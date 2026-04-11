@@ -57,10 +57,10 @@ Gaps that surface across multiple models or multiple test apps become the next v
 | Todo list | v0.3.2 | Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT | Surfaced list `+`, list removal, `each` in functions — all closed by v0.4 |
 | Weather app | v0.3.2 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | Validated reactive read pattern; surfaced `null` — closed by v0.4 |
 | **Chat interface** | **v0.4** | **Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT** | **PASS — first 100% clean test in the suite (zero inventions across all three models)** |
-| Music player | v0.4 | Pending | v0.4 acceptance test |
+| **Music player** | **v0.4** | **Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT** | **PARTIAL — 2/3 clean (Gemini, ChatGPT). Claude invented icon-in-button compound. Fix is documentation, not features** |
 | Notes app | v0.4 | Pending | v0.4 acceptance test (first multi-screen) |
 
-**Four apps tested across three models = 12 independent data points so far.** v0.4 is the first version drafted from empirical evidence rather than designer intuition, and the first v0.4 acceptance test (Chat) passed cleanly with zero inventions — including the first test in which Gemini adopted `is not empty` instead of inventing `==`/`!=`, validating the v0.4 `is X` documentation empirically.
+**Five apps tested across three models = 15 independent data points so far.** v0.4 is the first version drafted from empirical evidence rather than designer intuition. v0.4 acceptance is currently **2/3 done: Chat PASS, Music Player PARTIAL, Notes pending.** The Music Player PARTIAL is recoverable with a 3-line v0.4.1 documentation patch (icon button example, functions-as-expressions one-liner, `image round` vs `layout rounded` clarification).
 
 ## Design principles
 
@@ -93,8 +93,8 @@ igni/
     │   └── summary.md              # cross-app aggregation (the v0.4 backlog)
     └── v0.4/                       # tests run against v0.4 (current)
         ├── prompts.md              # the three v0.4 acceptance prompts
-        ├── Chat.md                 # COMPLETE — first 100% clean PASS
-        ├── MusicPlayer.md          # acceptance test, pending
+        ├── Chat.md                 # COMPLETE — PASS
+        ├── MusicPlayer.md          # COMPLETE — PARTIAL
         ├── Notes.md                # acceptance test, pending — first multi-screen
         └── summary.md              # cross-app aggregation (in progress)
 ```

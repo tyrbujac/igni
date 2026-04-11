@@ -1,73 +1,85 @@
 # Igni v0.4 — Cold-LLM Test Summary
 
 **Spec version:** v0.4
-**Test suite run:** 2026-04-11 (in progress: 1 of 3 complete)
-**Apps tested:** Chat (complete), Music Player (pending), Notes (pending)
+**Test suite run:** 2026-04-11 (in progress: 2 of 3 complete)
+**Apps tested:** Chat (PASS), Music Player (PARTIAL), Notes (pending)
 **Models tested:** Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT (free tier)
 
 ## Headline result so far
 
-**Chat passed cleanly across all three models with zero inventions** — the **first 100% clean test in the entire test suite history.** Calculator, Todo, and Weather under v0.3.2 all had at least one universal invention. Chat is the first time the spec covers a use case so completely that no model reaches outside it.
+- **Chat: PASS.** First 100% clean test in the suite history. All three models, zero inventions.
+- **Music Player: PARTIAL.** 2/3 models clean (Gemini, ChatGPT). Claude invented an `icon`-as-`button`-child compound pattern that doesn't exist in v0.4. The fix is documentation, not new features — the right pattern (`icon "play", on tap: handler`) is already supported, just not shown in the spec as the canonical "icon button" form.
 
-The most important finding is that **Gemini finally adopted `is not empty`** instead of inventing `==`/`!=`. In Calculator and Todo, Gemini was the consistent equality outlier (used `==`/`!=` while Claude and ChatGPT extended `is X`). In Chat against v0.4, Gemini wrote `if draft is not empty:`. **The v0.4 documentation of `is X` for arbitrary equality empirically captured Gemini's preference.** The equality gap is now closed across all three models, not just two.
+The most important findings so far:
 
-The remaining two tests (Music Player and Notes) will determine whether v0.4 can ship as the stable release.
+1. **Gemini finally adopted `is not empty`** in Chat instead of inventing `==`/`!=` — the v0.4 documentation of `is X` for arbitrary equality empirically captured Gemini's preference. The equality gap is now closed across all three models.
+2. **Gemini used the `#` comment syntax** in Music Player — first test in the suite to actually use comments. Validates that the v0.4 Comments section was discoverable.
+3. **The `on tap:` on any primitive rule** (v0.3.2 → v0.4) needs an explicit "icon button" example. 2/3 models found it cold; Claude over-engineered without it.
+
+The remaining test (Notes) will determine the final v0.4 acceptance verdict.
 
 ## Apps × models matrix
 
 | App           | Claude Opus 4.6 | Gemini Thinking 3.0 | ChatGPT (free) | Verdict |
 |---|---|---|---|---|
 | Chat          | **Y**            | **Y**                | **Y**           | **PASS** (zero inventions) |
-| Music Player  | _pending_        | _pending_            | _pending_       | _pending_ |
+| Music Player  | **N** (invented icon-in-button) | **Y** | **~** (function-as-arg, borderline) | **PARTIAL** |
 | Notes         | _pending_        | _pending_            | _pending_       | _pending_ |
 
 Legend: **Y** = valid Igni first-try, no inventions. **N** = failed (invented syntax). **~** = valid but with subtle issues.
 
-## Confirmed v0.4 wins (from Chat)
+## Confirmed v0.4 wins (across both completed tests)
 
-These v0.4 changes were validated empirically by the Chat test:
+Validated empirically by Chat and/or Music Player:
 
-1. **`is X` for arbitrary equality** — All three models used `is not empty` for the draft check. **Gemini in particular** had been the consistent equality outlier in v0.3.2 testing; in Chat it adopted `is not empty` naturally. The v0.4 documentation worked.
-2. **Reactive input clearing** — All three models cleared the input via `draft = ""` (just reassign the bound variable). The "predicted gap" of a `clear()` method invention didn't materialize. The two-way `bind` model is intuitive.
-3. **List append with `+`** — All three used `messages = messages + [{...}]`. Universal pattern, exactly as v0.4 specifies.
-4. **Object literals in append context** — All three constructed message objects inline with `{sender: "...", text: "..."}`. v0.4 object literal syntax landed cleanly.
-5. **Functions inside screens close over state** — All three defined `send()` / `send_message()` inside the screen and freely mutated `messages` and `draft`.
-6. **Component extraction is encouraged but not enforced** — 2/3 models (Claude, Gemini) extracted `MessageBubble`. ChatGPT inlined. Both forms are valid; the readability hint nudges without coercing.
+1. **`is X` for arbitrary equality** — Chat: all three models used `is not empty`. **Gemini in particular** adopted it in Chat after consistently inventing `==`/`!=` in v0.3.2 testing. The v0.4 documentation worked.
+2. **Reactive input clearing via `draft = ""`** — Chat: all three. The two-way `bind` model is intuitive.
+3. **List append with `+`** — Chat: all three used `messages = messages + [{...}]`.
+4. **Object literals in append context** — Chat + Music Player: all three constructed objects with `{key: value}` correctly.
+5. **Functions inside screens close over state** — both tests: all six (3 models × 2 tests). Universal.
+6. **`on tap:` attaches to any primitive** — Music Player: 2/3 models used `icon "name", on tap: handler` directly. Claude missed it; the others used the v0.4 universal-`on-tap` rule cleanly.
+7. **`#` for comments** — Music Player: Gemini used `# Logic for next track would go here` inside function bodies. First test to exercise the v0.4 Comments section.
+8. **Component extraction is encouraged but not enforced** — Chat: 2/3 extracted `MessageBubble`, 1/3 inlined. Both forms valid.
 
-## Gaps observed (from Chat)
+## Gaps observed (so far)
 
-**None.** Zero gaps. First clean test in the suite.
+### From Chat
 
-The two predicted gaps both resolved without intervention:
+**None.** Zero gaps.
 
-- **Input clearing**: `draft = ""` is the obvious answer once you understand reactive `bind`. Not a gap.
-- **Scroll-to-bottom**: not attempted by any model. Treated as out-of-scope rather than invented. Worth a v0.5 feature consideration but not a v0.4 defect.
+### From Music Player
 
-## Per-model observations (Chat round)
+1. **Icon-button pattern not shown explicitly** (Claude only). Claude tried to wrap icons inside buttons as compound primitives, which doesn't exist in v0.4. The right pattern (`icon "name", on tap: handler()`) is fully supported but not shown in the spec. **Possible v0.4.1 patch:** add a one-line example to Built-in Primitives or Events.
+2. **Function-call-as-expression in argument position** (ChatGPT, borderline). ChatGPT wrote `icon play_pause_icon(), size: large`, calling a function inline to choose the icon name. Spec doesn't explicitly show this pattern but it's consistent with the existing function/return-value semantics. **Possible v0.4.1 patch:** one sentence in Functions section noting that function calls compose anywhere a value is expected.
+3. **`rounded: medium` on `image`** (Claude only). Claude wrote `image song.art, size: 280, rounded: medium`. The spec example uses `round: true` (boolean, for circular images). `rounded:` is a layout corner-radius token. Possible spec confusion between `image round:` (boolean) and `layout rounded:` (token). Worth a one-line clarification.
+
+### Predicted gaps that did NOT surface
+
+- **Input clearing** (Chat): all three models found `draft = ""`. Not a gap.
+- **Scroll-to-bottom** (Chat): not attempted by any model. Treated as out-of-scope rather than invented.
+- **Music Player happy path**: was supposed to be the easy baseline. Mostly held — only Claude tripped, and it was on a missing-example issue rather than a missing feature.
+
+## Per-model observations
 
 ### Claude Opus 4.6
 
-- Extracted `MessageBubble` as a component (cleanest decomposition).
-- Added `color: brand` styling to the send button.
-- Used `is not empty` and `draft = ""` cleanly.
-- ~19 lines.
+- **Chat:** Extracted `MessageBubble` as a component, used `is not empty` cleanly, zero inventions.
+- **Music Player:** Over-engineered the icon button pattern (compound `button` + indented `icon` child, which isn't valid). Used `rounded: medium` on `image` (probably meant `round: true`). **Only model so far to fail a v0.4 acceptance test.**
+- **Pattern:** Claude leans toward more structured / decomposed solutions even when the simpler primitive pattern would work. In Chat this was a strength (clean component extraction); in Music Player it became a weakness (invented compound primitive).
 
 ### Gemini Thinking 3.0
 
-- Extracted `MessageBubble` as a component.
-- Seeded the messages list with an initial system message (`"Welcome to Igni Chat v0.4"`).
-- **First test in the suite where Gemini used `is not empty`** instead of inventing `==`/`!=`. The v0.4 `is X` documentation captured Gemini's preference at last.
-- ~22 lines.
+- **Chat:** Extracted `MessageBubble`, seeded with system message, **first time using `is not empty` in the suite** (the v0.4 documentation worked).
+- **Music Player:** Clean v0.4 throughout. **First test to actually use the `#` comment syntax** added in v0.4. Used `icon "name", on tap: handler` for all controls — the right pattern.
+- **Pattern:** Gemini in v0.4 is a noticeably different model than Gemini in v0.3.2 testing. The equality outlier behaviour vanished, and Gemini now uses v0.4 features (comments, `is X`, universal `on tap:`) cleanly.
 
 ### ChatGPT (free)
 
-- Inlined message rendering instead of extracting a component (still valid; component extraction is a hint, not a rule).
-- Most compact output of the three (~17 lines).
-- Used `is not empty` and `draft = ""` cleanly.
+- **Chat:** Inlined message rendering instead of extracting a component (still valid). Most compact output. Used `is not empty` and `draft = ""` cleanly.
+- **Music Player:** Took `track` as a screen argument (only model to do so). Used `playing = not playing` for the toggle (cleaner than the if/else swap pattern). **Borderline finding:** `icon play_pause_icon()` calls a function inline to choose the icon name, which the spec doesn't explicitly show as a pattern.
+- **Pattern:** ChatGPT continues to be the most compact and most JS-idiom-prone of the three. The function-as-expression pattern is creative but consistent with how the spec defines functions.
 
 ## Cross-test progress (v0.3.2 → v0.4)
-
-Combined view across both spec versions:
 
 | Test | Spec | Models | Verdict | Inventions |
 |---|---|---|---|---|
@@ -75,19 +87,23 @@ Combined view across both spec versions:
 | Todo | v0.3.2 | 3 | FAIL → fed v0.4 backlog | Universal: list `+`, list removal; per-model: `without`, `each` in functions, `continue`, `color: x and y`, in-place mutation |
 | Weather | v0.3.2 | 3 | PARTIAL → fed v0.4 backlog | Universal: number+string `+`; per-model: `null`, manual state vs reactive read |
 | **Chat** | **v0.4** | **3** | **PASS** | **None** |
-| Music Player | v0.4 | _pending_ | _pending_ | _pending_ |
+| **Music Player** | **v0.4** | **3** | **PARTIAL** | Claude only: icon-in-button compound, `rounded: medium` on image; ChatGPT borderline: function call as inline argument |
 | Notes | v0.4 | _pending_ | _pending_ | _pending_ |
 
-**12 independent data points so far** (4 apps × 3 models). The first three apps fed the v0.4 backlog; v0.4 is now being validated against three more apps (Chat done, two pending).
+**15 independent data points so far** (5 apps × 3 models). The first three tests fed the v0.4 backlog; v0.4 is now 2/3 of the way through acceptance.
 
 ## Conclusions and v0.5 priorities (so far)
 
-After Chat:
+After Chat + Music Player:
 
-- **v0.4 ships unchanged** for chat-app use cases. No patches needed for what Chat exercises.
-- **Potential v0.5 features identified by Chat:** scroll-to-bottom for long lists (not attempted by any model, but real chat apps need it). Lower priority than the cross-screen state question that Notes is expected to surface.
+- **v0.4 ships unchanged for chat-app and media-player use cases** for 5 out of 6 (model × app) combinations. The one outlier (Claude on Music Player) is fixable with documentation, not features.
+- **Possible v0.4.1 patch (3 one-line additions):**
+  1. Add an "icon button" example showing `icon "play", on tap: play_song()` in Built-in Primitives or Events.
+  2. Add one sentence in Functions section: function calls return values that compose anywhere a value is expected.
+  3. Clarify `image round: true` (boolean, for circular) vs `layout rounded: <token>` (corner-radius for layouts). Currently the two are easy to conflate.
+- **Potential v0.5 features identified so far:** scroll-to-bottom for long lists (from Chat). Lower priority than the cross-screen state question that Notes is expected to surface.
 
-After Music Player and Notes are complete, this section will be updated with the full v0.5 backlog. The biggest open question is whether Notes surfaces cross-screen state as a real design driver (predicted) or whether the models find a clean pattern using existing primitives (which would be a major win for v0.4).
+After Notes is complete, this section will be updated with the full v0.5 backlog and the final v0.4 acceptance verdict (PASS, PARTIAL, or FAIL across the suite).
 
 ## Methodology notes
 
