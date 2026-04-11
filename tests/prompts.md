@@ -1,6 +1,6 @@
 # Igni Cold-LLM Test Prompts
 
-These are the five prompts used in the cold-LLM test suite.
+These are the six prompts used in the cold-LLM test suite.
 
 ## How to use these prompts
 
@@ -10,15 +10,15 @@ Each prompt ends with a *"Respond with only the Igni code"* directive. Don't rem
 
 Your final chat message should look like this:
 
-```
-[entire contents of Igni_Language_Spec_v0.3.2.md, all ~440 lines]
+```text
+[entire contents of spec/v0.4.md, all ~430 lines]
 
 ---
 
 [one of the prompts below, including the "Respond with only the Igni code" line]
 ```
 
-Send. Capture the response into the matching `Cold_Test_<App>_v0.3.2.md` file.
+Send. Capture the response into the matching `Cold_Test_<App>_v<spec_version>.md` file.
 
 ---
 
@@ -30,7 +30,9 @@ Send. Capture the response into the matching `Cold_Test_<App>_v0.3.2.md` file.
 
 **What this exercises:** state mutation, event handlers, nested horizontal/vertical layouts, screen-internal functions for the calculation logic.
 
-**Predicted gaps:** comparison operators (`==`, `!=`); number-vs-string distinction (display is a string but math needs numbers); possibly grid layout (a 4×4 button grid is currently 4 nested horizontal layouts).
+**Predicted gaps (v0.3.2):** comparison operators (`==`, `!=`); number-vs-string distinction (display is a string but math needs numbers); possibly grid layout (a 4×4 button grid is currently 4 nested horizontal layouts).
+
+**Status against v0.4:** v0.4 added `is X` for equality, arithmetic operators `-`/`*`/`/`, and operator precedence — closing all the calculator gaps surfaced in v0.3.2 testing.
 
 ---
 
@@ -42,7 +44,9 @@ Send. Capture the response into the matching `Cold_Test_<App>_v0.3.2.md` file.
 
 **What this exercises:** lists, two-way binding for the input, list mutation (add and remove), per-item state (completion).
 
-**Predicted gaps:** list mutation syntax (is it `posts.add(item)`? `posts = posts + [item]`? something else?); possibly filter/find for delete-by-id.
+**Predicted gaps (v0.3.2):** list mutation syntax (is it `posts.add(item)`? `posts = posts + [item]`? something else?); possibly filter/find for delete-by-id.
+
+**Status against v0.4:** v0.4 added `+` for list concatenation, `without(list, item)` for removal, `each` in non-rendering contexts, and committed to functional list updates — closing the Todo gaps from v0.3.2 testing.
 
 ---
 
@@ -54,7 +58,9 @@ Send. Capture the response into the matching `Cold_Test_<App>_v0.3.2.md` file.
 
 **What this exercises:** async fetch (the v0.3 strength), loading/error/loaded states, an input + button to trigger a re-fetch.
 
-**Predicted gaps:** how to re-trigger a `fetch` when an input changes — the spec doesn't show this pattern; possibly query param composition.
+**Predicted gaps (v0.3.2):** how to re-trigger a `fetch` when an input changes — the spec doesn't show this pattern; possibly query param composition.
+
+**Status against v0.4:** v0.3.2 testing showed the reactive re-fetch pattern was discoverable (2/3 models found it cold), so v0.4 added an explicit example to the Async Data section. Also added `null` and `is null` for the "no value yet" sentinel that Claude reached for.
 
 ---
 
@@ -78,4 +84,22 @@ Send. Capture the response into the matching `Cold_Test_<App>_v0.3.2.md` file.
 
 **What this exercises:** image, slider with bind, conditional button (play vs pause), horizontal layout for the controls row, the `icon` primitive.
 
-**Predicted gaps:** none significant. This one is the closest to a v0.3.2 happy path and was already validated against Gemini in the v0.3.1 comparison test. Use it as the baseline.
+**Predicted gaps:** none significant. This one is the closest to a v0.4 happy path and was already validated against Gemini in the v0.3.1 comparison test. Use it as the baseline.
+
+---
+
+## 6. Notes app
+
+> Using only the Igni language spec above, write a notes app in Igni. The user should see a list of all their notes (showing just the title) on the main screen, with a button to create a new note. Tapping a note opens a detail screen showing the full content. From the detail screen, the user can edit the note's title and body, save changes, or delete the note. When there are no notes yet, show an empty state on the main screen.
+>
+> Respond with only the Igni code — no explanation, no commentary, no discussion of the spec.
+
+**What this exercises:** **multi-screen navigation** (the first test in the suite that genuinely requires it), list rendering, empty state handling with `is empty`, edit-and-save mutation flow, delete with `without`, and create-new-note flow. Combines list patterns from Todo with the navigation pattern that no previous test exercises.
+
+**Predicted gaps for v0.4:**
+
+- **Cross-screen state.** The notes list lives on the main screen, but the detail screen needs to read and modify it. v0.4 has no shared-store concept (deferred to v0.5). Models will likely either: (a) pass the whole list down as an argument and rebuild via callbacks, (b) invent a global store, (c) find a pattern using existing primitives.
+- **Navigation with state mutation.** When the detail screen deletes or edits a note, how does the list screen reflect the change? Tied to the cross-screen state question.
+- **Returning from detail with a result.** The spec only has `navigate to` and `navigate back` with no mention of return values. Models may invent a callback pattern.
+
+This is the **first v0.4 acceptance test that's expected to surface a real gap** (cross-screen state). If models find a clean pattern using existing primitives, v0.4 is more powerful than expected. If they all converge on inventing something, that's the v0.5 design driver.
