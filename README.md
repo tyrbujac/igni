@@ -25,7 +25,7 @@ Indentation for blocks. Colons end the line that opens one. Lowercase for built-
 
 ## The current spec
 
-The canonical version is **[`spec/v0.4.1.md`](spec/v0.4.1.md)** — a documentation patch over v0.4 with five one-line additions grounded in the v0.4 acceptance test findings. v0.4.1 ships as the stable release.
+The canonical version is **[`spec/v0.5.md`](spec/v0.5.md)** — adds cross-screen shared state (`shared:` block), wrapper components with the `body` slot keyword, list builtins (`replace`, `find`, `count`, `length`, `is in`/`is not in`), and a prominent input-debounce common-pitfall callout. **v0.5 is the last design-only round; the next major workstream is the TypeScript-to-Dart transpiler.**
 
 ## Project history and versioning
 
@@ -38,7 +38,8 @@ The language was originally named **Rocket**, then renamed to **Igni** at v0.3.2
 | `spec/v0.3.1.md` | Rocket | Historical | Mutation pattern fix, `icon` primitive, object literals, no string interpolation |
 | `spec/v0.3.2.md` | Igni | Historical | Renamed Rocket → Igni; no language changes |
 | `spec/v0.4.md` | Igni | Historical | Arithmetic operators, `is X` for equality, `null`, list operations, `each` in functions, comments |
-| **`spec/v0.4.1.md`** | **Igni** | **Canonical** | Documentation patch: single-screen multi-view pattern, icon button example, functions-as-expressions, `image round:` vs `layout rounded:`, cross-screen call rule |
+| `spec/v0.4.1.md` | Igni | Historical | Documentation patch from v0.4 acceptance findings: single-screen multi-view pattern, icon button example, functions-as-expressions, `image round:` vs `layout rounded:`, cross-screen call rule |
+| **`spec/v0.5.md`** | **Igni** | **Canonical** | Shared state via `shared:` block, wrapper components with `body` slot, list builtins (`replace`, `find`, `count`, `length`, `is in`/`is not in`), input-debounce common-pitfall callout |
 
 ## Validation methodology
 
@@ -57,11 +58,13 @@ Gaps that surface across multiple models or multiple test apps become the next v
 | Calculator | v0.3.2 | Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT | Surfaced arithmetic operators, `is` extension, precedence — all closed by v0.4 |
 | Todo list | v0.3.2 | Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT | Surfaced list `+`, list removal, `each` in functions — all closed by v0.4 |
 | Weather app | v0.3.2 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | Validated reactive read pattern; surfaced `null` — closed by v0.4 |
-| Chat interface | v0.4 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | **PASS** — first 100% clean test in the suite (zero inventions across all three models) |
-| Music player | v0.4 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | **PARTIAL** — 2/3 clean. Claude invented icon-in-button compound. Closed by v0.4.1 documentation patch |
-| Notes app | v0.4 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | **MIXED** — Claude PASS-incomplete (honestly named the cross-screen state gap), Gemini PASS (single-screen workaround), ChatGPT PARTIAL (invented cross-screen function visibility). v0.4.1 documents the workaround; v0.5 will design the broader fix |
+| Chat interface | v0.4 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | **PASS** — first 100% clean test in the suite |
+| Music player | v0.4 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | **PARTIAL** — 2/3 clean; Claude invented icon-in-button. Closed by v0.4.1 documentation |
+| Notes app | v0.4 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | **MIXED** — surfaced cross-screen state as the v0.5 priority. Closed by v0.5 `shared:` block |
+| Notes app re-run | v0.5 | Pending | v0.5 validation — does shared state close the gap? |
+| Shopping app | v0.5 | Pending | v0.5 acceptance — exercises shared state, body slots, list builtins together |
 
-**Six apps tested across three models = 18 independent data points.** v0.4 acceptance is **complete: 1 PASS, 1 PARTIAL, 1 MIXED.** v0.4.1 is shippable as the stable release — it adds 5 documentation one-liners grounded in the v0.4 acceptance findings, no new language features. The PARTIAL and MIXED findings are addressed by the v0.4.1 documentation patch (icon button example, single-screen multi-view pattern, cross-screen call rule, etc.). The Notes MIXED verdict surfaces **cross-screen shared state** as a real v0.5 priority — Claude's honest negative result correctly identified the gap that Gemini's clever workaround sidesteps for one specific use case but doesn't actually solve.
+**Six apps tested across three models = 18 independent data points.** v0.4 acceptance is complete (1 PASS, 1 PARTIAL, 1 MIXED). v0.5 closes the cross-screen state gap that the Notes test surfaced and adds wrapper components, list builtins, and a louder debounce warning. **v0.5 is the last design-only round** — pending its own cold-test validation, the next major workstream is the TypeScript-to-Dart transpiler.
 
 ## Design principles
 
@@ -84,26 +87,31 @@ igni/
 │   ├── v0.3.1.md                   # Rocket-era historical
 │   ├── v0.3.2.md                   # Igni-era historical (rename only)
 │   ├── v0.4.md                     # Igni-era historical (acceptance round)
-│   └── v0.4.1.md                   # canonical (documentation patch from v0.4 acceptance findings)
+│   ├── v0.4.1.md                   # Igni-era historical (docs patch)
+│   └── v0.5.md                     # canonical (shared state, body slots, list builtins)
 └── tests/                          # cold-LLM test infrastructure
     ├── README.md                   # test methodology
     ├── v0.3.2/                     # tests run against v0.3.2
-    │   ├── prompts.md              # the three prompts tested against v0.3.2
-    │   ├── Calculator.md           # complete
-    │   ├── Todo.md                 # complete
-    │   ├── Weather.md              # complete
-    │   └── summary.md              # cross-app aggregation (the v0.4 backlog)
-    └── v0.4/                       # tests run against v0.4
-        ├── prompts.md              # the three v0.4 acceptance prompts
-        ├── Chat.md                 # PASS
-        ├── MusicPlayer.md          # PARTIAL
-        ├── Notes.md                # MIXED
-        └── summary.md              # cross-app aggregation (final)
+    │   ├── prompts.md
+    │   ├── Calculator.md
+    │   ├── Todo.md
+    │   ├── Weather.md
+    │   └── summary.md
+    ├── v0.4/                       # tests run against v0.4
+    │   ├── prompts.md
+    │   ├── Chat.md                 # PASS
+    │   ├── MusicPlayer.md          # PARTIAL
+    │   ├── Notes.md                # MIXED
+    │   └── summary.md
+    └── v0.5/                       # tests run against v0.5 (current)
+        ├── prompts.md              # Notes re-run + new Shopping app
+        ├── Notes.md                # validation re-run, pending
+        └── Shopping.md             # acceptance test, pending — exercises all v0.5 features
 ```
 
 ## What this project is *not*
 
-- **Not a Flutter plugin or DSL yet.** The transpile-to-Flutter path is under consideration but uncommitted.
+- **Not a Flutter plugin or DSL yet.** The transpile-to-Flutter path is the next major workstream after v0.5 cold-test validation.
 - **Not an active codebase.** No build step, no compiler, no runtime. The project is a design document and its empirical validation.
 - **Not a multi-target language for v1.** Web is the v1 target so that "three commands to first pixel" stays achievable. Mobile compilation is opt-in later.
 
