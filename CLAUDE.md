@@ -21,23 +21,33 @@ Indentation for blocks. Colons end the line that opens one. Lowercase for built-
 
 ## Repo layout
 
-```
+```text
 igni/
-├── README.md            # public-facing project summary
-├── CLAUDE.md            # this file (notes for AI assistants)
-├── LICENSE              # MIT
-├── spec/                # all spec versions
-│   ├── v0.2.md          # Rocket-era historical
-│   ├── v0.3.md          # Rocket-era historical
-│   ├── v0.3.1.md        # Rocket-era historical
-│   ├── v0.3.2.md        # Igni-era historical (rename only)
-│   └── v0.4.md          # current canonical
-└── tests/               # cold-LLM test infrastructure
-    ├── README.md        # test methodology
-    ├── prompts.md       # paste-ready test prompts
-    ├── Cold_Test_*.md   # one per app per spec version
-    └── v0.3.2_summary.md
+├── README.md                # public-facing project summary
+├── CLAUDE.md                # this file (notes for AI assistants)
+├── LICENSE                  # MIT
+├── spec/                    # all spec versions
+│   ├── v0.2.md              # Rocket-era historical
+│   ├── v0.3.md              # Rocket-era historical
+│   ├── v0.3.1.md            # Rocket-era historical
+│   ├── v0.3.2.md            # Igni-era historical (rename only)
+│   └── v0.4.md              # current canonical
+└── tests/                   # cold-LLM test infrastructure
+    ├── README.md            # test methodology
+    ├── v0.3.2/              # tests run against v0.3.2
+    │   ├── prompts.md       # the three prompts tested against v0.3.2
+    │   ├── Calculator.md    # complete
+    │   ├── Todo.md          # complete
+    │   ├── Weather.md       # complete
+    │   └── summary.md       # cross-app aggregation that fed v0.4
+    └── v0.4/                # tests run against v0.4 (current)
+        ├── prompts.md       # the three v0.4 acceptance prompts
+        ├── Chat.md          # acceptance test, pending
+        ├── MusicPlayer.md   # acceptance test, pending
+        └── Notes.md         # acceptance test, pending — first multi-screen
 ```
+
+Each spec version gets its own subfolder under `tests/` containing both the prompts that were used and the result files. Test result filenames drop the `Cold_Test_` prefix and the version suffix (the folder carries the version).
 
 ## Spec files
 
@@ -65,7 +75,7 @@ If a proposal violates one of these, it's wrong by definition — push back inst
 
 ## Validation methodology
 
-The spec is validated with **cold-LLM tests**: paste the current spec into a fresh frontier-model conversation (Claude, Gemini, ChatGPT) and run the test prompts at the bottom of the spec verbatim.
+The spec is validated with **cold-LLM tests**: paste the current spec into a fresh frontier-model conversation (Claude, Gemini, ChatGPT) and run the prompts in `tests/v<spec_version>/prompts.md` verbatim. Test results live alongside the prompts under `tests/v<spec_version>/<App>.md`.
 
 - **The easy case** (Settings screen) is a smoke test. Every UI DSL passes it.
 - **The hard case** — paginated list with loading/error states, navigation to a detail screen, and an edit-and-save flow — is the real validator. If the LLM produces compilable Igni on the first try with no invented syntax, the spec is learnable zero-shot. If it invents, those areas need a patch.
@@ -101,7 +111,7 @@ Always run the test suite on every new version. The cold-LLM test caught the v0.
 Items deferred from v0.4 that will be designed once enough test data accumulates:
 
 - **Optimistic updates with rollback** — requires cross-screen state, background requests, and post-navigation error surfacing. Three orthogonal sub-problems.
-- **Cross-screen shared state** — once optimistic updates need it.
+- **Cross-screen shared state** — likely surfaced by the Notes app cold test (the first test requiring multi-screen navigation).
 - **Forms and validation** — multi-field, cross-field, async validators.
 - **Animations and transitions.**
 - **List search / filter / sort** built into the iteration syntax.

@@ -9,9 +9,9 @@ The point of these tests is **not** to demonstrate the spec works on cherry-pick
 For each combination of (app × model):
 
 1. **Open a fresh conversation** in the target LLM (Claude.ai, Gemini, ChatGPT). Actually fresh — new thread, no system prompt, no prior messages, no custom instructions enabled. Contamination from earlier context kills the test.
-2. **Paste the full spec verbatim.** Copy the entire current `Igni_Language_Spec_v*.md` file (currently v0.3.2). No editing. No commentary. No "here's a language I designed."
-3. **In the same message**, paste the prompt verbatim from `prompts.md`. **If the model asks follow-up questions, don't answer them** — that refusal-to-commit is itself a finding.
-4. **Capture the entire response** (code plus any narration) into the matching `Cold_Test_<App>_v<spec_version>.md` file under the appropriate model's section.
+2. **Paste the full current spec verbatim.** Currently `spec/v0.4.md`. No editing. No commentary. No "here's a language I designed."
+3. **In the same message**, paste the prompt verbatim from the matching `tests/v<spec_version>/prompts.md` (e.g. `tests/v0.4/prompts.md`). **If the model asks follow-up questions, don't answer them** — that refusal-to-commit is itself a finding.
+4. **Capture the entire response** (code plus any narration) into the matching test result file: `tests/v<spec_version>/<App>.md` (e.g. `tests/v0.4/Notes.md`) under the appropriate model's section.
 5. **Note metadata:** date, model version, whether the output came in one shot or got split across messages.
 
 ## Grading rubric
@@ -24,30 +24,42 @@ For each output, three questions:
 
 A "gap" includes both LLM inventions AND your own `# GAP:` comments from hand-written attempts of the same app. Both are evidence of the same underlying spec defect.
 
-## Test order and pacing
+## Test apps
 
-Run apps in this order, one app per session, across all three models:
+Six apps in the suite, in order of escalating complexity:
 
-1. **Calculator** — state, events, nested layouts. Predicted gaps: comparison operators, number/string handling.
-2. **Todo list** — lists, add/remove, bind. Predicted gaps: list mutation patterns, possibly filter/find.
-3. **Weather app** — async fetch, loading/error, real API patterns. Should mostly use existing v0.3.2 features.
-4. **Chat interface** — list of messages, input clearing after send. Predicted gaps: clearing inputs programmatically, scroll behaviour.
-5. **Music player** — already partially tested in the comparison case. Formalises the result.
+1. **Calculator** — state, events, nested layouts, screen-internal functions. Tested against v0.3.2; surfaced arithmetic operators, `is X` extension, operator precedence. All closed by v0.4.
+2. **Todo list** — lists, two-way bind, add/remove, per-item state. Tested against v0.3.2; surfaced list `+`, `without` removal, `each` in functions, functional updates. All closed by v0.4.
+3. **Weather app** — async fetch, loading/error/loaded states, re-fetch on input change. Tested against v0.3.2; validated the reactive read pattern (2/3 models found it cold), surfaced `null`. All closed by v0.4.
+4. **Chat interface** — list of messages, input clearing after send, scroll-to-bottom. v0.4 acceptance test; predicted gaps: clearing inputs programmatically, scroll behaviour.
+5. **Music player** — image, slider, conditional buttons, horizontal control row. v0.4 acceptance test; expected to pass cleanly (happy-path baseline).
+6. **Notes app** — multi-screen navigation, list + detail + edit + delete + empty state. v0.4 acceptance test; **first test in the suite that requires multi-screen navigation.** Expected to surface cross-screen state as the v0.5 design driver.
 
-**Don't do all five in one sitting.** One app per session, write up the results before moving to the next. The gaps overlap and you'll see which ones are actually load-bearing vs theoretical.
+**Don't run all six in one sitting.** One app per session, write up the results before moving to the next. The gaps overlap and you'll see which ones are actually load-bearing vs theoretical.
 
-**After three apps, stop and look at the gap list before continuing.** Don't rush v0.4.
+## Folder layout
 
-## Files in this folder
+```text
+tests/
+├── README.md                  # this file (test methodology)
+├── v0.3.2/                    # tests run against the v0.3.2 spec
+│   ├── prompts.md             # the three prompts that were tested against v0.3.2
+│   ├── Calculator.md          # complete
+│   ├── Todo.md                # complete
+│   ├── Weather.md             # complete
+│   └── summary.md             # cross-app aggregation that fed the v0.4 backlog
+└── v0.4/                      # tests run against the v0.4 spec (current)
+    ├── prompts.md             # the three prompts being run as v0.4 acceptance tests
+    ├── Chat.md                # acceptance test, pending
+    ├── MusicPlayer.md         # acceptance test, pending
+    └── Notes.md               # acceptance test, pending — first multi-screen test
+```
 
-- `README.md` — this file (test methodology and protocol).
-- `prompts.md` — all five test prompts in one place. Self-contained, ready to paste.
-- `Cold_Test_<App>_v<spec_version>.md` — one per app per spec version. Holds Claude, Gemini, GPT outputs and per-output grading.
-- `v<spec_version>_summary.md` — aggregates findings across all five apps for that spec version. Becomes the next version's backlog.
+Each spec version gets its own subfolder containing both the prompts that were tested against it AND the result files. Test result filenames drop both the version (the folder carries it) and the `Cold_Test_` prefix (the folder + filename together communicate the test identity).
 
 ## Practical notes
 
 - **Use the chat UI, not the API.** Chat UI is what real developers use; it's the truest test. Move to API only if you need to scale beyond ~50 runs.
 - **Don't prompt-engineer mid-test.** When a model produces wrong output, the temptation is to add "make sure to use `is loading`." Resist it. Add the issue to the gap list and let the spec do the work.
 - **Capture line counts.** Spec line count vs LLM output line count is part of the pitch and worth tracking per app.
-- **Each spec version gets its own set of test result files.** When you ship v0.4, create `Cold_Test_Calculator_v0.4.md` etc. and run the suite again. The diff between v0.3.2 results and v0.4 results is the proof v0.4 fixed the right things.
+- **Each spec version gets its own subfolder.** When you ship v0.5, create `tests/v0.5/` with its own `prompts.md` (a copy of the prompts you actually want to run against v0.5) and run the suite again. The diff between two version folders is the proof that the new version fixed the right things.

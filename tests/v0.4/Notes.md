@@ -2,7 +2,7 @@
 
 **Spec version tested:** Igni v0.4
 **Test run dates:** _(fill in when run)_
-**Source prompt:** `tests/prompts.md` → Notes app
+**Source prompt:** `prompts.md` → Notes app
 
 ## The prompt
 

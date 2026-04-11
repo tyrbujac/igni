@@ -53,12 +53,12 @@ Gaps that surface across multiple models or multiple test apps become the next v
 
 | App | Spec version | Models tested | Outcome |
 |---|---|---|---|
-| Calculator | v0.3.2 | Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT | Surfaced arithmetic operators, `is` extension, precedence |
-| Todo list | v0.3.2 | Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT | Surfaced list `+`, list removal, `each` in functions |
-| Weather app | v0.3.2 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | Validated reactive read pattern; surfaced `null` |
+| Calculator | v0.3.2 | Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT | Surfaced arithmetic operators, `is` extension, precedence — all closed by v0.4 |
+| Todo list | v0.3.2 | Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT | Surfaced list `+`, list removal, `each` in functions — all closed by v0.4 |
+| Weather app | v0.3.2 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | Validated reactive read pattern; surfaced `null` — closed by v0.4 |
 | Chat interface | v0.4 | Pending | v0.4 acceptance test |
 | Music player | v0.4 | Pending | v0.4 acceptance test |
-| Notes app | v0.4 | Pending | v0.4 acceptance test |
+| Notes app | v0.4 | Pending | v0.4 acceptance test (first multi-screen) |
 
 Three apps tested across three models = 9 independent data points so far. **v0.4 is the first version drafted from empirical evidence rather than designer intuition.**
 
@@ -72,22 +72,30 @@ Three apps tested across three models = 9 independent data points so far. **v0.4
 
 ## Repo structure
 
-```
+```text
 igni/
 ├── README.md                       # this file
 ├── CLAUDE.md                       # working notes for AI assistants
 ├── LICENSE                         # MIT
 ├── spec/                           # all spec versions, oldest to newest
-│   ├── v0.2.md
-│   ├── v0.3.md
-│   ├── v0.3.1.md
-│   ├── v0.3.2.md
+│   ├── v0.2.md                     # Rocket-era historical
+│   ├── v0.3.md                     # Rocket-era historical
+│   ├── v0.3.1.md                   # Rocket-era historical
+│   ├── v0.3.2.md                   # Igni-era historical (rename only)
 │   └── v0.4.md                     # canonical
 └── tests/                          # cold-LLM test infrastructure
     ├── README.md                   # test methodology
-    ├── prompts.md                  # test prompts (paste-ready)
-    ├── Cold_Test_*.md              # one per app per spec version
-    └── v0.3.2_summary.md           # cross-app aggregation
+    ├── v0.3.2/                     # tests run against v0.3.2
+    │   ├── prompts.md              # the three prompts tested against v0.3.2
+    │   ├── Calculator.md           # complete
+    │   ├── Todo.md                 # complete
+    │   ├── Weather.md              # complete
+    │   └── summary.md              # cross-app aggregation that fed the v0.4 backlog
+    └── v0.4/                       # tests run against v0.4 (current)
+        ├── prompts.md              # the three v0.4 acceptance prompts
+        ├── Chat.md                 # acceptance test, pending
+        ├── MusicPlayer.md          # acceptance test, pending
+        └── Notes.md                # acceptance test, pending — first multi-screen
 ```
 
 ## What this project is *not*

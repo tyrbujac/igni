@@ -2,7 +2,7 @@
 
 **Spec version tested:** Igni v0.3.2
 **Test run dates:** 2026-04-11 (all three models complete)
-**Source prompt:** `tests/prompts.md` → Weather app
+**Source prompt:** `prompts.md` → Weather app
 
 ## The prompt
 
