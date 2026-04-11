@@ -25,7 +25,7 @@ Indentation for blocks. Colons end the line that opens one. Lowercase for built-
 
 ## The current spec
 
-The canonical version is **[`spec/v0.4.md`](spec/v0.4.md)**. v0.4 is shippable as the stable release; a small v0.4.1 documentation patch is recommended (5 one-line additions, no new features).
+The canonical version is **[`spec/v0.4.1.md`](spec/v0.4.1.md)** — a documentation patch over v0.4 with five one-line additions grounded in the v0.4 acceptance test findings. v0.4.1 ships as the stable release.
 
 ## Project history and versioning
 
@@ -37,7 +37,8 @@ The language was originally named **Rocket**, then renamed to **Igni** at v0.3.2
 | `spec/v0.3.md` | Rocket | Historical | Async data, mutations, screen-internal functions, lexical reactivity rule |
 | `spec/v0.3.1.md` | Rocket | Historical | Mutation pattern fix, `icon` primitive, object literals, no string interpolation |
 | `spec/v0.3.2.md` | Igni | Historical | Renamed Rocket → Igni; no language changes |
-| **`spec/v0.4.md`** | **Igni** | **Canonical** | Arithmetic operators, `is X` for equality, `null`, list operations, `each` in functions, comments |
+| `spec/v0.4.md` | Igni | Historical | Arithmetic operators, `is X` for equality, `null`, list operations, `each` in functions, comments |
+| **`spec/v0.4.1.md`** | **Igni** | **Canonical** | Documentation patch: single-screen multi-view pattern, icon button example, functions-as-expressions, `image round:` vs `layout rounded:`, cross-screen call rule |
 
 ## Validation methodology
 
@@ -56,11 +57,11 @@ Gaps that surface across multiple models or multiple test apps become the next v
 | Calculator | v0.3.2 | Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT | Surfaced arithmetic operators, `is` extension, precedence — all closed by v0.4 |
 | Todo list | v0.3.2 | Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT | Surfaced list `+`, list removal, `each` in functions — all closed by v0.4 |
 | Weather app | v0.3.2 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | Validated reactive read pattern; surfaced `null` — closed by v0.4 |
-| **Chat interface** | **v0.4** | **Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT** | **PASS** — first 100% clean test in the suite (zero inventions across all three models) |
-| **Music player** | **v0.4** | **Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT** | **PARTIAL** — 2/3 clean (Gemini, ChatGPT). Claude invented icon-in-button compound. Recoverable with documentation |
-| **Notes app** | **v0.4** | **Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT** | **MIXED** — Claude PASS-incomplete (honestly named the cross-screen state gap and refused to invent), Gemini PASS (tactical single-screen workaround), ChatGPT PARTIAL (invented cross-screen function visibility). Surfaces cross-screen shared state as a real v0.5 priority |
+| Chat interface | v0.4 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | **PASS** — first 100% clean test in the suite (zero inventions across all three models) |
+| Music player | v0.4 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | **PARTIAL** — 2/3 clean. Claude invented icon-in-button compound. Closed by v0.4.1 documentation patch |
+| Notes app | v0.4 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | **MIXED** — Claude PASS-incomplete (honestly named the cross-screen state gap), Gemini PASS (single-screen workaround), ChatGPT PARTIAL (invented cross-screen function visibility). v0.4.1 documents the workaround; v0.5 will design the broader fix |
 
-**Six apps tested across three models = 18 independent data points.** v0.4 acceptance is **complete: 1 PASS, 1 PARTIAL, 1 MIXED.** v0.4 is shippable as the stable release. The PARTIAL and MIXED findings are addressable with a small v0.4.1 documentation patch (5 one-line additions, no new features). The Notes MIXED verdict surfaces a **real v0.5 priority** (cross-screen shared state) — Claude's honest negative result correctly identified the gap that Gemini's clever workaround sidesteps for one specific use case but doesn't actually solve.
+**Six apps tested across three models = 18 independent data points.** v0.4 acceptance is **complete: 1 PASS, 1 PARTIAL, 1 MIXED.** v0.4.1 is shippable as the stable release — it adds 5 documentation one-liners grounded in the v0.4 acceptance findings, no new language features. The PARTIAL and MIXED findings are addressed by the v0.4.1 documentation patch (icon button example, single-screen multi-view pattern, cross-screen call rule, etc.). The Notes MIXED verdict surfaces **cross-screen shared state** as a real v0.5 priority — Claude's honest negative result correctly identified the gap that Gemini's clever workaround sidesteps for one specific use case but doesn't actually solve.
 
 ## Design principles
 
@@ -82,7 +83,8 @@ igni/
 │   ├── v0.3.md                     # Rocket-era historical
 │   ├── v0.3.1.md                   # Rocket-era historical
 │   ├── v0.3.2.md                   # Igni-era historical (rename only)
-│   └── v0.4.md                     # canonical
+│   ├── v0.4.md                     # Igni-era historical (acceptance round)
+│   └── v0.4.1.md                   # canonical (documentation patch from v0.4 acceptance findings)
 └── tests/                          # cold-LLM test infrastructure
     ├── README.md                   # test methodology
     ├── v0.3.2/                     # tests run against v0.3.2
@@ -91,11 +93,11 @@ igni/
     │   ├── Todo.md                 # complete
     │   ├── Weather.md              # complete
     │   └── summary.md              # cross-app aggregation (the v0.4 backlog)
-    └── v0.4/                       # tests run against v0.4 (current)
+    └── v0.4/                       # tests run against v0.4
         ├── prompts.md              # the three v0.4 acceptance prompts
-        ├── Chat.md                 # COMPLETE — PASS
-        ├── MusicPlayer.md          # COMPLETE — PARTIAL
-        ├── Notes.md                # COMPLETE — MIXED
+        ├── Chat.md                 # PASS
+        ├── MusicPlayer.md          # PARTIAL
+        ├── Notes.md                # MIXED
         └── summary.md              # cross-app aggregation (final)
 ```
 

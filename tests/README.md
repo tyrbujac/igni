@@ -9,7 +9,7 @@ The point of these tests is **not** to demonstrate the spec works on cherry-pick
 For each combination of (app × model):
 
 1. **Open a fresh conversation** in the target LLM (Claude.ai, Gemini, ChatGPT). Actually fresh — new thread, no system prompt, no prior messages, no custom instructions enabled. Contamination from earlier context kills the test.
-2. **Paste the full current spec verbatim.** Currently `spec/v0.4.md`. No editing. No commentary. No "here's a language I designed."
+2. **Paste the full current spec verbatim.** Currently `spec/v0.4.1.md`. No editing. No commentary. No "here's a language I designed."
 3. **In the same message**, paste the prompt verbatim from the matching `tests/v<spec_version>/prompts.md` (e.g. `tests/v0.4/prompts.md`). **If the model asks follow-up questions, don't answer them** — that refusal-to-commit is itself a finding.
 4. **Capture the entire response** (code plus any narration) into the matching test result file: `tests/v<spec_version>/<App>.md` (e.g. `tests/v0.4/Notes.md`) under the appropriate model's section.
 5. **Note metadata:** date, model version, whether the output came in one shot or got split across messages.
@@ -24,6 +24,8 @@ For each output, three questions:
 
 A "gap" includes both LLM inventions AND your own `# GAP:` comments from hand-written attempts of the same app. Both are evidence of the same underlying spec defect.
 
+**Special category: the honest "no".** If a model refuses to invent and explicitly identifies a gap (as Claude did with cross-screen state in the Notes test), treat that as the most diagnostically useful output of the round. A model that correctly names what the spec *can't* do is more useful for designing the next version than a model that invents a workaround. The "honest no" is data; the "clever yes" can hide the real limitation.
+
 ## Test apps
 
 Six apps in the suite, in order of escalating complexity:
@@ -31,9 +33,9 @@ Six apps in the suite, in order of escalating complexity:
 1. **Calculator** — state, events, nested layouts, screen-internal functions. Tested against v0.3.2; surfaced arithmetic operators, `is X` extension, operator precedence. All closed by v0.4.
 2. **Todo list** — lists, two-way bind, add/remove, per-item state. Tested against v0.3.2; surfaced list `+`, `without` removal, `each` in functions, functional updates. All closed by v0.4.
 3. **Weather app** — async fetch, loading/error/loaded states, re-fetch on input change. Tested against v0.3.2; validated the reactive read pattern (2/3 models found it cold), surfaced `null`. All closed by v0.4.
-4. **Chat interface** — list of messages, input clearing after send, scroll-to-bottom. v0.4 acceptance test; predicted gaps: clearing inputs programmatically, scroll behaviour.
-5. **Music player** — image, slider, conditional buttons, horizontal control row. v0.4 acceptance test; expected to pass cleanly (happy-path baseline).
-6. **Notes app** — multi-screen navigation, list + detail + edit + delete + empty state. v0.4 acceptance test; **first test in the suite that requires multi-screen navigation.** Expected to surface cross-screen state as the v0.5 design driver.
+4. **Chat interface** — list of messages, input clearing after send, scroll-to-bottom. v0.4 acceptance test. **PASS** — first 100% clean test in the suite.
+5. **Music player** — image, slider, conditional buttons, horizontal control row. v0.4 acceptance test. **PARTIAL** — Claude over-engineered the icon button. Closed by v0.4.1 documentation.
+6. **Notes app** — multi-screen navigation, list + detail + edit + delete + empty state. v0.4 acceptance test; **first test in the suite that requires multi-screen navigation.** **MIXED** — surfaced cross-screen shared state as a real v0.5 priority. Claude refused to invent and named the gap; Gemini found a tactical single-screen workaround; ChatGPT invented cross-screen function visibility.
 
 **Don't run all six in one sitting.** One app per session, write up the results before moving to the next. The gaps overlap and you'll see which ones are actually load-bearing vs theoretical.
 
@@ -48,14 +50,17 @@ tests/
 │   ├── Todo.md                # complete
 │   ├── Weather.md             # complete
 │   └── summary.md             # cross-app aggregation that fed the v0.4 backlog
-└── v0.4/                      # tests run against the v0.4 spec (current)
-    ├── prompts.md             # the three prompts being run as v0.4 acceptance tests
-    ├── Chat.md                # acceptance test, pending
-    ├── MusicPlayer.md         # acceptance test, pending
-    └── Notes.md               # acceptance test, pending — first multi-screen test
+└── v0.4/                      # tests run against the v0.4 spec
+    ├── prompts.md             # the three v0.4 acceptance prompts
+    ├── Chat.md                # PASS
+    ├── MusicPlayer.md         # PARTIAL
+    ├── Notes.md               # MIXED
+    └── summary.md             # final v0.4 acceptance summary
 ```
 
-Each spec version gets its own subfolder containing both the prompts that were tested against it AND the result files. Test result filenames drop both the version (the folder carries it) and the `Cold_Test_` prefix (the folder + filename together communicate the test identity).
+Each spec version gets its own subfolder containing both the prompts that were tested against it AND the result files. Test result filenames inside drop both the version (the folder carries it) and the `Cold_Test_` prefix (the folder + filename together communicate the test identity).
+
+**v0.4.1 testing.** v0.4.1 is a documentation-only patch over v0.4. The existing v0.4 test results are still valid (no language changes), so re-running the full suite isn't necessary. If you want to verify the v0.4.1 documentation additions actually catch the inventions they were meant to catch (e.g., does Claude find the icon button pattern when it's documented?), create a `tests/v0.4.1/` folder with the relevant prompts and re-run only the targeted tests (Music Player and Notes are the most informative).
 
 ## Practical notes
 

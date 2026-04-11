@@ -31,20 +31,22 @@ igni/
 │   ├── v0.3.md              # Rocket-era historical
 │   ├── v0.3.1.md            # Rocket-era historical
 │   ├── v0.3.2.md            # Igni-era historical (rename only)
-│   └── v0.4.md              # current canonical
+│   ├── v0.4.md              # Igni-era historical (acceptance round)
+│   └── v0.4.1.md            # current canonical (docs patch from v0.4 findings)
 └── tests/                   # cold-LLM test infrastructure
     ├── README.md            # test methodology
     ├── v0.3.2/              # tests run against v0.3.2
-    │   ├── prompts.md       # the three prompts tested against v0.3.2
+    │   ├── prompts.md
     │   ├── Calculator.md    # complete
     │   ├── Todo.md          # complete
     │   ├── Weather.md       # complete
     │   └── summary.md       # cross-app aggregation that fed v0.4
-    └── v0.4/                # tests run against v0.4 (current)
-        ├── prompts.md       # the three v0.4 acceptance prompts
-        ├── Chat.md          # acceptance test, pending
-        ├── MusicPlayer.md   # acceptance test, pending
-        └── Notes.md         # acceptance test, pending — first multi-screen
+    └── v0.4/                # tests run against v0.4
+        ├── prompts.md
+        ├── Chat.md          # PASS
+        ├── MusicPlayer.md   # PARTIAL
+        ├── Notes.md         # MIXED
+        └── summary.md       # cross-app aggregation (final)
 ```
 
 Each spec version gets its own subfolder under `tests/` containing both the prompts that were used and the result files. Test result filenames drop the `Cold_Test_` prefix and the version suffix (the folder carries the version).
@@ -55,9 +57,10 @@ Each spec version gets its own subfolder under `tests/` containing both the prom
 - `spec/v0.3.md` — Rocket-era historical. Adds async data, mutations, screen-internal functions, the lexical reactivity rule, and the *"spec as budget"* and *"three commands to first pixel"* principles.
 - `spec/v0.3.1.md` — Rocket-era historical. Last version under the Rocket name. Patches v0.3 with a structurally-correct mutation example, the `icon` primitive, object literals, the no-interpolation rule, and the intrinsic-dimensions carve-out.
 - `spec/v0.3.2.md` — Igni-era historical. Rename only — no language changes from v0.3.1.
-- `spec/v0.4.md` — **current canonical version.** Adds arithmetic operators (`-`, `*`, `/`), `is X` for arbitrary equality, `null` and `is null`/`is not null`, `+` for list concatenation, `without(list, item)` builtin, `each` in non-rendering contexts, functional list updates, comments (`#`), cross-component function calls, and a reactive re-fetch example. **Every addition is grounded in cold-LLM test data from Calculator, Todo, and Weather apps.**
+- `spec/v0.4.md` — Igni-era historical. The first version drafted from cold-LLM test data (Calculator, Todo, Weather under v0.3.2). Adds arithmetic operators (`-`, `*`, `/`), `is X` for arbitrary equality, `null` and `is null`/`is not null`, `+` for list concatenation, `without(list, item)` builtin, `each` in non-rendering contexts, functional list updates, comments (`#`), cross-component function calls, and a reactive re-fetch example.
+- `spec/v0.4.1.md` — **current canonical version.** A documentation patch over v0.4 with five one-line additions grounded in the v0.4 acceptance test findings (Chat, Music Player, Notes): single-screen multi-view pattern (with caveats), icon button example, functions-as-expressions, `image round:` vs `layout rounded:` clarification, explicit no-cross-screen-function-calls rule. **Zero new language features** — pure documentation refinement.
 
-When proposing spec changes, **work from `spec/v0.4.md` and fork to a new version file** (`spec/v0.4.1.md` for patches, `spec/v0.5.md` for content additions) rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
+When proposing spec changes, **work from `spec/v0.4.1.md` and fork to a new version file** (`spec/v0.4.2.md` for further patches, `spec/v0.5.md` for content additions) rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
 
 ## Non-negotiable design principles
 
@@ -72,6 +75,7 @@ If a proposal violates one of these, it's wrong by definition — push back inst
 - **Arguments to screens and components are immutable.** To edit a value passed in, declare a local variable inside the body.
 - **UI primitives only render in screen or component bodies, never inside a function.** Functions mutate state; layouts render. The v0.3 → v0.3.1 patch fixed a spec example that violated this — don't reintroduce it.
 - **List elements cannot be mutated in place.** Updates flow through reassignment of the whole list. Reactivity tracks variable reassignment, not field-level changes. Verbose but the rule stays simple.
+- **Cross-screen function calls are NOT allowed.** Functions defined in one screen are not visible to other screens connected by `navigate to`. For tightly coupled list/detail flows, use the single-screen multi-view pattern (Conditionals section). For genuinely separate screens that need to share state, that's a v0.5 design question.
 
 ## Validation methodology
 
@@ -81,7 +85,7 @@ The spec is validated with **cold-LLM tests**: paste the current spec into a fre
 - **The hard case** — paginated list with loading/error states, navigation to a detail screen, and an edit-and-save flow — is the real validator. If the LLM produces compilable Igni on the first try with no invented syntax, the spec is learnable zero-shot. If it invents, those areas need a patch.
 - **The comparison case** — write a music player in both Igni and Flutter — quantifies the readability win in line count and nesting depth.
 
-Always run the test suite on every new version. The cold-LLM test caught the v0.3 mutation defect that self-review missed entirely. v0.4 is the first version drafted *from* test data rather than from designer intuition.
+Always run the test suite on every new version. The cold-LLM test caught the v0.3 mutation defect that self-review missed entirely. v0.4 is the first version drafted *from* test data rather than from designer intuition. v0.4.1 is the documentation patch that closes the v0.4 acceptance findings.
 
 ## Working on the spec with Tyr
 
@@ -89,8 +93,9 @@ Always run the test suite on every new version. The cold-LLM test caught the v0.
 - **For exploratory questions, give 2-3 sentences and the main tradeoff** — not an essay. Tyr will ask for depth if he wants it.
 - **For structural changes, use the plan-then-execute pattern**: explore, propose a plan, get approval, then write. Plan mode is appropriate for non-trivial spec edits.
 - **Never delete or overwrite a snapshot version.** Preserve them as historical artifacts in `spec/`.
-- **Design by trying, not by theorising.** When working on a future v0.X, try to write the hard example in the current spec, hit the walls, and let the walls dictate the additions. This is how v0.3, v0.3.1, and v0.4 were designed (the latter two grounded in cold-LLM test data).
+- **Design by trying, not by theorising.** When working on a future v0.X, try to write the hard example in the current spec, hit the walls, and let the walls dictate the additions. This is how v0.3, v0.3.1, v0.4, and v0.4.1 were designed (the latter three grounded in cold-LLM test data).
 - **Be honest about defects.** If a spec example is structurally wrong, say so directly. The cold test exists precisely to catch what self-review misses.
+- **Claude's "honest no" is more valuable than a clever workaround.** If a model correctly identifies a gap and refuses to invent around it, that's the most useful diagnostic signal — more useful than a model that invents a workaround that hides the underlying limitation.
 
 ## Common pitfalls to avoid
 
@@ -108,10 +113,10 @@ Always run the test suite on every new version. The cold-LLM test caught the v0.
 
 ## Tracked open questions (v0.5 backlog)
 
-Items deferred from v0.4 that will be designed once enough test data accumulates:
+Items deferred from v0.4 / v0.4.1 that will be designed once enough test data accumulates:
 
-- **Optimistic updates with rollback** — requires cross-screen state, background requests, and post-navigation error surfacing. Three orthogonal sub-problems.
-- **Cross-screen shared state** — likely surfaced by the Notes app cold test (the first test requiring multi-screen navigation).
+- **Cross-screen shared state** — the real underlying gap that the Notes acceptance test surfaced. v0.4.1 documents the single-screen pattern as a tactical workaround for tightly coupled list/detail flows, but the broader case (apps with many screens, scenarios that need real navigation, settings/auth/cart-style global state) needs a real shared-state mechanism in v0.5.
+- **Optimistic updates with rollback** — depends on cross-screen state.
 - **Forms and validation** — multi-field, cross-field, async validators.
 - **Animations and transitions.**
 - **List search / filter / sort** built into the iteration syntax.
@@ -119,5 +124,6 @@ Items deferred from v0.4 that will be designed once enough test data accumulates
 - **Theming and dark mode propagation.**
 - **Package / module system** for sharing components across projects.
 - **Doc-comment syntax** for components and screens.
+- **Scroll behaviour** (e.g. scroll-to-bottom on chat append).
 
-The current and authoritative list lives at the bottom of `spec/v0.4.md`.
+The current and authoritative list lives at the bottom of `spec/v0.4.1.md`.
