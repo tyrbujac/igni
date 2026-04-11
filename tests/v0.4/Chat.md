@@ -1,7 +1,7 @@
 # Cold-LLM Test: Chat Interface (Igni v0.4)
 
 **Spec version tested:** Igni v0.4
-**Test run dates:** _(fill in when run)_
+**Test run dates:** 2026-04-11 (all three models complete)
 **Source prompt:** `prompts.md` → Chat interface
 
 ## The prompt
@@ -14,103 +14,186 @@
 
 ## Claude
 
-**Model version:** _(e.g. Opus 4.6)_
-**Date:** _(YYYY-MM-DD)_
-**One-shot or split?:** _(one shot / split into parts / asked clarifying questions)_
+**Model version:** Claude Opus 4.6
+**Date:** 2026-04-11
+**One-shot or split?:** One shot. No clarifying questions, no narration.
 
 ### Output
 
 ```igni
-(paste full LLM output here)
+screen Chat:
+  messages = []
+  draft = ""
+
+  layout vertical, padding: medium:
+    each message in messages:
+      MessageBubble message
+
+    layout horizontal, gap: small:
+      input bind: draft, placeholder: "Type a message"
+      button "Send", color: brand, on tap: send()
+
+  send():
+    if draft is not empty:
+      messages = messages + [{sender: "Tyr", text: draft}]
+      draft = ""
+
+component MessageBubble(message):
+  layout vertical, padding: small:
+    label message.sender, style: caption, color: subtle
+    label message.text, style: body
 ```
 
 ### Grading
 
-- **Invented syntax not in the spec?** _(yes/no — list what)_
-- **Used existing syntax wrong?** _(yes/no — list where)_
-- **Valid Igni on first try?** _(yes/no)_
-- **Line count:** _(N lines)_
+- **Invented syntax not in the spec?** **No.** Zero inventions.
+- **Used existing syntax wrong?** **No.**
+- **Valid Igni on first try?** **Yes.** Clean v0.4 throughout.
+- **Line count:** ~19 lines.
 
 ### Notes
 
-_(any narration the model added, how it reasoned, anything notable about its approach)_
+- **Extracted `MessageBubble` as a component** — cleanest decomposition, matches the v0.4 readability hint about preferring components for tappable/repeated rendering.
+- **Used `draft = ""` to clear the input** — no invented `clear()` method, just reactive reassignment of the bound variable. The "predicted gap" about input clearing didn't materialize for this model.
+- **Added `color: brand` styling** to the send button — minor stylistic flourish, fully valid.
+- **Used `is not empty` for the empty check** — confirming the `is X` extension is now reflexive for Claude.
+- **No scroll-to-bottom behaviour attempted** — Claude didn't try to invent a scroll primitive, just rendered the list normally. Treats scroll as out-of-scope.
 
 ---
 
 ## Gemini
 
-**Model version:** _(e.g. Gemini 3.1 Pro)_
-**Date:** _(YYYY-MM-DD)_
-**One-shot or split?:** _(one shot / split / asked questions)_
+**Model version:** Gemini Thinking 3.0
+**Date:** 2026-04-11
+**One-shot or split?:** One shot. No clarifying questions, no narration.
 
 ### Output
 
 ```igni
-(paste full LLM output here)
+screen Chat:
+  messages = [{sender: "System", text: "Welcome to Igni Chat v0.4"}]
+  draft = ""
+
+  layout vertical, gap: medium, padding: large:
+    layout vertical, gap: medium:
+      each msg in messages:
+        MessageBubble msg
+
+    layout horizontal, gap: small:
+      input bind: draft, placeholder: "Type a message..."
+      button "Send", on tap: send_message()
+
+  send_message():
+    if draft is not empty:
+      messages = messages + [{sender: "Me", text: draft}]
+      draft = ""
+
+component MessageBubble(msg):
+  layout vertical, gap: small:
+    label msg.sender, style: caption, color: subtle
+    label msg.text, style: body
 ```
 
 ### Grading
 
-- **Invented syntax not in the spec?** _(yes/no — list what)_
-- **Used existing syntax wrong?** _(yes/no — list where)_
-- **Valid Igni on first try?** _(yes/no)_
-- **Line count:** _(N lines)_
+- **Invented syntax not in the spec?** **No.** Zero inventions.
+- **Used existing syntax wrong?** **No.**
+- **Valid Igni on first try?** **Yes.** Clean v0.4 throughout.
+- **Line count:** ~22 lines.
 
 ### Notes
 
-_(any narration the model added, how it reasoned, anything notable about its approach)_
+- **Initial system message** — Gemini seeded the messages list with `[{sender: "System", text: "Welcome to Igni Chat v0.4"}]`. Cute touch and demonstrates the object literal initialization pattern.
+- **Extracted `MessageBubble` as a component** — same architectural choice as Claude, slightly different naming (`msg` vs `message`).
+- **`is not empty` for the draft check** — Gemini has finally adopted the `is X` extension. This is the first test where Gemini didn't reach for `==`/`!=`. The v0.4 documentation of `is X` worked.
+- **`draft = ""` to clear the input** — same as Claude, no invention.
+- **No scroll-to-bottom behaviour** — same as Claude, treated as out-of-scope.
 
 ---
 
 ## GPT
 
-**Model version:** _(e.g. GPT-5 / ChatGPT free tier)_
-**Date:** _(YYYY-MM-DD)_
-**One-shot or split?:** _(one shot / split / asked questions)_
+**Model version:** ChatGPT (free tier, model version not displayed)
+**Date:** 2026-04-11
+**One-shot or split?:** One shot. No clarifying questions, no narration.
 
 ### Output
 
 ```igni
-(paste full LLM output here)
+screen Chat:
+  messages = []
+  draft = ""
+
+  layout vertical, gap: medium, padding: large:
+    layout vertical, gap: small:
+      each message in messages:
+        layout vertical, gap: small:
+          label message.sender, style: caption, color: subtle
+          label message.text, style: body
+
+    layout horizontal, gap: small:
+      input bind: draft, placeholder: "Type a message"
+      button "Send", on tap: send_message()
+
+  send_message():
+    if draft is not empty:
+      messages = messages + [{sender: "You", text: draft}]
+      draft = ""
 ```
 
 ### Grading
 
-- **Invented syntax not in the spec?** _(yes/no — list what)_
-- **Used existing syntax wrong?** _(yes/no — list where)_
-- **Valid Igni on first try?** _(yes/no)_
-- **Line count:** _(N lines)_
+- **Invented syntax not in the spec?** **No.** Zero inventions.
+- **Used existing syntax wrong?** **No.**
+- **Valid Igni on first try?** **Yes.** Clean v0.4 throughout.
+- **Line count:** ~17 lines (the most compact of the three).
 
 ### Notes
 
-_(any narration the model added, how it reasoned, anything notable about its approach)_
+- **Inlined message rendering** instead of extracting a `MessageBubble` component. Both styles are valid — the v0.4 readability hint *prefers* extraction but doesn't require it. ChatGPT picked the more compact form.
+- **Nested `layout vertical` inside `each`** to give each message its own visual block. Adds depth but stays well within the 4-level limit (screen → layout → layout → each → layout = depth 3 since `each` doesn't count).
+- **`is not empty` for the draft check** — same as the other two models. Universal across all three.
+- **`draft = ""` to clear** — same as the other two.
+- **No scroll-to-bottom attempted** — same as the other two.
 
 ---
 
 ## Gaps observed (across all three models)
 
-This is a **v0.4 acceptance test.** Universal gaps here mean v0.4 missed something the test suite should have caught.
+**Zero gaps across all three models.** This is the first test in the suite to produce a 100% clean PASS.
 
-### Predicted gaps for this test
+### The cross-model gap matrix (Chat)
 
-- **Clearing an input programmatically.** The spec only shows two-way `bind`. To clear an input after send, the model needs to set the bound variable to `""`. Worth checking whether this is obvious from the bind docs or if models invent a `clear()` method.
-- **Scroll-to-bottom behaviour.** The spec has no scroll primitive. Chat UIs traditionally scroll to the bottom when a new message arrives. Models may invent a scroll directive, ignore the issue entirely, or do something creative.
+| Concern | Claude Opus 4.6 | Gemini Thinking 3.0 | ChatGPT (free) |
+|---|---|---|---|
+| Invented syntax | None | None | None |
+| Used existing wrong | None | None | None |
+| Valid first try | Yes | Yes | Yes |
+| Used `is not empty` | Yes | **Yes (first time for Gemini)** | Yes |
+| Cleared input via `draft = ""` | Yes | Yes | Yes |
+| Extracted MessageBubble component | Yes | Yes | No (inlined) |
+| Attempted scroll-to-bottom | No | No | No |
 
-### Findings (fill in as tests run)
+### Predicted gaps that did NOT surface
 
-1. _(...)_
+- **Clearing an input programmatically.** All three models converged on `draft = ""` — the simple reactive approach. The predicted gap was based on the assumption that models might invent a `controller.clear()` method, but with `bind` being two-way and reactivity being lexical, reassignment is the obvious answer. Not a gap.
+- **Scroll-to-bottom behaviour.** None of the three attempted to add scroll behaviour. This is technically still a missing feature (real chat apps need it), but it didn't manifest as an *invented gap* — models treated it as out-of-scope rather than reaching for a fictional primitive. Worth noting as a v0.5 feature consideration but not a v0.4 defect.
+
+### What this confirms about v0.4
+
+- **The `is X` extension has now landed for all three models.** Gemini was the holdout in Calculator and Todo (consistently invented `==`/`!=`), but in Chat it used `is not empty`. The v0.4 documentation of `is X` for arbitrary equality successfully captured Gemini's preference. This is a strong validation signal — v0.4 closed the equality gap empirically, not just theoretically.
+- **Reactive input clearing is discoverable.** All three models found `draft = ""` without help. The two-way `bind` model is genuinely intuitive once you understand it.
+- **Component extraction is encouraged but not enforced.** 2/3 models extracted `MessageBubble`, 1/3 inlined. Both forms are valid v0.4. The readability hint nudges without coercing — exactly the right balance.
 
 ---
 
 ## v0.4 acceptance verdict
 
-After all three models are tested, decide:
+**PASS.** All three models produced valid Igni first-try with zero inventions. v0.4 covers the chat-app use case fully. The chat-specific predicted gaps (input clearing, scroll-to-bottom) either resolved themselves through existing reactive primitives (clearing) or were treated as out-of-scope by all models (scroll).
 
-- **PASS** — all three models produce valid Igni first-try with no inventions. v0.4 covers this case cleanly.
-- **PARTIAL** — at least one model invented something, but the inventions are minor or fall under predicted v0.5 gaps (like scroll behaviour). v0.4 ships, the gaps go into the v0.5 backlog.
-- **FAIL** — multiple models invented things v0.4 should have covered. Patch as v0.4.1 or roll back.
+This is the **first 100% clean test in the suite.** Calculator, Todo, and Weather all had at least one universal invention (arithmetic, list operations, `null`). Chat is the first to validate v0.4 cleanly.
 
-_(fill in after tests run)_
+**Implication:** v0.4 is genuinely shipping-ready for the kinds of apps the test suite covers. The remaining acceptance tests (Music player and Notes) will tell us whether that ship-readiness extends to the harder cases.
 
 ---
 
