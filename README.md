@@ -25,7 +25,7 @@ Indentation for blocks. Colons end the line that opens one. Lowercase for built-
 
 ## The current spec
 
-The canonical version is **[`spec/v0.5.md`](spec/v0.5.md)** — adds cross-screen shared state (`shared:` block), wrapper components with the `body` slot keyword, list builtins (`replace`, `find`, `count`, `length`, `is in`/`is not in`), and a prominent input-debounce common-pitfall callout. **v0.5 is the last design-only round; the next major workstream is the TypeScript-to-Dart transpiler.**
+The canonical version is **[`spec/v0.5.md`](spec/v0.5.md)** — adds cross-screen shared state (`shared:` block), wrapper components with the `body` slot keyword, list builtins (`replace`, `find`, `count`, `length`, `is in`/`is not in`), and a prominent input-debounce common-pitfall callout. **v0.5 ships as the stable release** with a queued v0.5.1 documentation patch from the Shopping test findings (mostly clarifying that `find` is identity-based). The next major workstream is the TypeScript-to-Dart transpiler.
 
 ## Project history and versioning
 
@@ -38,7 +38,7 @@ The language was originally named **Rocket**, then renamed to **Igni** at v0.3.2
 | `spec/v0.3.1.md` | Rocket | Historical | Mutation pattern fix, `icon` primitive, object literals, no string interpolation |
 | `spec/v0.3.2.md` | Igni | Historical | Renamed Rocket → Igni; no language changes |
 | `spec/v0.4.md` | Igni | Historical | Arithmetic operators, `is X` for equality, `null`, list operations, `each` in functions, comments |
-| `spec/v0.4.1.md` | Igni | Historical | Documentation patch from v0.4 acceptance findings: single-screen multi-view pattern, icon button example, functions-as-expressions, `image round:` vs `layout rounded:`, cross-screen call rule |
+| `spec/v0.4.1.md` | Igni | Historical | Documentation patch from v0.4 acceptance findings |
 | **`spec/v0.5.md`** | **Igni** | **Canonical** | Shared state via `shared:` block, wrapper components with `body` slot, list builtins (`replace`, `find`, `count`, `length`, `is in`/`is not in`), input-debounce common-pitfall callout |
 
 ## Validation methodology
@@ -49,7 +49,7 @@ The spec is validated with **cold-LLM tests**: paste the current spec into a fre
 2. **Did it use existing syntax wrong?** → *spec is ambiguous*
 3. **Did it produce valid Igni on the first try?** → *spec works for this case*
 
-Gaps that surface across multiple models or multiple test apps become the next version's backlog. The methodology is documented in [`tests/README.md`](tests/README.md). Per-version cross-app summaries live in [`tests/v0.3.2/summary.md`](tests/v0.3.2/summary.md) and [`tests/v0.4/summary.md`](tests/v0.4/summary.md).
+Gaps that surface across multiple models or multiple test apps become the next version's backlog. The methodology is documented in [`tests/README.md`](tests/README.md). Per-version cross-app summaries live in [`tests/v0.3.2/summary.md`](tests/v0.3.2/summary.md), [`tests/v0.4/summary.md`](tests/v0.4/summary.md), and [`tests/v0.5/summary.md`](tests/v0.5/summary.md).
 
 ### Test results so far
 
@@ -60,11 +60,11 @@ Gaps that surface across multiple models or multiple test apps become the next v
 | Weather app | v0.3.2 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | Validated reactive read pattern; surfaced `null` — closed by v0.4 |
 | Chat interface | v0.4 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | **PASS** — first 100% clean test in the suite |
 | Music player | v0.4 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | **PARTIAL** — 2/3 clean; Claude invented icon-in-button. Closed by v0.4.1 documentation |
-| Notes app | v0.4 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | **MIXED** — surfaced cross-screen state as the v0.5 priority. Closed by v0.5 `shared:` block |
-| Notes app re-run | v0.5 | Pending | v0.5 validation — does shared state close the gap? |
-| Shopping app | v0.5 | Pending | v0.5 acceptance — exercises shared state, body slots, list builtins together |
+| Notes app | v0.4 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | **MIXED** — surfaced cross-screen state as the v0.5 priority |
+| **Notes app re-run** | **v0.5** | **Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT** | **PASS** — clean across all three models. Cross-screen state gap empirically closed (was MIXED in v0.4) |
+| **Shopping app** | **v0.5** | **Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT** | **PARTIAL** — Gemini PASS (cleanest output), Claude/ChatGPT misused `find` for structural matching. Closes via v0.5.1 docs patch |
 
-**Six apps tested across three models = 18 independent data points.** v0.4 acceptance is complete (1 PASS, 1 PARTIAL, 1 MIXED). v0.5 closes the cross-screen state gap that the Notes test surfaced and adds wrapper components, list builtins, and a louder debounce warning. **v0.5 is the last design-only round** — pending its own cold-test validation, the next major workstream is the TypeScript-to-Dart transpiler.
+**Eight test runs across three models = 24 independent data points.** v0.4 acceptance: 1 PASS, 1 PARTIAL, 1 MIXED. v0.5 acceptance: 1 PASS, 1 PARTIAL. **v0.5 is shippable as the stable release** with a queued v0.5.1 documentation patch from the Shopping findings (mostly clarifying that `find` is identity-based, not structural-key matching). The Notes re-run is the strongest single validation in the suite history — the entire v0.4 MIXED verdict transformed into a clean PASS, empirically proving that v0.5's `shared:` design landed and is universally discoverable.
 
 ## Design principles
 
@@ -88,7 +88,7 @@ igni/
 │   ├── v0.3.2.md                   # Igni-era historical (rename only)
 │   ├── v0.4.md                     # Igni-era historical (acceptance round)
 │   ├── v0.4.1.md                   # Igni-era historical (docs patch)
-│   └── v0.5.md                     # canonical (shared state, body slots, list builtins)
+│   └── v0.5.md                     # canonical
 └── tests/                          # cold-LLM test infrastructure
     ├── README.md                   # test methodology
     ├── v0.3.2/                     # tests run against v0.3.2
@@ -104,14 +104,15 @@ igni/
     │   ├── Notes.md                # MIXED
     │   └── summary.md
     └── v0.5/                       # tests run against v0.5 (current)
-        ├── prompts.md              # Notes re-run + new Shopping app
-        ├── Notes.md                # validation re-run, pending
-        └── Shopping.md             # acceptance test, pending — exercises all v0.5 features
+        ├── prompts.md
+        ├── Notes.md                # PASS — re-run validates shared state
+        ├── Shopping.md             # PARTIAL — `find` misuse → v0.5.1 docs patch
+        └── summary.md              # final v0.5 acceptance summary
 ```
 
 ## What this project is *not*
 
-- **Not a Flutter plugin or DSL yet.** The transpile-to-Flutter path is the next major workstream after v0.5 cold-test validation.
+- **Not a Flutter plugin or DSL yet.** The transpile-to-Flutter path is the next major workstream now that v0.5 has shipped its acceptance round.
 - **Not an active codebase.** No build step, no compiler, no runtime. The project is a design document and its empirical validation.
 - **Not a multi-target language for v1.** Web is the v1 target so that "three commands to first pixel" stays achievable. Mobile compilation is opt-in later.
 
