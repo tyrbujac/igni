@@ -1,78 +1,109 @@
 # Igni v0.3.2 — Cold-LLM Test Summary
 
 **Spec version:** v0.3.2
-**Test suite run:** _(date range, fill in when complete)_
-**Apps tested:** Calculator, Todo, Weather, Chat, Music Player
-**Models tested:** Claude, Gemini, GPT
+**Test suite run:** 2026-04-11
+**Apps tested:** Calculator, Todo, Weather (3 of 5 originally planned — Chat and Music Player were deferred to the v0.4 acceptance round so they could test the v0.4 spec instead)
+**Models tested:** Claude Opus 4.6, Gemini 3.1 Pro / Thinking 3.0, ChatGPT (free tier)
 
 ## Headline result
 
-_(One paragraph: did v0.3.2 pass the suite? How many apps produced compilable Igni first-try across how many models? Any major failure modes worth flagging?)_
+**v0.3.2 surfaced 12+ gaps across three apps and three models** — exactly the data needed to design v0.4 from empirical evidence rather than designer intuition. No app passed cleanly under v0.3.2; every test produced at least one universal invention, which was the entire point of the exercise.
+
+The strongest signal came from **Calculator + Todo** showing 2/3 models naturally extending `is X` for arbitrary equality (a slam-dunk for the v0.4 design call) and from **Weather** confirming that the v0.3.2 reactive read pattern was already discoverable for live re-fetching (2/3 models found it cold; only Claude reached for the manual state-machine pattern).
 
 ## Apps × models matrix
 
-| App           | Claude | Gemini | GPT  |
-|---------------|--------|--------|------|
-| Calculator    | _?_    | _?_    | _?_  |
-| Todo          | _?_    | _?_    | _?_  |
-| Weather       | _?_    | _?_    | _?_  |
-| Chat          | _?_    | _?_    | _?_  |
-| Music Player  | _?_    | _?_    | _?_  |
+| App           | Claude Opus 4.6 | Gemini 3.1 Pro | ChatGPT (free) | Verdict |
+|---|---|---|---|---|
+| Calculator    | N (5 inventions) | N (5 inventions) | N (4 inventions) | FAIL |
+| Todo          | N (3 inventions) | N (3 inventions) | N (4 inventions) | FAIL |
+| Weather       | ~ (5 inventions, manual state pattern) | ~ (1 invention, reactive pattern) | **Y (zero inventions)** | PARTIAL |
 
-Legend: **Y** = valid Igni first-try / **N** = failed (invented syntax or used existing wrong) / **~** = valid but with subtle issues that should still feed the gap list.
+Legend: **Y** = valid Igni first-try, no inventions. **~** = valid but with subtle issues. **N** = failed (invented syntax).
 
 ## Aggregated gaps (the v0.4 backlog)
 
-Ranked by how many tests surfaced each issue. A gap that appeared in 5 apps is more urgent than one that appeared in 1. Each gap should reference which `Cold_Test_*.md` files it came from.
+Ranked by how many tests surfaced each issue. Each gap references the test result file it came from.
 
-1. _(e.g. "Comparison operators — surfaced in: Calculator, Todo (filter), Chat (validation). Recommended fix: extend `is` to include `is equal to`, or commit to `==`/`!=` and add to spec.")_
-2. _(...)_
+1. **Equality syntax** (Calculator + Todo) — 2/3 models naturally extended `is X` from `is empty` to general equality. Only Gemini reached for `==`/`!=`. **Strongest evidence in the suite (4/6 data points across two apps).** v0.4 fix: bless `is X` for arbitrary equality.
+2. **Arithmetic operators `-`, `*`, `/`** (Calculator) — 3/3 models invented all three. Universal need. v0.4 fix: add as standard operators.
+3. **Operator precedence** (Calculator) — 3/3 models depend on standard math precedence. v0.4 fix: one sentence rule.
+4. **List append `list = list + [item]`** (Todo) — 3/3 models converged on the same pattern. v0.4 fix: bless `+` for list concatenation.
+5. **List removal pattern** (Todo) — 3/3 models needed it, no consensus on approach (Claude invented `without()`, ChatGPT used `each` + `continue`, Gemini used `each` filter rebuild). v0.4 design call: `without(list, item)` builtin (Claude's intuition; reads like English).
+6. **`each` in non-rendering context** (Todo) — 2/3 models stretched `each` into function bodies. v0.4 fix: bless this.
+7. **`null` value** (Weather) — Claude reached for `null` and `is not null` for the "no value yet" sentinel. v0.4 fix: bless `null` and extend `is X` to include `is null`/`is not null`.
+8. **Number+string concatenation** (Weather) — 2/3 models wrote `number + "°"` style mixed-type expressions. v0.4 fix: one sentence — `+` coerces number to string in mixed expressions.
+9. **Reactive re-fetch documentation** (Weather) — 2/3 models discovered the pattern cold; Claude missed it and reached for the manual state-machine instead. v0.4 fix: add an explicit example to the Async Data section. **No new feature** — just docs.
+10. **Truthiness coercion stop-note** (Calculator + Todo + Weather) — 3 different models, 3 forms (`if operator:`, `color: x and y`, `else if error_msg:`). v0.4 fix: explicit rule that conditionals require explicit booleans.
+11. **List item field mutation rule** (Todo, Claude only) — Claude wrote `item.done = not item.done`. Spec is silent on whether this is allowed. v0.4 fix: commit to functional updates only (rule stays simple).
+12. **Cross-component function calls** (Todo, Claude only) — `TodoItem` calls a parent screen's function. Spec is silent. v0.4 fix: one-line clarification that this is allowed.
+13. **Primitives auto-render numeric values** (Calculator) — Claude invented `to_number`/`to_string`. v0.4 fix: one-line note that primitives auto-convert.
 
 ## Per-model observations
 
-### Claude
+### Claude Opus 4.6
 
-_(Anything systematic about how Claude tended to interpret the spec, what it consistently got right vs wrong, where it leaned on familiar patterns from other languages, etc.)_
+- **Strongest at structural decomposition.** Always extracted components when the pattern called for it (`TodoItem` in Todo, `MessageBubble` later in Chat).
+- **Reaches for the imperative pattern when both imperative and reactive options exist** — Claude wrote the manual state machine for Weather (loading/error/weather as separate variables) instead of the cleaner reactive `data = fetch(...)` form. The v0.3.2 mutation example in the spec was overshadowing the simpler read pattern. v0.4 added an explicit reactive re-fetch example to fix this.
+- **Naturally extends `is X` to equality.** Both `is not empty` and `is "0"` style.
+- **Invents type conversion when it picks string-typed display.** `to_number` / `to_string`.
 
-### Gemini
+### Gemini 3.1 Pro / Thinking 3.0
 
-_(Same — patterns specific to Gemini's behaviour across the suite.)_
+- **Consistently invented `==`/`!=` instead of extending `is`** in v0.3.2 testing. Both Calculator and Todo. The v0.3.2 spec didn't make `is X` discoverable enough for Gemini specifically. (Note: in the v0.4 Chat test, Gemini finally adopted `is not empty` — the v0.4 documentation worked.)
+- **Functional update style.** Rebuilds lists rather than mutating in place. Verbose but unambiguous.
+- **Discovers reactive patterns from existing primitives.** The Weather reactive re-fetch was found cold, no help needed.
+- **Stretches `each` into function-body context** for filter loops.
+- Models tested: Gemini 3.1 Pro (Calculator, Todo) → Gemini Thinking 3.0 (Weather, after Pro 3.1 limits).
 
-### GPT
+### ChatGPT (free tier)
 
-_(Same — patterns specific to GPT's behaviour across the suite.)_
+- **Most prone to JS-style idioms.** Truthiness coercion (`if operator:`, `color: x and y`), `continue` statement, conditional values via boolean expressions.
+- **Also extends `is X` naturally** (used `if item is target:` in Todo, `if draft is empty:` for the empty check).
+- **Most compact output** of the three across all apps.
+- **First model in the entire test suite to produce a 100% clean output** — Weather, ChatGPT, zero inventions, against v0.3.2.
 
-## Line count comparison vs Flutter
+## Conclusions and v0.4 priorities (now shipped)
 
-Quantifies the readability win. For each app, write the LLM-generated Igni alongside an equivalent hand-written Flutter version and compare.
+The v0.4 backlog (now shipped):
 
-| App           | Igni LOC | Flutter LOC | Ratio |
-|---------------|----------|-------------|-------|
-| Calculator    | _?_      | _?_         | _?_   |
-| Todo          | _?_      | _?_         | _?_   |
-| Weather       | _?_      | _?_         | _?_   |
-| Chat          | _?_      | _?_         | _?_   |
-| Music Player  | _?_      | _?_         | _?_   |
+1. ✅ Arithmetic operators `-`, `*`, `/` + precedence rule
+2. ✅ Bless `is X` for arbitrary equality (the highest-evidence finding)
+3. ✅ Bless `+` for list concatenation
+4. ✅ `without(list, item)` builtin for removal
+5. ✅ `each` in non-rendering contexts
+6. ✅ `null` value + `is null` / `is not null`
+7. ✅ Number-to-string coercion in `+`
+8. ✅ Reactive re-fetch documentation (no new feature, just docs)
+9. ✅ Functional list updates (committed rule, no in-place mutation)
+10. ✅ Cross-component function calls (one-line allowance)
+11. ✅ Primitives auto-render numbers (one-line note)
+12. ✅ Truthiness coercion stop-note
+13. ✅ Conditional values via boolean expressions stop-note
+14. ✅ Comments syntax (`#` to end of line, formalising existing convention)
 
-Average ratio: _(?)_
+**Deferred to v0.5:**
 
-## Conclusions and v0.4 priorities
+- Optimistic updates with rollback (requires cross-screen state, background requests, post-navigation error surfacing).
+- Cross-screen shared state (likely surfaced by the Notes app test in v0.4 acceptance).
+- Forms, animations, search/filter/sort, routing patterns, theming, package system.
 
-After running the suite, the top priorities for v0.4 are:
+**Surprises from this round:**
 
-1. _(highest-impact gap, ranked by how many apps it broke)_
-2. _(...)_
-3. _(...)_
+- Weather's reactive re-fetch pattern was *already discoverable* in v0.3.2 — the v0.4 fix is documentation, not new features. 2/3 models found the pattern cold.
+- Calculator's predicted "grid layout" gap and "number-vs-string distinction" gap did NOT materialize. Models worked around them naturally.
+- ChatGPT was the first model to produce a 100% clean test output (Weather) — and it's the free-tier model, not the highest-end one.
 
-**Deferred to v0.5 or later:**
+**Methodology notes for the v0.4 round:**
 
-- _(gaps that appeared in only one app, or that aren't blocking anything)_
+- Use the chat UI (not API). Established this round, kept for v0.4.
+- Always end each prompt with *"Respond with only the Igni code"* — added mid-round after early chat-UI tests showed models discussing the spec instead of writing code.
+- Capture cross-model agreement explicitly — patterns shared by 2/3 or 3/3 models are much stronger evidence than per-model findings.
 
-**Surprises:**
+## Pointers
 
-- _(things that worked unexpectedly well)_
-- _(things that broke unexpectedly badly)_
-
-**Methodology notes for next round:**
-
-- _(anything about the test process itself worth changing for v0.4 testing)_
+- Per-test result files: `tests/v0.3.2/Calculator.md`, `Todo.md`, `Weather.md`
+- Prompts used: `tests/v0.3.2/prompts.md`
+- Spec snapshot tested: `spec/v0.3.2.md`
+- v0.4 spec (the result of this backlog): `spec/v0.4.md`
+- v0.4 acceptance summary (in progress): `tests/v0.4/summary.md`

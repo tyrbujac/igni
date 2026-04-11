@@ -47,7 +47,7 @@ The spec is validated with **cold-LLM tests**: paste the current spec into a fre
 2. **Did it use existing syntax wrong?** → *spec is ambiguous*
 3. **Did it produce valid Igni on the first try?** → *spec works for this case*
 
-Gaps that surface across multiple models or multiple test apps become the next version's backlog. The methodology is documented in [`tests/README.md`](tests/README.md).
+Gaps that surface across multiple models or multiple test apps become the next version's backlog. The methodology is documented in [`tests/README.md`](tests/README.md). Per-version cross-app summaries live in [`tests/v0.3.2/summary.md`](tests/v0.3.2/summary.md) and [`tests/v0.4/summary.md`](tests/v0.4/summary.md).
 
 ### Test results so far
 
@@ -56,11 +56,11 @@ Gaps that surface across multiple models or multiple test apps become the next v
 | Calculator | v0.3.2 | Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT | Surfaced arithmetic operators, `is` extension, precedence — all closed by v0.4 |
 | Todo list | v0.3.2 | Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT | Surfaced list `+`, list removal, `each` in functions — all closed by v0.4 |
 | Weather app | v0.3.2 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | Validated reactive read pattern; surfaced `null` — closed by v0.4 |
-| Chat interface | v0.4 | Pending | v0.4 acceptance test |
+| **Chat interface** | **v0.4** | **Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT** | **PASS — first 100% clean test in the suite (zero inventions across all three models)** |
 | Music player | v0.4 | Pending | v0.4 acceptance test |
 | Notes app | v0.4 | Pending | v0.4 acceptance test (first multi-screen) |
 
-Three apps tested across three models = 9 independent data points so far. **v0.4 is the first version drafted from empirical evidence rather than designer intuition.**
+**Four apps tested across three models = 12 independent data points so far.** v0.4 is the first version drafted from empirical evidence rather than designer intuition, and the first v0.4 acceptance test (Chat) passed cleanly with zero inventions — including the first test in which Gemini adopted `is not empty` instead of inventing `==`/`!=`, validating the v0.4 `is X` documentation empirically.
 
 ## Design principles
 
@@ -90,12 +90,13 @@ igni/
     │   ├── Calculator.md           # complete
     │   ├── Todo.md                 # complete
     │   ├── Weather.md              # complete
-    │   └── summary.md              # cross-app aggregation that fed the v0.4 backlog
+    │   └── summary.md              # cross-app aggregation (the v0.4 backlog)
     └── v0.4/                       # tests run against v0.4 (current)
         ├── prompts.md              # the three v0.4 acceptance prompts
-        ├── Chat.md                 # acceptance test, pending
+        ├── Chat.md                 # COMPLETE — first 100% clean PASS
         ├── MusicPlayer.md          # acceptance test, pending
-        └── Notes.md                # acceptance test, pending — first multi-screen
+        ├── Notes.md                # acceptance test, pending — first multi-screen
+        └── summary.md              # cross-app aggregation (in progress)
 ```
 
 ## What this project is *not*
