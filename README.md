@@ -25,7 +25,7 @@ Indentation for blocks. Colons end the line that opens one. Lowercase for built-
 
 ## The current spec
 
-The canonical version is **[`spec/v0.4.md`](spec/v0.4.md)**.
+The canonical version is **[`spec/v0.4.md`](spec/v0.4.md)**. v0.4 is shippable as the stable release; a small v0.4.1 documentation patch is recommended (5 one-line additions, no new features).
 
 ## Project history and versioning
 
@@ -56,11 +56,11 @@ Gaps that surface across multiple models or multiple test apps become the next v
 | Calculator | v0.3.2 | Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT | Surfaced arithmetic operators, `is` extension, precedence — all closed by v0.4 |
 | Todo list | v0.3.2 | Claude Opus 4.6, Gemini 3.1 Pro, ChatGPT | Surfaced list `+`, list removal, `each` in functions — all closed by v0.4 |
 | Weather app | v0.3.2 | Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT | Validated reactive read pattern; surfaced `null` — closed by v0.4 |
-| **Chat interface** | **v0.4** | **Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT** | **PASS — first 100% clean test in the suite (zero inventions across all three models)** |
-| **Music player** | **v0.4** | **Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT** | **PARTIAL — 2/3 clean (Gemini, ChatGPT). Claude invented icon-in-button compound. Fix is documentation, not features** |
-| Notes app | v0.4 | Pending | v0.4 acceptance test (first multi-screen) |
+| **Chat interface** | **v0.4** | **Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT** | **PASS** — first 100% clean test in the suite (zero inventions across all three models) |
+| **Music player** | **v0.4** | **Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT** | **PARTIAL** — 2/3 clean (Gemini, ChatGPT). Claude invented icon-in-button compound. Recoverable with documentation |
+| **Notes app** | **v0.4** | **Claude Opus 4.6, Gemini Thinking 3.0, ChatGPT** | **MIXED** — Claude PASS-incomplete (honestly named the cross-screen state gap and refused to invent), Gemini PASS (tactical single-screen workaround), ChatGPT PARTIAL (invented cross-screen function visibility). Surfaces cross-screen shared state as a real v0.5 priority |
 
-**Five apps tested across three models = 15 independent data points so far.** v0.4 is the first version drafted from empirical evidence rather than designer intuition. v0.4 acceptance is currently **2/3 done: Chat PASS, Music Player PARTIAL, Notes pending.** The Music Player PARTIAL is recoverable with a 3-line v0.4.1 documentation patch (icon button example, functions-as-expressions one-liner, `image round` vs `layout rounded` clarification).
+**Six apps tested across three models = 18 independent data points.** v0.4 acceptance is **complete: 1 PASS, 1 PARTIAL, 1 MIXED.** v0.4 is shippable as the stable release. The PARTIAL and MIXED findings are addressable with a small v0.4.1 documentation patch (5 one-line additions, no new features). The Notes MIXED verdict surfaces a **real v0.5 priority** (cross-screen shared state) — Claude's honest negative result correctly identified the gap that Gemini's clever workaround sidesteps for one specific use case but doesn't actually solve.
 
 ## Design principles
 
@@ -95,8 +95,8 @@ igni/
         ├── prompts.md              # the three v0.4 acceptance prompts
         ├── Chat.md                 # COMPLETE — PASS
         ├── MusicPlayer.md          # COMPLETE — PARTIAL
-        ├── Notes.md                # acceptance test, pending — first multi-screen
-        └── summary.md              # cross-app aggregation (in progress)
+        ├── Notes.md                # COMPLETE — MIXED
+        └── summary.md              # cross-app aggregation (final)
 ```
 
 ## What this project is *not*
