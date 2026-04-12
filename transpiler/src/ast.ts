@@ -18,7 +18,7 @@ export interface Ident {
 export interface BinaryExpr {
   type: 'BinaryExpr';
   left: Expr;
-  op: '+' | '-' | '*' | '/';
+  op: '+' | '-' | '*' | '/' | '>' | '<' | '>=' | '<=';
   right: Expr;
 }
 

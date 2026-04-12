@@ -155,6 +155,30 @@ export class Lexer {
     }
 
     // Two-character tokens
+    if (ch === '>' && this.pos + 1 < this.source.length && this.source[this.pos + 1] === '=') {
+      this.emit(TokenType.GreaterEqual, '>=');
+      this.pos += 2;
+      this.col += 2;
+      return;
+    }
+    if (ch === '<' && this.pos + 1 < this.source.length && this.source[this.pos + 1] === '=') {
+      this.emit(TokenType.LessEqual, '<=');
+      this.pos += 2;
+      this.col += 2;
+      return;
+    }
+    if (ch === '>' ) {
+      this.emit(TokenType.GreaterThan, '>');
+      this.pos++;
+      this.col++;
+      return;
+    }
+    if (ch === '<') {
+      this.emit(TokenType.LessThan, '<');
+      this.pos++;
+      this.col++;
+      return;
+    }
     if (ch === '=' && this.pos + 1 < this.source.length && this.source[this.pos + 1] === '>') {
       this.emit(TokenType.Arrow, '=>');
       this.pos += 2;

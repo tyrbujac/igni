@@ -35,6 +35,10 @@ export enum TokenType {
   // Operators
   Arrow,
   Equals,
+  GreaterThan,
+  GreaterEqual,
+  LessThan,
+  LessEqual,
   Plus,
   Minus,
   Star,

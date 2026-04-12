@@ -631,6 +631,15 @@ export class Parser {
       const right = this.parseAdditive();
       return { type: 'EqualityExpr', left, right, negated } as EqualityExpr;
     }
+    // Comparison operators: >, <, >=, <=
+    if (
+      this.check(TokenType.GreaterThan) || this.check(TokenType.GreaterEqual) ||
+      this.check(TokenType.LessThan) || this.check(TokenType.LessEqual)
+    ) {
+      const op = this.advance().value as '>' | '<' | '>=' | '<=';
+      const right = this.parseAdditive();
+      return { type: 'BinaryExpr', left, op, right };
+    }
     return left;
   }
 
