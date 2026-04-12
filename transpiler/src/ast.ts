@@ -237,15 +237,20 @@ export interface BadgeNode {
   properties: Property[];
 }
 
+export interface BodyNode {
+  type: 'Body';
+}
+
 export interface ComponentInvocation {
   type: 'ComponentInvocation';
   name: string;
   args: Expr[];
   properties: Property[];
   events: EventHandler[];
+  children: UINode[];
 }
 
-export type UINode = Layout | LabelNode | ButtonNode | InputNode | ToggleNode | IfNode | EachNode | SpinnerNode | DividerNode | IconNode | ImageNode | SliderNode | CheckboxNode | DropdownNode | BadgeNode | ComponentInvocation;
+export type UINode = Layout | LabelNode | ButtonNode | InputNode | ToggleNode | IfNode | EachNode | SpinnerNode | DividerNode | IconNode | ImageNode | SliderNode | CheckboxNode | DropdownNode | BadgeNode | BodyNode | ComponentInvocation;
 
 // -- Top-level --
 

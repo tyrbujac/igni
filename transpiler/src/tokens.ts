@@ -30,6 +30,7 @@ export enum TokenType {
   Checkbox,
   Dropdown,
   Badge,
+  Body,
 
   // Operators
   Arrow,

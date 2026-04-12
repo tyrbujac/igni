@@ -1,0 +1,22 @@
+component Card(title):
+  layout vertical, padding: medium, background: card, rounded: medium:
+    label title, style: heading.small
+    body
+
+screen Home:
+  layout vertical, gap: medium, padding: large:
+    label "Wrapper Demo", style: heading
+
+    Card "Settings":
+      toggle bind: dark_mode
+      toggle bind: notifications
+
+    Card "Account":
+      label "user@example.com"
+      button "Logout", color: danger, on tap: logged_out()
+
+  dark_mode = false
+  notifications = true
+
+  logged_out():
+    dark_mode = false

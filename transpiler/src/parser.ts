@@ -129,6 +129,11 @@ export class Parser {
       case TokenType.Dropdown: return this.parseDropdown();
       case TokenType.Badge:   return this.parseBadge();
       case TokenType.Identifier:
+        if (token.value === 'body') {
+          this.advance();
+          this.consume(TokenType.Newline, 'Expected newline');
+          return { type: 'Body' };
+        }
         if (token.value[0] >= 'A' && token.value[0] <= 'Z') {
           return this.parseComponentInvocation();
         }
@@ -326,8 +331,20 @@ export class Parser {
       }
     }
 
-    this.consume(TokenType.Newline, 'Expected newline');
-    return { type: 'ComponentInvocation', name, args, properties, events };
+    // Wrapper invocation: trailing colon + indented children
+    const children: UINode[] = [];
+    if (this.check(TokenType.Colon)) {
+      this.advance(); // consume :
+      this.consume(TokenType.Newline, 'Expected newline');
+      this.consume(TokenType.Indent, 'Expected indent');
+      while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+        children.push(this.parseUINode());
+      }
+      this.consume(TokenType.Dedent, 'Expected dedent');
+    } else {
+      this.consume(TokenType.Newline, 'Expected newline');
+    }
+    return { type: 'ComponentInvocation', name, args, properties, events, children };
   }
 
   private parseIf(): IfNode {

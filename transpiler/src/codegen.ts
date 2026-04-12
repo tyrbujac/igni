@@ -285,6 +285,7 @@ export class CodeGenerator {
       case 'Checkbox': return this.genCheckbox(node, depth);
       case 'Dropdown': return this.genDropdown(node, depth);
       case 'Badge':   return this.genBadge(node, depth);
+      case 'Body':    return `${'  '.repeat(depth)}child`;
       case 'ComponentInvocation': return this.genComponentInvocation(node, depth);
     }
   }
@@ -612,11 +613,11 @@ export class CodeGenerator {
   }
 
   private genComponentDef(comp: ComponentDef): string {
-    // Save/restore screen-level state
     const prevParams = this.screenParams;
     this.screenParams = comp.params;
 
     const name = comp.name;
+    const hasBody = this.componentHasBody(comp.body);
     const paramFields = comp.params.map(p => `  final dynamic ${p};`).join('\n');
     const ctorParams = comp.params.map(p => `required this.${p}`).join(', ');
     const bodyWidget = comp.body.length > 0 ? this.genUINode(comp.body[0], 2) : '    const SizedBox()';
@@ -625,7 +626,13 @@ export class CodeGenerator {
     if (comp.params.length > 0) {
       code += paramFields + '\n';
     }
-    code += `  const ${name}({super.key${comp.params.length > 0 ? ', ' + ctorParams : ''}});\n\n`;
+    if (hasBody) {
+      code += `  final Widget child;\n`;
+    }
+    const allCtorParams: string[] = [];
+    if (comp.params.length > 0) allCtorParams.push(ctorParams);
+    if (hasBody) allCtorParams.push('required this.child');
+    code += `  const ${name}({super.key${allCtorParams.length > 0 ? ', ' + allCtorParams.join(', ') : ''}});\n\n`;
     code += `  @override\n  Widget build(BuildContext context) {\n`;
     code += `    return ${bodyWidget.trimStart()};\n`;
     code += `  }\n}\n`;
@@ -634,19 +641,37 @@ export class CodeGenerator {
     return code;
   }
 
+  private componentHasBody(nodes: UINode[]): boolean {
+    for (const node of nodes) {
+      if (node.type === 'Body') return true;
+      if (node.type === 'Layout' && this.componentHasBody(node.children)) return true;
+      if (node.type === 'If') {
+        if (this.componentHasBody(node.then)) return true;
+        if (node.else_ && this.componentHasBody(node.else_)) return true;
+      }
+    }
+    return false;
+  }
+
   private genComponentInvocation(node: ComponentInvocation, depth: number): string {
     const ind = '  '.repeat(depth);
     const comp = this.allComponents.find(c => c.name === node.name);
     const paramNames = comp?.params ?? [];
 
-    // Map positional args to named params
     const namedArgs: string[] = [];
     for (let i = 0; i < node.args.length && i < paramNames.length; i++) {
       namedArgs.push(`${paramNames[i]}: ${this.exprToDart(node.args[i])}`);
     }
-    // Add named properties
     for (const prop of node.properties) {
       namedArgs.push(`${prop.name}: ${this.exprToDart(prop.value)}`);
+    }
+
+    // Wrapper invocation: wrap children in Column and pass as child
+    if (node.children.length > 0) {
+      const childLines = node.children.map(c => this.genUINode(c, depth + 2) + ',').join('\n');
+      const childWidget = `Column(\n${ind}    crossAxisAlignment: CrossAxisAlignment.start,\n${ind}    children: [\n${childLines}\n${ind}    ],\n${ind}  )`;
+      namedArgs.push(`child: ${childWidget}`);
+      return `${ind}${node.name}(\n${ind}  ${namedArgs.join(`,\n${ind}  `)},\n${ind})`;
     }
 
     return `${ind}${node.name}(${namedArgs.join(', ')})`;

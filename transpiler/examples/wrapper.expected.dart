@@ -1,0 +1,109 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MaterialApp(home: HomeScreen()));
+}
+
+class Card extends StatelessWidget {
+  final dynamic title;
+  final Widget child;
+  const Card({super.key, required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Text(
+            '$title',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          child,
+        ],
+      ),
+    ),
+    );
+  }
+}
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool dark_mode = false;
+  bool notifications = true;
+
+  void logged_out() {
+    setState(() {
+      dark_mode = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Text(
+              'Wrapper Demo',
+              style: Theme.of(context).textTheme.headlineLarge,
+            ),
+            const SizedBox(height: 16),
+            Card(
+              title: 'Settings',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                Switch(
+                  value: dark_mode,
+                  onChanged: (value) {
+                    setState(() {
+                      dark_mode = value;
+                    });
+                  },
+                ),
+                Switch(
+                  value: notifications,
+                  onChanged: (value) {
+                    setState(() {
+                      notifications = value;
+                    });
+                  },
+                ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              title: 'Account',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                Text(
+                  'user@example.com',
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  onPressed: () {
+                    logged_out();
+                  },
+                  child: const Text('Logout'),
+                ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
