@@ -1,0 +1,12 @@
+screen Settings:
+  username = "Tyr"
+  email = "tyr@example.com"
+  dark_mode = false
+  notifications = true
+
+  layout vertical, gap: medium, padding: large:
+    label "Settings", style: heading
+    input bind: username, placeholder: "Username"
+    input bind: email, placeholder: "Email"
+    toggle bind: dark_mode
+    toggle bind: notifications

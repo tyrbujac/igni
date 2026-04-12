@@ -2,7 +2,7 @@
 
 UI-first language being designed by Tyr (sole author and sole decision-maker). North star: *"Flutter, without the bracket hell"* — same cross-platform power, but code that reads like a design spec. The hypothesis is that LLM accuracy and human readability correlate tightly, so removing the ambiguity that trips LLMs up also makes the language nicer for humans.
 
-**Status: design stage.** No compiler or runtime exists yet. The entire project is a versioned markdown spec plus a cold-LLM test suite that empirically validates each version against multiple frontier models. **v0.5 is the final design-only round** — after v0.5 cold tests, the next major workstream is the TypeScript-to-Dart transpiler.
+**Status: design stage.** No compiler or runtime exists yet. The entire project is a versioned markdown spec plus a cold-LLM test suite that empirically validates each version against multiple frontier models. **v0.5.1 is the final spec** — the next major workstream is the TypeScript-to-Dart transpiler.
 
 *Project history: the language was originally named Rocket and was renamed to Igni at v0.3.2. Spec files in `spec/` are immutable historical snapshots — never edited after they ship. Each new version is a new file.*
 
@@ -33,25 +33,19 @@ igni/
 │   ├── v0.3.2.md            # Igni-era historical (rename only)
 │   ├── v0.4.md              # Igni-era historical (acceptance round)
 │   ├── v0.4.1.md            # Igni-era historical (docs patch)
-│   └── v0.5.md              # current canonical (shared state, body slots, list builtins)
-└── tests/                   # cold-LLM test infrastructure
-    ├── README.md            # test methodology
-    ├── v0.3.2/              # tests run against v0.3.2
-    │   ├── prompts.md
-    │   ├── Calculator.md    # complete
-    │   ├── Todo.md          # complete
-    │   ├── Weather.md       # complete
-    │   └── summary.md       # cross-app aggregation that fed v0.4
-    ├── v0.4/                # tests run against v0.4
-    │   ├── prompts.md
-    │   ├── Chat.md          # PASS
-    │   ├── MusicPlayer.md   # PARTIAL
-    │   ├── Notes.md         # MIXED
-    │   └── summary.md       # final v0.4 acceptance summary
-    └── v0.5/                # tests run against v0.5 (current)
-        ├── prompts.md       # Notes re-run + new Shopping app
-        ├── Notes.md         # validation re-run, pending
-        └── Shopping.md      # acceptance test, pending
+│   ├── v0.5.md              # Igni-era historical (shared state, body slots, list builtins)
+│   └── v0.5.1.md            # current canonical (docs patch from v0.5 Shopping test)
+├── tests/                   # cold-LLM test infrastructure
+│   ├── README.md            # test methodology
+│   ├── v0.3.2/              # Calculator, Todo, Weather — fed v0.4
+│   ├── v0.4/                # Chat (PASS), MusicPlayer (PARTIAL), Notes (MIXED)
+│   └── v0.5/                # Notes re-run (PASS), Shopping (PARTIAL) — fed v0.5.1
+├── transpiler/              # TypeScript-to-Dart transpiler
+│   ├── src/                 # lexer, parser, codegen, CLI
+│   ├── examples/            # .igni sources + .expected.dart reference outputs
+│   ├── package.json
+│   └── tsconfig.json
+└── docs/                    # project docs (private, gitignored)
 ```
 
 Each spec version gets its own subfolder under `tests/` containing both the prompts that were used and the result files. Test result filenames drop the `Cold_Test_` prefix and the version suffix (the folder carries the version).
@@ -64,9 +58,22 @@ Each spec version gets its own subfolder under `tests/` containing both the prom
 - `spec/v0.3.2.md` — Igni-era historical. Rename only — no language changes from v0.3.1.
 - `spec/v0.4.md` — Igni-era historical. The first version drafted from cold-LLM test data (Calculator, Todo, Weather under v0.3.2). Adds arithmetic operators, `is X` for arbitrary equality, `null`, `+` for lists, `without`, `each` in non-rendering contexts, functional list updates, comments, cross-component function calls, and the reactive re-fetch example.
 - `spec/v0.4.1.md` — Igni-era historical. Documentation patch over v0.4 with five one-line additions grounded in the v0.4 acceptance test findings: single-screen multi-view pattern (with caveats), icon button example, functions-as-expressions, `image round:` vs `layout rounded:`, no-cross-screen-function-calls rule.
-- `spec/v0.5.md` — **current canonical version.** Closes the cross-screen state gap from the Notes test plus three other v0.5 design items. Adds: (1) cross-screen shared state via top-level `shared:` block, (2) wrapper components with `body` slot keyword (zero-or-once invocation supports conditional wrappers like LoadingWrapper / AuthGuard / Modal), (3) list builtins `replace` / `find` / `count` / `length` plus `is in` / `is not in` operators, (4) prominent input-debounce common-pitfall callout in Async Data section. Three new language features and one documentation upgrade. **No lambdas, no named slots — both deferred to v0.6.**
+- `spec/v0.5.md` — Igni-era historical. Closes the cross-screen state gap from the Notes test plus three other v0.5 design items. Adds: (1) cross-screen shared state via top-level `shared:` block, (2) wrapper components with `body` slot keyword (zero-or-once invocation supports conditional wrappers like LoadingWrapper / AuthGuard / Modal), (3) list builtins `replace` / `find` / `count` / `length` plus `is in` / `is not in` operators, (4) prominent input-debounce common-pitfall callout in Async Data section. Three new language features and one documentation upgrade. **No lambdas, no named slots — both deferred to v0.6.**
+- `spec/v0.5.1.md` — **current canonical version.** Documentation patch over v0.5 with five clarifications grounded in the v0.5 cold-LLM Shopping test findings: (1) `find` identity warning with counter-example, (2) `spread: true` as the canonical boolean form, (3) "wrapper component" terminology cross-reference to `body`, (4) `count`-for-quantity idiom from Gemini's Shopping output, (5) no-arg component invocation clarification. No new language features; zero budget impact.
 
-When proposing spec changes, **work from `spec/v0.5.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline. **But v0.5 is the last design-only round** — after v0.5 cold tests validate, the next workstream is the TypeScript-to-Dart transpiler against v0.5, not v0.6 spec design.
+When proposing spec changes, **work from `spec/v0.5.1.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline. **v0.5.1 is the final spec before the transpiler** — don't propose v0.6 design work without explicit direction.
+
+## Transpiler
+
+The transpiler lives in `transpiler/` — a TypeScript project that compiles `.igni` source to Dart/Flutter targeting web. Hand-written recursive descent parser, no dependencies beyond TypeScript.
+
+**Pipeline:** `.igni` → Lexer (INDENT/DEDENT) → Parser → AST → CodeGen → `.dart`
+
+**Currently supported:** `screen`, variables (int/String/bool), `layout` (vertical/horizontal, align, gap, padding), `label`, `button` + `on tap`, `input bind:` + `placeholder:`, `toggle bind:`, `if`/`else`/`else if`, `not`, arithmetic (`+`/`-`/`*`/`/`).
+
+**Testing:** Each example in `transpiler/examples/` has a `.igni` source and a `.expected.dart` reference. `npx tsx src/cli.ts example.igni | diff - example.expected.dart` — zero diff = pass. Browser testing via a gitignored `test_app/` Flutter project.
+
+**Next features to add:** `each` loops (lists), screen-internal functions, `navigate to` (multi-screen), `fetch` + async states.
 
 ## Non-negotiable design principles
 
@@ -104,7 +111,7 @@ Always run the test suite on every new version. The cold-LLM test caught the v0.
 - **Design by trying, not by theorising.** When working on a future v0.X, try to write the hard example in the current spec, hit the walls, and let the walls dictate the additions. This is how every version since v0.3 was designed.
 - **Be honest about defects.** If a spec example is structurally wrong, say so directly. The cold test exists precisely to catch what self-review misses.
 - **Claude's "honest no" is more valuable than a clever workaround.** If a model correctly identifies a gap and refuses to invent around it, that's the most useful diagnostic signal.
-- **v0.5 is the last design-only round.** After v0.5 cold tests validate, the next workstream is the transpiler — don't propose v0.6 design work without explicit direction.
+- **v0.5.1 is the final spec before the transpiler.** Don't propose v0.6 design work without explicit direction.
 
 ## Common pitfalls to avoid
 
@@ -112,13 +119,11 @@ Always run the test suite on every new version. The cold-LLM test caught the v0.
 - **Don't add a new keyword when an existing primitive can be extended.** That violates the spec budget rule.
 - **Don't write Dart, Flutter, React, or TypeScript** in proposals. Only Igni and prose. If you need to demonstrate something, write it in Igni.
 - **Don't use brackets, braces, parentheses on component invocation, ternary operators, or string interpolation.** These are explicitly out.
-- **Don't try to run anything.** There is no build step, no compiler, no test suite (in the unit-test sense). The project is documentation and its empirical validation via cold-LLM tests.
 - **Don't bind a `fetch` URL directly to a text input** — that's the v0.5-documented common pitfall. Use the trigger-variable pattern (see Async Data in the spec).
+- **Test transpiler changes by running all example diffs.** `npx tsx src/cli.ts examples/<app>.igni | diff - examples/<app>.expected.dart` for each example. Zero diff = pass. Then browser-test via `test_app/`.
 
 ## What this project is *not*
 
-- **Not a Flutter plugin or DSL yet.** The transpile-to-Flutter path is the next major workstream after v0.5 cold-test validation. Don't write code that assumes a compile target exists today.
-- **Not an active codebase.** No `package.json`, no `pubspec.yaml`, no build scripts. There's nothing to install or run.
 - **Not a multi-target language for v1.** Web is the v1 target so that "three commands to first pixel" stays achievable. Mobile compilation is opt-in later via the Flutter toolchain.
 
 ## Tracked open questions (v0.6 backlog)
@@ -138,4 +143,4 @@ Items deferred from v0.5 that will be designed once enough test data accumulates
 - **Lambda syntax** for richer list operations like `map(list, fn)` and `sorted(list, by)` — deferred from v0.5 because lambdas are a major new shape.
 - **Submit modifier on inputs** — currently the trigger-variable pattern handles this; might be cleaner if v0.6 needs it.
 
-The current and authoritative list lives at the bottom of `spec/v0.5.md`.
+The current and authoritative list lives at the bottom of `spec/v0.5.1.md`.

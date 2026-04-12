@@ -1,0 +1,6 @@
+screen Counter:
+  count = 0
+
+  layout vertical, align: center, gap: medium:
+    label count, style: heading
+    button "Add", on tap: count = count + 1

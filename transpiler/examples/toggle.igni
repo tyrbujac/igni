@@ -1,0 +1,9 @@
+screen Toggle:
+  show = true
+
+  layout vertical, gap: medium, padding: large, align: center:
+    button "Toggle", on tap: show = not show
+    if show:
+      label "Now you see me", style: heading
+    else:
+      label "Gone!", style: caption
