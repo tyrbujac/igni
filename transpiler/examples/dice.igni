@@ -1,10 +1,18 @@
 screen DiceRoller:
-  result = 1
+  result = 0
+  rolled = false
 
   layout vertical, gap: medium, padding: large, align: center:
     label "Dice Roller", style: heading
-    label result, style: heading
+
+    if rolled:
+      label "You rolled:", style: body
+      label result, style: heading
+    else:
+      label "Tap Roll to start!", style: body
+
     button "Roll", on tap: roll()
 
   roll():
     result = random(1, 6)
+    rolled = true

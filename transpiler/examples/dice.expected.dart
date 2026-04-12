@@ -13,11 +13,15 @@ class DiceRollerScreen extends StatefulWidget {
 }
 
 class _DiceRollerScreenState extends State<DiceRollerScreen> {
-  int result = 1;
+  int result = 0;
+  bool rolled = false;
 
   void roll() {
     setState(() {
       result = (Random().nextInt(6 - 1 + 1) + 1);
+    });
+    setState(() {
+      rolled = true;
     });
   }
 
@@ -35,10 +39,21 @@ class _DiceRollerScreenState extends State<DiceRollerScreen> {
                 style: Theme.of(context).textTheme.headlineLarge,
               ),
               const SizedBox(height: 16),
-              Text(
-                '$result',
-                style: Theme.of(context).textTheme.headlineLarge,
-              ),
+              if (rolled) ...[
+                Text(
+                  'You rolled:',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                Text(
+                  '$result',
+                  style: Theme.of(context).textTheme.headlineLarge,
+                ),
+              ] else ...[
+                Text(
+                  'Tap Roll to start!',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ],
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
