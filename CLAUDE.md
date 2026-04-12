@@ -69,11 +69,13 @@ The transpiler lives in `transpiler/` — a TypeScript project that compiles `.i
 
 **Pipeline:** `.igni` → Lexer (INDENT/DEDENT) → Parser → AST → CodeGen → `.dart`
 
-**Currently supported:** `screen`, variables (int/String/bool), `layout` (vertical/horizontal, align, gap, padding), `label`, `button` + `on tap`, `input bind:` + `placeholder:`, `toggle bind:`, `if`/`else`/`else if`, `not`, arithmetic (`+`/`-`/`*`/`/`).
+**Currently supported:** `screen` (StatefulWidget), `component` (StatelessWidget), variables (int/String/bool/List), `layout` (vertical/horizontal, align, gap, padding), `label`, `button` + `on tap`, `input bind:` + `placeholder:`, `toggle bind:`, `if`/`else`/`else if`, `not`, `is empty`/`is not empty`, `each` loops, `navigate to`/`navigate back` (multi-screen with params), `shared:` state (ChangeNotifier), `fetch` + `is loading`/`is error` + `spinner`, `without`/`replace` builtins, screen-internal functions with params, list literals `[]`, object literals `{key: val}`, field access `obj.field`, arithmetic (`+`/`-`/`*`/`/`), string concatenation with `+`.
+
+**Eleven example apps:** counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full (with delete), components, shared (cross-screen state), fetch (async API call). All pass diff tests and run in the browser.
 
 **Testing:** Each example in `transpiler/examples/` has a `.igni` source and a `.expected.dart` reference. `npx tsx src/cli.ts example.igni | diff - example.expected.dart` — zero diff = pass. Browser testing via a gitignored `test_app/` Flutter project.
 
-**Next features to add:** `each` loops (lists), screen-internal functions, `navigate to` (multi-screen), `fetch` + async states.
+**Not yet supported (v0.5.1 spec features):** wrapper components with `body` slot, `fetch` with `method:`/`body:` (mutations), reactive re-fetch, `find`/`count`/`length` builtins, `is in`/`is not in`, `is null`/`is not null`, `is` for general equality, `image`/`icon`/`slider`/`checkbox`/`dropdown`/`badge`/`divider` primitives, `on tap:` on non-button primitives, `on change:`, `theme:` block, `paginate:` on `each`, comments passthrough.
 
 ## Non-negotiable design principles
 

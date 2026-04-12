@@ -17,21 +17,21 @@ Indentation for blocks. Colons open them. One way to do everything. No imports, 
 
 ## How it works
 
-Igni source (`.igni` files) transpiles to Dart targeting Flutter for web. You write Igni, the transpiler outputs a standard Flutter project, and `flutter run` serves it in the browser. The goal is three commands to first pixel:
+Igni source (`.igni` files) transpiles to Dart targeting Flutter for web. You write Igni, the transpiler outputs Dart, and Flutter serves it in the browser.
 
-```
-install igni
-igni new my-app
-igni run
+```bash
+cd transpiler
+npx tsx src/cli.ts examples/counter.igni > test_app/lib/main.dart
+cd test_app && flutter run -d chrome
 ```
 
-Web is the v1 target. Mobile compilation comes later via Flutter's existing toolchain.
+Average compression: **5.7x fewer lines in Igni than Dart** across eleven example apps.
 
 ## Status
 
-The language spec is complete at **[`spec/v0.5.1.md`](spec/v0.5.1.md)**. The spec was designed iteratively using cold-LLM testing — pasting the spec into fresh Claude, Gemini, and ChatGPT sessions, asking the model to write apps, and grading the output. Gaps found across models became the next version's design work. Eight test apps across three models produced 24 independent data points over seven spec versions.
+**Language spec:** Complete at [`spec/v0.5.1.md`](spec/v0.5.1.md). Designed iteratively through cold-LLM testing — pasting the spec into fresh Claude, Gemini, and ChatGPT sessions and grading the output. Eight test apps, three models, 24 data points across seven spec versions.
 
-The next workstream is the **TypeScript-to-Dart transpiler**.
+**Transpiler:** Working. Eleven example apps compile and run in the browser. Covers screens, components, layouts, conditionals, loops, functions, navigation, shared state, async data fetching, two-way data binding, and list operations. See [`transpiler/README.md`](transpiler/README.md).
 
 ## Repo structure
 
@@ -39,16 +39,17 @@ The next workstream is the **TypeScript-to-Dart transpiler**.
 igni/
 ├── spec/                    # language spec (versioned snapshots)
 │   ├── v0.5.1.md            # current — the transpiler builds against this
-│   └── v0.2 → v0.5.md       # historical versions (never edited after shipping)
+│   └── v0.2 → v0.5.md       # historical (never edited after shipping)
 ├── tests/                   # cold-LLM test results
-│   ├── README.md            # test methodology
-│   ├── v0.3.2/              # Calculator, Todo, Weather — fed v0.4
-│   ├── v0.4/                # Chat (PASS), MusicPlayer (PARTIAL), Notes (MIXED)
-│   └── v0.5/                # Notes re-run (PASS), Shopping (PARTIAL) — fed v0.5.1
-└── docs/                    # project docs (proposal, etc.)
+│   ├── v0.3.2/              # Calculator, Todo, Weather
+│   ├── v0.4/                # Chat, MusicPlayer, Notes
+│   ├── v0.5/                # Notes re-run, Shopping
+│   └── v0.5.1/              # Settings, Greeting (transpiler-validated)
+├── transpiler/              # TypeScript-to-Dart transpiler
+│   ├── src/                 # lexer, parser, codegen, CLI
+│   └── examples/            # 11 .igni apps + .expected.dart references
+└── docs/                    # project docs (private, gitignored)
 ```
-
-Spec files are immutable snapshots — each new version is a new file. Tests live alongside the spec version they were run against.
 
 ## License
 
