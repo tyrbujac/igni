@@ -2,8 +2,9 @@ import { Token, TokenType } from './tokens.js';
 import {
   Program, Screen, ScreenItem, VariableDecl, UINode,
   Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
-  Property, EventHandler, FunctionDef, FunctionCall, Statement,
+  Property, EventHandler, FunctionDef, FunctionCall, Statement, EachNode,
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
+  ListLit, ObjectLit, FieldAccess,
 } from './ast.js';
 
 export class Parser {
@@ -76,6 +77,7 @@ export class Parser {
       case TokenType.Input:  return this.parseInput();
       case TokenType.Toggle: return this.parseToggle();
       case TokenType.If:     return this.parseIf();
+      case TokenType.Each:   return this.parseEach();
       default:
         return this.error(`Unexpected token "${token.value}" — expected a UI element`);
     }
@@ -150,6 +152,22 @@ export class Parser {
       props.push(this.parseProperty());
     }
     return props;
+  }
+
+  private parseEach(): EachNode {
+    this.consume(TokenType.Each, 'Expected "each"');
+    const variable = this.consume(TokenType.Identifier, 'Expected iteration variable').value;
+    this.consume(TokenType.In, 'Expected "in"');
+    const list = this.parseExpr();
+    this.consume(TokenType.Colon, 'Expected ":"');
+    this.consume(TokenType.Newline, 'Expected newline');
+    this.consume(TokenType.Indent, 'Expected indent');
+    const children: UINode[] = [];
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      children.push(this.parseUINode());
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent');
+    return { type: 'Each', variable, list, children };
   }
 
   private parseIf(): IfNode {
@@ -314,23 +332,74 @@ export class Parser {
     }
     if (this.check(TokenType.Number)) {
       const tok = this.advance();
-      return { type: 'NumberLit', value: parseInt(tok.value, 10) } as NumberLit;
+      return this.parsePostfix({ type: 'NumberLit', value: parseInt(tok.value, 10) });
     }
     if (this.check(TokenType.String)) {
       const tok = this.advance();
-      return { type: 'StringLit', value: tok.value } as StringLit;
+      return this.parsePostfix({ type: 'StringLit', value: tok.value });
     }
     if (this.check(TokenType.Identifier)) {
       const tok = this.advance();
-      return { type: 'Ident', name: tok.value } as Ident;
+      return this.parsePostfix({ type: 'Ident', name: tok.value });
     }
     if (this.check(TokenType.LParen)) {
-      this.advance(); // consume (
+      this.advance();
       const expr = this.parseExpr();
       this.consume(TokenType.RParen, 'Expected ")"');
-      return expr;
+      return this.parsePostfix(expr);
+    }
+    if (this.check(TokenType.LBracket)) {
+      return this.parseListLit();
+    }
+    if (this.check(TokenType.LBrace)) {
+      return this.parseObjectLit();
     }
     return this.error(`Unexpected token: "${this.current().value}"`);
+  }
+
+  private parsePostfix(expr: Expr): Expr {
+    while (this.check(TokenType.Dot)) {
+      this.advance(); // consume .
+      const field = this.consume(TokenType.Identifier, 'Expected field name').value;
+      expr = { type: 'FieldAccess', object: expr, field } as FieldAccess;
+    }
+    return expr;
+  }
+
+  private parseListLit(): ListLit {
+    this.consume(TokenType.LBracket, 'Expected "["');
+    const elements: Expr[] = [];
+    if (!this.check(TokenType.RBracket)) {
+      elements.push(this.parseExpr());
+      while (this.check(TokenType.Comma)) {
+        this.advance();
+        if (this.check(TokenType.RBracket)) break; // trailing comma
+        elements.push(this.parseExpr());
+      }
+    }
+    this.consume(TokenType.RBracket, 'Expected "]"');
+    return { type: 'ListLit', elements };
+  }
+
+  private parseObjectLit(): ObjectLit {
+    this.consume(TokenType.LBrace, 'Expected "{"');
+    const entries: { key: string; value: Expr }[] = [];
+    if (!this.check(TokenType.RBrace)) {
+      const key = this.consume(TokenType.Identifier, 'Expected key').value;
+      this.consume(TokenType.Colon, 'Expected ":"');
+      const value = this.parseExpr();
+      entries.push({ key, value });
+      while (this.check(TokenType.Comma)) {
+        this.advance();
+        if (this.check(TokenType.RBrace)) break;
+        const k = this.consume(TokenType.Identifier, 'Expected key').value;
+        this.consume(TokenType.Colon, 'Expected ":"');
+        const v = this.parseExpr();
+        entries.push({ key: k, value: v });
+      }
+    }
+    this.consume(TokenType.RBrace, 'Expected "}"');
+    return { type: 'ObjectLit', entries };
   }
 
   // -- Helpers --

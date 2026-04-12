@@ -1,6 +1,6 @@
 import {
   Program, Screen, ScreenItem, VariableDecl,
-  UINode, Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
+  UINode, Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode, EachNode,
   Property, EventHandler, FunctionDef, Statement, Expr, IsExpr,
 } from './ast.js';
 
@@ -131,6 +131,7 @@ ${preBuild}
       case 'Ident':
         if (expr.name === 'true' || expr.name === 'false') return 'bool';
         return 'var';
+      case 'ListLit': return 'List<dynamic>';
       default: return 'var';
     }
   }
@@ -145,6 +146,7 @@ ${preBuild}
       case 'Input':  return this.genInput(node, depth);
       case 'Toggle': return this.genToggle(node, depth);
       case 'If':     return this.genIf(node, depth);
+      case 'Each':   return this.genEach(node, depth);
     }
   }
 
@@ -288,15 +290,31 @@ ${preBuild}
     return code;
   }
 
+  private genEach(node: EachNode, depth: number): string {
+    const ind = '  '.repeat(depth);
+    const listExpr = this.exprToDart(node.list);
+
+    let code = `${ind}for (final ${node.variable} in ${listExpr}) ...[`;
+    for (const child of node.children) {
+      code += '\n' + this.genUINode(child, depth + 1) + ',';
+    }
+    code += `\n${ind}]`;
+    return code;
+  }
+
   private genFunctionDef(func: FunctionDef): string {
-    const stmts = func.body
-      .map(s => {
-        if (s.type === 'Assignment') {
-          return `      ${s.target} = ${this.exprToDart(s.value)};`;
+    const stmtLines: string[] = [];
+    for (const s of func.body) {
+      if (s.type === 'Assignment') {
+        stmtLines.push(`      ${s.target} = ${this.exprToDart(s.value)};`);
+        if (this.boundInputVars.includes(s.target)) {
+          stmtLines.push(`      _${s.target}Controller.text = ${s.target};`);
         }
-        return `      ${s.name}();`;
-      })
-      .join('\n');
+      } else {
+        stmtLines.push(`      ${s.name}();`);
+      }
+    }
+    const stmts = stmtLines.join('\n');
 
     let code = `  void ${func.name}() {\n`;
     code += `    setState(() {\n`;
@@ -349,6 +367,13 @@ ${preBuild}
         if (expr.check === 'empty') return `${this.exprToDart(expr.target)}.isEmpty`;
         if (expr.check === 'not empty') return `${this.exprToDart(expr.target)}.isNotEmpty`;
         return `${this.exprToDart(expr.target)}.isEmpty`;
+      case 'ListLit':
+        if (expr.elements.length === 0) return '[]';
+        return `[${expr.elements.map(e => this.exprToDart(e)).join(', ')}]`;
+      case 'ObjectLit':
+        return `{${expr.entries.map(e => `'${e.key}': ${this.exprToDart(e.value)}`).join(', ')}}`;
+      case 'FieldAccess':
+        return `${this.exprToDart(expr.object)}['${expr.field}']`;
     }
   }
 
@@ -360,9 +385,12 @@ ${preBuild}
       case 'BinaryExpr':
         return this.exprToDart(expr);
       case 'UnaryExpr':
-        return "'" + '${' + this.exprToDart(expr) + "}'";
       case 'IsExpr':
+      case 'ListLit':
+      case 'ObjectLit':
         return "'" + '${' + this.exprToDart(expr) + "}'";
+      case 'FieldAccess':
+        return this.exprToDart(expr) + '.toString()';
     }
   }
 

@@ -1,0 +1,17 @@
+screen Todo:
+  items = []
+  draft = ""
+
+  layout vertical, gap: medium, padding: large:
+    label "Todo", style: heading
+    input bind: draft, placeholder: "New task"
+    button "Add", on tap: add()
+    if items is empty:
+      label "No tasks yet"
+    else:
+      each item in items:
+        label item.text
+
+  add():
+    items = items + [{text: draft}]
+    draft = ""

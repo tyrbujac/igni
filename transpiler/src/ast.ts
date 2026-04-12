@@ -34,7 +34,23 @@ export interface IsExpr {
   check: 'empty' | 'not empty';
 }
 
-export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr;
+export interface ListLit {
+  type: 'ListLit';
+  elements: Expr[];
+}
+
+export interface ObjectLit {
+  type: 'ObjectLit';
+  entries: { key: string; value: Expr }[];
+}
+
+export interface FieldAccess {
+  type: 'FieldAccess';
+  object: Expr;
+  field: string;
+}
+
+export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr | ListLit | ObjectLit | FieldAccess;
 
 // -- Properties and events --
 
@@ -117,7 +133,14 @@ export interface IfNode {
   else_: UINode[] | null;
 }
 
-export type UINode = Layout | LabelNode | ButtonNode | InputNode | ToggleNode | IfNode;
+export interface EachNode {
+  type: 'Each';
+  variable: string;
+  list: Expr;
+  children: UINode[];
+}
+
+export type UINode = Layout | LabelNode | ButtonNode | InputNode | ToggleNode | IfNode | EachNode;
 
 // -- Top-level --
 

@@ -132,8 +132,13 @@ export class Lexer {
       '-': TokenType.Minus,
       '*': TokenType.Star,
       '/': TokenType.Slash,
+      '.': TokenType.Dot,
       '(': TokenType.LParen,
       ')': TokenType.RParen,
+      '[': TokenType.LBracket,
+      ']': TokenType.RBracket,
+      '{': TokenType.LBrace,
+      '}': TokenType.RBrace,
     };
 
     if (ch in singles) {

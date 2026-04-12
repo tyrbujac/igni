@@ -16,6 +16,8 @@ export enum TokenType {
   Else,
   Not,
   Is,
+  Each,
+  In,
 
   // Operators
   Equals,
@@ -27,8 +29,13 @@ export enum TokenType {
   // Punctuation
   Colon,
   Comma,
+  Dot,
   LParen,
   RParen,
+  LBracket,
+  RBracket,
+  LBrace,
+  RBrace,
 
   // Structure
   Newline,
@@ -56,4 +63,6 @@ export const KEYWORDS: Record<string, TokenType> = {
   else: TokenType.Else,
   not: TokenType.Not,
   is: TokenType.Is,
+  each: TokenType.Each,
+  in: TokenType.In,
 };
