@@ -107,7 +107,26 @@ export interface NavigateBack {
   type: 'NavigateBack';
 }
 
-export type Statement = Assignment | FunctionCall | NavigateTo | NavigateBack;
+export interface ReturnStmt {
+  type: 'Return';
+  value: Expr | null;
+}
+
+export interface IfStmt {
+  type: 'IfStmt';
+  condition: Expr;
+  then: Statement[];
+  else_: Statement[] | null;
+}
+
+export interface EachStmt {
+  type: 'EachStmt';
+  variable: string;
+  list: Expr;
+  body: Statement[];
+}
+
+export type Statement = Assignment | FunctionCall | NavigateTo | NavigateBack | ReturnStmt | IfStmt | EachStmt;
 
 export interface FunctionDef {
   type: 'FunctionDef';

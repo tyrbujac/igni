@@ -4,7 +4,7 @@ import {
   Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
   Property, EventHandler, FunctionDef, FunctionCall, Statement, EachNode,
   NavigateTo, NavigateBack, ComponentDef, ComponentInvocation,
-  LambdaExpr, EqualityExpr,
+  LambdaExpr, EqualityExpr, ReturnStmt, IfStmt, EachStmt,
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
   ListLit, ObjectLit, FieldAccess,
 } from './ast.js';
@@ -351,10 +351,75 @@ export class Parser {
     if (this.check(TokenType.Shared)) {
       return this.parseSharedAssignment();
     }
+    if (this.check(TokenType.Return)) {
+      return this.parseReturn();
+    }
+    if (this.check(TokenType.If)) {
+      return this.parseIfStmt();
+    }
+    if (this.check(TokenType.Each)) {
+      return this.parseEachStmt();
+    }
     if (this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.LParen) {
       return this.parseFunctionCall();
     }
     return this.parseAssignment();
+  }
+
+  private parseReturn(): ReturnStmt {
+    this.consume(TokenType.Return, 'Expected "return"');
+    let value: Expr | null = null;
+    if (!this.check(TokenType.Newline)) {
+      value = this.parseExpr();
+    }
+    return { type: 'Return', value };
+  }
+
+  private parseIfStmt(): IfStmt {
+    this.consume(TokenType.If, 'Expected "if"');
+    const condition = this.parseExpr();
+    this.consume(TokenType.Colon, 'Expected ":"');
+    this.consume(TokenType.Newline, 'Expected newline');
+    this.consume(TokenType.Indent, 'Expected indent');
+    const then: Statement[] = [];
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      then.push(this.parseStatement());
+      if (this.check(TokenType.Newline)) this.advance();
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent');
+
+    let else_: Statement[] | null = null;
+    if (this.check(TokenType.Else)) {
+      this.advance();
+      this.consume(TokenType.Colon, 'Expected ":"');
+      this.consume(TokenType.Newline, 'Expected newline');
+      this.consume(TokenType.Indent, 'Expected indent');
+      else_ = [];
+      while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+        else_.push(this.parseStatement());
+        if (this.check(TokenType.Newline)) this.advance();
+      }
+      this.consume(TokenType.Dedent, 'Expected dedent');
+    }
+
+    return { type: 'IfStmt', condition, then, else_ };
+  }
+
+  private parseEachStmt(): EachStmt {
+    this.consume(TokenType.Each, 'Expected "each"');
+    const variable = this.consume(TokenType.Identifier, 'Expected variable').value;
+    this.consume(TokenType.In, 'Expected "in"');
+    const list = this.parseExpr();
+    this.consume(TokenType.Colon, 'Expected ":"');
+    this.consume(TokenType.Newline, 'Expected newline');
+    this.consume(TokenType.Indent, 'Expected indent');
+    const body: Statement[] = [];
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      body.push(this.parseStatement());
+      if (this.check(TokenType.Newline)) this.advance();
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent');
+    return { type: 'EachStmt', variable, list, body };
   }
 
   private parseSharedAssignment(): Assignment {
@@ -428,7 +493,8 @@ export class Parser {
     const body: Statement[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       body.push(this.parseStatement());
-      this.consume(TokenType.Newline, 'Expected newline');
+      // IfStmt consumes its own newlines; other statements need explicit newline
+      if (this.check(TokenType.Newline)) this.advance();
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
     return { type: 'FunctionDef', name, params, body };

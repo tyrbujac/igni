@@ -1,0 +1,22 @@
+screen Cart:
+  items = [{name: "Shoes", price: 50}, {name: "Hat", price: 15}, {name: "Shirt", price: 30}]
+
+  layout vertical, gap: medium, padding: large:
+    label "Cart", style: heading
+    each item in items:
+      label item.name + " - $" + item.price
+    label "Total: $" + total()
+    label status()
+
+  total():
+    sum = 0
+    each item in items:
+      sum = sum + item.price
+    return sum
+
+  status():
+    t = total()
+    if t is 0:
+      return "Empty cart"
+    else:
+      return "Ready to checkout"

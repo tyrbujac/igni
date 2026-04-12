@@ -31,9 +31,11 @@ class _TodoScreenState extends State<TodoScreen> {
   void add() {
     setState(() {
       items = items + [{'text': draft}];
-      draft = '';
-      _draftController.text = draft;
     });
+    setState(() {
+      draft = '';
+    });
+    _draftController.text = draft;
   }
 
   @override

@@ -30,6 +30,7 @@ export class CodeGenerator {
   private boundInputVars: string[] = [];
   private screenParams: string[] = [];
   private functionParams: string[] = [];
+  private declaredLocals: Set<string> = new Set();
   private allScreens: Screen[] = [];
 
   private allComponents: ComponentDef[] = [];
@@ -471,54 +472,92 @@ export class CodeGenerator {
 
   private genFunctionDef(func: FunctionDef): string {
     this.functionParams = func.params;
-    const localStmts: string[] = [];
-    const sharedStmts: string[] = [];
-    const postStmts: string[] = [];
+    this.declaredLocals = new Set();
+    const hasReturn = func.body.some(s => this.stmtHasReturn(s));
+    const paramStr = func.params.map(p => `dynamic ${p}`).join(', ');
+    const returnType = hasReturn ? 'dynamic' : 'void';
 
-    for (const s of func.body) {
-      if (s.type === 'Assignment') {
+    let code = `  ${returnType} ${func.name}(${paramStr}) {\n`;
+    code += this.genStmtBlock(func.body, 2);
+    code += `  }`;
+    this.functionParams = [];
+    this.declaredLocals = new Set();
+    return code;
+  }
+
+  private stmtHasReturn(s: Statement): boolean {
+    if (s.type === 'Return') return true;
+    if (s.type === 'IfStmt') {
+      return s.then.some(st => this.stmtHasReturn(st)) ||
+        (s.else_?.some(st => this.stmtHasReturn(st)) ?? false);
+    }
+    return false;
+  }
+
+  private genStmtBlock(stmts: Statement[], depth: number): string {
+    const ind = '  '.repeat(depth);
+    let code = '';
+    for (const s of stmts) {
+      code += this.genStmt(s, depth);
+    }
+    return code;
+  }
+
+  private genStmt(s: Statement, depth: number): string {
+    const ind = '  '.repeat(depth);
+    switch (s.type) {
+      case 'Assignment': {
         if (s.target.startsWith('shared.')) {
-          sharedStmts.push(`      ${s.target} = ${this.exprToDart(s.value)};`);
-        } else {
-          localStmts.push(`      ${s.target} = ${this.exprToDart(s.value)};`);
-          if (this.boundInputVars.includes(s.target)) {
-            localStmts.push(`      _${s.target}Controller.text = ${s.target};`);
-          }
+          return `${ind}shared.update(() {\n${ind}  ${s.target} = ${this.exprToDart(s.value)};\n${ind}});\n`;
         }
-      } else if (s.type === 'FunctionCall') {
+        const isStateVar = this.stateVars.includes(s.target);
+        if (isStateVar) {
+          let code = `${ind}setState(() {\n${ind}  ${s.target} = ${this.exprToDart(s.value)};\n${ind}});\n`;
+          if (this.boundInputVars.includes(s.target)) {
+            code += `${ind}_${s.target}Controller.text = ${s.target};\n`;
+          }
+          return code;
+        }
+        // Local variable
+        const prefix = this.declaredLocals.has(s.target) ? '' : 'dynamic ';
+        this.declaredLocals.add(s.target);
+        return `${ind}${prefix}${s.target} = ${this.exprToDart(s.value)};\n`;
+      }
+      case 'FunctionCall': {
         const args = s.args.map(a => this.exprToDart(a)).join(', ');
-        localStmts.push(`      ${s.name}(${args});`);
-      } else if (s.type === 'NavigateBack') {
-        postStmts.push(`    Navigator.pop(context);`);
-      } else if (s.type === 'NavigateTo') {
+        return `${ind}${s.name}(${args});\n`;
+      }
+      case 'NavigateBack':
+        return `${ind}Navigator.pop(context);\n`;
+      case 'NavigateTo': {
         const targetScreen = this.allScreens.find(sc => sc.name === s.screen);
         const argStr = s.arg ? this.exprToDart(s.arg) : null;
         const paramName = targetScreen?.params[0];
         const ctorArgs = paramName && argStr ? `${paramName}: ${argStr}` : '';
-        postStmts.push(`    Navigator.push(context, MaterialPageRoute(builder: (context) => ${s.screen}Screen(${ctorArgs})));`);
+        return `${ind}Navigator.push(context, MaterialPageRoute(builder: (context) => ${s.screen}Screen(${ctorArgs})));\n`;
+      }
+      case 'Return':
+        if (s.value) {
+          return `${ind}return ${this.exprToDart(s.value)};\n`;
+        }
+        return `${ind}return;\n`;
+      case 'IfStmt': {
+        let code = `${ind}if (${this.exprToDart(s.condition)}) {\n`;
+        code += this.genStmtBlock(s.then, depth + 1);
+        if (s.else_) {
+          code += `${ind}} else {\n`;
+          code += this.genStmtBlock(s.else_, depth + 1);
+        }
+        code += `${ind}}\n`;
+        return code;
+      }
+      case 'EachStmt': {
+        let code = `${ind}for (final ${s.variable} in ${this.exprToDart(s.list)}) {\n`;
+        code += this.genStmtBlock(s.body, depth + 1);
+        code += `${ind}}\n`;
+        return code;
       }
     }
-
-    const paramStr = func.params.map(p => `dynamic ${p}`).join(', ');
-    let code = `  void ${func.name}(${paramStr}) {\n`;
-
-    if (localStmts.length > 0) {
-      code += `    setState(() {\n`;
-      code += localStmts.join('\n') + '\n';
-      code += `    });\n`;
-    }
-    if (sharedStmts.length > 0) {
-      code += `    shared.update(() {\n`;
-      code += sharedStmts.join('\n') + '\n';
-      code += `    });\n`;
-    }
-    if (postStmts.length > 0) {
-      code += postStmts.join('\n') + '\n';
-    }
-
-    code += `  }`;
-    this.functionParams = [];
-    return code;
   }
 
   private genOnPressed(event: EventHandler, depth: number): string {
@@ -573,12 +612,15 @@ export class CodeGenerator {
   private exprToDart(expr: Expr): string {
     switch (expr.type) {
       case 'NumberLit': return `${expr.value}`;
-      case 'StringLit': return `'${expr.value}'`;
+      case 'StringLit': return `'${expr.value.replace(/\$/g, '\\$')}'`;
       case 'Ident':
         if (this.functionParams.includes(expr.name)) return expr.name;
         if (this.screenParams.includes(expr.name)) return `widget.${expr.name}`;
         return expr.name;
       case 'BinaryExpr':
+        if (expr.op === '+' && this.isStringExpr(expr)) {
+          return `${this.exprToDart(expr.left)}.toString() + ${this.exprToDart(expr.right)}.toString()`;
+        }
         return `${this.exprToDart(expr.left)} ${expr.op} ${this.exprToDart(expr.right)}`;
       case 'UnaryExpr':
         return `!${this.exprToDart(expr.operand)}`;
@@ -696,6 +738,14 @@ export class CodeGenerator {
   }
 
   // -- Property helpers --
+
+  private isStringExpr(expr: Expr): boolean {
+    if (expr.type === 'StringLit') return true;
+    if (expr.type === 'BinaryExpr' && expr.op === '+') {
+      return this.isStringExpr(expr.left) || this.isStringExpr(expr.right);
+    }
+    return false;
+  }
 
   private resolveIdentName(expr: Expr): string | null {
     return expr.type === 'Ident' ? expr.name : null;
