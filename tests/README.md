@@ -56,12 +56,17 @@ The full suite has grown over time. Each spec version's subfolder contains the p
 5. **Music player** — image, slider, conditional buttons, horizontal control row. **PARTIAL** — Claude over-engineered the icon button. Closed by v0.4.1 documentation.
 6. **Notes app** — multi-screen navigation, list + detail + edit + delete + empty state. **MIXED** — surfaced cross-screen shared state as the v0.5 priority. Closed by v0.5 `shared:` block.
 
-**v0.5 validation round (in progress):**
+**v0.5 validation round (complete):**
 
-7. **Notes app re-run** — same prompt as v0.4 round, against v0.5. Validates that `shared:` state actually closes the cross-screen state gap that the v0.4 Notes test surfaced. The most important regression check in the suite.
-8. **Shopping app** — new for v0.5. Multi-screen e-commerce (product list, product detail, cart) with shared state (`shared.cart`), wrapper components (`ProductCard` with `body` slot), and the new list builtins (`replace` for quantity updates, `find` by id, `is in` cart membership, `length` for total items). Exercises all three v0.5 features in a single test.
+7. **Notes app re-run** — same prompt as v0.4 round, against v0.5. **PASS** — clean across all three models. Cross-screen state gap closed.
+8. **Shopping app** — new for v0.5. **PARTIAL** — Gemini PASS, Claude/ChatGPT misused `find` for structural matching. Closed by v0.5.1 docs patch.
 
-**Don't run all of them in one sitting.** One app per session, write up the results before moving to the next. The gaps overlap and you'll see which ones are actually load-bearing vs theoretical.
+**v0.5.1 transpiler-validated round (pending):**
+
+9. **Settings screen** — first transpiler-validated test. Input binding, toggle binding, button, layout. Scoped to what the transpiler handles. LLM output is run through the transpiler and tested in the browser.
+10. **Greeting screen** — conditional rendering test. Expected to surface `is not empty` and string `+` as transpiler gaps.
+
+**Don't run all of them in one sitting.** One app per session, write up the results before moving to the next.
 
 ## Folder layout
 
@@ -80,10 +85,13 @@ tests/
 │   ├── MusicPlayer.md         # PARTIAL
 │   ├── Notes.md               # MIXED
 │   └── summary.md             # final v0.4 acceptance summary
-└── v0.5/                      # tests run against the v0.5 spec (current)
-    ├── prompts.md             # Notes re-run + new Shopping app
-    ├── Notes.md               # validation re-run, pending
-    └── Shopping.md            # acceptance test, pending
+├── v0.5/                      # tests run against the v0.5 spec
+│   ├── prompts.md             # Notes re-run + new Shopping app
+│   ├── Notes.md               # PASS — re-run validates shared state
+│   ├── Shopping.md            # PARTIAL — `find` misuse → v0.5.1 docs patch
+│   └── summary.md             # final v0.5 acceptance summary
+└── v0.5.1/                    # tests run against v0.5.1 (current — first transpiler-validated round)
+    └── prompts.md             # Settings + Greeting (transpiler-validated)
 ```
 
 Each spec version gets its own subfolder containing both the prompts that were tested against it AND the result files. Test result filenames inside drop both the version (the folder carries it) and the `Cold_Test_` prefix.
