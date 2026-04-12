@@ -323,6 +323,12 @@ export class CodeGenerator {
       const padInd = '  '.repeat(depth);
       code = `Padding(\n${padInd}  padding: const EdgeInsets.all(${padSize}),\n${padInd}  child: ${code},\n${padInd})`;
     }
+    const tapEvent = node.events.find(e => e.event === 'tap');
+    if (tapEvent) {
+      const gestInd = '  '.repeat(depth);
+      const onTap = this.genOnPressed(tapEvent, depth + 1);
+      code = `GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${gestInd}  child: ${code},\n${gestInd})`;
+    }
     return '  '.repeat(depth) + code;
   }
 
@@ -685,6 +691,9 @@ export class CodeGenerator {
     }
     if (call.name === 'count' && args.length === 2) {
       return `${args[0]}.where((e) => e == ${args[1]}).length`;
+    }
+    if (call.name === 'contains' && args.length === 2) {
+      return `${args[0]}.toString().contains(${args[1]}.toString())`;
     }
     return `${call.name}(${args.join(', ')})`;
   }

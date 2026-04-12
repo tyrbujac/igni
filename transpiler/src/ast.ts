@@ -141,6 +141,7 @@ export interface Layout {
   type: 'Layout';
   direction: 'vertical' | 'horizontal';
   properties: Property[];
+  events: EventHandler[];
   children: UINode[];
 }
 

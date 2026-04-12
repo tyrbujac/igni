@@ -7,6 +7,7 @@ export class Lexer {
   private col = 1;
   private tokens: Token[] = [];
   private indentStack: number[] = [0];
+  private bracketDepth = 0;
 
   constructor(source: string) {
     // Normalize line endings
@@ -32,6 +33,34 @@ export class Lexer {
     while (this.pos < this.source.length && this.source[this.pos] === ' ') {
       indent++;
       this.pos++;
+    }
+
+    // Inside brackets — skip indentation and newlines
+    if (this.bracketDepth > 0) {
+      if (this.pos >= this.source.length || this.source[this.pos] === '\n') {
+        if (this.pos < this.source.length) {
+          this.pos++;
+          this.line++;
+          this.col = 1;
+        }
+        return;
+      }
+      this.col = indent + 1;
+      while (this.pos < this.source.length && this.source[this.pos] !== '\n') {
+        this.skipSpaces();
+        if (this.pos >= this.source.length || this.source[this.pos] === '\n') break;
+        this.scanToken();
+      }
+      // If brackets closed on this line, emit NEWLINE for the parser
+      if (this.bracketDepth === 0) {
+        this.emit(TokenType.Newline, '\\n');
+      }
+      if (this.pos < this.source.length && this.source[this.pos] === '\n') {
+        this.pos++;
+        this.line++;
+        this.col = 1;
+      }
+      return;
     }
 
     // 2. Skip blank lines
@@ -93,8 +122,10 @@ export class Lexer {
       this.scanToken();
     }
 
-    // 6. Emit NEWLINE
-    this.emit(TokenType.Newline, '\\n');
+    // 6. Emit NEWLINE (only outside brackets)
+    if (this.bracketDepth === 0) {
+      this.emit(TokenType.Newline, '\\n');
+    }
     if (this.pos < this.source.length) {
       this.pos++; // consume '\n'
       this.line++;
@@ -150,6 +181,8 @@ export class Lexer {
     };
 
     if (ch in singles) {
+      if (ch === '[' || ch === '{') this.bracketDepth++;
+      if (ch === ']' || ch === '}') this.bracketDepth--;
       this.emit(singles[ch], ch);
       this.pos++;
       this.col++;
