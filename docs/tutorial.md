@@ -1,233 +1,183 @@
-# Learn Igni — Build a Calculator
+# Learn Igni
 
-This tutorial takes you from zero to a working calculator. No programming experience needed.
+Build your first app in 10 steps. No programming experience needed.
 
-## Step 1: Your first screen
+Every step you save the file and see the result in the browser. Do this → see that.
 
-Every Igni app starts with a `screen`. A screen is a page — what the user sees.
+---
+
+## Step 1: Show text
 
 ```igni
 screen Hello:
   label "Hello World"
 ```
 
-That's it. Two lines. `screen Hello:` creates a page called Hello. `label "Hello World"` puts text on it.
+Save this as a `.igni` file. Transpile it. You see "Hello World" in the browser. That's your first app.
 
-**Try it:** Save this as `hello.igni`, transpile it, and run it. You should see "Hello World" in the browser.
+`screen Hello:` creates a page. `label "Hello World"` puts text on it. The colon `:` means "here's what's inside."
 
-## Step 2: Add more things
+---
 
-Just add more lines inside the screen:
+## Step 2: Show more text
 
 ```igni
 screen Hello:
   label "Hello"
-  label "World"
+  label "My name is Tyr"
 ```
 
-Both labels appear, stacked top to bottom. Igni screens flow vertically by default — no extra layout needed.
+Save. Both lines appear, top to bottom. Things stack vertically by default — just add more lines.
 
-## Step 3: Add spacing and padding
+---
 
-When you want control over spacing, use `layout vertical` with `gap:` and `padding:`:
+## Step 3: Use a box to store something
+
+A **variable** is a box. You give it a name and put something inside.
 
 ```igni
 screen Hello:
-  layout vertical, gap: medium, padding: large:
-    label "Hello"
-    label "World"
+  name = "Tyr"
+
+  label name
 ```
 
-`layout vertical:` stacks everything top-to-bottom (which is the default — but now you can add `gap:` for spacing and `padding:` for edges). The colon `:` means "here come the contents." Everything indented under it is inside the layout.
+`name = "Tyr"` — a box called `name` with "Tyr" inside. `label name` — show what's in the box.
 
-## Step 4: Put things side by side
+---
 
-Use `layout horizontal` for a row:
+## Step 4: Join things together
+
+Use `+` to join text together:
 
 ```igni
 screen Hello:
-  layout vertical, gap: medium, padding: large:
-    label "Top"
-    layout horizontal, gap: small:
-      label "Left"
-      label "Right"
-    label "Bottom"
+  name = "Tyr"
+  age = 21
+
+  label "Hello, " + name
+  label "I am " + age + " years old"
 ```
 
-This gives you: "Top" on its own line, then "Left" and "Right" side by side, then "Bottom" below.
+`+` sticks text together. Numbers get turned into text automatically.
 
-## Step 5: Buttons and actions
+---
 
-Buttons do something when tapped:
+## Step 5: Make a decision
+
+```igni
+screen Hello:
+  age = 21
+
+  if age >= 18:
+    label "You are an adult"
+  else:
+    label "You are a child"
+```
+
+Save and see "You are an adult." Change `age = 10`, save again — now it says "You are a child." The app makes decisions based on what's in the box.
+
+---
+
+## Step 6: Make a button
 
 ```igni
 screen Counter:
   count = 0
 
-  layout vertical, gap: medium, padding: large:
-    label count, style: heading
-    button "Add One", on tap: count = count + 1
+  label count, style: heading
+  button "Add one", on tap: count = count + 1
 ```
 
-`count = 0` creates a variable. `label count` shows its value. `button "Add One", on tap: count = count + 1` adds 1 every time you tap. The screen updates automatically — that's reactivity.
+`count = 0` — a box starting at zero. `label count` — show the number. `button "Add one"` — when you tap it, the number goes up by 1. The screen updates automatically.
 
-## Step 6: Multiple buttons
+---
 
-You can have as many buttons as you want:
+## Step 7: More buttons side by side
 
 ```igni
 screen Counter:
   count = 0
 
-  layout vertical, gap: medium, padding: large:
-    label count, style: heading
-    layout horizontal, gap: small:
-      button "+1", on tap: count = count + 1
-      button "-1", on tap: count = count - 1
-      button "Reset", on tap: count = 0
+  label count, style: heading
+  layout horizontal, gap: small:
+    button "+1", on tap: count = count + 1
+    button "-1", on tap: count = count - 1
+    button "Reset", on tap: count = 0
 ```
 
-## Step 7: Functions
+`layout horizontal:` puts things side by side in a row. `gap: small` adds a little space between them.
 
-When an action is more than one line, put it in a function:
+---
+
+## Step 8: Let someone type
 
 ```igni
-screen Counter:
-  count = 0
+screen Greeter:
+  name = ""
 
-  layout vertical, gap: medium, padding: large:
-    label count, style: heading
-    button "Add", on tap: add()
-
-  add():
-    count = count + 1
+  input bind: name, placeholder: "Type your name"
+  label "Hello, " + name
 ```
 
-Functions go inside the screen, after the layout. They can read and change any variable in the screen.
+`input bind: name` — a text box connected to the `name` variable. Whatever you type goes into the box, and the label updates instantly. `bind` means "connected."
 
-## Step 8: Text input
+---
 
-Get text from the user with `input`:
+## Step 9: Make it look nice
 
 ```igni
 screen Greeter:
   name = ""
 
   layout vertical, gap: medium, padding: large:
-    input bind: name, placeholder: "Your name"
-    label "Hello, " + name
-```
-
-`bind: name` connects the input to the variable — whatever the user types goes into `name`, and the label updates automatically.
-
-## Step 9: Conditionals
-
-Show different things based on conditions:
-
-```igni
-screen Greeter:
-  name = ""
-
-  layout vertical, gap: medium, padding: large:
-    input bind: name, placeholder: "Your name"
+    label "Greeter", style: heading
+    input bind: name, placeholder: "Type your name"
     if name is not empty:
       label "Hello, " + name
     else:
       label "Type your name above"
 ```
 
-## Now: Build the Calculator
+`layout vertical, gap: medium, padding: large:` — stack things with spacing between them and padding around the edges. `style: heading` makes text big. `if name is not empty:` — only show the greeting when they've typed something.
 
-You know enough. Here's the plan:
+---
 
-- **Variables:** `display` (what shows on screen), `first_number`, `operator`, `waiting` (are we waiting for the second number?)
-- **Layout:** A `label` at the top showing the display, then rows of buttons
-- **Each button:** `on tap:` calls a function that updates the display
-- **Operators:** Store the first number and operator, then calculate when `=` is pressed
+## Step 10: Build a dice roller
 
-Start with this skeleton:
+You know enough. Let's build something real.
 
 ```igni
-screen Calculator:
-  display = "0"
+screen DiceRoller:
+  result = 1
 
-  layout vertical, gap: small, padding: large:
-    label display, style: heading
+  layout vertical, gap: medium, padding: large, align: center:
+    label "Dice Roller", style: heading
+    label result, style: heading
+    button "Roll", on tap: roll()
 
-    layout horizontal, gap: small:
-      button "7", on tap: press("7")
-      button "8", on tap: press("8")
-      button "9", on tap: press("9")
-
-    layout horizontal, gap: small:
-      button "4", on tap: press("4")
-      button "5", on tap: press("5")
-      button "6", on tap: press("6")
-
-    layout horizontal, gap: small:
-      button "1", on tap: press("1")
-      button "2", on tap: press("2")
-      button "3", on tap: press("3")
-
-    layout horizontal, gap: small:
-      button "0", on tap: press("0")
-      button "=", on tap: calculate()
-      button "C", on tap: clear()
-
-  press(digit):
-    if display is "0":
-      display = digit
-    else:
-      display = display + digit
-
-  clear():
-    display = "0"
-
-  calculate():
-    display = "0"
+  roll():
+    result = random(1, 6)
 ```
 
-Try this first. It won't do math yet — just digit entry, display, and clear. Get it running, then add the operators.
+`random(1, 6)` picks a number between 1 and 6. Tap "Roll" and the number changes. That's a working dice roller — in 10 lines.
 
-## Adding operators
+`roll()` is a **function** — a named action. `on tap: roll()` means "when tapped, do the roll action." Functions go at the bottom of the screen.
 
-Once the basic buttons work, add operator handling:
+---
 
-```igni
-screen Calculator:
-  display = "0"
-  first = 0
-  op = ""
-  waiting = false
+## What you learned
 
-  # ... layout with number buttons as above ...
+1. `screen Name:` — creates a page
+2. `label "text"` — shows text
+3. `name = "value"` — a box that holds something
+4. `"text" + name` — joins things together
+5. `if`/`else` — makes decisions
+6. `button "text", on tap:` — does something when tapped
+7. `layout horizontal:` — puts things side by side
+8. `input bind: name` — lets someone type
+9. `layout vertical, gap:, padding:` — spacing and padding
+10. `random(1, 6)` — picks a random number
+11. `function_name():` — a named action
 
-  # Add operator buttons to a row:
-  # button "+", on tap: set_op("+")
-  # button "-", on tap: set_op("-")
-
-  press(digit):
-    if waiting:
-      display = digit
-      waiting = false
-    else if display is "0":
-      display = digit
-    else:
-      display = display + digit
-
-  set_op(operator):
-    first = display
-    op = operator
-    waiting = true
-
-  clear():
-    display = "0"
-    first = 0
-    op = ""
-    waiting = false
-
-  # calculate() would need number parsing — Igni doesn't have
-  # string-to-number conversion yet, so the display stays as text
-```
-
-**Note:** A full calculator with actual math needs string-to-number conversion, which Igni doesn't have yet. But you can build the UI, the button layout, and the state management — which is what the language is designed for.
+That's Igni. Simple text that makes real apps.

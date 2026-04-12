@@ -58,10 +58,16 @@ export class CodeGenerator {
       s.body.some(item => item.type === 'VariableDecl' && item.value.type === 'FunctionCall' && item.value.name === 'fetch')
     );
 
+    // Detect random usage by checking if any generated code will use Random()
+    const hasRandom = this.detectBuiltin(program, 'random');
+
     let code = `import 'package:flutter/material.dart';\n`;
     if (this.hasFetch) {
       code += `import 'package:http/http.dart' as http;\n`;
       code += `import 'dart:convert';\n`;
+    }
+    if (hasRandom) {
+      code += `import 'dart:math';\n`;
     }
     code += '\n';
 
@@ -911,6 +917,9 @@ export class CodeGenerator {
     if (call.name === 'contains' && args.length === 2) {
       return `${args[0]}.toString().contains(${args[1]}.toString())`;
     }
+    if (call.name === 'random' && args.length === 2) {
+      return `(Random().nextInt(${args[1]} - ${args[0]} + 1) + ${args[0]})`;
+    }
     return `${call.name}(${args.join(', ')})`;
   }
 
@@ -964,6 +973,37 @@ export class CodeGenerator {
   }
 
   // -- Property helpers --
+
+  private detectBuiltin(program: Program, name: string): boolean {
+    const check = (nodes: UINode[]): boolean => {
+      for (const n of nodes) {
+        if (n.type === 'Layout' && check(n.children)) return true;
+        if (n.type === 'If' && (check(n.then) || (n.else_ ? check(n.else_) : false))) return true;
+        if (n.type === 'Each' && check(n.children)) return true;
+      }
+      return false;
+    };
+    const checkExpr = (e: Expr): boolean => {
+      if (e.type === 'FunctionCall' && e.name === name) return true;
+      if (e.type === 'BinaryExpr') return checkExpr(e.left) || checkExpr(e.right);
+      return false;
+    };
+    const checkStmts = (stmts: Statement[]): boolean => {
+      for (const s of stmts) {
+        if (s.type === 'Assignment' && checkExpr(s.value)) return true;
+        if (s.type === 'IfStmt' && (checkStmts(s.then) || (s.else_ ? checkStmts(s.else_) : false))) return true;
+        if (s.type === 'EachStmt' && checkStmts(s.body)) return true;
+      }
+      return false;
+    };
+    for (const screen of program.screens) {
+      for (const item of screen.body) {
+        if (item.type === 'FunctionDef' && checkStmts(item.body)) return true;
+        if (item.type === 'VariableDecl' && checkExpr(item.value)) return true;
+      }
+    }
+    return false;
+  }
 
   private isStringExpr(expr: Expr): boolean {
     if (expr.type === 'StringLit') return true;

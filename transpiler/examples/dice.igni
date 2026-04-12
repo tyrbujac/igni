@@ -1,0 +1,10 @@
+screen DiceRoller:
+  result = 1
+
+  layout vertical, gap: medium, padding: large, align: center:
+    label "Dice Roller", style: heading
+    label result, style: heading
+    button "Roll", on tap: roll()
+
+  roll():
+    result = random(1, 6)
