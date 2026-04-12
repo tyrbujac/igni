@@ -1,0 +1,43 @@
+component StatCard(title, value, icon_name):
+  layout vertical, padding: medium, background: card, rounded: medium:
+    layout horizontal, spread: true:
+      label title, style: caption
+      icon icon_name, size: medium, color: brand
+    label value, style: heading
+    body
+
+screen Dashboard:
+  users = 1240
+  revenue = "$14,200"
+  orders = 84
+
+  activities = [
+    {text: "New user registered", time: "2m ago"},
+    {text: "Order #4421 shipped", time: "15m ago"},
+    {text: "Revenue goal reached", time: "1h ago"}
+  ]
+
+  layout vertical, padding: large, gap: large:
+    layout horizontal, spread: true:
+      label "Dashboard", style: heading
+      button "Refresh", on tap: refresh()
+
+    layout horizontal, gap: medium:
+      StatCard "Users", users, icon_name: "users":
+        badge "+12%", color: green
+
+      StatCard "Revenue", revenue, icon_name: "dollar":
+        badge "Stable", color: subtle
+
+      StatCard "Orders", orders, icon_name: "cart":
+        badge "Active", color: brand
+
+    layout vertical, gap: small:
+      label "Recent Activity", style: heading.small
+      each event in activities:
+        layout horizontal, padding: medium, spread: true:
+          label event.text, style: body
+          label event.time, style: caption
+
+  refresh():
+    activities = [{text: "Data refreshed", time: "just now"}] + activities

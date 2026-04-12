@@ -36,6 +36,7 @@ export class CodeGenerator {
   private stateVars: string[] = [];
   private boundInputVars: string[] = [];
   private screenParams: string[] = [];
+  private isComponent = false;
   private functionParams: string[] = [];
   private declaredLocals: Set<string> = new Set();
   private allScreens: Screen[] = [];
@@ -614,7 +615,9 @@ export class CodeGenerator {
 
   private genComponentDef(comp: ComponentDef): string {
     const prevParams = this.screenParams;
+    const prevIsComponent = this.isComponent;
     this.screenParams = comp.params;
+    this.isComponent = true;
 
     const name = comp.name;
     const hasBody = this.componentHasBody(comp.body);
@@ -638,6 +641,7 @@ export class CodeGenerator {
     code += `  }\n}\n`;
 
     this.screenParams = prevParams;
+    this.isComponent = prevIsComponent;
     return code;
   }
 
@@ -822,7 +826,7 @@ export class CodeGenerator {
       case 'StringLit': return `'${expr.value.replace(/\$/g, '\\$')}'`;
       case 'Ident':
         if (this.functionParams.includes(expr.name)) return expr.name;
-        if (this.screenParams.includes(expr.name)) return `widget.${expr.name}`;
+        if (this.screenParams.includes(expr.name)) return this.isComponent ? expr.name : `widget.${expr.name}`;
         return expr.name;
       case 'BinaryExpr':
         if (expr.op === '+' && this.isStringExpr(expr)) {
