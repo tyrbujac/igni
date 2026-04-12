@@ -32,3 +32,13 @@ Tests a wider model range: frontier models (Claude, Gemini, ChatGPT) AND non-fro
 > Respond with only the Igni code — no explanation, no commentary, no discussion of the spec.
 
 **What this tests:** Core features only — input binding, button events, functions, each loops, if/else, without/list operations. No lambdas, no shared state, no navigation. If a model fails this with the cheat sheet, the cheat sheet is missing fundamental information.
+
+---
+
+## 3. Dashboard (exercises wrapper components + icons + badges)
+
+> Using only the Igni language spec above, write a Dashboard screen in Igni. It should have three stat cards at the top (Users, Revenue, Orders), each showing a number and an icon. Use a wrapper component for the cards with a `body` slot. Below the cards, show an activity feed — a list of recent events, each with a description and a timestamp. Include a "Refresh" button that simulates reloading the data.
+>
+> Respond with only the Igni code — no explanation, no commentary, no discussion of the spec.
+
+**What this tests:** Wrapper components with `body` slot, icon primitive, badge, component composition, each loops, layout with spread/background/rounded, functions. The wrapper `body` slot has NOT been cold-tested yet — this is the first test.
