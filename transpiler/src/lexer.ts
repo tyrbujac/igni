@@ -123,6 +123,14 @@ export class Lexer {
       return;
     }
 
+    // Two-character tokens
+    if (ch === '=' && this.pos + 1 < this.source.length && this.source[this.pos + 1] === '>') {
+      this.emit(TokenType.Arrow, '=>');
+      this.pos += 2;
+      this.col += 2;
+      return;
+    }
+
     // Single-character tokens
     const singles: Record<string, TokenType> = {
       ':': TokenType.Colon,

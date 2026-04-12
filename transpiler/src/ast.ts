@@ -31,7 +31,7 @@ export interface UnaryExpr {
 export interface IsExpr {
   type: 'IsExpr';
   target: Expr;
-  check: 'empty' | 'not empty' | 'loading' | 'error';
+  check: 'empty' | 'not empty' | 'null' | 'not null' | 'loading' | 'error';
 }
 
 export interface ListLit {
@@ -50,7 +50,20 @@ export interface FieldAccess {
   field: string;
 }
 
-export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr | ListLit | ObjectLit | FieldAccess | FunctionCall;
+export interface LambdaExpr {
+  type: 'LambdaExpr';
+  param: string;
+  body: Expr;
+}
+
+export interface EqualityExpr {
+  type: 'EqualityExpr';
+  left: Expr;
+  right: Expr;
+  negated: boolean;
+}
+
+export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr | LambdaExpr | EqualityExpr | ListLit | ObjectLit | FieldAccess | FunctionCall;
 
 // -- Properties and events --
 

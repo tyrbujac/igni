@@ -1,0 +1,11 @@
+screen Contacts:
+  contacts = [{name: "Charlie", active: true}, {name: "Alice", active: true}, {name: "Bob", active: false}]
+
+  layout vertical, gap: medium, padding: large:
+    label "Contacts", style: heading
+    label "Active (sorted):", style: body
+    each contact in sorted(filter(contacts, c => c.active), c => c.name):
+      label contact.name
+    label "All (reversed):", style: body
+    each contact in reversed(sorted(contacts, c => c.name)):
+      label contact.name

@@ -24,6 +24,7 @@ export enum TokenType {
   Spinner,
 
   // Operators
+  Arrow,
   Equals,
   Plus,
   Minus,

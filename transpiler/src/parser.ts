@@ -4,6 +4,7 @@ import {
   Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
   Property, EventHandler, FunctionDef, FunctionCall, Statement, EachNode,
   NavigateTo, NavigateBack, ComponentDef, ComponentInvocation,
+  LambdaExpr, EqualityExpr,
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
   ListLit, ObjectLit, FieldAccess,
 } from './ast.js';
@@ -444,18 +445,32 @@ export class Parser {
     if (this.check(TokenType.Is)) {
       this.advance(); // consume 'is'
       const negated = this.check(TokenType.Not);
-      if (negated) this.advance(); // consume 'not'
-      const word = this.consume(TokenType.Identifier, 'Expected "empty" or "null"').value;
-      if (word === 'empty') {
-        return { type: 'IsExpr', target: left, check: negated ? 'not empty' : 'empty' } as IsExpr;
+      if (negated) this.advance();
+
+      // Keyword checks
+      if (this.check(TokenType.Identifier)) {
+        const word = this.current().value;
+        if (word === 'empty') {
+          this.advance();
+          return { type: 'IsExpr', target: left, check: negated ? 'not empty' : 'empty' } as IsExpr;
+        }
+        if (word === 'null') {
+          this.advance();
+          return { type: 'IsExpr', target: left, check: negated ? 'not null' : 'null' } as IsExpr;
+        }
+        if (word === 'loading' && !negated) {
+          this.advance();
+          return { type: 'IsExpr', target: left, check: 'loading' } as IsExpr;
+        }
+        if (word === 'error' && !negated) {
+          this.advance();
+          return { type: 'IsExpr', target: left, check: 'error' } as IsExpr;
+        }
       }
-      if (word === 'loading') {
-        return { type: 'IsExpr', target: left, check: 'loading' } as IsExpr;
-      }
-      if (word === 'error') {
-        return { type: 'IsExpr', target: left, check: 'error' } as IsExpr;
-      }
-      return this.error(`Unsupported "is" check: ${word}`);
+
+      // General equality: is <expr> / is not <expr>
+      const right = this.parseAdditive();
+      return { type: 'EqualityExpr', left, right, negated } as EqualityExpr;
     }
     return left;
   }
@@ -493,6 +508,12 @@ export class Parser {
     if (this.check(TokenType.String)) {
       const tok = this.advance();
       return this.parsePostfix({ type: 'StringLit', value: tok.value });
+    }
+    if (this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.Arrow) {
+      const param = this.advance().value;
+      this.advance(); // consume =>
+      const body = this.parseExpr();
+      return { type: 'LambdaExpr', param, body } as LambdaExpr;
     }
     if (this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.LParen) {
       const call = this.parseFunctionCall();

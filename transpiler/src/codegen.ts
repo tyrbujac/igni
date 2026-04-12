@@ -3,6 +3,7 @@ import {
   UINode, Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode, EachNode,
   ComponentDef, ComponentInvocation,
   Property, EventHandler, FunctionDef, Statement, Expr, IsExpr,
+  LambdaExpr, EqualityExpr,
 } from './ast.js';
 
 const DESIGN_TOKENS: Record<string, number> = {
@@ -584,6 +585,8 @@ export class CodeGenerator {
       case 'IsExpr':
         if (expr.check === 'empty') return `${this.exprToDart(expr.target)}.isEmpty`;
         if (expr.check === 'not empty') return `${this.exprToDart(expr.target)}.isNotEmpty`;
+        if (expr.check === 'null') return `${this.exprToDart(expr.target)} == null`;
+        if (expr.check === 'not null') return `${this.exprToDart(expr.target)} != null`;
         if (expr.check === 'loading') {
           const varName = expr.target.type === 'Ident' ? expr.target.name : '';
           return `_${varName}Loading`;
@@ -593,6 +596,10 @@ export class CodeGenerator {
           return `_${varName}Error`;
         }
         return `${this.exprToDart(expr.target)}.isEmpty`;
+      case 'LambdaExpr':
+        return `(${expr.param}) => ${this.exprToDart(expr.body)}`;
+      case 'EqualityExpr':
+        return `${this.exprToDart(expr.left)} ${expr.negated ? '!=' : '=='} ${this.exprToDart(expr.right)}`;
       case 'ListLit':
         if (expr.elements.length === 0) return '[]';
         return `[${expr.elements.map(e => this.exprToDart(e)).join(', ')}]`;
@@ -616,7 +623,48 @@ export class CodeGenerator {
     if (call.name === 'replace' && args.length === 3) {
       return `${args[0]}.map((e) => e == ${args[1]} ? ${args[2]} : e).toList()`;
     }
+    if (call.name === 'filter' && args.length === 2) {
+      return `${args[0]}.where(${args[1]}).toList()`;
+    }
+    if (call.name === 'find' && args.length === 2 && call.args[1].type === 'LambdaExpr') {
+      return `${args[0]}.cast<dynamic>().firstWhere(${args[1]}, orElse: () => null)`;
+    }
+    if (call.name === 'reversed' && args.length === 1) {
+      return `${args[0]}.reversed.toList()`;
+    }
+    if (call.name === 'sorted' && args.length === 2 && call.args[1].type === 'LambdaExpr') {
+      const lambda = call.args[1] as LambdaExpr;
+      const keyA = this.exprToDart(this.substituteLambdaParam(lambda.body, lambda.param, 'a'));
+      const keyB = this.exprToDart(this.substituteLambdaParam(lambda.body, lambda.param, 'b'));
+      return `(List.from(${args[0]})..sort((a, b) => (${keyA} as Comparable).compareTo(${keyB})))`;
+    }
+    if (call.name === 'length' && args.length === 1) {
+      return `${args[0]}.length`;
+    }
+    if (call.name === 'count' && args.length === 2) {
+      return `${args[0]}.where((e) => e == ${args[1]}).length`;
+    }
     return `${call.name}(${args.join(', ')})`;
+  }
+
+  private substituteLambdaParam(expr: Expr, param: string, replacement: string): Expr {
+    switch (expr.type) {
+      case 'Ident':
+        if (expr.name === param) return { type: 'Ident', name: replacement };
+        return expr;
+      case 'FieldAccess':
+        return { type: 'FieldAccess', object: this.substituteLambdaParam(expr.object, param, replacement), field: expr.field };
+      case 'BinaryExpr':
+        return { type: 'BinaryExpr', left: this.substituteLambdaParam(expr.left, param, replacement), op: expr.op, right: this.substituteLambdaParam(expr.right, param, replacement) };
+      case 'EqualityExpr':
+        return { type: 'EqualityExpr', left: this.substituteLambdaParam(expr.left, param, replacement), right: this.substituteLambdaParam(expr.right, param, replacement), negated: expr.negated };
+      case 'IsExpr':
+        return { type: 'IsExpr', target: this.substituteLambdaParam(expr.target, param, replacement), check: expr.check };
+      case 'UnaryExpr':
+        return { type: 'UnaryExpr', op: expr.op, operand: this.substituteLambdaParam(expr.operand, param, replacement) };
+      default:
+        return expr;
+    }
   }
 
   private exprToDisplayStr(expr: Expr): string {
@@ -634,6 +682,9 @@ export class CodeGenerator {
       case 'FieldAccess':
       case 'FunctionCall':
         return this.exprToDart(expr) + '.toString()';
+      case 'LambdaExpr':
+      case 'EqualityExpr':
+        return "'" + '${' + this.exprToDart(expr) + "}'";
     }
   }
 
