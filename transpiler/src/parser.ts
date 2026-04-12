@@ -301,13 +301,29 @@ export class Parser {
   private parseFunctionCall(): FunctionCall {
     const name = this.consume(TokenType.Identifier, 'Expected function name').value;
     this.consume(TokenType.LParen, 'Expected "("');
+    const args: Expr[] = [];
+    if (!this.check(TokenType.RParen)) {
+      args.push(this.parseExpr());
+      while (this.check(TokenType.Comma)) {
+        this.advance();
+        args.push(this.parseExpr());
+      }
+    }
     this.consume(TokenType.RParen, 'Expected ")"');
-    return { type: 'FunctionCall', name };
+    return { type: 'FunctionCall', name, args };
   }
 
   private parseFunctionDef(): FunctionDef {
     const name = this.consume(TokenType.Identifier, 'Expected function name').value;
     this.consume(TokenType.LParen, 'Expected "("');
+    const params: string[] = [];
+    if (!this.check(TokenType.RParen)) {
+      params.push(this.consume(TokenType.Identifier, 'Expected parameter name').value);
+      while (this.check(TokenType.Comma)) {
+        this.advance();
+        params.push(this.consume(TokenType.Identifier, 'Expected parameter name').value);
+      }
+    }
     this.consume(TokenType.RParen, 'Expected ")"');
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
@@ -318,7 +334,7 @@ export class Parser {
       this.consume(TokenType.Newline, 'Expected newline');
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
-    return { type: 'FunctionDef', name, body };
+    return { type: 'FunctionDef', name, params, body };
   }
 
   // -- Expressions (with operator precedence) --
@@ -375,6 +391,10 @@ export class Parser {
     if (this.check(TokenType.String)) {
       const tok = this.advance();
       return this.parsePostfix({ type: 'StringLit', value: tok.value });
+    }
+    if (this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.LParen) {
+      const call = this.parseFunctionCall();
+      return this.parsePostfix(call);
     }
     if (this.check(TokenType.Identifier)) {
       const tok = this.advance();

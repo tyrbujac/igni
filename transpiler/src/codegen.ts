@@ -117,7 +117,7 @@ export class CodeGenerator {
       stateClass += preBuild + '\n\n';
     }
     stateClass += `  @override\n  Widget build(BuildContext context) {\n`;
-    stateClass += `    return Scaffold(\n      body: ${bodyWidget},\n    );\n`;
+    stateClass += `    return Scaffold(\n      body: ${bodyWidget.trimStart()},\n    );\n`;
     stateClass += `  }\n}\n`;
 
     return widgetClass + '\n' + stateClass;
@@ -213,7 +213,7 @@ export class CodeGenerator {
       const padInd = '  '.repeat(depth);
       code = `Padding(\n${padInd}  padding: const EdgeInsets.all(${padSize}),\n${padInd}  child: ${code},\n${padInd})`;
     }
-    return code;
+    return '  '.repeat(depth) + code;
   }
 
   private genLabel(node: LabelNode, depth: number): string {
@@ -327,13 +327,15 @@ export class CodeGenerator {
         if (this.boundInputVars.includes(s.target)) {
           stmtLines.push(`      _${s.target}Controller.text = ${s.target};`);
         }
-      } else {
-        stmtLines.push(`      ${s.name}();`);
+      } else if (s.type === 'FunctionCall') {
+        const args = s.args.map(a => this.exprToDart(a)).join(', ');
+        stmtLines.push(`      ${s.name}(${args});`);
       }
     }
     const stmts = stmtLines.join('\n');
 
-    let code = `  void ${func.name}() {\n`;
+    const paramStr = func.params.map(p => `dynamic ${p}`).join(', ');
+    let code = `  void ${func.name}(${paramStr}) {\n`;
     code += `    setState(() {\n`;
     code += stmts + '\n';
     code += `    });\n`;
@@ -364,8 +366,9 @@ export class CodeGenerator {
     }
 
     if (action.type === 'FunctionCall') {
+      const args = action.args.map(a => this.exprToDart(a)).join(', ');
       let code = `${ind}onPressed: () {\n`;
-      code += `${ind}  ${action.name}();\n`;
+      code += `${ind}  ${action.name}(${args});\n`;
       code += `${ind}},\n`;
       return code;
     }
@@ -411,7 +414,20 @@ export class CodeGenerator {
         return `{${expr.entries.map(e => `'${e.key}': ${this.exprToDart(e.value)}`).join(', ')}}`;
       case 'FieldAccess':
         return `${this.exprToDart(expr.object)}['${expr.field}']`;
+      case 'FunctionCall':
+        return this.genFunctionCallExpr(expr);
     }
+  }
+
+  private genFunctionCallExpr(call: { name: string; args: Expr[] }): string {
+    const args = call.args.map(a => this.exprToDart(a));
+    if (call.name === 'without' && args.length === 2) {
+      return `${args[0]}.where((e) => e != ${args[1]}).toList()`;
+    }
+    if (call.name === 'replace' && args.length === 3) {
+      return `${args[0]}.map((e) => e == ${args[1]} ? ${args[2]} : e).toList()`;
+    }
+    return `${call.name}(${args.join(', ')})`;
   }
 
   private exprToDisplayStr(expr: Expr): string {
@@ -427,6 +443,7 @@ export class CodeGenerator {
       case 'ObjectLit':
         return "'" + '${' + this.exprToDart(expr) + "}'";
       case 'FieldAccess':
+      case 'FunctionCall':
         return this.exprToDart(expr) + '.toString()';
     }
   }

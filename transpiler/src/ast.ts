@@ -50,7 +50,7 @@ export interface FieldAccess {
   field: string;
 }
 
-export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr | ListLit | ObjectLit | FieldAccess;
+export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr | ListLit | ObjectLit | FieldAccess | FunctionCall;
 
 // -- Properties and events --
 
@@ -81,6 +81,7 @@ export interface Assignment {
 export interface FunctionCall {
   type: 'FunctionCall';
   name: string;
+  args: Expr[];
 }
 
 export interface NavigateTo {
@@ -98,6 +99,7 @@ export type Statement = Assignment | FunctionCall | NavigateTo | NavigateBack;
 export interface FunctionDef {
   type: 'FunctionDef';
   name: string;
+  params: string[];
   body: Statement[];
 }
 
