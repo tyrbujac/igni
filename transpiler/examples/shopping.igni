@@ -1,0 +1,60 @@
+shared:
+  cart = []
+
+screen ProductList:
+  products = [
+    {id: 1, name: "Laptop", price: 1200},
+    {id: 2, name: "Headphones", price: 150},
+    {id: 3, name: "Mechanical Keyboard", price: 100}
+  ]
+
+  add_to_cart(product):
+    existing = find(shared.cart, item => item.id is product.id)
+    if existing is not null:
+      updated = {id: existing.id, name: existing.name, price: existing.price, quantity: existing.quantity + 1}
+      shared.cart = replace(shared.cart, existing, updated)
+    else:
+      new_item = {id: product.id, name: product.name, price: product.price, quantity: 1}
+      shared.cart = shared.cart + [new_item]
+
+  layout vertical, padding: large:
+    layout horizontal, spread: true:
+      label "Products", style: heading
+      button "View Cart", color: brand, on tap: navigate to Cart
+
+    each product in products:
+      layout horizontal, spread: true, padding: medium:
+        layout vertical:
+          label product.name, style: heading.small
+          label "$" + product.price
+        button "Add to Cart", on tap: add_to_cart(product)
+
+screen Cart:
+  total = 0
+
+  remove_item(target):
+    shared.cart = filter(shared.cart, item => item.id is not target.id)
+
+  layout vertical, padding: large:
+    layout horizontal, spread: true:
+      label "Your Cart", style: heading
+      button "Back to Shop", on tap: navigate back
+
+    if shared.cart is empty:
+      label "The cart is empty."
+    else:
+      each item in shared.cart:
+        layout horizontal, spread: true, padding: medium:
+          layout vertical:
+            label item.name, style: heading.small
+            label "$" + item.price + " (Qty: " + item.quantity + ")"
+          button "Remove", color: danger, on tap: remove_item(item)
+
+      divider
+      label "Total: $" + cart_total(), style: heading.small
+
+  cart_total():
+    t = 0
+    each item in shared.cart:
+      t = t + (item.price * item.quantity)
+    return t

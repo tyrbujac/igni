@@ -189,6 +189,10 @@ export interface SpinnerNode {
   type: 'Spinner';
 }
 
+export interface DividerNode {
+  type: 'Divider';
+}
+
 export interface ComponentInvocation {
   type: 'ComponentInvocation';
   name: string;
@@ -197,7 +201,7 @@ export interface ComponentInvocation {
   events: EventHandler[];
 }
 
-export type UINode = Layout | LabelNode | ButtonNode | InputNode | ToggleNode | IfNode | EachNode | SpinnerNode | ComponentInvocation;
+export type UINode = Layout | LabelNode | ButtonNode | InputNode | ToggleNode | IfNode | EachNode | SpinnerNode | DividerNode | ComponentInvocation;
 
 // -- Top-level --
 

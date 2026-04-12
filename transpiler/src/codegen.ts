@@ -19,6 +19,13 @@ const STYLE_MAP: Record<string, string> = {
   caption: 'Theme.of(context).textTheme.bodySmall',
 };
 
+const COLOR_MAP: Record<string, string> = {
+  brand: 'Theme.of(context).colorScheme.primary',
+  subtle: 'Colors.grey',
+  danger: 'Colors.red',
+  green: 'Colors.green',
+};
+
 const ALIGN_MAP: Record<string, string> = {
   start: 'MainAxisAlignment.start',
   center: 'MainAxisAlignment.center',
@@ -271,6 +278,7 @@ export class CodeGenerator {
       case 'If':     return this.genIf(node, depth);
       case 'Each':   return this.genEach(node, depth);
       case 'Spinner': return `${'  '.repeat(depth)}const CircularProgressIndicator()`;
+      case 'Divider': return `${'  '.repeat(depth)}const Divider()`;
       case 'ComponentInvocation': return this.genComponentInvocation(node, depth);
     }
   }
@@ -302,8 +310,11 @@ export class CodeGenerator {
     }
 
     let code = `${widget}(\n`;
+    const spreadProp = this.findProp(node.properties, 'spread');
     if (isCenter) {
       code += `${ind}  mainAxisSize: MainAxisSize.min,\n`;
+    } else if (spreadProp) {
+      code += `${ind}  mainAxisAlignment: MainAxisAlignment.spaceBetween,\n`;
     } else if (alignProp) {
       const alignment = this.resolveAlign(alignProp.value);
       code += `${ind}  mainAxisAlignment: ${alignment},\n`;
@@ -323,6 +334,19 @@ export class CodeGenerator {
       const padInd = '  '.repeat(depth);
       code = `Padding(\n${padInd}  padding: const EdgeInsets.all(${padSize}),\n${padInd}  child: ${code},\n${padInd})`;
     }
+    const bgProp = this.findProp(node.properties, 'background');
+    const roundedProp = this.findProp(node.properties, 'rounded');
+    if (bgProp || roundedProp) {
+      const decInd = '  '.repeat(depth);
+      const bgColor = bgProp ? this.resolveBackground(bgProp.value) : null;
+      const radius = roundedProp ? this.resolveDesignToken(roundedProp.value) : null;
+      let dec = 'BoxDecoration(';
+      const decParts: string[] = [];
+      if (bgColor) decParts.push(`color: ${bgColor}`);
+      if (radius) decParts.push(`borderRadius: BorderRadius.circular(${radius})`);
+      dec += decParts.join(', ') + ')';
+      code = `Container(\n${decInd}  decoration: ${dec},\n${decInd}  child: ${code},\n${decInd})`;
+    }
     const tapEvent = node.events.find(e => e.event === 'tap');
     if (tapEvent) {
       const gestInd = '  '.repeat(depth);
@@ -335,14 +359,22 @@ export class CodeGenerator {
   private genLabel(node: LabelNode, depth: number): string {
     const ind = '  '.repeat(depth);
     const styleProp = this.findProp(node.properties, 'style');
+    const colorProp = this.findProp(node.properties, 'color');
 
     const displayStr = this.exprToDisplayStr(node.value);
 
     let code = `${ind}Text(\n`;
     code += `${ind}  ${displayStr},\n`;
-    if (styleProp) {
-      const styleStr = this.resolveStyle(styleProp.value);
-      code += `${ind}  style: ${styleStr},\n`;
+    if (styleProp || colorProp) {
+      const styleBase = styleProp ? this.resolveStyle(styleProp.value) : null;
+      const colorStr = colorProp ? this.resolveColor(colorProp.value) : null;
+      if (styleBase && colorStr) {
+        code += `${ind}  style: ${styleBase}.copyWith(color: ${colorStr}),\n`;
+      } else if (styleBase) {
+        code += `${ind}  style: ${styleBase},\n`;
+      } else if (colorStr) {
+        code += `${ind}  style: TextStyle(color: ${colorStr}),\n`;
+      }
     }
     code += `${ind})`;
     return code;
@@ -351,8 +383,13 @@ export class CodeGenerator {
   private genButton(node: ButtonNode, depth: number): string {
     const ind = '  '.repeat(depth);
     const tapEvent = node.events.find(e => e.event === 'tap');
+    const colorProp = this.findProp(node.properties, 'color');
 
     let code = `${ind}ElevatedButton(\n`;
+    if (colorProp) {
+      const colorStr = this.resolveColor(colorProp.value);
+      code += `${ind}  style: ElevatedButton.styleFrom(backgroundColor: ${colorStr}),\n`;
+    }
     if (tapEvent) {
       code += this.genOnPressed(tapEvent, depth + 1);
     }
@@ -778,6 +815,11 @@ export class CodeGenerator {
     if (expr.type === 'Ident' && expr.name in STYLE_MAP) {
       return STYLE_MAP[expr.name];
     }
+    // Handle dotted styles like heading.small
+    if (expr.type === 'FieldAccess' && expr.object.type === 'Ident') {
+      const key = `${expr.object.name}.${expr.field}`;
+      if (key in STYLE_MAP) return STYLE_MAP[key];
+    }
     return `Theme.of(context).textTheme.bodyLarge`; // fallback
   }
 
@@ -786,5 +828,20 @@ export class CodeGenerator {
       return ALIGN_MAP[expr.name];
     }
     return 'MainAxisAlignment.start'; // fallback
+  }
+
+  private resolveBackground(expr: Expr): string {
+    if (expr.type === 'Ident') {
+      if (expr.name === 'card') return 'Theme.of(context).cardColor';
+      if (expr.name === 'overlay') return 'Colors.black54';
+    }
+    return 'Theme.of(context).cardColor'; // fallback
+  }
+
+  private resolveColor(expr: Expr): string {
+    if (expr.type === 'Ident' && expr.name in COLOR_MAP) {
+      return COLOR_MAP[expr.name];
+    }
+    return 'Colors.grey'; // fallback
   }
 }

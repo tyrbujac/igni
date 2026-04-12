@@ -117,6 +117,10 @@ export class Parser {
         this.advance();
         this.consume(TokenType.Newline, 'Expected newline');
         return { type: 'Spinner' };
+      case TokenType.Divider:
+        this.advance();
+        this.consume(TokenType.Newline, 'Expected newline');
+        return { type: 'Divider' };
       case TokenType.Identifier:
         if (token.value[0] >= 'A' && token.value[0] <= 'Z') {
           return this.parseComponentInvocation();

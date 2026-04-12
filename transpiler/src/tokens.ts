@@ -23,6 +23,7 @@ export enum TokenType {
   Component,
   Shared,
   Spinner,
+  Divider,
 
   // Operators
   Arrow,
@@ -76,4 +77,5 @@ export const KEYWORDS: Record<string, TokenType> = {
   component: TokenType.Component,
   shared: TokenType.Shared,
   spinner: TokenType.Spinner,
+  divider: TokenType.Divider,
 };
