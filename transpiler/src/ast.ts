@@ -28,7 +28,13 @@ export interface UnaryExpr {
   operand: Expr;
 }
 
-export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr;
+export interface IsExpr {
+  type: 'IsExpr';
+  target: Expr;
+  check: 'empty' | 'not empty';
+}
+
+export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr;
 
 // -- Properties and events --
 

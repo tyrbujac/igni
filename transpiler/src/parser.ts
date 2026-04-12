@@ -3,7 +3,7 @@ import {
   Program, Screen, ScreenItem, VariableDecl, UINode,
   Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
   Property, EventHandler, FunctionDef, FunctionCall, Statement,
-  Assignment, Expr, BinaryExpr, NumberLit, StringLit, Ident,
+  Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
 } from './ast.js';
 
 export class Parser {
@@ -268,7 +268,22 @@ export class Parser {
   // -- Expressions (with operator precedence) --
 
   private parseExpr(): Expr {
-    return this.parseAdditive();
+    return this.parseComparison();
+  }
+
+  private parseComparison(): Expr {
+    const left = this.parseAdditive();
+    if (this.check(TokenType.Is)) {
+      this.advance(); // consume 'is'
+      const negated = this.check(TokenType.Not);
+      if (negated) this.advance(); // consume 'not'
+      const word = this.consume(TokenType.Identifier, 'Expected "empty" or "null"').value;
+      if (word === 'empty') {
+        return { type: 'IsExpr', target: left, check: negated ? 'not empty' : 'empty' } as IsExpr;
+      }
+      return this.error(`Unsupported "is" check: ${word}`);
+    }
+    return left;
   }
 
   private parseAdditive(): Expr {

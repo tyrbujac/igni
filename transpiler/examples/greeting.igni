@@ -1,0 +1,9 @@
+screen Greeting:
+  name = ""
+
+  layout vertical, gap: medium, padding: large:
+    input bind: name, placeholder: "Name"
+    if name is not empty:
+      label "Hello, " + name
+    else:
+      label "Type your name above"

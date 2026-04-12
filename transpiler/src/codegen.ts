@@ -1,7 +1,7 @@
 import {
   Program, Screen, ScreenItem, VariableDecl,
   UINode, Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
-  Property, EventHandler, FunctionDef, Statement, Expr,
+  Property, EventHandler, FunctionDef, Statement, Expr, IsExpr,
 } from './ast.js';
 
 const DESIGN_TOKENS: Record<string, number> = {
@@ -345,6 +345,10 @@ ${preBuild}
         return `${this.exprToDart(expr.left)} ${expr.op} ${this.exprToDart(expr.right)}`;
       case 'UnaryExpr':
         return `!${this.exprToDart(expr.operand)}`;
+      case 'IsExpr':
+        if (expr.check === 'empty') return `${this.exprToDart(expr.target)}.isEmpty`;
+        if (expr.check === 'not empty') return `${this.exprToDart(expr.target)}.isNotEmpty`;
+        return `${this.exprToDart(expr.target)}.isEmpty`;
     }
   }
 
@@ -354,7 +358,10 @@ ${preBuild}
       case 'NumberLit': return `'${expr.value}'`;
       case 'Ident':     return "'" + '$' + expr.name + "'";
       case 'BinaryExpr':
+        return this.exprToDart(expr);
       case 'UnaryExpr':
+        return "'" + '${' + this.exprToDart(expr) + "}'";
+      case 'IsExpr':
         return "'" + '${' + this.exprToDart(expr) + "}'";
     }
   }

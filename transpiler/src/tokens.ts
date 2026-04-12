@@ -15,6 +15,7 @@ export enum TokenType {
   If,
   Else,
   Not,
+  Is,
 
   // Operators
   Equals,
@@ -54,4 +55,5 @@ export const KEYWORDS: Record<string, TokenType> = {
   if: TokenType.If,
   else: TokenType.Else,
   not: TokenType.Not,
+  is: TokenType.Is,
 };
