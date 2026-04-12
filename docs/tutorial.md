@@ -15,20 +15,21 @@ That's it. Two lines. `screen Hello:` creates a page called Hello. `label "Hello
 
 **Try it:** Save this as `hello.igni`, transpile it, and run it. You should see "Hello World" in the browser.
 
-## Step 2: Stack things vertically
+## Step 2: Add more things
 
-To put multiple things on screen, use `layout vertical`:
+Just add more lines inside the screen:
 
 ```igni
 screen Hello:
-  layout vertical:
-    label "Hello"
-    label "World"
+  label "Hello"
+  label "World"
 ```
 
-`layout vertical:` stacks everything below it top-to-bottom. The colon `:` means "here come the contents." Everything indented under it is inside the layout.
+Both labels appear, stacked top to bottom. Igni screens flow vertically by default — no extra layout needed.
 
-Add spacing with `gap:` and padding with `padding:`:
+## Step 3: Add spacing and padding
+
+When you want control over spacing, use `layout vertical` with `gap:` and `padding:`:
 
 ```igni
 screen Hello:
@@ -37,7 +38,9 @@ screen Hello:
     label "World"
 ```
 
-## Step 3: Put things side by side
+`layout vertical:` stacks everything top-to-bottom (which is the default — but now you can add `gap:` for spacing and `padding:` for edges). The colon `:` means "here come the contents." Everything indented under it is inside the layout.
+
+## Step 4: Put things side by side
 
 Use `layout horizontal` for a row:
 
@@ -53,7 +56,7 @@ screen Hello:
 
 This gives you: "Top" on its own line, then "Left" and "Right" side by side, then "Bottom" below.
 
-## Step 4: Buttons and actions
+## Step 5: Buttons and actions
 
 Buttons do something when tapped:
 
@@ -68,7 +71,7 @@ screen Counter:
 
 `count = 0` creates a variable. `label count` shows its value. `button "Add One", on tap: count = count + 1` adds 1 every time you tap. The screen updates automatically — that's reactivity.
 
-## Step 5: Multiple buttons
+## Step 6: Multiple buttons
 
 You can have as many buttons as you want:
 
@@ -84,7 +87,7 @@ screen Counter:
       button "Reset", on tap: count = 0
 ```
 
-## Step 6: Functions
+## Step 7: Functions
 
 When an action is more than one line, put it in a function:
 
@@ -102,7 +105,7 @@ screen Counter:
 
 Functions go inside the screen, after the layout. They can read and change any variable in the screen.
 
-## Step 7: Text input
+## Step 8: Text input
 
 Get text from the user with `input`:
 
@@ -117,7 +120,7 @@ screen Greeter:
 
 `bind: name` connects the input to the variable — whatever the user types goes into `name`, and the label updates automatically.
 
-## Step 8: Conditionals
+## Step 9: Conditionals
 
 Show different things based on conditions:
 

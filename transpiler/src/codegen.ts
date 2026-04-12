@@ -157,7 +157,16 @@ export class CodeGenerator {
     const name = screen.name;
     const hasParams = screen.params.length > 0;
     const hasState = stateDecls.length > 0;
-    const bodyWidget = uiNodes.length > 0 ? this.genUINode(uiNodes[0], 3) : 'const SizedBox()';
+    let bodyWidget: string;
+    if (uiNodes.length === 0) {
+      bodyWidget = 'const SizedBox()';
+    } else if (uiNodes.length === 1) {
+      bodyWidget = this.genUINode(uiNodes[0], 3);
+    } else {
+      // Implicit vertical layout — multiple children without explicit layout wrapper
+      const children = uiNodes.map(n => this.genUINode(n, 4) + ',').join('\n');
+      bodyWidget = `      Column(\n        children: [\n${children}\n        ],\n      )`;
+    }
     const hasControllers = this.boundInputVars.length > 0;
 
     // Widget class
