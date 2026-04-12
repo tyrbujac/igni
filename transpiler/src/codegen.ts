@@ -28,17 +28,27 @@ export class CodeGenerator {
   private stateVars: string[] = [];
   private boundInputVars: string[] = [];
   private screenParams: string[] = [];
+  private functionParams: string[] = [];
   private allScreens: Screen[] = [];
 
   private allComponents: ComponentDef[] = [];
 
+  private hasShared = false;
+
   generate(program: Program): string {
     this.allScreens = program.screens;
     this.allComponents = program.components;
+    this.hasShared = program.shared.length > 0;
     const firstName = program.screens[0].name;
 
     let code = `import 'package:flutter/material.dart';\n\n`;
-    code += `void main() {\n  runApp(const MaterialApp(home: ${firstName}Screen()));\n}\n`;
+
+    if (this.hasShared) {
+      code += this.genSharedState(program.shared) + '\n';
+      code += `void main() {\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(home: ${firstName}Screen()),\n  ));\n}\n`;
+    } else {
+      code += `void main() {\n  runApp(const MaterialApp(home: ${firstName}Screen()));\n}\n`;
+    }
 
     for (const comp of program.components) {
       code += '\n' + this.genComponentDef(comp);
@@ -48,6 +58,21 @@ export class CodeGenerator {
       code += '\n' + this.genScreen(screen);
     }
 
+    return code;
+  }
+
+  private genSharedState(vars: VariableDecl[]): string {
+    const fields = vars.map(v => {
+      const dartType = this.inferType(v.value);
+      const dartValue = this.exprToDart(v.value);
+      return `  ${dartType} ${v.name} = ${dartValue};`;
+    }).join('\n');
+
+    let code = `class SharedState extends ChangeNotifier {\n`;
+    code += fields + '\n\n';
+    code += `  void update(void Function() fn) {\n    fn();\n    notifyListeners();\n  }\n`;
+    code += `}\n\n`;
+    code += `final shared = SharedState();\n`;
     return code;
   }
 
@@ -370,26 +395,54 @@ export class CodeGenerator {
   }
 
   private genFunctionDef(func: FunctionDef): string {
-    const stmtLines: string[] = [];
+    this.functionParams = func.params;
+    const localStmts: string[] = [];
+    const sharedStmts: string[] = [];
+    const postStmts: string[] = [];
+
     for (const s of func.body) {
       if (s.type === 'Assignment') {
-        stmtLines.push(`      ${s.target} = ${this.exprToDart(s.value)};`);
-        if (this.boundInputVars.includes(s.target)) {
-          stmtLines.push(`      _${s.target}Controller.text = ${s.target};`);
+        if (s.target.startsWith('shared.')) {
+          sharedStmts.push(`      ${s.target} = ${this.exprToDart(s.value)};`);
+        } else {
+          localStmts.push(`      ${s.target} = ${this.exprToDart(s.value)};`);
+          if (this.boundInputVars.includes(s.target)) {
+            localStmts.push(`      _${s.target}Controller.text = ${s.target};`);
+          }
         }
       } else if (s.type === 'FunctionCall') {
         const args = s.args.map(a => this.exprToDart(a)).join(', ');
-        stmtLines.push(`      ${s.name}(${args});`);
+        localStmts.push(`      ${s.name}(${args});`);
+      } else if (s.type === 'NavigateBack') {
+        postStmts.push(`    Navigator.pop(context);`);
+      } else if (s.type === 'NavigateTo') {
+        const targetScreen = this.allScreens.find(sc => sc.name === s.screen);
+        const argStr = s.arg ? this.exprToDart(s.arg) : null;
+        const paramName = targetScreen?.params[0];
+        const ctorArgs = paramName && argStr ? `${paramName}: ${argStr}` : '';
+        postStmts.push(`    Navigator.push(context, MaterialPageRoute(builder: (context) => ${s.screen}Screen(${ctorArgs})));`);
       }
     }
-    const stmts = stmtLines.join('\n');
 
     const paramStr = func.params.map(p => `dynamic ${p}`).join(', ');
     let code = `  void ${func.name}(${paramStr}) {\n`;
-    code += `    setState(() {\n`;
-    code += stmts + '\n';
-    code += `    });\n`;
+
+    if (localStmts.length > 0) {
+      code += `    setState(() {\n`;
+      code += localStmts.join('\n') + '\n';
+      code += `    });\n`;
+    }
+    if (sharedStmts.length > 0) {
+      code += `    shared.update(() {\n`;
+      code += sharedStmts.join('\n') + '\n';
+      code += `    });\n`;
+    }
+    if (postStmts.length > 0) {
+      code += postStmts.join('\n') + '\n';
+    }
+
     code += `  }`;
+    this.functionParams = [];
     return code;
   }
 
@@ -447,6 +500,7 @@ export class CodeGenerator {
       case 'NumberLit': return `${expr.value}`;
       case 'StringLit': return `'${expr.value}'`;
       case 'Ident':
+        if (this.functionParams.includes(expr.name)) return expr.name;
         if (this.screenParams.includes(expr.name)) return `widget.${expr.name}`;
         return expr.name;
       case 'BinaryExpr':
@@ -463,6 +517,9 @@ export class CodeGenerator {
       case 'ObjectLit':
         return `{${expr.entries.map(e => `'${e.key}': ${this.exprToDart(e.value)}`).join(', ')}}`;
       case 'FieldAccess':
+        if (expr.object.type === 'Ident' && expr.object.name === 'shared') {
+          return `shared.${expr.field}`;
+        }
         return `${this.exprToDart(expr.object)}['${expr.field}']`;
       case 'FunctionCall':
         return this.genFunctionCallExpr(expr);

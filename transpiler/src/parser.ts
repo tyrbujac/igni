@@ -19,14 +19,30 @@ export class Parser {
   parse(): Program {
     const screens: Screen[] = [];
     const components: ComponentDef[] = [];
+    const shared: VariableDecl[] = [];
     while (!this.check(TokenType.EOF)) {
       if (this.check(TokenType.Component)) {
         components.push(this.parseComponentDef());
+      } else if (this.check(TokenType.Shared)) {
+        shared.push(...this.parseSharedBlock());
       } else {
         screens.push(this.parseScreen());
       }
     }
-    return { type: 'Program', screens, components };
+    return { type: 'Program', screens, components, shared };
+  }
+
+  private parseSharedBlock(): VariableDecl[] {
+    this.consume(TokenType.Shared, 'Expected "shared"');
+    this.consume(TokenType.Colon, 'Expected ":"');
+    this.consume(TokenType.Newline, 'Expected newline');
+    this.consume(TokenType.Indent, 'Expected indent');
+    const vars: VariableDecl[] = [];
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      vars.push(this.parseVariableDecl());
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent');
+    return vars;
   }
 
   // -- Top-level --
@@ -327,10 +343,22 @@ export class Parser {
     if (this.check(TokenType.Navigate)) {
       return this.parseNavigate();
     }
+    if (this.check(TokenType.Shared)) {
+      return this.parseSharedAssignment();
+    }
     if (this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.LParen) {
       return this.parseFunctionCall();
     }
     return this.parseAssignment();
+  }
+
+  private parseSharedAssignment(): Assignment {
+    this.consume(TokenType.Shared, 'Expected "shared"');
+    this.consume(TokenType.Dot, 'Expected "."');
+    const field = this.consume(TokenType.Identifier, 'Expected field name').value;
+    this.consume(TokenType.Equals, 'Expected "="');
+    const value = this.parseExpr();
+    return { type: 'Assignment', target: 'shared.' + field, value };
   }
 
   private parseNavigate(): NavigateTo | NavigateBack {
@@ -459,6 +487,10 @@ export class Parser {
     if (this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.LParen) {
       const call = this.parseFunctionCall();
       return this.parsePostfix(call);
+    }
+    if (this.check(TokenType.Shared)) {
+      this.advance();
+      return this.parsePostfix({ type: 'Ident', name: 'shared' });
     }
     if (this.check(TokenType.Identifier)) {
       const tok = this.advance();

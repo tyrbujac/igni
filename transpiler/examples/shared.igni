@@ -1,0 +1,21 @@
+shared:
+  notes = [{title: "First note"}, {title: "Second note"}]
+
+screen NoteList:
+  layout vertical, gap: medium, padding: large:
+    label "Notes", style: heading
+    if shared.notes is empty:
+      label "No notes yet"
+    else:
+      each note in shared.notes:
+        button note.title, on tap: navigate to NoteDetail note
+
+screen NoteDetail(note):
+  layout vertical, gap: medium, padding: large:
+    label note.title, style: heading
+    button "Delete", on tap: delete(note)
+    button "Back", on tap: navigate back
+
+  delete(note):
+    shared.notes = without(shared.notes, note)
+    navigate back

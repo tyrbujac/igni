@@ -184,4 +184,5 @@ export interface Program {
   type: 'Program';
   screens: Screen[];
   components: ComponentDef[];
+  shared: VariableDecl[];
 }
