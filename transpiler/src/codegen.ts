@@ -1,7 +1,7 @@
 import {
   Program, Screen, ScreenItem, VariableDecl,
   UINode, Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
-  Property, EventHandler, Expr,
+  Property, EventHandler, FunctionDef, Statement, Expr,
 } from './ast.js';
 
 const DESIGN_TOKENS: Record<string, number> = {
@@ -37,10 +37,14 @@ export class CodeGenerator {
     const stateDecls: string[] = [];
     const uiNodes: UINode[] = [];
 
+    const funcDefs: FunctionDef[] = [];
+
     for (const item of screen.body) {
       if (item.type === 'VariableDecl') {
         this.stateVars.push(item.name);
         stateDecls.push(this.genStateVar(item));
+      } else if (item.type === 'FunctionDef') {
+        funcDefs.push(item);
       } else {
         uiNodes.push(item);
       }
@@ -72,6 +76,10 @@ export class CodeGenerator {
         .map(v => `    _${v}Controller.dispose();`)
         .join('\n');
       preBuild += `\n\n  @override\n  void dispose() {\n${disposals}\n    super.dispose();\n  }`;
+    }
+
+    for (const func of funcDefs) {
+      preBuild += '\n\n' + this.genFunctionDef(func);
     }
 
     return `import 'package:flutter/material.dart';
@@ -280,23 +288,48 @@ ${preBuild}
     return code;
   }
 
+  private genFunctionDef(func: FunctionDef): string {
+    const stmts = func.body
+      .map(s => {
+        if (s.type === 'Assignment') {
+          return `      ${s.target} = ${this.exprToDart(s.value)};`;
+        }
+        return `      ${s.name}();`;
+      })
+      .join('\n');
+
+    let code = `  void ${func.name}() {\n`;
+    code += `    setState(() {\n`;
+    code += stmts + '\n';
+    code += `    });\n`;
+    code += `  }`;
+    return code;
+  }
+
   private genOnPressed(event: EventHandler, depth: number): string {
     const ind = '  '.repeat(depth);
-    const assignment = event.action;
-    const dartExpr = this.exprToDart(assignment.value);
+    const action = event.action;
 
-    // Wrap in setState if targeting a state variable
-    if (this.stateVars.includes(assignment.target)) {
+    if (action.type === 'FunctionCall') {
+      let code = `${ind}onPressed: () {\n`;
+      code += `${ind}  ${action.name}();\n`;
+      code += `${ind}},\n`;
+      return code;
+    }
+
+    const dartExpr = this.exprToDart(action.value);
+
+    if (this.stateVars.includes(action.target)) {
       let code = `${ind}onPressed: () {\n`;
       code += `${ind}  setState(() {\n`;
-      code += `${ind}    ${assignment.target} = ${dartExpr};\n`;
+      code += `${ind}    ${action.target} = ${dartExpr};\n`;
       code += `${ind}  });\n`;
       code += `${ind}},\n`;
       return code;
     }
 
     let code = `${ind}onPressed: () {\n`;
-    code += `${ind}  ${assignment.target} = ${dartExpr};\n`;
+    code += `${ind}  ${action.target} = ${dartExpr};\n`;
     code += `${ind}},\n`;
     return code;
   }

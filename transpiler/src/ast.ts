@@ -39,7 +39,7 @@ export interface Property {
 
 export interface EventHandler {
   event: string;
-  action: Assignment;
+  action: Statement;
 }
 
 // -- Statements --
@@ -54,6 +54,19 @@ export interface Assignment {
   type: 'Assignment';
   target: string;
   value: Expr;
+}
+
+export interface FunctionCall {
+  type: 'FunctionCall';
+  name: string;
+}
+
+export type Statement = Assignment | FunctionCall;
+
+export interface FunctionDef {
+  type: 'FunctionDef';
+  name: string;
+  body: Statement[];
 }
 
 // -- UI nodes --
@@ -102,7 +115,7 @@ export type UINode = Layout | LabelNode | ButtonNode | InputNode | ToggleNode | 
 
 // -- Top-level --
 
-export type ScreenItem = VariableDecl | UINode;
+export type ScreenItem = VariableDecl | UINode | FunctionDef;
 
 export interface Screen {
   type: 'Screen';

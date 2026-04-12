@@ -2,7 +2,7 @@ import { Token, TokenType } from './tokens.js';
 import {
   Program, Screen, ScreenItem, VariableDecl, UINode,
   Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
-  Property, EventHandler,
+  Property, EventHandler, FunctionDef, FunctionCall, Statement,
   Assignment, Expr, BinaryExpr, NumberLit, StringLit, Ident,
 } from './ast.js';
 
@@ -43,6 +43,11 @@ export class Parser {
         this.peek(1)?.type === TokenType.Equals
       ) {
         items.push(this.parseVariableDecl());
+      } else if (
+        this.check(TokenType.Identifier) &&
+        this.peek(1)?.type === TokenType.LParen
+      ) {
+        items.push(this.parseFunctionDef());
       } else {
         items.push(this.parseUINode());
       }
@@ -219,8 +224,15 @@ export class Parser {
     this.consume(TokenType.On, 'Expected "on"');
     const event = this.consume(TokenType.Identifier, 'Expected event name').value;
     this.consume(TokenType.Colon, 'Expected ":"');
-    const action = this.parseAssignment();
+    const action = this.parseStatement();
     return { event, action };
+  }
+
+  private parseStatement(): Statement {
+    if (this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.LParen) {
+      return this.parseFunctionCall();
+    }
+    return this.parseAssignment();
   }
 
   private parseAssignment(): Assignment {
@@ -228,6 +240,29 @@ export class Parser {
     this.consume(TokenType.Equals, 'Expected "="');
     const value = this.parseExpr();
     return { type: 'Assignment', target, value };
+  }
+
+  private parseFunctionCall(): FunctionCall {
+    const name = this.consume(TokenType.Identifier, 'Expected function name').value;
+    this.consume(TokenType.LParen, 'Expected "("');
+    this.consume(TokenType.RParen, 'Expected ")"');
+    return { type: 'FunctionCall', name };
+  }
+
+  private parseFunctionDef(): FunctionDef {
+    const name = this.consume(TokenType.Identifier, 'Expected function name').value;
+    this.consume(TokenType.LParen, 'Expected "("');
+    this.consume(TokenType.RParen, 'Expected ")"');
+    this.consume(TokenType.Colon, 'Expected ":"');
+    this.consume(TokenType.Newline, 'Expected newline');
+    this.consume(TokenType.Indent, 'Expected indent');
+    const body: Statement[] = [];
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      body.push(this.parseStatement());
+      this.consume(TokenType.Newline, 'Expected newline');
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent');
+    return { type: 'FunctionDef', name, body };
   }
 
   // -- Expressions (with operator precedence) --
