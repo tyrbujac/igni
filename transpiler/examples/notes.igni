@@ -1,0 +1,13 @@
+screen NoteList:
+  notes = [{title: "First note", body: "Hello world"}, {title: "Second note", body: "Goodbye"}]
+
+  layout vertical, gap: medium, padding: large:
+    label "Notes", style: heading
+    each note in notes:
+      button note.title, on tap: navigate to NoteDetail note
+
+screen NoteDetail(note):
+  layout vertical, gap: medium, padding: large:
+    label note.title, style: heading
+    label note.body
+    button "Back", on tap: navigate back

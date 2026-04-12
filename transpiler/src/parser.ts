@@ -3,6 +3,7 @@ import {
   Program, Screen, ScreenItem, VariableDecl, UINode,
   Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
   Property, EventHandler, FunctionDef, FunctionCall, Statement, EachNode,
+  NavigateTo, NavigateBack,
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
   ListLit, ObjectLit, FieldAccess,
 } from './ast.js';
@@ -28,12 +29,24 @@ export class Parser {
   private parseScreen(): Screen {
     this.consume(TokenType.Screen, 'Expected "screen"');
     const name = this.consume(TokenType.Identifier, 'Expected screen name').value;
+    const params: string[] = [];
+    if (this.check(TokenType.LParen)) {
+      this.advance();
+      if (!this.check(TokenType.RParen)) {
+        params.push(this.consume(TokenType.Identifier, 'Expected parameter name').value);
+        while (this.check(TokenType.Comma)) {
+          this.advance();
+          params.push(this.consume(TokenType.Identifier, 'Expected parameter name').value);
+        }
+      }
+      this.consume(TokenType.RParen, 'Expected ")"');
+    }
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
     this.consume(TokenType.Indent, 'Expected indent');
     const body = this.parseScreenBody();
     this.consume(TokenType.Dedent, 'Expected dedent');
-    return { type: 'Screen', name, body };
+    return { type: 'Screen', name, params, body };
   }
 
   private parseScreenBody(): ScreenItem[] {
@@ -247,10 +260,35 @@ export class Parser {
   }
 
   private parseStatement(): Statement {
+    if (this.check(TokenType.Navigate)) {
+      return this.parseNavigate();
+    }
     if (this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.LParen) {
       return this.parseFunctionCall();
     }
     return this.parseAssignment();
+  }
+
+  private parseNavigate(): NavigateTo | NavigateBack {
+    this.consume(TokenType.Navigate, 'Expected "navigate"');
+    const direction = this.consume(TokenType.Identifier, 'Expected "to" or "back"').value;
+    if (direction === 'back') {
+      return { type: 'NavigateBack' };
+    }
+    if (direction === 'to') {
+      const screen = this.consume(TokenType.Identifier, 'Expected screen name').value;
+      let arg: Expr | null = null;
+      // Check if there's an argument (not newline, not comma, not colon)
+      if (
+        !this.check(TokenType.Newline) &&
+        !this.check(TokenType.Comma) &&
+        !this.check(TokenType.EOF)
+      ) {
+        arg = this.parseExpr();
+      }
+      return { type: 'NavigateTo', screen, arg };
+    }
+    return this.error(`Expected "to" or "back" after "navigate", got "${direction}"`);
   }
 
   private parseAssignment(): Assignment {

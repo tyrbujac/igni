@@ -83,7 +83,17 @@ export interface FunctionCall {
   name: string;
 }
 
-export type Statement = Assignment | FunctionCall;
+export interface NavigateTo {
+  type: 'NavigateTo';
+  screen: string;
+  arg: Expr | null;
+}
+
+export interface NavigateBack {
+  type: 'NavigateBack';
+}
+
+export type Statement = Assignment | FunctionCall | NavigateTo | NavigateBack;
 
 export interface FunctionDef {
   type: 'FunctionDef';
@@ -149,6 +159,7 @@ export type ScreenItem = VariableDecl | UINode | FunctionDef;
 export interface Screen {
   type: 'Screen';
   name: string;
+  params: string[];
   body: ScreenItem[];
 }
 

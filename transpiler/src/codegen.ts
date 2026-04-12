@@ -26,17 +26,29 @@ const ALIGN_MAP: Record<string, string> = {
 export class CodeGenerator {
   private stateVars: string[] = [];
   private boundInputVars: string[] = [];
+  private screenParams: string[] = [];
+  private allScreens: Screen[] = [];
 
   generate(program: Program): string {
-    return this.genScreen(program.screens[0]);
+    this.allScreens = program.screens;
+    const firstName = program.screens[0].name;
+
+    let code = `import 'package:flutter/material.dart';\n\n`;
+    code += `void main() {\n  runApp(const MaterialApp(home: ${firstName}Screen()));\n}\n`;
+
+    for (const screen of program.screens) {
+      code += '\n' + this.genScreen(screen);
+    }
+
+    return code;
   }
 
   private genScreen(screen: Screen): string {
     this.stateVars = [];
     this.boundInputVars = [];
+    this.screenParams = screen.params;
     const stateDecls: string[] = [];
     const uiNodes: UINode[] = [];
-
     const funcDefs: FunctionDef[] = [];
 
     for (const item of screen.body) {
@@ -50,22 +62,40 @@ export class CodeGenerator {
       }
     }
 
-    // Scan UI tree for input bind: vars that need controllers
     this.collectBoundInputs(uiNodes);
 
     const name = screen.name;
-    const stateLines = stateDecls.map(d => `  ${d}`).join('\n');
+    const hasParams = screen.params.length > 0;
+    const hasState = stateDecls.length > 0;
     const bodyWidget = uiNodes.length > 0 ? this.genUINode(uiNodes[0], 3) : 'const SizedBox()';
     const hasControllers = this.boundInputVars.length > 0;
 
-    // Build class body before build() method
-    let preBuild = stateLines;
+    // Widget class
+    let widgetClass = `class ${name}Screen extends StatefulWidget {\n`;
+    if (hasParams) {
+      for (const p of screen.params) {
+        widgetClass += `  final dynamic ${p};\n`;
+      }
+    }
+    const constPrefix = hasParams ? '' : 'const ';
+    const paramList = hasParams
+      ? `{super.key, ${screen.params.map(p => `required this.${p}`).join(', ')}}`
+      : '{super.key}';
+    widgetClass += `  ${constPrefix}${name}Screen(${paramList});\n\n`;
+    widgetClass += `  @override\n  State<${name}Screen> createState() => _${name}ScreenState();\n`;
+    widgetClass += `}\n`;
+
+    // State class
+    let preBuild = '';
+    if (hasState) {
+      preBuild = stateDecls.map(d => `  ${d}`).join('\n');
+    }
 
     if (hasControllers) {
       const controllerDecls = this.boundInputVars
         .map(v => `  late final TextEditingController _${v}Controller;`)
         .join('\n');
-      preBuild += '\n' + controllerDecls;
+      preBuild += (preBuild ? '\n' : '') + controllerDecls;
 
       const inits = this.boundInputVars
         .map(v => `    _${v}Controller = TextEditingController(text: ${v});`)
@@ -79,33 +109,18 @@ export class CodeGenerator {
     }
 
     for (const func of funcDefs) {
-      preBuild += '\n\n' + this.genFunctionDef(func);
+      preBuild += (preBuild ? '\n\n' : '') + this.genFunctionDef(func);
     }
 
-    return `import 'package:flutter/material.dart';
+    let stateClass = `class _${name}ScreenState extends State<${name}Screen> {\n`;
+    if (preBuild) {
+      stateClass += preBuild + '\n\n';
+    }
+    stateClass += `  @override\n  Widget build(BuildContext context) {\n`;
+    stateClass += `    return Scaffold(\n      body: ${bodyWidget},\n    );\n`;
+    stateClass += `  }\n}\n`;
 
-void main() {
-  runApp(const MaterialApp(home: ${name}Screen()));
-}
-
-class ${name}Screen extends StatefulWidget {
-  const ${name}Screen({super.key});
-
-  @override
-  State<${name}Screen> createState() => _${name}ScreenState();
-}
-
-class _${name}ScreenState extends State<${name}Screen> {
-${preBuild}
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: ${bodyWidget},
-    );
-  }
-}
-`;
+    return widgetClass + '\n' + stateClass;
   }
 
   private collectBoundInputs(nodes: UINode[]): void {
@@ -225,7 +240,9 @@ ${preBuild}
     if (tapEvent) {
       code += this.genOnPressed(tapEvent, depth + 1);
     }
-    code += `${ind}  child: const Text(${this.exprToConstStr(node.text)}),\n`;
+    const isConstText = node.text.type === 'StringLit';
+    const textStr = isConstText ? this.exprToConstStr(node.text) : this.exprToDisplayStr(node.text);
+    code += `${ind}  child: ${isConstText ? 'const ' : ''}Text(${textStr}),\n`;
     code += `${ind})`;
     return code;
   }
@@ -328,6 +345,24 @@ ${preBuild}
     const ind = '  '.repeat(depth);
     const action = event.action;
 
+    if (action.type === 'NavigateBack') {
+      let code = `${ind}onPressed: () {\n`;
+      code += `${ind}  Navigator.pop(context);\n`;
+      code += `${ind}},\n`;
+      return code;
+    }
+
+    if (action.type === 'NavigateTo') {
+      const targetScreen = this.allScreens.find(s => s.name === action.screen);
+      const argStr = action.arg ? this.exprToDart(action.arg) : null;
+      const paramName = targetScreen?.params[0];
+      const ctorArgs = paramName && argStr ? `${paramName}: ${argStr}` : '';
+      let code = `${ind}onPressed: () {\n`;
+      code += `${ind}  Navigator.push(context, MaterialPageRoute(builder: (context) => ${action.screen}Screen(${ctorArgs})));\n`;
+      code += `${ind}},\n`;
+      return code;
+    }
+
     if (action.type === 'FunctionCall') {
       let code = `${ind}onPressed: () {\n`;
       code += `${ind}  ${action.name}();\n`;
@@ -358,7 +393,9 @@ ${preBuild}
     switch (expr.type) {
       case 'NumberLit': return `${expr.value}`;
       case 'StringLit': return `'${expr.value}'`;
-      case 'Ident':     return expr.name;
+      case 'Ident':
+        if (this.screenParams.includes(expr.name)) return `widget.${expr.name}`;
+        return expr.name;
       case 'BinaryExpr':
         return `${this.exprToDart(expr.left)} ${expr.op} ${this.exprToDart(expr.right)}`;
       case 'UnaryExpr':
