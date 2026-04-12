@@ -4,7 +4,8 @@ import {
   Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
   Property, EventHandler, FunctionDef, FunctionCall, Statement, EachNode,
   NavigateTo, NavigateBack, ComponentDef, ComponentInvocation,
-  LambdaExpr, EqualityExpr, ReturnStmt, IfStmt, EachStmt,
+  LambdaExpr, EqualityExpr, InExpr, ReturnStmt, IfStmt, EachStmt,
+  IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
   ListLit, ObjectLit, FieldAccess,
 } from './ast.js';
@@ -121,6 +122,12 @@ export class Parser {
         this.advance();
         this.consume(TokenType.Newline, 'Expected newline');
         return { type: 'Divider' };
+      case TokenType.Icon:    return this.parseIcon();
+      case TokenType.Image:   return this.parseImage();
+      case TokenType.Slider:  return this.parseSlider();
+      case TokenType.Checkbox: return this.parseCheckbox();
+      case TokenType.Dropdown: return this.parseDropdown();
+      case TokenType.Badge:   return this.parseBadge();
       case TokenType.Identifier:
         if (token.value[0] >= 'A' && token.value[0] <= 'Z') {
           return this.parseComponentInvocation();
@@ -200,6 +207,57 @@ export class Parser {
       props.push(this.parseProperty());
     }
     return props;
+  }
+
+  private parseIcon(): IconNode {
+    this.consume(TokenType.Icon, 'Expected "icon"');
+    const name = this.parseExpr();
+    const { properties, events } = this.parseArgs();
+    this.consume(TokenType.Newline, 'Expected newline');
+    return { type: 'Icon', name, properties, events };
+  }
+
+  private parseImage(): ImageNode {
+    this.consume(TokenType.Image, 'Expected "image"');
+    const url = this.parseExpr();
+    const { properties } = this.parseArgs();
+    this.consume(TokenType.Newline, 'Expected newline');
+    return { type: 'Image', url, properties };
+  }
+
+  private parseSlider(): SliderNode {
+    this.consume(TokenType.Slider, 'Expected "slider"');
+    const allProps = this.parsePropsNoPositional();
+    this.consume(TokenType.Newline, 'Expected newline');
+    const bindProp = allProps.find(p => p.name === 'bind');
+    if (!bindProp || bindProp.value.type !== 'Ident') return this.error('slider requires bind:');
+    return { type: 'Slider', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind') };
+  }
+
+  private parseCheckbox(): CheckboxNode {
+    this.consume(TokenType.Checkbox, 'Expected "checkbox"');
+    const allProps = this.parsePropsNoPositional();
+    this.consume(TokenType.Newline, 'Expected newline');
+    const bindProp = allProps.find(p => p.name === 'bind');
+    if (!bindProp || bindProp.value.type !== 'Ident') return this.error('checkbox requires bind:');
+    return { type: 'Checkbox', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind') };
+  }
+
+  private parseDropdown(): DropdownNode {
+    this.consume(TokenType.Dropdown, 'Expected "dropdown"');
+    const allProps = this.parsePropsNoPositional();
+    this.consume(TokenType.Newline, 'Expected newline');
+    const bindProp = allProps.find(p => p.name === 'bind');
+    if (!bindProp || bindProp.value.type !== 'Ident') return this.error('dropdown requires bind:');
+    return { type: 'Dropdown', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind') };
+  }
+
+  private parseBadge(): BadgeNode {
+    this.consume(TokenType.Badge, 'Expected "badge"');
+    const text = this.parseExpr();
+    const { properties } = this.parseArgs();
+    this.consume(TokenType.Newline, 'Expected newline');
+    return { type: 'Badge', text, properties };
   }
 
   private parseEach(): EachNode {
@@ -334,7 +392,14 @@ export class Parser {
   }
 
   private parseProperty(): Property {
-    const name = this.consume(TokenType.Identifier, 'Expected property name').value;
+    // Accept keywords as property names (e.g. label: on checkbox/toggle)
+    const tok = this.current();
+    if (tok.type === TokenType.Identifier || tok.type === TokenType.Label || tok.type === TokenType.Image || tok.type === TokenType.Icon) {
+      this.advance();
+    } else {
+      this.consume(TokenType.Identifier, 'Expected property name');
+    }
+    const name = tok.value;
     this.consume(TokenType.Colon, 'Expected ":"');
     const value = this.parseExpr();
     return { name, value };
@@ -536,6 +601,13 @@ export class Parser {
           this.advance();
           return { type: 'IsExpr', target: left, check: 'error' } as IsExpr;
         }
+      }
+
+      // is in / is not in
+      if (this.check(TokenType.In)) {
+        this.advance();
+        const list = this.parseAdditive();
+        return { type: 'InExpr', target: left, list, negated } as InExpr;
       }
 
       // General equality: is <expr> / is not <expr>

@@ -1,0 +1,29 @@
+screen Demo:
+  volume = 50
+  agreed = false
+  selected = "Option A"
+  options = ["Option A", "Option B", "Option C"]
+  favorites = ["Alice", "Charlie"]
+
+  layout vertical, gap: medium, padding: large:
+    label "Primitives Demo", style: heading
+
+    icon "star", size: large, color: brand
+    image "https://picsum.photos/100", size: 100, round: true
+    badge "Online", color: green
+    divider
+
+    slider bind: volume, min: 0, max: 100
+    label "Volume: " + volume
+
+    checkbox bind: agreed, label: "I agree to the terms"
+
+    dropdown bind: selected, options: options
+    label "Selected: " + selected
+
+    divider
+
+    if "Alice" is in favorites:
+      label "Alice is a favorite"
+    if "Bob" is not in favorites:
+      label "Bob is not a favorite"

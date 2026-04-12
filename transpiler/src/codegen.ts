@@ -279,6 +279,12 @@ export class CodeGenerator {
       case 'Each':   return this.genEach(node, depth);
       case 'Spinner': return `${'  '.repeat(depth)}const CircularProgressIndicator()`;
       case 'Divider': return `${'  '.repeat(depth)}const Divider()`;
+      case 'Icon':    return this.genIcon(node, depth);
+      case 'Image':   return this.genImage(node, depth);
+      case 'Slider':  return this.genSlider(node, depth);
+      case 'Checkbox': return this.genCheckbox(node, depth);
+      case 'Dropdown': return this.genDropdown(node, depth);
+      case 'Badge':   return this.genBadge(node, depth);
       case 'ComponentInvocation': return this.genComponentInvocation(node, depth);
     }
   }
@@ -429,6 +435,139 @@ export class CodeGenerator {
     code += `${ind}      ${node.bind} = value;\n`;
     code += `${ind}    });\n`;
     code += `${ind}  },\n`;
+    code += `${ind})`;
+    return code;
+  }
+
+  private genIcon(node: IconNode, depth: number): string {
+    const ind = '  '.repeat(depth);
+    const nameStr = this.exprToDart(node.name);
+    const sizeProp = this.findProp(node.properties, 'size');
+    const colorProp = this.findProp(node.properties, 'color');
+    const tapEvent = node.events.find(e => e.event === 'tap');
+
+    const iconName = node.name.type === 'StringLit' ? this.mapIconName(node.name.value) : nameStr;
+    const parts: string[] = [`${ind}Icon(\n${ind}  ${iconName}`];
+    if (sizeProp) parts.push(`size: ${this.resolveDesignToken(sizeProp.value)}`);
+    if (colorProp) parts.push(`color: ${this.resolveColor(colorProp.value)}`);
+
+    let code = parts[0];
+    for (let i = 1; i < parts.length; i++) {
+      code += `,\n${ind}  ${parts[i]}`;
+    }
+    code += `,\n${ind})`;
+
+    if (tapEvent) {
+      const onTap = this.genOnPressed(tapEvent, depth + 1);
+      code = `${ind}GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${ind}  child: ${code.trimStart()},\n${ind})`;
+    }
+    return code;
+  }
+
+  private mapIconName(name: string): string {
+    const map: Record<string, string> = {
+      play: 'Icons.play_arrow', pause: 'Icons.pause', stop: 'Icons.stop',
+      skip: 'Icons.skip_next', back: 'Icons.arrow_back', close: 'Icons.close',
+      search: 'Icons.search', settings: 'Icons.settings', plus: 'Icons.add',
+      trash: 'Icons.delete', edit: 'Icons.edit', phone: 'Icons.phone',
+      cart: 'Icons.shopping_cart', 'shopping-cart': 'Icons.shopping_cart',
+      heart: 'Icons.favorite', star: 'Icons.star', check: 'Icons.check',
+    };
+    return map[name] ?? `Icons.${name.replace(/-/g, '_')}`;
+  }
+
+  private genImage(node: ImageNode, depth: number): string {
+    const ind = '  '.repeat(depth);
+    const url = this.exprToDart(node.url);
+    const sizeProp = this.findProp(node.properties, 'size');
+    const roundProp = this.findProp(node.properties, 'round');
+    const size = sizeProp ? this.resolveDesignToken(sizeProp.value) : 48;
+    const isRound = roundProp !== undefined;
+
+    let code = `${ind}Image.network(\n${ind}  ${url},\n${ind}  width: ${size},\n${ind}  height: ${size},\n${ind}  fit: BoxFit.cover,\n${ind})`;
+    if (isRound) {
+      code = `${ind}ClipOval(\n${ind}  child: ${code.trimStart()},\n${ind})`;
+    }
+    return code;
+  }
+
+  private genSlider(node: SliderNode, depth: number): string {
+    const ind = '  '.repeat(depth);
+    const minProp = this.findProp(node.properties, 'min');
+    const maxProp = this.findProp(node.properties, 'max');
+    const min = minProp ? this.exprToDart(minProp.value) : '0';
+    const max = maxProp ? this.exprToDart(maxProp.value) : '100';
+
+    let code = `${ind}Slider(\n`;
+    code += `${ind}  value: ${node.bind}.toDouble(),\n`;
+    code += `${ind}  min: ${min}.toDouble(),\n`;
+    code += `${ind}  max: ${max}.toDouble(),\n`;
+    code += `${ind}  onChanged: (value) {\n`;
+    code += `${ind}    setState(() {\n`;
+    code += `${ind}      ${node.bind} = value.round();\n`;
+    code += `${ind}    });\n`;
+    code += `${ind}  },\n`;
+    code += `${ind})`;
+    return code;
+  }
+
+  private genCheckbox(node: CheckboxNode, depth: number): string {
+    const ind = '  '.repeat(depth);
+    const labelProp = this.findProp(node.properties, 'label');
+    const labelStr = labelProp ? this.exprToDart(labelProp.value) : null;
+
+    if (labelStr) {
+      let code = `${ind}CheckboxListTile(\n`;
+      code += `${ind}  value: ${node.bind},\n`;
+      code += `${ind}  title: Text(${labelStr}),\n`;
+      code += `${ind}  onChanged: (value) {\n`;
+      code += `${ind}    setState(() {\n`;
+      code += `${ind}      ${node.bind} = value ?? false;\n`;
+      code += `${ind}    });\n`;
+      code += `${ind}  },\n`;
+      code += `${ind})`;
+      return code;
+    }
+
+    let code = `${ind}Checkbox(\n`;
+    code += `${ind}  value: ${node.bind},\n`;
+    code += `${ind}  onChanged: (value) {\n`;
+    code += `${ind}    setState(() {\n`;
+    code += `${ind}      ${node.bind} = value ?? false;\n`;
+    code += `${ind}    });\n`;
+    code += `${ind}  },\n`;
+    code += `${ind})`;
+    return code;
+  }
+
+  private genDropdown(node: DropdownNode, depth: number): string {
+    const ind = '  '.repeat(depth);
+    const optionsProp = this.findProp(node.properties, 'options');
+    const optionsExpr = optionsProp ? this.exprToDart(optionsProp.value) : '[]';
+
+    let code = `${ind}DropdownButton<dynamic>(\n`;
+    code += `${ind}  value: ${node.bind},\n`;
+    code += `${ind}  items: (${optionsExpr} as List).map((e) => DropdownMenuItem<dynamic>(value: e, child: Text(e.toString()))).toList(),\n`;
+    code += `${ind}  onChanged: (value) {\n`;
+    code += `${ind}    setState(() {\n`;
+    code += `${ind}      ${node.bind} = value;\n`;
+    code += `${ind}    });\n`;
+    code += `${ind}  },\n`;
+    code += `${ind})`;
+    return code;
+  }
+
+  private genBadge(node: BadgeNode, depth: number): string {
+    const ind = '  '.repeat(depth);
+    const textStr = this.exprToDisplayStr(node.text);
+    const colorProp = this.findProp(node.properties, 'color');
+    const colorStr = colorProp ? this.resolveColor(colorProp.value) : null;
+
+    let code = `${ind}Chip(\n`;
+    code += `${ind}  label: Text(${textStr}),\n`;
+    if (colorStr) {
+      code += `${ind}  backgroundColor: ${colorStr},\n`;
+    }
     code += `${ind})`;
     return code;
   }
@@ -685,6 +824,8 @@ export class CodeGenerator {
         return `(${expr.param}) => ${this.exprToDart(expr.body)}`;
       case 'EqualityExpr':
         return `${this.exprToDart(expr.left)} ${expr.negated ? '!=' : '=='} ${this.exprToDart(expr.right)}`;
+      case 'InExpr':
+        return `${expr.negated ? '!' : ''}${this.exprToDart(expr.list)}.contains(${this.exprToDart(expr.target)})`;
       case 'ListLit':
         if (expr.elements.length === 0) return '[]';
         return `[${expr.elements.map(e => this.exprToDart(e)).join(', ')}]`;
@@ -772,6 +913,7 @@ export class CodeGenerator {
         return this.exprToDart(expr) + '.toString()';
       case 'LambdaExpr':
       case 'EqualityExpr':
+      case 'InExpr':
         return "'" + '${' + this.exprToDart(expr) + "}'";
     }
   }

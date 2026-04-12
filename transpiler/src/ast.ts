@@ -63,7 +63,14 @@ export interface EqualityExpr {
   negated: boolean;
 }
 
-export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr | LambdaExpr | EqualityExpr | ListLit | ObjectLit | FieldAccess | FunctionCall;
+export interface InExpr {
+  type: 'InExpr';
+  target: Expr;
+  list: Expr;
+  negated: boolean;
+}
+
+export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr | LambdaExpr | EqualityExpr | InExpr | ListLit | ObjectLit | FieldAccess | FunctionCall;
 
 // -- Properties and events --
 
@@ -193,6 +200,43 @@ export interface DividerNode {
   type: 'Divider';
 }
 
+export interface IconNode {
+  type: 'Icon';
+  name: Expr;
+  properties: Property[];
+  events: EventHandler[];
+}
+
+export interface ImageNode {
+  type: 'Image';
+  url: Expr;
+  properties: Property[];
+}
+
+export interface SliderNode {
+  type: 'Slider';
+  bind: string;
+  properties: Property[];
+}
+
+export interface CheckboxNode {
+  type: 'Checkbox';
+  bind: string;
+  properties: Property[];
+}
+
+export interface DropdownNode {
+  type: 'Dropdown';
+  bind: string;
+  properties: Property[];
+}
+
+export interface BadgeNode {
+  type: 'Badge';
+  text: Expr;
+  properties: Property[];
+}
+
 export interface ComponentInvocation {
   type: 'ComponentInvocation';
   name: string;
@@ -201,7 +245,7 @@ export interface ComponentInvocation {
   events: EventHandler[];
 }
 
-export type UINode = Layout | LabelNode | ButtonNode | InputNode | ToggleNode | IfNode | EachNode | SpinnerNode | DividerNode | ComponentInvocation;
+export type UINode = Layout | LabelNode | ButtonNode | InputNode | ToggleNode | IfNode | EachNode | SpinnerNode | DividerNode | IconNode | ImageNode | SliderNode | CheckboxNode | DropdownNode | BadgeNode | ComponentInvocation;
 
 // -- Top-level --
 

@@ -24,6 +24,12 @@ export enum TokenType {
   Shared,
   Spinner,
   Divider,
+  Icon,
+  Image,
+  Slider,
+  Checkbox,
+  Dropdown,
+  Badge,
 
   // Operators
   Arrow,
@@ -78,4 +84,10 @@ export const KEYWORDS: Record<string, TokenType> = {
   shared: TokenType.Shared,
   spinner: TokenType.Spinner,
   divider: TokenType.Divider,
+  icon: TokenType.Icon,
+  image: TokenType.Image,
+  slider: TokenType.Slider,
+  checkbox: TokenType.Checkbox,
+  dropdown: TokenType.Dropdown,
+  badge: TokenType.Badge,
 };
