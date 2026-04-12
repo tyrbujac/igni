@@ -28,7 +28,8 @@ class _DiceRollerScreenState extends State<DiceRollerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Center(
           child: Column(
@@ -36,22 +37,22 @@ class _DiceRollerScreenState extends State<DiceRollerScreen> {
             children: [
               Text(
                 'Dice Roller',
-                style: Theme.of(context).textTheme.headlineLarge,
+                style: Theme.of(context).textTheme.headlineLarge!,
               ),
               const SizedBox(height: 16),
               if (rolled) ...[
                 Text(
                   'You rolled:',
-                  style: Theme.of(context).textTheme.bodyLarge,
+                  style: Theme.of(context).textTheme.bodyLarge!,
                 ),
                 Text(
                   '$result',
-                  style: Theme.of(context).textTheme.headlineLarge,
+                  style: Theme.of(context).textTheme.headlineLarge!,
                 ),
               ] else ...[
                 Text(
                   'Tap Roll to start!',
-                  style: Theme.of(context).textTheme.bodyLarge,
+                  style: Theme.of(context).textTheme.bodyLarge!,
                 ),
               ],
               const SizedBox(height: 16),
@@ -64,6 +65,7 @@ class _DiceRollerScreenState extends State<DiceRollerScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

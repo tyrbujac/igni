@@ -222,6 +222,15 @@ export class Lexer {
       this.pos++;
       this.col++;
     }
+    // Float: consume `.` + digits if the dot is followed by a digit (not a field access)
+    if (this.pos < this.source.length - 1 && this.source[this.pos] === '.' && this.isDigit(this.source[this.pos + 1])) {
+      this.pos++; // consume '.'
+      this.col++;
+      while (this.pos < this.source.length && this.isDigit(this.source[this.pos])) {
+        this.pos++;
+        this.col++;
+      }
+    }
     this.emit(TokenType.Number, this.source.slice(start, this.pos));
   }
 

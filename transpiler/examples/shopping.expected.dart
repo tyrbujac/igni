@@ -46,7 +46,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -55,7 +56,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
               children: [
                 Text(
                   'Products',
-                  style: Theme.of(context).textTheme.headlineLarge,
+                  style: Theme.of(context).textTheme.headlineLarge!,
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
@@ -76,7 +77,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       children: [
                         Text(
                           product['name'].toString(),
-                          style: Theme.of(context).textTheme.headlineSmall,
+                          style: Theme.of(context).textTheme.headlineSmall!,
                         ),
                         Text(
                           '\$'.toString() + product['price'].toString(),
@@ -96,6 +97,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ],
         ),
       ),
+      ),
     );
   }
 }
@@ -112,7 +114,7 @@ class _CartScreenState extends State<CartScreen> {
 
   void remove_item(dynamic target) {
     shared.update(() {
-      shared.cart = shared.cart.where((item) => item['id'] != target['id']).toList();
+      shared.cart = shared.cart.where((item) => (item['id'] != target['id']) == true).toList();
     });
   }
 
@@ -127,7 +129,8 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -136,7 +139,7 @@ class _CartScreenState extends State<CartScreen> {
               children: [
                 Text(
                   'Your Cart',
-                  style: Theme.of(context).textTheme.headlineLarge,
+                  style: Theme.of(context).textTheme.headlineLarge!,
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -161,7 +164,7 @@ class _CartScreenState extends State<CartScreen> {
                         children: [
                           Text(
                             item['name'].toString(),
-                            style: Theme.of(context).textTheme.headlineSmall,
+                            style: Theme.of(context).textTheme.headlineSmall!,
                           ),
                           Text(
                             '\$'.toString() + item['price'].toString().toString() + ' (Qty: '.toString().toString() + item['quantity'].toString().toString() + ')'.toString(),
@@ -182,11 +185,12 @@ class _CartScreenState extends State<CartScreen> {
               const Divider(),
               Text(
                 'Total: \$'.toString() + cart_total().toString(),
-                style: Theme.of(context).textTheme.headlineSmall,
+                style: Theme.of(context).textTheme.headlineSmall!,
               ),
             ],
           ],
         ),
+      ),
       ),
     );
   }

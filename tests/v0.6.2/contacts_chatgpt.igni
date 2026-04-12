@@ -1,0 +1,45 @@
+screen Contacts:
+  contacts = [
+    {name: "Alice", phone: "123456", favourite: true},
+    {name: "Bob", phone: "987654", favourite: false},
+    {name: "Charlie", phone: "555666", favourite: true}
+  ]
+  search = ""
+  show_favourites = false
+
+  filtered = contacts
+  if search is not empty:
+    filtered = filter(filtered, c => contains(c.name, search))
+  if show_favourites:
+    filtered = filter(filtered, c => c.favourite)
+
+  display = sorted(filtered, c => c.name)
+
+  layout vertical, gap: medium, padding: large:
+    input bind: search, placeholder: "Search contacts..."
+    toggle bind: show_favourites
+
+    if display is empty:
+      label "No contacts found", color: subtle
+    else:
+      each contact in display:
+        ContactRow contact, on tap: navigate to ContactDetail contact
+
+component ContactRow(contact):
+  layout vertical, padding: medium, background: card, rounded: medium:
+    label contact.name, style: body
+    label contact.phone, style: caption, color: subtle
+
+screen ContactDetail(contact):
+  layout vertical, gap: medium, padding: large:
+    label contact.name, style: heading
+    label contact.phone, style: body
+
+    if contact.favourite:
+      badge "Favourite", color: brand
+
+    button "Toggle Favourite", on tap: toggle_favourite()
+
+  toggle_favourite():
+    contact.favourite = not contact.favourite
+    navigate back

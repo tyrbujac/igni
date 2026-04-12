@@ -17,7 +17,8 @@ class _ToggleScreenState extends State<ToggleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Center(
           child: Column(
@@ -35,17 +36,18 @@ class _ToggleScreenState extends State<ToggleScreen> {
               if (show) ...[
                 Text(
                   'Now you see me',
-                  style: Theme.of(context).textTheme.headlineLarge,
+                  style: Theme.of(context).textTheme.headlineLarge!,
                 ),
               ] else ...[
                 Text(
                   'Gone!',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: Theme.of(context).textTheme.bodySmall!,
                 ),
               ],
             ],
           ),
         ),
+      ),
       ),
     );
   }

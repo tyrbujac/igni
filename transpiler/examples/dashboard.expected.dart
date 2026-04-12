@@ -24,7 +24,7 @@ class StatCard extends StatelessWidget {
             children: [
               Text(
                 '$title',
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(context).textTheme.bodySmall!,
               ),
               Icon(
                 icon_name,
@@ -35,7 +35,7 @@ class StatCard extends StatelessWidget {
           ),
           Text(
             '$value',
-            style: Theme.of(context).textTheme.headlineLarge,
+            style: Theme.of(context).textTheme.headlineLarge!,
           ),
           child,
         ],
@@ -67,7 +67,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -76,7 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 Text(
                   'Dashboard',
-                  style: Theme.of(context).textTheme.headlineLarge,
+                  style: Theme.of(context).textTheme.headlineLarge!,
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -140,7 +141,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 Text(
                   'Recent Activity',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style: Theme.of(context).textTheme.headlineSmall!,
                 ),
                 const SizedBox(height: 8),
                 for (final event in activities) ...[
@@ -151,11 +152,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         Text(
                           event['text'].toString(),
-                          style: Theme.of(context).textTheme.bodyLarge,
+                          style: Theme.of(context).textTheme.bodyLarge!,
                         ),
                         Text(
                           event['time'].toString(),
-                          style: Theme.of(context).textTheme.bodySmall,
+                          style: Theme.of(context).textTheme.bodySmall!,
                         ),
                       ],
                     ),
@@ -165,6 +166,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

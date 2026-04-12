@@ -17,13 +17,14 @@ class _NoteListScreenState extends State<NoteListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             Text(
               'Notes',
-              style: Theme.of(context).textTheme.headlineLarge,
+              style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
             for (final note in notes) ...[
@@ -36,6 +37,7 @@ class _NoteListScreenState extends State<NoteListScreen> {
             ],
           ],
         ),
+      ),
       ),
     );
   }
@@ -53,13 +55,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             Text(
               widget.note['title'].toString(),
-              style: Theme.of(context).textTheme.headlineLarge,
+              style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
             Text(
@@ -74,6 +77,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

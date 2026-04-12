@@ -47,13 +47,14 @@ class _TodoScreenState extends State<TodoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             Text(
               'Todo',
-              style: Theme.of(context).textTheme.headlineLarge,
+              style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
             TextField(
@@ -97,6 +98,7 @@ class _TodoScreenState extends State<TodoScreen> {
             ],
           ],
         ),
+      ),
       ),
     );
   }

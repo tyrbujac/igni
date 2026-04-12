@@ -17,21 +17,22 @@ class _ContactsScreenState extends State<ContactsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             Text(
               'Contacts',
-              style: Theme.of(context).textTheme.headlineLarge,
+              style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
             Text(
               'Active (sorted):',
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: Theme.of(context).textTheme.bodyLarge!,
             ),
             const SizedBox(height: 16),
-            for (final contact in (List.from(contacts.where((c) => c['active']).toList())..sort((a, b) => (a['name'] as Comparable).compareTo(b['name'])))) ...[
+            for (final contact in (List.from(contacts.where((c) => (c['active']) == true).toList())..sort((a, b) => (a['name'] as Comparable).compareTo(b['name'])))) ...[
               Text(
                 contact['name'].toString(),
               ),
@@ -39,7 +40,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
             const SizedBox(height: 16),
             Text(
               'All (reversed):',
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: Theme.of(context).textTheme.bodyLarge!,
             ),
             const SizedBox(height: 16),
             for (final contact in (List.from(contacts)..sort((a, b) => (a['name'] as Comparable).compareTo(b['name']))).reversed.toList()) ...[
@@ -49,6 +50,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
             ],
           ],
         ),
+      ),
       ),
     );
   }

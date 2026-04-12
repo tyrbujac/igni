@@ -17,13 +17,14 @@ class _CounterScreenState extends State<CounterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
+      body: SingleChildScrollView(
+        child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               '$count',
-              style: Theme.of(context).textTheme.headlineLarge,
+              style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -36,6 +37,7 @@ class _CounterScreenState extends State<CounterScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

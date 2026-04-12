@@ -3,6 +3,7 @@
 export interface NumberLit {
   type: 'NumberLit';
   value: number;
+  isFloat: boolean;
 }
 
 export interface StringLit {
@@ -18,7 +19,7 @@ export interface Ident {
 export interface BinaryExpr {
   type: 'BinaryExpr';
   left: Expr;
-  op: '+' | '-' | '*' | '/' | '>' | '<' | '>=' | '<=';
+  op: '+' | '-' | '*' | '/' | '>' | '<' | '>=' | '<=' | 'and' | 'or';
   right: Expr;
 }
 
@@ -156,6 +157,7 @@ export interface LabelNode {
   type: 'Label';
   value: Expr;
   properties: Property[];
+  events: EventHandler[];
 }
 
 export interface ButtonNode {
@@ -211,30 +213,35 @@ export interface ImageNode {
   type: 'Image';
   url: Expr;
   properties: Property[];
+  events: EventHandler[];
 }
 
 export interface SliderNode {
   type: 'Slider';
   bind: string;
   properties: Property[];
+  events: EventHandler[];
 }
 
 export interface CheckboxNode {
   type: 'Checkbox';
   bind: string;
   properties: Property[];
+  events: EventHandler[];
 }
 
 export interface DropdownNode {
   type: 'Dropdown';
   bind: string;
   properties: Property[];
+  events: EventHandler[];
 }
 
 export interface BadgeNode {
   type: 'Badge';
   text: Expr;
   properties: Property[];
+  events: EventHandler[];
 }
 
 export interface BodyNode {

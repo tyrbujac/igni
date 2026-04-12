@@ -31,6 +31,8 @@ export enum TokenType {
   Dropdown,
   Badge,
   Body,
+  And,
+  Or,
 
   // Operators
   Arrow,
@@ -95,4 +97,6 @@ export const KEYWORDS: Record<string, TokenType> = {
   checkbox: TokenType.Checkbox,
   dropdown: TokenType.Dropdown,
   badge: TokenType.Badge,
+  and: TokenType.And,
+  or: TokenType.Or,
 };

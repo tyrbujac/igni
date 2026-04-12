@@ -49,7 +49,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -62,7 +63,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             ] else ...[
               Text(
                 user['name'].toString(),
-                style: Theme.of(context).textTheme.headlineLarge,
+                style: Theme.of(context).textTheme.headlineLarge!,
               ),
               Text(
                 user['email'].toString(),
@@ -70,6 +71,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             ],
           ],
         ),
+      ),
       ),
     );
   }

@@ -2,7 +2,9 @@
 
 Build your first app in 10 steps. No programming experience needed.
 
-Every step you save the file and see the result in the browser. Do this → see that.
+Every step you save the file (**Cmd+S** on Mac, **Ctrl+S** on Windows) and see the result in the browser. Do this → see that.
+
+**If something goes wrong:** If you see red text in the terminal, don't panic — check your spelling and spacing, then save again.
 
 ---
 

@@ -21,13 +21,14 @@ class _DemoScreenState extends State<DemoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             Text(
               'Primitives Demo',
-              style: Theme.of(context).textTheme.headlineLarge,
+              style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
             Icon(
@@ -106,6 +107,7 @@ class _DemoScreenState extends State<DemoScreen> {
             ],
           ],
         ),
+      ),
       ),
     );
   }

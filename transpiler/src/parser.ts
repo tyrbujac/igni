@@ -162,9 +162,9 @@ export class Parser {
   private parseLabel(): LabelNode {
     this.consume(TokenType.Label, 'Expected "label"');
     const value = this.parseExpr();
-    const { properties } = this.parseArgs();
+    const { properties, events } = this.parseArgs();
     this.consume(TokenType.Newline, 'Expected newline');
-    return { type: 'Label', value, properties };
+    return { type: 'Label', value, properties, events };
   }
 
   private parseButton(): ButtonNode {
@@ -177,7 +177,7 @@ export class Parser {
 
   private parseInput(): InputNode {
     this.consume(TokenType.Input, 'Expected "input"');
-    const allProps = this.parsePropsNoPositional();
+    const { properties: allProps } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
     if (!bindProp || bindProp.value.type !== 'Ident') {
@@ -192,7 +192,7 @@ export class Parser {
 
   private parseToggle(): ToggleNode {
     this.consume(TokenType.Toggle, 'Expected "toggle"');
-    const allProps = this.parsePropsNoPositional();
+    const { properties: allProps } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
     if (!bindProp || bindProp.value.type !== 'Ident') {
@@ -205,13 +205,23 @@ export class Parser {
     };
   }
 
-  private parsePropsNoPositional(): Property[] {
-    const props = [this.parseProperty()];
+  private parsePropsNoPositional(): { properties: Property[]; events: EventHandler[] } {
+    const properties: Property[] = [];
+    const events: EventHandler[] = [];
+    if (this.check(TokenType.On)) {
+      events.push(this.parseEventHandler());
+    } else {
+      properties.push(this.parseProperty());
+    }
     while (this.check(TokenType.Comma)) {
       this.advance();
-      props.push(this.parseProperty());
+      if (this.check(TokenType.On)) {
+        events.push(this.parseEventHandler());
+      } else {
+        properties.push(this.parseProperty());
+      }
     }
-    return props;
+    return { properties, events };
   }
 
   private parseIcon(): IconNode {
@@ -225,44 +235,44 @@ export class Parser {
   private parseImage(): ImageNode {
     this.consume(TokenType.Image, 'Expected "image"');
     const url = this.parseExpr();
-    const { properties } = this.parseArgs();
+    const { properties, events } = this.parseArgs();
     this.consume(TokenType.Newline, 'Expected newline');
-    return { type: 'Image', url, properties };
+    return { type: 'Image', url, properties, events };
   }
 
   private parseSlider(): SliderNode {
     this.consume(TokenType.Slider, 'Expected "slider"');
-    const allProps = this.parsePropsNoPositional();
+    const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
     if (!bindProp || bindProp.value.type !== 'Ident') return this.error('slider requires bind:');
-    return { type: 'Slider', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind') };
+    return { type: 'Slider', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind'), events };
   }
 
   private parseCheckbox(): CheckboxNode {
     this.consume(TokenType.Checkbox, 'Expected "checkbox"');
-    const allProps = this.parsePropsNoPositional();
+    const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
     if (!bindProp || bindProp.value.type !== 'Ident') return this.error('checkbox requires bind:');
-    return { type: 'Checkbox', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind') };
+    return { type: 'Checkbox', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind'), events };
   }
 
   private parseDropdown(): DropdownNode {
     this.consume(TokenType.Dropdown, 'Expected "dropdown"');
-    const allProps = this.parsePropsNoPositional();
+    const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
     if (!bindProp || bindProp.value.type !== 'Ident') return this.error('dropdown requires bind:');
-    return { type: 'Dropdown', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind') };
+    return { type: 'Dropdown', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind'), events };
   }
 
   private parseBadge(): BadgeNode {
     this.consume(TokenType.Badge, 'Expected "badge"');
     const text = this.parseExpr();
-    const { properties } = this.parseArgs();
+    const { properties, events } = this.parseArgs();
     this.consume(TokenType.Newline, 'Expected newline');
-    return { type: 'Badge', text, properties };
+    return { type: 'Badge', text, properties, events };
   }
 
   private parseEach(): EachNode {
@@ -589,7 +599,27 @@ export class Parser {
   // -- Expressions (with operator precedence) --
 
   private parseExpr(): Expr {
-    return this.parseComparison();
+    return this.parseLogicalOr();
+  }
+
+  private parseLogicalOr(): Expr {
+    let left = this.parseLogicalAnd();
+    while (this.check(TokenType.Or)) {
+      this.advance();
+      const right = this.parseLogicalAnd();
+      left = { type: 'BinaryExpr', left, op: 'or', right } as BinaryExpr;
+    }
+    return left;
+  }
+
+  private parseLogicalAnd(): Expr {
+    let left = this.parseComparison();
+    while (this.check(TokenType.And)) {
+      this.advance();
+      const right = this.parseComparison();
+      left = { type: 'BinaryExpr', left, op: 'and', right } as BinaryExpr;
+    }
+    return left;
   }
 
   private parseComparison(): Expr {
@@ -671,7 +701,7 @@ export class Parser {
     }
     if (this.check(TokenType.Number)) {
       const tok = this.advance();
-      return this.parsePostfix({ type: 'NumberLit', value: parseInt(tok.value, 10) });
+      return this.parsePostfix({ type: 'NumberLit', value: parseFloat(tok.value), isFloat: tok.value.includes('.') });
     }
     if (this.check(TokenType.String)) {
       const tok = this.advance();

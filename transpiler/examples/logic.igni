@@ -1,0 +1,20 @@
+screen Access:
+  logged_in = false
+  verified = false
+  age = 0
+
+  layout vertical, gap: medium, padding: large:
+    label "Access Check", style: heading
+
+    toggle bind: logged_in
+    toggle bind: verified
+
+    if logged_in and verified:
+      label "Full access granted"
+    else if logged_in and not verified:
+      label "Please verify your email"
+    else:
+      label "Please log in"
+
+    if age > 12 or verified:
+      label "Content visible"

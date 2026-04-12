@@ -30,7 +30,8 @@ class _GreetingScreenState extends State<GreetingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -55,6 +56,7 @@ class _GreetingScreenState extends State<GreetingScreen> {
             ],
           ],
         ),
+      ),
       ),
     );
   }

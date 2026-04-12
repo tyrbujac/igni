@@ -13,10 +13,10 @@ const DESIGN_TOKENS: Record<string, number> = {
 };
 
 const STYLE_MAP: Record<string, string> = {
-  heading: 'Theme.of(context).textTheme.headlineLarge',
-  'heading.small': 'Theme.of(context).textTheme.headlineSmall',
-  body: 'Theme.of(context).textTheme.bodyLarge',
-  caption: 'Theme.of(context).textTheme.bodySmall',
+  heading: 'Theme.of(context).textTheme.headlineLarge!',
+  'heading.small': 'Theme.of(context).textTheme.headlineSmall!',
+  body: 'Theme.of(context).textTheme.bodyLarge!',
+  caption: 'Theme.of(context).textTheme.bodySmall!',
 };
 
 const COLOR_MAP: Record<string, string> = {
@@ -248,7 +248,7 @@ export class CodeGenerator {
       stateClass += preBuild + '\n\n';
     }
     stateClass += `  @override\n  Widget build(BuildContext context) {\n`;
-    stateClass += `    return Scaffold(\n      body: ${bodyWidget.trimStart()},\n    );\n`;
+    stateClass += `    return Scaffold(\n      body: SingleChildScrollView(\n        child: ${bodyWidget.trimStart()},\n      ),\n    );\n`;
     stateClass += `  }\n}\n`;
 
     return widgetClass + '\n' + stateClass;
@@ -267,12 +267,26 @@ export class CodeGenerator {
   private genStateVar(decl: VariableDecl): string {
     const dartType = this.inferType(decl.value);
     const dartValue = this.exprToDart(decl.value);
-    return `${dartType} ${decl.name} = ${dartValue};`;
+    const needsLate = this.exprRefsParams(decl.value);
+    return needsLate ? `late ${dartType} ${decl.name} = ${dartValue};` : `${dartType} ${decl.name} = ${dartValue};`;
+  }
+
+  private exprRefsParams(expr: Expr): boolean {
+    if (expr.type === 'Ident') return this.screenParams.includes(expr.name);
+    if (expr.type === 'FieldAccess') return this.exprRefsParams(expr.object);
+    if (expr.type === 'BinaryExpr') return this.exprRefsParams(expr.left) || this.exprRefsParams(expr.right);
+    if (expr.type === 'UnaryExpr') return this.exprRefsParams(expr.operand);
+    if (expr.type === 'FunctionCall') return expr.args.some(a => this.exprRefsParams(a));
+    if (expr.type === 'LambdaExpr') return this.exprRefsParams(expr.body);
+    if (expr.type === 'EqualityExpr') return this.exprRefsParams(expr.left) || this.exprRefsParams(expr.right);
+    if (expr.type === 'IsExpr') return this.exprRefsParams(expr.target);
+    if (expr.type === 'InExpr') return this.exprRefsParams(expr.target) || this.exprRefsParams(expr.list);
+    return false;
   }
 
   private inferType(expr: Expr): string {
     switch (expr.type) {
-      case 'NumberLit': return 'int';
+      case 'NumberLit': return expr.isFloat ? 'double' : 'int';
       case 'StringLit': return 'String';
       case 'Ident':
         if (expr.name === 'true' || expr.name === 'false') return 'bool';
@@ -400,6 +414,11 @@ export class CodeGenerator {
       }
     }
     code += `${ind})`;
+    const tapEvent = node.events.find(e => e.event === 'tap');
+    if (tapEvent) {
+      const onTap = this.genOnPressed(tapEvent, depth + 1);
+      code = `${ind}GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${ind}  child: ${code.trimStart()},\n${ind})`;
+    }
     return code;
   }
 
@@ -505,6 +524,11 @@ export class CodeGenerator {
     if (isRound) {
       code = `${ind}ClipOval(\n${ind}  child: ${code.trimStart()},\n${ind})`;
     }
+    const tapEvent = node.events.find(e => e.event === 'tap');
+    if (tapEvent) {
+      const onTap = this.genOnPressed(tapEvent, depth + 1);
+      code = `${ind}GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${ind}  child: ${code.trimStart()},\n${ind})`;
+    }
     return code;
   }
 
@@ -525,6 +549,11 @@ export class CodeGenerator {
     code += `${ind}    });\n`;
     code += `${ind}  },\n`;
     code += `${ind})`;
+    const tapEventS = node.events.find(e => e.event === 'tap');
+    if (tapEventS) {
+      const onTap = this.genOnPressed(tapEventS, depth + 1);
+      code = `${ind}GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${ind}  child: ${code.trimStart()},\n${ind})`;
+    }
     return code;
   }
 
@@ -543,6 +572,11 @@ export class CodeGenerator {
       code += `${ind}    });\n`;
       code += `${ind}  },\n`;
       code += `${ind})`;
+      const tapEventCL = node.events.find(e => e.event === 'tap');
+      if (tapEventCL) {
+        const onTap = this.genOnPressed(tapEventCL, depth + 1);
+        code = `${ind}GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${ind}  child: ${code.trimStart()},\n${ind})`;
+      }
       return code;
     }
 
@@ -554,6 +588,11 @@ export class CodeGenerator {
     code += `${ind}    });\n`;
     code += `${ind}  },\n`;
     code += `${ind})`;
+    const tapEventC = node.events.find(e => e.event === 'tap');
+    if (tapEventC) {
+      const onTap = this.genOnPressed(tapEventC, depth + 1);
+      code = `${ind}GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${ind}  child: ${code.trimStart()},\n${ind})`;
+    }
     return code;
   }
 
@@ -571,6 +610,11 @@ export class CodeGenerator {
     code += `${ind}    });\n`;
     code += `${ind}  },\n`;
     code += `${ind})`;
+    const tapEventD = node.events.find(e => e.event === 'tap');
+    if (tapEventD) {
+      const onTap = this.genOnPressed(tapEventD, depth + 1);
+      code = `${ind}GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${ind}  child: ${code.trimStart()},\n${ind})`;
+    }
     return code;
   }
 
@@ -586,6 +630,11 @@ export class CodeGenerator {
       code += `${ind}  backgroundColor: ${colorStr},\n`;
     }
     code += `${ind})`;
+    const tapEventB = node.events.find(e => e.event === 'tap');
+    if (tapEventB) {
+      const onTap = this.genOnPressed(tapEventB, depth + 1);
+      code = `${ind}GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${ind}  child: ${code.trimStart()},\n${ind})`;
+    }
     return code;
   }
 
@@ -847,6 +896,8 @@ export class CodeGenerator {
         if (expr.op === '+' && this.isStringExpr(expr)) {
           return `${this.exprToDart(expr.left)}.toString() + ${this.exprToDart(expr.right)}.toString()`;
         }
+        if (expr.op === 'and') return `${this.exprToDart(expr.left)} && ${this.exprToDart(expr.right)}`;
+        if (expr.op === 'or') return `${this.exprToDart(expr.left)} || ${this.exprToDart(expr.right)}`;
         return `${this.exprToDart(expr.left)} ${expr.op} ${this.exprToDart(expr.right)}`;
       case 'UnaryExpr':
         return `!${this.exprToDart(expr.operand)}`;
@@ -894,6 +945,11 @@ export class CodeGenerator {
       return `${args[0]}.map((e) => e == ${args[1]} ? ${args[2]} : e).toList()`;
     }
     if (call.name === 'filter' && args.length === 2) {
+      if (call.args[1].type === 'LambdaExpr') {
+        const lambda = call.args[1] as LambdaExpr;
+        const body = this.exprToDart(lambda.body);
+        return `${args[0]}.where((${lambda.param}) => (${body}) == true).toList()`;
+      }
       return `${args[0]}.where(${args[1]}).toList()`;
     }
     if (call.name === 'find' && args.length === 2 && call.args[1].type === 'LambdaExpr') {
@@ -915,7 +971,7 @@ export class CodeGenerator {
       return `${args[0]}.where((e) => e == ${args[1]}).length`;
     }
     if (call.name === 'contains' && args.length === 2) {
-      return `${args[0]}.toString().contains(${args[1]}.toString())`;
+      return `${args[0]}.toString().toLowerCase().contains(${args[1]}.toString().toLowerCase())`;
     }
     if (call.name === 'random' && args.length === 2) {
       return `(Random().nextInt(${args[1]} - ${args[0]} + 1) + ${args[0]})`;

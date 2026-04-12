@@ -34,13 +34,14 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             Text(
               'Cart',
-              style: Theme.of(context).textTheme.headlineLarge,
+              style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
             for (final item in items) ...[
@@ -58,6 +59,7 @@ class _CartScreenState extends State<CartScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -1,0 +1,51 @@
+shared:
+  contacts = [
+    {name: "Alice", phone: "555-0101", favourite: false},
+    {name: "Bob", phone: "555-0102", favourite: true},
+    {name: "Charlie", phone: "555-0103", favourite: false},
+    {name: "Diana", phone: "555-0104", favourite: true},
+    {name: "Eve", phone: "555-0105", favourite: false}
+  ]
+
+screen ContactList:
+  query = ""
+  favourites_only = false
+
+  layout vertical, gap: medium, padding: large:
+    label "Contacts", style: heading
+    input bind: query, placeholder: "Search..."
+    toggle bind: favourites_only
+    if visible() is empty:
+      label "No contacts found", style: body, color: subtle
+    else:
+      each contact in visible():
+        ContactRow contact, on tap: navigate to ContactDetail contact
+
+  visible():
+    result = shared.contacts
+    if favourites_only:
+      result = filter(result, c => c.favourite)
+    if query is not empty:
+      result = filter(result, c => contains(c.name, query))
+    return sorted(result, c => c.name)
+
+screen ContactDetail(contact):
+  current = find(shared.contacts, c => c.name is contact.name)
+
+  layout vertical, gap: medium, padding: large:
+    label current.name, style: heading
+    label current.phone, style: body
+    if current.favourite:
+      badge "Favourite", color: brand
+    button "Toggle Favourite", on tap: toggle_fav()
+    button "Back", on tap: navigate back
+
+  toggle_fav():
+    c = find(shared.contacts, c => c.name is contact.name)
+    shared.contacts = replace(shared.contacts, c, {name: c.name, phone: c.phone, favourite: not c.favourite})
+
+component ContactRow(contact):
+  layout horizontal, padding: medium, background: card, rounded: medium, spread: true:
+    label contact.name, style: body
+    if contact.favourite:
+      icon "star", color: brand
