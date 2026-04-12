@@ -19,6 +19,7 @@ export enum TokenType {
   Each,
   In,
   Navigate,
+  Component,
 
   // Operators
   Equals,
@@ -67,4 +68,5 @@ export const KEYWORDS: Record<string, TokenType> = {
   each: TokenType.Each,
   in: TokenType.In,
   navigate: TokenType.Navigate,
+  component: TokenType.Component,
 };

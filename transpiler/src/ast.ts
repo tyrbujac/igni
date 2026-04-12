@@ -152,7 +152,15 @@ export interface EachNode {
   children: UINode[];
 }
 
-export type UINode = Layout | LabelNode | ButtonNode | InputNode | ToggleNode | IfNode | EachNode;
+export interface ComponentInvocation {
+  type: 'ComponentInvocation';
+  name: string;
+  args: Expr[];
+  properties: Property[];
+  events: EventHandler[];
+}
+
+export type UINode = Layout | LabelNode | ButtonNode | InputNode | ToggleNode | IfNode | EachNode | ComponentInvocation;
 
 // -- Top-level --
 
@@ -165,7 +173,15 @@ export interface Screen {
   body: ScreenItem[];
 }
 
+export interface ComponentDef {
+  type: 'ComponentDef';
+  name: string;
+  params: string[];
+  body: UINode[];
+}
+
 export interface Program {
   type: 'Program';
   screens: Screen[];
+  components: ComponentDef[];
 }

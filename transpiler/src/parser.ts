@@ -3,7 +3,7 @@ import {
   Program, Screen, ScreenItem, VariableDecl, UINode,
   Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
   Property, EventHandler, FunctionDef, FunctionCall, Statement, EachNode,
-  NavigateTo, NavigateBack,
+  NavigateTo, NavigateBack, ComponentDef, ComponentInvocation,
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
   ListLit, ObjectLit, FieldAccess,
 } from './ast.js';
@@ -18,10 +18,15 @@ export class Parser {
 
   parse(): Program {
     const screens: Screen[] = [];
+    const components: ComponentDef[] = [];
     while (!this.check(TokenType.EOF)) {
-      screens.push(this.parseScreen());
+      if (this.check(TokenType.Component)) {
+        components.push(this.parseComponentDef());
+      } else {
+        screens.push(this.parseScreen());
+      }
     }
-    return { type: 'Program', screens };
+    return { type: 'Program', screens, components };
   }
 
   // -- Top-level --
@@ -91,6 +96,11 @@ export class Parser {
       case TokenType.Toggle: return this.parseToggle();
       case TokenType.If:     return this.parseIf();
       case TokenType.Each:   return this.parseEach();
+      case TokenType.Identifier:
+        if (token.value[0] >= 'A' && token.value[0] <= 'Z') {
+          return this.parseComponentInvocation();
+        }
+        return this.error(`Unexpected token "${token.value}" — expected a UI element`);
       default:
         return this.error(`Unexpected token "${token.value}" — expected a UI element`);
     }
@@ -181,6 +191,60 @@ export class Parser {
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
     return { type: 'Each', variable, list, children };
+  }
+
+  private parseComponentDef(): ComponentDef {
+    this.consume(TokenType.Component, 'Expected "component"');
+    const name = this.consume(TokenType.Identifier, 'Expected component name').value;
+    this.consume(TokenType.LParen, 'Expected "("');
+    const params: string[] = [];
+    if (!this.check(TokenType.RParen)) {
+      params.push(this.consume(TokenType.Identifier, 'Expected parameter name').value);
+      while (this.check(TokenType.Comma)) {
+        this.advance();
+        params.push(this.consume(TokenType.Identifier, 'Expected parameter name').value);
+      }
+    }
+    this.consume(TokenType.RParen, 'Expected ")"');
+    this.consume(TokenType.Colon, 'Expected ":"');
+    this.consume(TokenType.Newline, 'Expected newline');
+    this.consume(TokenType.Indent, 'Expected indent');
+    const body: UINode[] = [];
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      body.push(this.parseUINode());
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent');
+    return { type: 'ComponentDef', name, params, body };
+  }
+
+  private parseComponentInvocation(): ComponentInvocation {
+    const name = this.consume(TokenType.Identifier, 'Expected component name').value;
+    const args: Expr[] = [];
+    const properties: Property[] = [];
+    const events: EventHandler[] = [];
+
+    // First positional arg
+    if (!this.check(TokenType.Newline) && !this.check(TokenType.Comma)) {
+      args.push(this.parseExpr());
+    }
+
+    // Rest: positional args, named props, or events
+    while (this.check(TokenType.Comma)) {
+      this.advance();
+      if (this.check(TokenType.On)) {
+        events.push(this.parseEventHandler());
+      } else if (
+        this.check(TokenType.Identifier) &&
+        this.peek(1)?.type === TokenType.Colon
+      ) {
+        properties.push(this.parseProperty());
+      } else {
+        args.push(this.parseExpr());
+      }
+    }
+
+    this.consume(TokenType.Newline, 'Expected newline');
+    return { type: 'ComponentInvocation', name, args, properties, events };
   }
 
   private parseIf(): IfNode {

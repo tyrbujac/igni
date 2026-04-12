@@ -1,6 +1,7 @@
 import {
   Program, Screen, ScreenItem, VariableDecl,
   UINode, Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode, EachNode,
+  ComponentDef, ComponentInvocation,
   Property, EventHandler, FunctionDef, Statement, Expr, IsExpr,
 } from './ast.js';
 
@@ -29,12 +30,19 @@ export class CodeGenerator {
   private screenParams: string[] = [];
   private allScreens: Screen[] = [];
 
+  private allComponents: ComponentDef[] = [];
+
   generate(program: Program): string {
     this.allScreens = program.screens;
+    this.allComponents = program.components;
     const firstName = program.screens[0].name;
 
     let code = `import 'package:flutter/material.dart';\n\n`;
     code += `void main() {\n  runApp(const MaterialApp(home: ${firstName}Screen()));\n}\n`;
+
+    for (const comp of program.components) {
+      code += '\n' + this.genComponentDef(comp);
+    }
 
     for (const screen of program.screens) {
       code += '\n' + this.genScreen(screen);
@@ -162,6 +170,7 @@ export class CodeGenerator {
       case 'Toggle': return this.genToggle(node, depth);
       case 'If':     return this.genIf(node, depth);
       case 'Each':   return this.genEach(node, depth);
+      case 'ComponentInvocation': return this.genComponentInvocation(node, depth);
     }
   }
 
@@ -317,6 +326,47 @@ export class CodeGenerator {
     }
     code += `\n${ind}]`;
     return code;
+  }
+
+  private genComponentDef(comp: ComponentDef): string {
+    // Save/restore screen-level state
+    const prevParams = this.screenParams;
+    this.screenParams = comp.params;
+
+    const name = comp.name;
+    const paramFields = comp.params.map(p => `  final dynamic ${p};`).join('\n');
+    const ctorParams = comp.params.map(p => `required this.${p}`).join(', ');
+    const bodyWidget = comp.body.length > 0 ? this.genUINode(comp.body[0], 2) : '    const SizedBox()';
+
+    let code = `class ${name} extends StatelessWidget {\n`;
+    if (comp.params.length > 0) {
+      code += paramFields + '\n';
+    }
+    code += `  const ${name}({super.key${comp.params.length > 0 ? ', ' + ctorParams : ''}});\n\n`;
+    code += `  @override\n  Widget build(BuildContext context) {\n`;
+    code += `    return ${bodyWidget.trimStart()};\n`;
+    code += `  }\n}\n`;
+
+    this.screenParams = prevParams;
+    return code;
+  }
+
+  private genComponentInvocation(node: ComponentInvocation, depth: number): string {
+    const ind = '  '.repeat(depth);
+    const comp = this.allComponents.find(c => c.name === node.name);
+    const paramNames = comp?.params ?? [];
+
+    // Map positional args to named params
+    const namedArgs: string[] = [];
+    for (let i = 0; i < node.args.length && i < paramNames.length; i++) {
+      namedArgs.push(`${paramNames[i]}: ${this.exprToDart(node.args[i])}`);
+    }
+    // Add named properties
+    for (const prop of node.properties) {
+      namedArgs.push(`${prop.name}: ${this.exprToDart(prop.value)}`);
+    }
+
+    return `${ind}${node.name}(${namedArgs.join(', ')})`;
   }
 
   private genFunctionDef(func: FunctionDef): string {

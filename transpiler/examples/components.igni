@@ -1,0 +1,12 @@
+component NoteCard(title, body):
+  layout vertical, padding: medium:
+    label title, style: heading
+    label body
+
+screen NoteList:
+  notes = [{title: "First", body: "Hello"}, {title: "Second", body: "World"}]
+
+  layout vertical, gap: medium, padding: large:
+    label "Notes", style: heading
+    each note in notes:
+      NoteCard note.title, note.body
