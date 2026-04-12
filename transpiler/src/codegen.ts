@@ -143,9 +143,39 @@ export class CodeGenerator {
     const buildLocalVars = new Set<string>();
 
     // First pass: collect variable names targeted by conditional assignment
+    let hasConditionalAssignment = false;
     for (const item of screen.body) {
       if (item.type === 'If' && this.ifContainsAssignments(item)) {
+        hasConditionalAssignment = true;
         this.collectAssignmentTargets(item, buildLocalVars);
+      }
+    }
+
+    // Second pass: expand build locals backwards through the dependency chain.
+    // If variable A is a build local and its initializer references variable B,
+    // then B must also be a build local — UNLESS B has a simple literal initializer
+    // (strings, numbers, booleans are real state, not derived values).
+    if (hasConditionalAssignment) {
+      const allDecls = screen.body.filter(i => i.type === 'VariableDecl') as VariableDecl[];
+      const isSimpleLiteral = (v: VariableDecl) => {
+        const t = v.value.type;
+        return t === 'StringLit' || t === 'NumberLit' || (t === 'Ident' && (v.value as any).name === 'true' || (v.value as any).name === 'false') || t === 'ListLit';
+      };
+      const scanned = new Set<string>();
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const decl of allDecls) {
+          if (buildLocalVars.has(decl.name) && !scanned.has(decl.name)) {
+            scanned.add(decl.name);
+            for (const other of allDecls) {
+              if (!buildLocalVars.has(other.name) && !isSimpleLiteral(other) && this.exprRefsAny(decl.value, new Set([other.name]))) {
+                buildLocalVars.add(other.name);
+                changed = true;
+              }
+            }
+          }
+        }
       }
     }
 
@@ -276,6 +306,19 @@ export class CodeGenerator {
     stateClass += `  }\n}\n`;
 
     return widgetClass + '\n' + stateClass;
+  }
+
+  private exprRefsAny(expr: Expr, names: Set<string>): boolean {
+    if (expr.type === 'Ident') return names.has(expr.name);
+    if (expr.type === 'FieldAccess') return this.exprRefsAny(expr.object, names);
+    if (expr.type === 'BinaryExpr') return this.exprRefsAny(expr.left, names) || this.exprRefsAny(expr.right, names);
+    if (expr.type === 'UnaryExpr') return this.exprRefsAny(expr.operand, names);
+    if (expr.type === 'FunctionCall') return expr.args.some(a => this.exprRefsAny(a, names));
+    if (expr.type === 'LambdaExpr') return this.exprRefsAny(expr.body, names);
+    if (expr.type === 'EqualityExpr') return this.exprRefsAny(expr.left, names) || this.exprRefsAny(expr.right, names);
+    if (expr.type === 'IsExpr') return this.exprRefsAny(expr.target, names);
+    if (expr.type === 'InExpr') return this.exprRefsAny(expr.target, names) || this.exprRefsAny(expr.list, names);
+    return false;
   }
 
   private collectAssignmentTargets(node: IfNode, targets: Set<string>): void {
@@ -598,6 +641,7 @@ export class CodeGenerator {
       trash: 'Icons.delete', edit: 'Icons.edit', phone: 'Icons.phone',
       cart: 'Icons.shopping_cart', 'shopping-cart': 'Icons.shopping_cart',
       heart: 'Icons.favorite', star: 'Icons.star', check: 'Icons.check',
+      user: 'Icons.person', person: 'Icons.person', home: 'Icons.home', mail: 'Icons.mail',
     };
     return map[name] ?? `Icons.${name.replace(/-/g, '_')}`;
   }
