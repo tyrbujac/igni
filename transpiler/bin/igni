@@ -1,0 +1,5 @@
+#!/bin/bash
+# Igni CLI wrapper — run from anywhere
+REAL_PATH="$(readlink -f "$0" 2>/dev/null || python3 -c "import os; print(os.path.realpath('$0'))")"
+SCRIPT_DIR="$(cd "$(dirname "$REAL_PATH")/.." && pwd)"
+exec npx tsx "$SCRIPT_DIR/src/igni.ts" "$@"

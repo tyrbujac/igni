@@ -1,0 +1,185 @@
+import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, readdirSync, statSync } from 'node:fs';
+import { join, basename } from 'node:path';
+import { spawn, execSync } from 'node:child_process';
+import { watch } from 'chokidar';
+import { Lexer } from './lexer.js';
+import { Parser } from './parser.js';
+import { CodeGenerator } from './codegen.js';
+
+const command = process.argv[2];
+
+if (command !== 'run') {
+  console.log('Usage: igni run');
+  console.log('  Run from a directory containing app.igni');
+  process.exit(1);
+}
+
+const cwd = process.cwd();
+const igniDir = join(cwd, '.igni');
+
+// --- Find .igni files ---
+
+function findIgniFiles(): string[] {
+  const entries = readdirSync(cwd);
+  const files = entries.filter(f => {
+    if (!f.endsWith('.igni') || f.startsWith('.')) return false;
+    // Make sure it's a file, not a directory
+    try { return statSync(join(cwd, f)).isFile(); } catch { return false; }
+  });
+  if (files.length === 0) {
+    console.error('No .igni files found in current directory.');
+    process.exit(1);
+  }
+  if (!files.includes('app.igni')) {
+    console.error('No app.igni found. Create one with your main screen.');
+    process.exit(1);
+  }
+  const rest = files.filter(f => f !== 'app.igni').sort();
+  return ['app.igni', ...rest];
+}
+
+// --- Transpile ---
+
+function transpile(): string | null {
+  const files = findIgniFiles();
+  const sources = files.map(f => readFileSync(join(cwd, f), 'utf-8'));
+  const combined = sources.join('\n\n');
+
+  try {
+    const tokens = new Lexer(combined).tokenize();
+    const ast = new Parser(tokens).parse();
+    const dart = new CodeGenerator().generate(ast);
+    return dart;
+  } catch (err: any) {
+    console.error(`\n  Transpile error: ${err.message}\n`);
+    return null;
+  }
+}
+
+function writeOutput(dart: string): void {
+  const outPath = join(igniDir, 'lib', 'main.dart');
+  writeFileSync(outPath, dart);
+}
+
+// --- Flutter project setup ---
+
+function ensureFlutterProject(): void {
+  if (existsSync(join(igniDir, 'pubspec.yaml'))) return;
+
+  console.log('Setting up Flutter project...');
+
+  try {
+    execSync('flutter --version', { stdio: 'ignore' });
+  } catch {
+    console.error('Flutter not found. Install it from https://flutter.dev');
+    process.exit(1);
+  }
+
+  const projectName = basename(cwd).toLowerCase().replace(/[^a-z0-9_]/g, '_') || 'igni_app';
+  execSync(`flutter create .igni --org com.igni --platforms web --project-name ${projectName}`, {
+    cwd,
+    stdio: 'ignore',
+  });
+
+  const testDir = join(igniDir, 'test');
+  if (existsSync(testDir)) rmSync(testDir, { recursive: true });
+
+  const gitignore = join(cwd, '.gitignore');
+  if (existsSync(gitignore)) {
+    const content = readFileSync(gitignore, 'utf-8');
+    if (!content.includes('.igni/')) {
+      writeFileSync(gitignore, content.trimEnd() + '\n.igni/\n');
+    }
+  }
+
+  console.log('Flutter project created.\n');
+}
+
+// --- Main ---
+
+async function run(): Promise<void> {
+  const dart = transpile();
+  if (!dart) {
+    console.error('Fix the error above, then run igni run again.');
+    process.exit(1);
+  }
+
+  ensureFlutterProject();
+  mkdirSync(join(igniDir, 'lib'), { recursive: true });
+  writeOutput(dart);
+
+  console.log('Starting...\n');
+
+  // Start flutter run
+  const flutter = spawn('flutter', ['run', '-d', 'chrome'], {
+    cwd: igniDir,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+
+  // Filter Flutter output
+  flutter.stdout.on('data', (data: Buffer) => {
+    const line = data.toString();
+    if (
+      line.includes('localhost') ||
+      line.includes('127.0.0.1') ||
+      line.includes('Error') ||
+      line.includes('error') ||
+      line.includes('Restarted') ||
+      line.includes('Reloaded') ||
+      line.includes('ready') ||
+      line.includes('lib/main.dart') ||
+      line.includes('Application finished')
+    ) {
+      process.stdout.write(line);
+    }
+  });
+
+  flutter.stderr.on('data', (data: Buffer) => {
+    const line = data.toString();
+    if (line.includes('Error') || line.includes('error') || line.includes('Exception')) {
+      process.stderr.write(line);
+    }
+  });
+
+  // Forward stdin (for r, R, q)
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
+  }
+  process.stdin.resume();
+  process.stdin.on('data', (data: Buffer) => {
+    const key = data.toString();
+    if (key === 'q' || key === '\u0003') {
+      flutter.kill();
+      process.exit(0);
+    }
+    flutter.stdin.write(data);
+  });
+
+  // Watch .igni files — watch each file individually for reliability
+  const igniFiles = findIgniFiles().map(f => join(cwd, f));
+  const watcher = watch(igniFiles, {
+    ignoreInitial: true,
+    awaitWriteFinish: { stabilityThreshold: 100, pollInterval: 50 },
+  });
+
+  watcher.on('ready', () => {
+    console.log(`Watching ${igniFiles.length} file(s) for changes...\n`);
+  });
+
+  watcher.on('change', (filePath) => {
+    const result = transpile();
+    if (result) {
+      writeOutput(result);
+      // Send 'r' to Flutter to trigger hot reload
+      flutter.stdin.write('r');
+      console.log(`  Recompiled (${basename(filePath)})`);
+    }
+  });
+
+  flutter.on('close', (code) => {
+    watcher.close();
+    process.exit(code ?? 0);
+  });
+}
+
+run();

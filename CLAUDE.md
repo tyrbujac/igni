@@ -69,13 +69,15 @@ When proposing spec changes, **work from `spec/v0.6.3.md` and fork to a new vers
 
 ## Transpiler
 
-The transpiler lives in `transpiler/` — a TypeScript project that compiles `.igni` source to Dart/Flutter targeting web. Hand-written recursive descent parser, no dependencies beyond TypeScript.
+The transpiler lives in `transpiler/` — a TypeScript project that compiles `.igni` source to Dart/Flutter targeting web. Hand-written recursive descent parser, chokidar for file watching.
 
 **Pipeline:** `.igni` → Lexer (INDENT/DEDENT) → Parser → AST → CodeGen → `.dart`
 
+**CLI:** `igni run` — one command to transpile, watch, and serve. Creates a hidden `.igni/` Flutter project automatically, watches for `.igni` file changes, hot reloads the browser on save. Entry point is `app.igni`. Run from any directory containing `.igni` files. Local wrapper at `transpiler/bin/igni`.
+
 **Currently supported:** `screen` (StatefulWidget), `component` (StatelessWidget), wrapper components with `body` slot, variables (int/double/String/bool/List), `layout` (vertical/horizontal, align, gap, padding, background, rounded, spread), implicit vertical layout for screen bodies, `label`, `button` + `on tap`, `input bind:` + `placeholder:`, `toggle bind:`, `image` (size, round), `icon` (size, color, `on tap:`), `slider` (bind, min, max), `checkbox` (bind, label), `dropdown` (bind, options), `badge` (color), `spinner`, `if`/`else`/`else if`, `not`, `is`/`is not` (general equality), `is empty`/`is not empty`, `is null`/`is not null`, `is in`/`is not in`, `is loading`/`is error`, comparison operators (`>`/`<`/`>=`/`<=`), `and`/`or` boolean operators, `each` loops, `navigate to`/`navigate back` (multi-screen with params), `shared:` state (ChangeNotifier), `fetch` + `spinner`, `without`/`replace`/`find`/`count`/`length`/`filter`/`sorted`/`reversed` builtins, `contains()` string builtin, `random(min, max)`, lambda expressions (`item => expr`), `return` in functions, screen-internal functions with params, list literals `[]`, object literals `{key: val}`, field access `obj.field`, arithmetic (`+`/`-`/`*`/`/`), float literals, string concatenation with `+`.
 
-**Nineteen example apps:** counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full (with delete), components, shared (cross-screen state), fetch (async API call), dice (random), dashboard, fn-return, lambda (filter/sorted/reversed), primitives, shopping (full e-commerce), wrapper (body slot), logic (and/or). All pass diff tests and run in the browser.
+**Twenty example apps:** counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full (with delete), components, shared (cross-screen state), fetch (async API call), dice (random), dashboard, fn-return, lambda (filter/sorted/reversed), primitives, shopping (full e-commerce), wrapper (body slot), logic (and/or). All pass diff tests and run in the browser.
 
 **Testing:** Each example in `transpiler/examples/` has a `.igni` source and a `.expected.dart` reference. `npx tsx src/cli.ts example.igni | diff - example.expected.dart` — zero diff = pass. Browser testing via a gitignored `test_app/` Flutter project.
 

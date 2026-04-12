@@ -15,40 +15,63 @@ screen Counter:
 
 Indentation for blocks. Colons open them. One way to do everything. No imports, no `useState`, no boilerplate. Reactivity is automatic.
 
-## How it works
-
-Igni source (`.igni` files) transpiles to Dart targeting Flutter for web. You write Igni, the transpiler outputs Dart, and Flutter serves it in the browser.
+## Quick start
 
 ```bash
-cd transpiler
-npx tsx src/cli.ts examples/counter.igni > test_app/lib/main.dart
-cd test_app && flutter run -d chrome
+# 1. Create a project
+mkdir my-app && cd my-app
+
+# 2. Create app.igni
+cat > app.igni << 'EOF'
+screen Hello:
+  count = 0
+
+  layout vertical, align: center, gap: medium, padding: large:
+    label count, style: heading
+    button "Add", on tap: count = count + 1
+EOF
+
+# 3. Run it
+igni run
 ```
 
-Average compression: **5.7x fewer lines in Igni than Dart** across eleven example apps.
+Save `app.igni`, browser updates automatically. That's it.
+
+**Prerequisites:** Node.js 18+, Flutter SDK, Chrome.
+
+## How it works
+
+Igni source (`.igni` files) transpiles to Dart targeting Flutter for web. `igni run` handles the whole chain: transpile, serve, watch for changes, hot reload.
+
+Under the hood, a hidden `.igni/` Flutter project is created automatically. You never touch it — just edit `.igni` files and save.
 
 ## Status
 
-**Language spec:** Complete at [`spec/v0.5.1.md`](spec/v0.5.1.md). Designed iteratively through cold-LLM testing — pasting the spec into fresh Claude, Gemini, and ChatGPT sessions and grading the output. Eight test apps, three models, 24 data points across seven spec versions.
+**Language spec:** [`spec/v0.6.3.md`](spec/v0.6.3.md) is the current version. Designed iteratively through cold-LLM testing (pasting the spec into fresh Claude, Gemini, and ChatGPT sessions) and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
-**Transpiler:** Working. Eleven example apps compile and run in the browser. Covers screens, components, layouts, conditionals, loops, functions, navigation, shared state, async data fetching, two-way data binding, and list operations. See [`transpiler/README.md`](transpiler/README.md).
+**Transpiler:** Working. Twenty example apps compile and run in the browser. Covers screens, components, wrapper components with `body` slot, layouts, conditionals, loops, functions with `return`, lambdas, navigation, shared state, async data fetching, two-way data binding, list operations (`map`/`filter`/`sorted`/`reversed`/`find`/`replace`/`without`/`count`/`length`), `and`/`or` boolean operators, comparison operators, float literals, and more.
+
+**CLI:** `igni run` — one command to transpile, watch, and serve. Save `.igni` file, browser updates.
 
 ## Repo structure
 
 ```
 igni/
 ├── spec/                    # language spec (versioned snapshots)
-│   ├── v0.5.1.md            # current — the transpiler builds against this
-│   └── v0.2 → v0.5.md       # historical (never edited after shipping)
+│   ├── v0.6.3.md            # current canonical
+│   └── v0.2 → v0.6.2.md    # historical (never edited after shipping)
 ├── tests/                   # cold-LLM test results
 │   ├── v0.3.2/              # Calculator, Todo, Weather
 │   ├── v0.4/                # Chat, MusicPlayer, Notes
 │   ├── v0.5/                # Notes re-run, Shopping
-│   └── v0.5.1/              # Settings, Greeting (transpiler-validated)
+│   └── v0.6.2/              # Contacts (first end-to-end transpiler-validated)
 ├── transpiler/              # TypeScript-to-Dart transpiler
 │   ├── src/                 # lexer, parser, codegen, CLI
-│   └── examples/            # 11 .igni apps + .expected.dart references
-└── docs/                    # project docs (private, gitignored)
+│   ├── bin/igni             # CLI entry point
+│   └── examples/            # 20 .igni apps + .expected.dart references
+├── CHANGELOG.md             # spec evolution history
+├── ROADMAP.md               # near-term plans + ideas
+└── docs/                    # tutorial + project docs
 ```
 
 ## License

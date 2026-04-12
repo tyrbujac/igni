@@ -5,12 +5,16 @@
   "scripts": {
     "build": "tsc",
     "transpile": "tsx src/cli.ts",
+    "igni": "tsx src/igni.ts",
     "dev": "nodemon --ext igni --watch examples --exec 'npx tsx src/cli.ts examples/tutorial.igni > test_app/lib/main.dart && echo Transpiled.'"
   },
   "devDependencies": {
-    "typescript": "^5.4.0",
-    "tsx": "^4.7.0",
     "@types/node": "^20.0.0",
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.1.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "chokidar": "^5.0.0"
   }
 }
