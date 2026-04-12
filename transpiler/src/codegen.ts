@@ -171,7 +171,7 @@ export class CodeGenerator {
     } else {
       // Implicit vertical layout — multiple children without explicit layout wrapper
       const children = uiNodes.map(n => this.genUINode(n, 4) + ',').join('\n');
-      bodyWidget = `      Column(\n        children: [\n${children}\n        ],\n      )`;
+      bodyWidget = `      Column(\n        crossAxisAlignment: CrossAxisAlignment.start,\n        children: [\n${children}\n        ],\n      )`;
     }
     const hasControllers = this.boundInputVars.length > 0;
 
