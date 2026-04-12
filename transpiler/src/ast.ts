@@ -182,9 +182,9 @@ export interface ToggleNode {
 export interface IfNode {
   type: 'If';
   condition: Expr;
-  then: UINode[];
-  elseIfs: { condition: Expr; body: UINode[] }[];
-  else_: UINode[] | null;
+  then: (UINode | VariableDecl)[];
+  elseIfs: { condition: Expr; body: (UINode | VariableDecl)[] }[];
+  else_: (UINode | VariableDecl)[] | null;
 }
 
 export interface EachNode {

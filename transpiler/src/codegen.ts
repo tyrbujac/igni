@@ -139,7 +139,17 @@ export class CodeGenerator {
     const funcDefs: FunctionDef[] = [];
 
     this.fetchVars = [];
+    const buildLocals: string[] = [];
+    const buildLocalVars = new Set<string>();
 
+    // First pass: collect variable names targeted by conditional assignment
+    for (const item of screen.body) {
+      if (item.type === 'If' && this.ifContainsAssignments(item)) {
+        this.collectAssignmentTargets(item, buildLocalVars);
+      }
+    }
+
+    let inBuildLocals = false;
     for (const item of screen.body) {
       if (item.type === 'VariableDecl') {
         // Detect fetch variables
@@ -147,12 +157,23 @@ export class CodeGenerator {
           const url = item.value.args[0];
           this.fetchVars.push({ name: item.name, url: this.exprToDart(url) });
           this.stateVars.push(item.name);
+        } else if (buildLocalVars.has(item.name) || inBuildLocals) {
+          // Variable is conditionally reassigned or follows one — build() local
+          inBuildLocals = true;
+          this.stateVars.push(item.name);
+          const alreadyDeclared = buildLocals.some(l => l.includes(`var ${item.name} `));
+          buildLocals.push(alreadyDeclared
+            ? `    ${item.name} = ${this.exprToDart(item.value)};`
+            : `    var ${item.name} = ${this.exprToDart(item.value)};`);
         } else {
           this.stateVars.push(item.name);
           stateDecls.push(this.genStateVar(item));
         }
       } else if (item.type === 'FunctionDef') {
         funcDefs.push(item);
+      } else if (item.type === 'If' && this.ifContainsAssignments(item)) {
+        inBuildLocals = true;
+        buildLocals.push(this.genImperativeIf(item));
       } else {
         uiNodes.push(item);
       }
@@ -248,10 +269,64 @@ export class CodeGenerator {
       stateClass += preBuild + '\n\n';
     }
     stateClass += `  @override\n  Widget build(BuildContext context) {\n`;
+    if (buildLocals.length > 0) {
+      stateClass += buildLocals.join('\n') + '\n';
+    }
     stateClass += `    return Scaffold(\n      body: SingleChildScrollView(\n        child: ${bodyWidget.trimStart()},\n      ),\n    );\n`;
     stateClass += `  }\n}\n`;
 
     return widgetClass + '\n' + stateClass;
+  }
+
+  private collectAssignmentTargets(node: IfNode, targets: Set<string>): void {
+    const collect = (items: (UINode | VariableDecl)[]) => {
+      for (const item of items) {
+        if (item.type === 'VariableDecl') targets.add(item.name);
+      }
+    };
+    collect(node.then);
+    for (const branch of node.elseIfs) collect(branch.body);
+    if (node.else_) collect(node.else_);
+  }
+
+  private ifContainsAssignments(node: IfNode): boolean {
+    const check = (items: (UINode | VariableDecl)[]) => items.some(i => i.type === 'VariableDecl');
+    if (check(node.then)) return true;
+    for (const branch of node.elseIfs) {
+      if (check(branch.body)) return true;
+    }
+    if (node.else_ && check(node.else_)) return true;
+    return false;
+  }
+
+  private genImperativeIf(node: IfNode): string {
+    const cond = this.exprToDart(node.condition);
+    let code = `    if (${cond}) {\n`;
+    for (const item of node.then) {
+      if (item.type === 'VariableDecl') {
+        code += `      ${item.name} = ${this.exprToDart(item.value)};\n`;
+      }
+    }
+    code += `    }`;
+    for (const branch of node.elseIfs) {
+      code += ` else if (${this.exprToDart(branch.condition)}) {\n`;
+      for (const item of branch.body) {
+        if (item.type === 'VariableDecl') {
+          code += `      ${item.name} = ${this.exprToDart(item.value)};\n`;
+        }
+      }
+      code += `    }`;
+    }
+    if (node.else_) {
+      code += ` else {\n`;
+      for (const item of node.else_) {
+        if (item.type === 'VariableDecl') {
+          code += `      ${item.name} = ${this.exprToDart(item.value)};\n`;
+        }
+      }
+      code += `    }`;
+    }
+    return code;
   }
 
   private collectBoundInputs(nodes: UINode[]): void {
@@ -463,6 +538,21 @@ export class CodeGenerator {
 
   private genToggle(node: ToggleNode, depth: number): string {
     const ind = '  '.repeat(depth);
+    const labelProp = this.findProp(node.properties, 'label');
+    const labelStr = labelProp ? this.exprToDart(labelProp.value) : null;
+
+    if (labelStr) {
+      let code = `${ind}SwitchListTile(\n`;
+      code += `${ind}  value: ${node.bind},\n`;
+      code += `${ind}  title: Text(${labelStr}),\n`;
+      code += `${ind}  onChanged: (value) {\n`;
+      code += `${ind}    setState(() {\n`;
+      code += `${ind}      ${node.bind} = value;\n`;
+      code += `${ind}    });\n`;
+      code += `${ind}  },\n`;
+      code += `${ind})`;
+      return code;
+    }
 
     let code = `${ind}Switch(\n`;
     code += `${ind}  value: ${node.bind},\n`;
@@ -954,6 +1044,11 @@ export class CodeGenerator {
     }
     if (call.name === 'find' && args.length === 2 && call.args[1].type === 'LambdaExpr') {
       return `${args[0]}.cast<dynamic>().firstWhere(${args[1]}, orElse: () => null)`;
+    }
+    if (call.name === 'map' && args.length === 2 && call.args[1].type === 'LambdaExpr') {
+      const lambda = call.args[1] as LambdaExpr;
+      const body = this.exprToDart(lambda.body);
+      return `${args[0]}.map((${lambda.param}) => ${body}).toList()`;
     }
     if (call.name === 'reversed' && args.length === 1) {
       return `${args[0]}.reversed.toList()`;

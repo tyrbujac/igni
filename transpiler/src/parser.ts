@@ -85,6 +85,8 @@ export class Parser {
         this.peek(1)?.type === TokenType.LParen
       ) {
         items.push(this.parseFunctionDef());
+      } else if (this.check(TokenType.If)) {
+        items.push(this.parseIf(true));
       } else {
         items.push(this.parseUINode());
       }
@@ -112,7 +114,7 @@ export class Parser {
       case TokenType.Button: return this.parseButton();
       case TokenType.Input:  return this.parseInput();
       case TokenType.Toggle: return this.parseToggle();
-      case TokenType.If:     return this.parseIf();
+      case TokenType.If:     return this.parseIf(false);
       case TokenType.Each:   return this.parseEach();
       case TokenType.Spinner:
         this.advance();
@@ -357,20 +359,27 @@ export class Parser {
     return { type: 'ComponentInvocation', name, args, properties, events, children };
   }
 
-  private parseIf(): IfNode {
+  private parseIfBodyItem(allowAssignments: boolean): UINode | VariableDecl {
+    if (allowAssignments && this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.Equals) {
+      return this.parseVariableDecl();
+    }
+    return this.parseUINode();
+  }
+
+  private parseIf(allowAssignments: boolean): IfNode {
     this.consume(TokenType.If, 'Expected "if"');
     const condition = this.parseExpr();
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
     this.consume(TokenType.Indent, 'Expected indent');
-    const then: UINode[] = [];
+    const then: (UINode | VariableDecl)[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
-      then.push(this.parseUINode());
+      then.push(this.parseIfBodyItem(allowAssignments));
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
 
-    const elseIfs: { condition: Expr; body: UINode[] }[] = [];
-    let else_: UINode[] | null = null;
+    const elseIfs: { condition: Expr; body: (UINode | VariableDecl)[] }[] = [];
+    let else_: (UINode | VariableDecl)[] | null = null;
 
     while (this.check(TokenType.Else)) {
       this.advance(); // consume else
@@ -380,9 +389,9 @@ export class Parser {
         this.consume(TokenType.Colon, 'Expected ":"');
         this.consume(TokenType.Newline, 'Expected newline');
         this.consume(TokenType.Indent, 'Expected indent');
-        const body: UINode[] = [];
+        const body: (UINode | VariableDecl)[] = [];
         while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
-          body.push(this.parseUINode());
+          body.push(this.parseIfBodyItem(allowAssignments));
         }
         this.consume(TokenType.Dedent, 'Expected dedent');
         elseIfs.push({ condition: cond, body });
@@ -392,7 +401,7 @@ export class Parser {
         this.consume(TokenType.Indent, 'Expected indent');
         else_ = [];
         while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
-          else_.push(this.parseUINode());
+          else_.push(this.parseIfBodyItem(allowAssignments));
         }
         this.consume(TokenType.Dedent, 'Expected dedent');
         break;
