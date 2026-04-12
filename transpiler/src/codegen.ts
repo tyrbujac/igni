@@ -32,8 +32,10 @@ export class CodeGenerator {
   private allScreens: Screen[] = [];
 
   private allComponents: ComponentDef[] = [];
+  private fetchVars: { name: string; url: string }[] = [];
 
   private hasShared = false;
+  private hasFetch = false;
 
   generate(program: Program): string {
     this.allScreens = program.screens;
@@ -41,7 +43,17 @@ export class CodeGenerator {
     this.hasShared = program.shared.length > 0;
     const firstName = program.screens[0].name;
 
-    let code = `import 'package:flutter/material.dart';\n\n`;
+    // Detect if any screen uses fetch
+    this.hasFetch = program.screens.some(s =>
+      s.body.some(item => item.type === 'VariableDecl' && item.value.type === 'FunctionCall' && item.value.name === 'fetch')
+    );
+
+    let code = `import 'package:flutter/material.dart';\n`;
+    if (this.hasFetch) {
+      code += `import 'package:http/http.dart' as http;\n`;
+      code += `import 'dart:convert';\n`;
+    }
+    code += '\n';
 
     if (this.hasShared) {
       code += this.genSharedState(program.shared) + '\n';
@@ -76,6 +88,32 @@ export class CodeGenerator {
     return code;
   }
 
+  private genFetchMethod(varName: string, url: string): string {
+    const methodName = `_fetch${varName[0].toUpperCase() + varName.slice(1)}`;
+    let code = `  Future<void> ${methodName}() async {\n`;
+    code += `    try {\n`;
+    code += `      final response = await http.get(Uri.parse(${url}));\n`;
+    code += `      if (response.statusCode == 200) {\n`;
+    code += `        setState(() {\n`;
+    code += `          ${varName} = jsonDecode(response.body);\n`;
+    code += `          _${varName}Loading = false;\n`;
+    code += `        });\n`;
+    code += `      } else {\n`;
+    code += `        setState(() {\n`;
+    code += `          _${varName}Error = true;\n`;
+    code += `          _${varName}Loading = false;\n`;
+    code += `        });\n`;
+    code += `      }\n`;
+    code += `    } catch (e) {\n`;
+    code += `      setState(() {\n`;
+    code += `        _${varName}Error = true;\n`;
+    code += `        _${varName}Loading = false;\n`;
+    code += `      });\n`;
+    code += `    }\n`;
+    code += `  }`;
+    return code;
+  }
+
   private genScreen(screen: Screen): string {
     this.stateVars = [];
     this.boundInputVars = [];
@@ -84,10 +122,19 @@ export class CodeGenerator {
     const uiNodes: UINode[] = [];
     const funcDefs: FunctionDef[] = [];
 
+    this.fetchVars = [];
+
     for (const item of screen.body) {
       if (item.type === 'VariableDecl') {
-        this.stateVars.push(item.name);
-        stateDecls.push(this.genStateVar(item));
+        // Detect fetch variables
+        if (item.value.type === 'FunctionCall' && item.value.name === 'fetch') {
+          const url = item.value.args[0];
+          this.fetchVars.push({ name: item.name, url: this.exprToDart(url) });
+          this.stateVars.push(item.name);
+        } else {
+          this.stateVars.push(item.name);
+          stateDecls.push(this.genStateVar(item));
+        }
       } else if (item.type === 'FunctionDef') {
         funcDefs.push(item);
       } else {
@@ -118,10 +165,20 @@ export class CodeGenerator {
     widgetClass += `  @override\n  State<${name}Screen> createState() => _${name}ScreenState();\n`;
     widgetClass += `}\n`;
 
+    const hasFetchVars = this.fetchVars.length > 0;
+
     // State class
     let preBuild = '';
     if (hasState) {
       preBuild = stateDecls.map(d => `  ${d}`).join('\n');
+    }
+
+    // Fetch variable fields
+    if (hasFetchVars) {
+      const fetchDecls = this.fetchVars.map(f =>
+        `  dynamic ${f.name};\n  bool _${f.name}Loading = true;\n  bool _${f.name}Error = false;`
+      ).join('\n');
+      preBuild += (preBuild ? '\n' : '') + fetchDecls;
     }
 
     if (hasControllers) {
@@ -129,16 +186,32 @@ export class CodeGenerator {
         .map(v => `  late final TextEditingController _${v}Controller;`)
         .join('\n');
       preBuild += (preBuild ? '\n' : '') + controllerDecls;
+    }
 
-      const inits = this.boundInputVars
-        .map(v => `    _${v}Controller = TextEditingController(text: ${v});`)
-        .join('\n');
-      preBuild += `\n\n  @override\n  void initState() {\n    super.initState();\n${inits}\n  }`;
+    // initState (controllers + fetch calls)
+    const needsInitState = hasControllers || hasFetchVars;
+    if (needsInitState) {
+      const initLines: string[] = [];
+      for (const v of this.boundInputVars) {
+        initLines.push(`    _${v}Controller = TextEditingController(text: ${v});`);
+      }
+      for (const f of this.fetchVars) {
+        initLines.push(`    _fetch${f.name[0].toUpperCase() + f.name.slice(1)}();`);
+      }
+      preBuild += `\n\n  @override\n  void initState() {\n    super.initState();\n${initLines.join('\n')}\n  }`;
+    }
 
+    // dispose (controllers only)
+    if (hasControllers) {
       const disposals = this.boundInputVars
         .map(v => `    _${v}Controller.dispose();`)
         .join('\n');
       preBuild += `\n\n  @override\n  void dispose() {\n${disposals}\n    super.dispose();\n  }`;
+    }
+
+    // Fetch methods
+    for (const f of this.fetchVars) {
+      preBuild += '\n\n' + this.genFetchMethod(f.name, f.url);
     }
 
     for (const func of funcDefs) {
@@ -195,6 +268,7 @@ export class CodeGenerator {
       case 'Toggle': return this.genToggle(node, depth);
       case 'If':     return this.genIf(node, depth);
       case 'Each':   return this.genEach(node, depth);
+      case 'Spinner': return `${'  '.repeat(depth)}const CircularProgressIndicator()`;
       case 'ComponentInvocation': return this.genComponentInvocation(node, depth);
     }
   }
@@ -510,6 +584,14 @@ export class CodeGenerator {
       case 'IsExpr':
         if (expr.check === 'empty') return `${this.exprToDart(expr.target)}.isEmpty`;
         if (expr.check === 'not empty') return `${this.exprToDart(expr.target)}.isNotEmpty`;
+        if (expr.check === 'loading') {
+          const varName = expr.target.type === 'Ident' ? expr.target.name : '';
+          return `_${varName}Loading`;
+        }
+        if (expr.check === 'error') {
+          const varName = expr.target.type === 'Ident' ? expr.target.name : '';
+          return `_${varName}Error`;
+        }
         return `${this.exprToDart(expr.target)}.isEmpty`;
       case 'ListLit':
         if (expr.elements.length === 0) return '[]';

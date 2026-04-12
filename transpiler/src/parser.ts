@@ -112,6 +112,10 @@ export class Parser {
       case TokenType.Toggle: return this.parseToggle();
       case TokenType.If:     return this.parseIf();
       case TokenType.Each:   return this.parseEach();
+      case TokenType.Spinner:
+        this.advance();
+        this.consume(TokenType.Newline, 'Expected newline');
+        return { type: 'Spinner' };
       case TokenType.Identifier:
         if (token.value[0] >= 'A' && token.value[0] <= 'Z') {
           return this.parseComponentInvocation();
@@ -444,6 +448,12 @@ export class Parser {
       const word = this.consume(TokenType.Identifier, 'Expected "empty" or "null"').value;
       if (word === 'empty') {
         return { type: 'IsExpr', target: left, check: negated ? 'not empty' : 'empty' } as IsExpr;
+      }
+      if (word === 'loading') {
+        return { type: 'IsExpr', target: left, check: 'loading' } as IsExpr;
+      }
+      if (word === 'error') {
+        return { type: 'IsExpr', target: left, check: 'error' } as IsExpr;
       }
       return this.error(`Unsupported "is" check: ${word}`);
     }

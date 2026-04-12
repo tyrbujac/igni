@@ -1,0 +1,11 @@
+screen UserProfile:
+  user = fetch("https://jsonplaceholder.typicode.com/users/1")
+
+  layout vertical, gap: medium, padding: large:
+    if user is loading:
+      spinner
+    else if user is error:
+      label "Failed to load user"
+    else:
+      label user.name, style: heading
+      label user.email

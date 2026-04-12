@@ -21,6 +21,7 @@ export enum TokenType {
   Navigate,
   Component,
   Shared,
+  Spinner,
 
   // Operators
   Equals,
@@ -71,4 +72,5 @@ export const KEYWORDS: Record<string, TokenType> = {
   navigate: TokenType.Navigate,
   component: TokenType.Component,
   shared: TokenType.Shared,
+  spinner: TokenType.Spinner,
 };
