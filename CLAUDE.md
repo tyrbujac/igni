@@ -95,12 +95,21 @@ If a proposal violates one of these, it's wrong by definition — push back inst
 
 The spec is validated with **cold-LLM tests**: paste the current spec into a fresh frontier-model conversation (Claude, Gemini, ChatGPT) and run the prompts in `tests/v<spec_version>/prompts.md` verbatim. Test results live alongside the prompts under `tests/v<spec_version>/<App>.md`.
 
-- **The easy case** (Settings screen) is a smoke test. Every UI DSL passes it.
+**Two-stage validation** (now that the transpiler exists):
+
+1. **Spec grading** (same as before) — did the LLM invent syntax, misuse existing syntax, or produce valid Igni? This grades the spec's learnability.
+2. **Transpiler validation** (new) — feed the LLM's output to the transpiler. Does it transpile? Does the Dart output run in the browser? This is the objective pass/fail. Transpiler errors also prioritise what to build next — if 2/3 models use a feature the transpiler doesn't handle, that feature moves to the top of the backlog.
+
+The two stages validate different things: stage 1 validates the spec, stage 2 validates the transpiler. Together they create a feedback loop — cold tests surface what LLMs actually write, which drives both spec patches and transpiler features.
+
+**Test cases:**
+
+- **The easy case** (Settings screen) is a smoke test. Every UI DSL passes it. Now also the first transpiler-validated test.
 - **The hard case** — paginated list with loading/error states, navigation to a detail screen, and an edit-and-save flow — is the real validator.
 - **The comparison case** — write a music player in both Igni and Flutter — quantifies the readability win in line count and nesting depth.
-- **The shared state case (new in v0.5)** — write a multi-screen e-commerce app with a shared cart, body-slot wrappers, and list builtins. Validates v0.5's three new language features together.
+- **The shared state case** — multi-screen e-commerce app with shared cart, body-slot wrappers, and list builtins.
 
-Always run the test suite on every new version. The cold-LLM test caught the v0.3 mutation defect that self-review missed entirely. v0.4 was the first version drafted *from* test data; v0.4.1 was the documentation patch that closed v0.4's acceptance findings; v0.5 closes the cross-screen state gap that v0.4 acceptance surfaced.
+Full methodology is in `tests/README.md`.
 
 ## Working on the spec with Tyr
 
