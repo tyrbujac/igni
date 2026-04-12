@@ -62,9 +62,10 @@ Each spec version gets its own subfolder under `tests/` containing both the prom
 - `spec/v0.5.1.md` — Documentation patch over v0.5 with five clarifications grounded in the v0.5 cold-LLM Shopping test findings: (1) `find` identity warning with counter-example, (2) `spread: true` as the canonical boolean form, (3) "wrapper component" terminology cross-reference to `body`, (4) `count`-for-quantity idiom from Gemini's Shopping output, (5) no-arg component invocation clarification. No new language features; zero budget impact. Last spec before the transpiler.
 - `spec/v0.6.md` — Igni-era historical. First post-transpiler spec. Adds: (1) lambda expressions for list builtins, (2) `filter`/`sorted`/`reversed` builtins, (3) `return` in functions, (4) `contains()` string builtin, (5) `and`/`or` boolean operators. Designed from developer experience building real apps with the transpiler.
 - `spec/v0.6.1.md` — Igni-era historical. Adds: (1) implicit vertical layout for screen/component bodies, (2) comparison operators (`>`/`<`/`>=`/`<=`).
-- `spec/v0.6.2.md` — **current canonical version.** Documentation patch. Cheatsheet companion at `spec/v0.6.2-cheatsheet.md`.
+- `spec/v0.6.2.md` — Igni-era historical. Documentation patch.
+- `spec/v0.6.3.md` — **current canonical version.** Five additions driven by first end-to-end cold-LLM test + human testing: (1) `toggle label:` primitives table fix, (2) `map` builtin, (3) `contains` case-insensitivity, (4) float literals, (5) `random(min, max)`. Cheatsheet companion at `spec/v0.6.3-cheatsheet.md`.
 
-When proposing spec changes, **work from `spec/v0.6.2.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
+When proposing spec changes, **work from `spec/v0.6.3.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
 
 ## Transpiler
 
@@ -125,7 +126,7 @@ Full methodology is in `tests/README.md`.
 - **Design by trying, not by theorising.** When working on a future v0.X, try to write the hard example in the current spec, hit the walls, and let the walls dictate the additions. This is how every version since v0.3 was designed.
 - **Be honest about defects.** If a spec example is structurally wrong, say so directly. The cold test exists precisely to catch what self-review misses.
 - **Claude's "honest no" is more valuable than a clever workaround.** If a model correctly identifies a gap and refuses to invent around it, that's the most useful diagnostic signal.
-- **v0.6.2 is the current canonical spec.** Work from it. Don't propose v0.7 design work without explicit direction.
+- **v0.6.3 is the current canonical spec.** Work from it. Don't propose v0.7 design work without explicit direction.
 
 ## Common pitfalls to avoid
 
@@ -155,4 +156,4 @@ Items deferred that will be designed once enough test data accumulates:
 - **Named slots** for wrapper components (multiple `body` regions per wrapper) — deferred because single slot covers 90% of cases.
 - **Submit modifier on inputs** — currently the trigger-variable pattern handles this.
 
-The current and authoritative list lives at the bottom of `spec/v0.6.2.md`.
+The current and authoritative list lives at the bottom of `spec/v0.6.3.md`.
