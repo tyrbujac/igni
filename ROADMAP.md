@@ -21,7 +21,8 @@ Things to build next, roughly prioritised.
 - **Angela Yu Flutter course projects** — rebuild her course projects in Igni as a real-world coverage test. Good stress test for the transpiler against progressively harder Flutter patterns, and produces concrete before/after comparisons (Flutter vs Igni) for the dissertation.
   - ~~**Dicee**~~ — **DONE.** 4/4 zero-fix cold test, 13 lines vs 56 lines Flutter (4.3x reduction). Drove: screen properties (`title:`, `background:`), local image assets, extended colours, `fill: true` layouts, AppBar support.
   - ~~**Xylophone**~~ — **DONE.** 4/4 transpile (after empty-block fix), 10 lines vs 45 lines Flutter (4.5x reduction). Drove: `play` audio builtin, `audio/` folder convention, `teal` colour, empty layout blocks. Weaker model convergence than Dicee — 2/4 extracted components, 2/4 inlined. Audio gap handled gracefully by all models (placeholder functions).
-  - ~~**Quizzler**~~ — **DONE.** 4/4 zero-fix (after list indexing added), ~50 lines vs ~120 lines Flutter (~2.4x reduction). Drove: list indexing (`items[index]`), apostrophe escaping, label `align:` property. Most revealing cold test — 4 distinct approaches before indexing, near-identical after. Divergence-as-signal methodology validated.
+  - ~~**Quizzler**~~ — **DONE.** 4/4 zero-fix (after list indexing added), ~50 lines vs ~120 lines Flutter (~2.4x reduction). Drove: list indexing (`items[index]`), apostrophe escaping, label `align:` property. Most revealing cold test — 4 distinct approaches before indexing, near-identical after. Divergence-as-signal methodology validated. Also validated cheatsheet-only methodology (3/4 correct from 300-line cheatsheet vs 4/4 from 1100-line full spec).
+  - ~~**Destini**~~ — **DONE.** Cheatsheet-only (v0.6.6). 3/4 data-driven architecture, 1 hardcoded if/else. First test with branching logic (choose-your-own-adventure). Surfaced: background image gap (4/4 models), `image fill: true` (2/4 models). No new transpiler features needed. Architecture divergence is design choice, not spec gap.
 
 ## Ideas
 
@@ -40,6 +41,8 @@ Unfiltered. No timeline. Some of these might be bad. Signal strength noted where
 - Package/module system for sharing components across projects
 - Scroll behaviour (scroll-to-bottom on chat append)
 - Deep links, query params, modal stacks, back-stack management
+- Background image on layouts (`background: "image.png"`) — **4/4 Destini models** tried to use an image as a backdrop. Igni has `background: red` for colours but no image backgrounds. Real gap for apps with background imagery. Options: extend `background:` to accept filenames, or add `backgroundImage:` property
+- `image fill: true` — **2/4 Destini models** wrote it. `fill: true` is layout-only. Intent is to make an image fill available space (e.g. background images). Needs design thought — could extend `fill:` to images or add a `fit:` property
 - `button background:` — full-width coloured buttons currently require a `layout horizontal, background: color` workaround. If 2-3 cold tests show models using this pattern, add `background:` to `button` directly
 - String interpolation — 2/4 models flagged `+` concatenation as verbose. Intentional trade, but worth revisiting
 - Async cancellation / stale response handling — ChatGPT flagged race conditions

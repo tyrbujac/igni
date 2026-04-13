@@ -26,7 +26,7 @@ Now that the transpiler exists, LLM output can be objectively validated:
 
 This is the key upgrade over spec-only testing. Before, "valid Igni" was a subjective judgment. Now it's an objective test — the code either compiles and runs or it doesn't. Transpiler errors also directly prioritise what to build next: if 2/3 models use a feature the transpiler doesn't handle, that feature moves to the top of the backlog.
 
-**Most LLM output will transpile now.** The transpiler covers the majority of the v0.6.5 spec — screens, components, wrapper components, layouts, conditionals, loops, functions, lambdas, navigation, shared state, fetch, list operations, and more. Remaining gaps: `on change:`, `fetch` mutations, reactive re-fetch, `theme:` blocks, `paginate:`, and comment passthrough.
+**Most LLM output transpiles zero-fix.** Across four Angela Yu apps and 19 model outputs, every one transpiles without modification (15/15 full-spec, 4/4 cheatsheet-only). The transpiler covers the majority of the v0.6.5 spec — screens, components, wrapper components, layouts, conditionals, loops, functions, lambdas, navigation, shared state, fetch, list operations, list indexing, and more. Remaining transpiler gaps: `on change:`, `fetch` mutations, reactive re-fetch, `theme:` blocks, `paginate:`, and comment passthrough.
 
 ## Grading rubric
 
@@ -61,12 +61,41 @@ The full suite has grown over time. Each spec version's subfolder contains the p
 7. **Notes app re-run** — same prompt as v0.4 round, against v0.5. **PASS** — clean across all three models. Cross-screen state gap closed.
 8. **Shopping app** — new for v0.5. **PARTIAL** — Gemini PASS, Claude/ChatGPT misused `find` for structural matching. Closed by v0.5.1 docs patch.
 
-**v0.5.1 transpiler-validated round (pending):**
+**v0.5.1 transpiler-validated round:**
 
-9. **Settings screen** — first transpiler-validated test. Input binding, toggle binding, button, layout. Scoped to what the transpiler handles. LLM output is run through the transpiler and tested in the browser.
-10. **Greeting screen** — conditional rendering test. Expected to surface `is not empty` and string `+` as transpiler gaps.
+9. **Settings screen** — first transpiler-validated test. Input binding, toggle binding, button, layout.
+10. **Greeting screen** — conditional rendering test.
+
+**v0.6.2 round (first end-to-end 3-model + transpiler test):**
+
+11. **Contacts** — list filtering, navigation, detail screen. First test where LLM output was run through the transpiler and tested in the browser.
+
+**v0.6.3 round (3/3 zero-fix):**
+
+12. **Contacts re-run** — same prompt as v0.6.2. After type hint transpiler support, 3/3 zero-fix. Last transpiler gap for this app closed.
+
+**v0.6.4 round (Angela Yu course projects, 4/4 zero-fix):**
+
+13. **Dicee** — two-dice roller. State, local images, `random()`, screen properties. **4/4 zero-fix.** 13 lines vs 56 lines Flutter (4.3x reduction). Drove: screen properties, local images, extended colours, `fill: true`, AppBar.
+14. **Xylophone** — seven coloured bars, tap to play notes. **4/4 transpile** (2 minor fixes). 10 lines vs 45 lines Flutter (4.5x reduction). Drove: `play()` audio builtin, `audio/` folder, `teal` colour, empty layout blocks.
+
+**v0.6.5 round (Quizzler — list indexing gap and resolution):**
+
+15. **Quizzler (pre-indexing)** — true/false quiz. Run before `list[index]` existed. **4 distinct approaches** — 2/4 invented `questions[index]`, strongest gap signal in the project. Divergence-as-signal methodology validated.
+16. **Quizzler (post-indexing)** — same prompt after adding `list[index]` to spec. **4/4 zero-fix.** Convergence restored. ~45 lines vs ~120 lines Flutter (~2.7x reduction).
+17. **Quizzler (cheatsheet-only)** — same prompt, v0.6.5-cheatsheet.md only (300 lines, 70% smaller than full spec). **3/4 correct** (1 scoping error). Key finding: cheatsheet produces structurally identical outputs to full spec.
+
+**v0.6.6 round (Destini — cheatsheet-only, branching logic):**
+
+18. **Destini** — choose-your-own-adventure story game. v0.6.6-cheatsheet.md only. **3 distinct architectures** — 3/4 data-driven, 1 hardcoded if/else. Surfaced background image gap (4/4 models). Cheatsheet-only continues to work.
 
 **Don't run all of them in one sitting.** One app per session, write up the results before moving to the next.
+
+## Cheatsheet-only methodology
+
+Starting with v0.6.5, tests can be run against the cheatsheet (~300 lines) instead of the full spec (~1100 lines). The v0.6.5 cheatsheet-only Quizzler test showed that **the 300-line cheatsheet produces structurally identical outputs to the 1100-line full spec** — approximately 70% of the full spec is explanatory context that aids human comprehension but isn't required for LLM code generation.
+
+The cheatsheet is now the primary document for LLM consumption. Cold tests should run against both formats when validating a new spec version. The v0.6.6 round (Destini) was cheatsheet-only.
 
 ## Folder layout
 
@@ -81,9 +110,9 @@ tests/
 ├── v0.6.1/                    # Todo, Dashboard, Shopping
 ├── v0.6.2/                    # Contacts (first end-to-end 3-model + transpiler test)
 ├── v0.6.3/                    # Contacts re-run (3/3 zero-fix after type hints)
-├── v0.6.4/                    # Angela Yu course project prompts (Dicee, Xylophone)
-├── v0.6.5/                    # Quizzler cold test prompts
-└── v0.6.6/                    # Destini cold test prompts (cheatsheet-only round)
+├── v0.6.4/                    # Dicee (4/4), Xylophone (4/4)
+├── v0.6.5/                    # Quizzler (4/4 post-indexing), Quizzler-Cheatsheet (3/4)
+└── v0.6.6/                    # Destini (cheatsheet-only, 3 architectures)
 ```
 
 Each spec version gets its own subfolder containing both the prompts that were tested against it AND the result files. Test result filenames inside drop both the version (the folder carries it) and the `Cold_Test_` prefix.

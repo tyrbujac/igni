@@ -2,7 +2,7 @@
 
 UI-first language being designed by Tyr (sole author and sole decision-maker). North star: *"Flutter, without the bracket hell"* — same cross-platform power, but code that reads like a design spec. The hypothesis is that LLM accuracy and human readability correlate tightly, so removing the ambiguity that trips LLMs up also makes the language nicer for humans.
 
-**Status: transpiler stage.** The TypeScript-to-Dart transpiler exists and covers most of the v0.6.5 spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter.
+**Status: transpiler stage.** The TypeScript-to-Dart transpiler exists and covers most of the v0.6.6 spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter.
 
 *Project history: the language was originally named Rocket and was renamed to Igni at v0.3.2. Spec files in `spec/` are immutable historical snapshots — never edited after they ship. Each new version is a new file.*
 
@@ -27,8 +27,8 @@ igni/
 ├── CLAUDE.md                # this file (notes for AI assistants)
 ├── LICENSE                  # MIT
 ├── spec/                    # all spec versions
-│   ├── v0.2.md → v0.6.4.md # historical snapshots (never edited after shipping)
-│   ├── v0.6.5.md            # current canonical spec
+│   ├── v0.2.md → v0.6.5.md # historical snapshots (never edited after shipping)
+│   ├── v0.6.6.md            # current canonical spec
 │   ├── v0.6.6-cheatsheet.md # current canonical cheatsheet (learning order)
 │   └── v0.6.1 → v0.6.5-cheatsheet.md  # historical cheatsheets
 ├── tests/                   # cold-LLM test infrastructure
@@ -70,10 +70,11 @@ Each spec version gets its own subfolder under `tests/` containing both the prom
 - `spec/v0.6.2.md` — Igni-era historical. Documentation patch.
 - `spec/v0.6.3.md` — Igni-era historical. Five additions driven by first end-to-end cold-LLM test + human testing: (1) `toggle label:` primitives table fix, (2) `map` builtin, (3) `contains` case-insensitivity, (4) float literals, (5) `random(min, max)`. Cheatsheet companion at `spec/v0.6.3-cheatsheet.md`.
 - `spec/v0.6.4.md` — Igni-era historical. Ten additions driven by rebuilding Angela Yu's Dicee and Xylophone Flutter course projects.
-- `spec/v0.6.5.md` — **current canonical spec.** Five documentation clarifications driven by 4-model spec review, plus list indexing driven by Quizzler cold test. Cheatsheet at `spec/v0.6.5-cheatsheet.md`.
-- `spec/v0.6.6-cheatsheet.md` — **current canonical cheatsheet.** Same content as v0.6.5 cheatsheet, restructured in learning order (hello world → showing things → variables → interaction → layout → logic → components → navigation). Rules moved to end as reference. Optimised for both human learning progression and LLM code generation.
+- `spec/v0.6.5.md` — Igni-era historical. Five documentation clarifications driven by 4-model spec review, plus list indexing driven by Quizzler cold test. Cheatsheet at `spec/v0.6.5-cheatsheet.md`.
+- `spec/v0.6.6.md` — **current canonical spec.** Full spec reorganised into learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference). Background images on layouts and screens. Cheatsheet at `spec/v0.6.6-cheatsheet.md`.
+- `spec/v0.6.6-cheatsheet.md` — **current canonical cheatsheet.** Learning order, background image support. Optimised for both human learning progression and LLM code generation.
 
-When proposing spec changes, **work from `spec/v0.6.5.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
+When proposing spec changes, **work from `spec/v0.6.6.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
 
 ## Transpiler
 
@@ -89,7 +90,7 @@ The transpiler lives in `transpiler/` — a TypeScript project that compiles `.i
 
 **Testing:** Each example in `transpiler/examples/` has a `.igni` source and a `.expected.dart` reference. Run `npm test` in `transpiler/` to execute all 22 diff tests (the 23rd, `tutorial.igni`, is a smoke test with no expected output). Browser testing via a gitignored `test_app/` Flutter project.
 
-**Not yet supported (v0.6.5 spec features):** `on change:`, `fetch` with `method:`/`body:` (mutations), reactive re-fetch, `theme:` block, `paginate:` on `each`, comments passthrough to Dart.
+**Not yet supported (v0.6.6 spec features):** `on change:`, `fetch` with `method:`/`body:` (mutations), reactive re-fetch, `theme:` block, `paginate:` on `each`, comments passthrough to Dart, `background:` with image filenames.
 
 ## Non-negotiable design principles
 
@@ -136,7 +137,7 @@ Full methodology is in `tests/README.md`.
 - **Design by trying, not by theorising.** When working on a future v0.X, try to write the hard example in the current spec, hit the walls, and let the walls dictate the additions. This is how every version since v0.3 was designed.
 - **Be honest about defects.** If a spec example is structurally wrong, say so directly. The cold test exists precisely to catch what self-review misses.
 - **Claude's "honest no" is more valuable than a clever workaround.** If a model correctly identifies a gap and refuses to invent around it, that's the most useful diagnostic signal.
-- **v0.6.5 is the current canonical spec.** Work from it. Don't propose v0.7 design work without explicit direction.
+- **v0.6.6 is the current canonical spec.** Work from it. Don't propose v0.7 design work without explicit direction.
 
 ## Common pitfalls to avoid
 
@@ -166,4 +167,4 @@ Items deferred that will be designed once enough test data accumulates:
 - **Named slots** for wrapper components (multiple `body` regions per wrapper) — deferred because single slot covers 90% of cases.
 - **Submit modifier on inputs** — currently the trigger-variable pattern handles this.
 
-The current and authoritative list lives at the bottom of `spec/v0.6.5.md`.
+The current and authoritative list lives at the bottom of `spec/v0.6.6.md`.

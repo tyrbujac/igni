@@ -5,12 +5,13 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 ---
 
 ## v0.6.6 — 2026-04-13
-*Cheatsheet restructured in learning order.*
+*Full spec reorganised into learning order. Background images.*
 
-- No new language features — same surface as v0.6.5
-- Cheatsheet reorganised: hello world → showing things → variables → interaction → layout → logic → components → navigation
-- Rules moved to end as reference section
-- Optimised for both human learning progression and LLM code generation
+- **Full spec reorganised** to match cheatsheet learning order: hello world → screens → display → variables → interaction → events → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference
+- Design principles moved to end as "Rules (reference)" section
+- Built-in primitives split into "Showing Things" (display) and "Interactive Things" (input)
+- **Background images** on layouts and screens (`background: "photo.png"`). Extends `background:` property — colour names unquoted, image filenames quoted. 4/4 Destini cold-test models attempted image backdrops.
+- Cheatsheet updated with background image support
 
 ## v0.6.5 — 2026-04-13
 *Five documentation clarifications from 4-model spec review, plus list indexing from Quizzler cold test.*
