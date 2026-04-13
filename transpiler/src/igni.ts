@@ -7,10 +7,12 @@ import { Parser } from './parser.js';
 import { CodeGenerator } from './codegen.js';
 
 const command = process.argv[2];
+const explicitFile = process.argv[3]; // optional: igni run myfile.igni
 
 if (command !== 'run') {
-  console.log('Usage: igni run');
-  console.log('  Run from a directory containing app.igni');
+  console.log('Usage: igni run [file.igni]');
+  console.log('  igni run              Run app.igni (default entry point)');
+  console.log('  igni run hello.igni   Run a specific file');
   process.exit(1);
 }
 
@@ -23,19 +25,26 @@ function findIgniFiles(): string[] {
   const entries = readdirSync(cwd);
   const files = entries.filter(f => {
     if (!f.endsWith('.igni') || f.startsWith('.')) return false;
-    // Make sure it's a file, not a directory
     try { return statSync(join(cwd, f)).isFile(); } catch { return false; }
   });
   if (files.length === 0) {
     console.error('No .igni files found in current directory.');
     process.exit(1);
   }
-  if (!files.includes('app.igni')) {
-    console.error('No app.igni found. Create one with your main screen.');
+
+  // Determine entry point
+  const entry = explicitFile || 'app.igni';
+  if (!files.includes(entry)) {
+    if (explicitFile) {
+      console.error(`File not found: ${entry}`);
+    } else {
+      console.error('No app.igni found. Create one or specify a file: igni run hello.igni');
+    }
     process.exit(1);
   }
-  const rest = files.filter(f => f !== 'app.igni').sort();
-  return ['app.igni', ...rest];
+
+  const rest = files.filter(f => f !== entry).sort();
+  return [entry, ...rest];
 }
 
 // --- Transpile ---
