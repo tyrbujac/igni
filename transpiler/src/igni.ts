@@ -126,6 +126,45 @@ function syncImages(): void {
   }
 }
 
+// --- Audio assets ---
+
+function syncAudio(): void {
+  const audioDir = join(cwd, 'audio');
+  const assetsDir = join(igniDir, 'assets');
+
+  if (!existsSync(audioDir)) return;
+
+  mkdirSync(assetsDir, { recursive: true });
+
+  const files = readdirSync(audioDir).filter(f => {
+    try { return statSync(join(audioDir, f)).isFile(); } catch { return false; }
+  });
+
+  for (const file of files) {
+    copyFileSync(join(audioDir, file), join(assetsDir, file));
+  }
+
+  if (files.length > 0) {
+    // Ensure assets section exists
+    const pubspecPath = join(igniDir, 'pubspec.yaml');
+    let pubspec = readFileSync(pubspecPath, 'utf-8');
+    if (!pubspec.includes('  assets:')) {
+      pubspec = pubspec.replace(
+        /(\s*uses-material-design:\s*true)/,
+        '$1\n\n  assets:\n    - assets/'
+      );
+    }
+    // Ensure audioplayers dependency
+    if (!pubspec.includes('audioplayers:')) {
+      pubspec = pubspec.replace(
+        /(\s*cupertino_icons:[^\n]*)/,
+        '$1\n  audioplayers: ^6.1.0'
+      );
+    }
+    writeFileSync(pubspecPath, pubspec);
+  }
+}
+
 // --- Main ---
 
 async function run(): Promise<void> {
@@ -137,6 +176,7 @@ async function run(): Promise<void> {
 
   ensureFlutterProject();
   syncImages();
+  syncAudio();
   mkdirSync(join(igniDir, 'lib'), { recursive: true });
   writeOutput(dart);
 

@@ -68,6 +68,7 @@ export class CodeGenerator {
 
     // Detect random usage by checking if any generated code will use Random()
     const hasRandom = this.detectBuiltin(program, 'random');
+    const hasAudio = this.detectBuiltin(program, 'play');
 
     let code = `import 'package:flutter/material.dart';\n`;
     if (this.hasFetch) {
@@ -76,6 +77,9 @@ export class CodeGenerator {
     }
     if (hasRandom) {
       code += `import 'dart:math';\n`;
+    }
+    if (hasAudio) {
+      code += `import 'package:audioplayers/audioplayers.dart';\n`;
     }
     code += '\n';
 
@@ -270,6 +274,12 @@ export class CodeGenerator {
         .map(v => `  late final TextEditingController _${v}Controller;`)
         .join('\n');
       preBuild += (preBuild ? '\n' : '') + controllerDecls;
+    }
+
+    // Audio player field
+    const screenUsesAudio = this.detectBuiltinInScreen(screen, 'play');
+    if (screenUsesAudio) {
+      preBuild += (preBuild ? '\n' : '') + '  final _audioPlayer = AudioPlayer();';
     }
 
     // initState (controllers + fetch calls)
@@ -499,6 +509,36 @@ export class CodeGenerator {
       }
     }
 
+    // Empty layout: skip Column, just use Container for background/fill
+    if (node.children.length === 0) {
+      let code = 'const SizedBox()';
+      const bgProp = this.findProp(node.properties, 'background');
+      const roundedProp = this.findProp(node.properties, 'rounded');
+      if (bgProp || roundedProp) {
+        const decInd = '  '.repeat(depth);
+        const bgColor = bgProp ? this.resolveBackground(bgProp.value) : null;
+        const radius = roundedProp ? this.resolveDesignToken(roundedProp.value) : null;
+        let dec = 'BoxDecoration(';
+        const decParts: string[] = [];
+        if (bgColor) decParts.push(`color: ${bgColor}`);
+        if (radius) decParts.push(`borderRadius: BorderRadius.circular(${radius})`);
+        dec += decParts.join(', ') + ')';
+        code = `Container(\n${decInd}  decoration: ${dec},\n${decInd})`;
+      }
+      const tapEvent = node.events.find(e => e.event === 'tap');
+      if (tapEvent) {
+        const gestInd = '  '.repeat(depth);
+        const onTap = this.genOnPressed(tapEvent, depth + 1);
+        code = `GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${gestInd}  child: ${code},\n${gestInd})`;
+      }
+      const fillProp = this.findProp(node.properties, 'fill');
+      if (fillProp) {
+        const fillInd = '  '.repeat(depth);
+        code = `Expanded(\n${fillInd}  child: ${code},\n${fillInd})`;
+      }
+      return '  '.repeat(depth) + code;
+    }
+
     let code = `${widget}(\n`;
     const spreadProp = this.findProp(node.properties, 'spread');
     if (isCenter) {
@@ -508,6 +548,11 @@ export class CodeGenerator {
     } else if (alignProp) {
       const alignment = this.resolveAlign(alignProp.value);
       code += `${ind}  mainAxisAlignment: ${alignment},\n`;
+    }
+    // Stretch children to full width when parent has fill children
+    const hasFillChildren = node.children.some(c => c.type === 'Layout' && this.findProp(c.properties, 'fill'));
+    if (hasFillChildren) {
+      code += `${ind}  crossAxisAlignment: CrossAxisAlignment.stretch,\n`;
     }
     code += `${ind}  children: [\n`;
     code += childLines.join('\n') + '\n';
@@ -989,6 +1034,10 @@ export class CodeGenerator {
         return `${ind}${prefix}${s.target} = ${this.exprToDart(s.value)};\n`;
       }
       case 'FunctionCall': {
+        if (s.name === 'play' && s.args.length === 1) {
+          const src = this.exprToDart(s.args[0]);
+          return `${ind}_audioPlayer.play(AssetSource(${src}));\n`;
+        }
         const args = s.args.map(a => this.exprToDart(a)).join(', ');
         return `${ind}${s.name}(${args});\n`;
       }
@@ -1048,9 +1097,14 @@ export class CodeGenerator {
     }
 
     if (action.type === 'FunctionCall') {
-      const args = action.args.map(a => this.exprToDart(a)).join(', ');
       let code = `${ind}onPressed: () {\n`;
-      code += `${ind}  ${action.name}(${args});\n`;
+      if (action.name === 'play' && action.args.length === 1) {
+        const src = this.exprToDart(action.args[0]);
+        code += `${ind}  _audioPlayer.play(AssetSource(${src}));\n`;
+      } else {
+        const args = action.args.map(a => this.exprToDart(a)).join(', ');
+        code += `${ind}  ${action.name}(${args});\n`;
+      }
       code += `${ind}},\n`;
       return code;
     }
@@ -1226,9 +1280,15 @@ export class CodeGenerator {
   // -- Property helpers --
 
   private detectBuiltin(program: Program, name: string): boolean {
+    const checkEvent = (n: { events?: EventHandler[] }): boolean => {
+      const events = (n as any).events as EventHandler[] | undefined;
+      if (!events) return false;
+      return events.some(e => e.action.type === 'FunctionCall' && e.action.name === name);
+    };
     const check = (nodes: UINode[]): boolean => {
       for (const n of nodes) {
-        if (n.type === 'Layout' && check(n.children)) return true;
+        if (checkEvent(n)) return true;
+        if (n.type === 'Layout' && (check(n.children) || checkEvent(n))) return true;
         if (n.type === 'If' && (check(n.then) || (n.else_ ? check(n.else_) : false))) return true;
         if (n.type === 'Each' && check(n.children)) return true;
       }
@@ -1241,6 +1301,7 @@ export class CodeGenerator {
     };
     const checkStmts = (stmts: Statement[]): boolean => {
       for (const s of stmts) {
+        if (s.type === 'FunctionCall' && s.name === name) return true;
         if (s.type === 'Assignment' && checkExpr(s.value)) return true;
         if (s.type === 'IfStmt' && (checkStmts(s.then) || (s.else_ ? checkStmts(s.else_) : false))) return true;
         if (s.type === 'EachStmt' && checkStmts(s.body)) return true;
@@ -1248,9 +1309,43 @@ export class CodeGenerator {
       return false;
     };
     for (const screen of program.screens) {
+      const uiNodes = screen.body.filter(i => i.type !== 'VariableDecl' && i.type !== 'FunctionDef') as UINode[];
+      if (check(uiNodes)) return true;
       for (const item of screen.body) {
         if (item.type === 'FunctionDef' && checkStmts(item.body)) return true;
         if (item.type === 'VariableDecl' && checkExpr(item.value)) return true;
+      }
+    }
+    return false;
+  }
+
+  private detectBuiltinInScreen(screen: Screen, name: string): boolean {
+    const checkEvent = (n: any): boolean => {
+      const events = n.events as EventHandler[] | undefined;
+      if (!events) return false;
+      return events.some((e: EventHandler) => e.action.type === 'FunctionCall' && e.action.name === name);
+    };
+    const checkNodes = (nodes: UINode[]): boolean => {
+      for (const n of nodes) {
+        if (checkEvent(n)) return true;
+        if (n.type === 'Layout' && checkNodes(n.children)) return true;
+        if (n.type === 'If' && (checkNodes(n.then) || (n.else_ ? checkNodes(n.else_) : false))) return true;
+        if (n.type === 'Each' && checkNodes(n.children)) return true;
+      }
+      return false;
+    };
+    const checkStmts = (stmts: Statement[]): boolean => {
+      for (const s of stmts) {
+        if (s.type === 'FunctionCall' && s.name === name) return true;
+        if (s.type === 'IfStmt' && (checkStmts(s.then) || (s.else_ ? checkStmts(s.else_) : false))) return true;
+        if (s.type === 'EachStmt' && checkStmts(s.body)) return true;
+      }
+      return false;
+    };
+    for (const item of screen.body) {
+      if (item.type === 'FunctionDef' && checkStmts(item.body)) return true;
+      if ('type' in item && (item as any).type !== 'VariableDecl' && (item as any).type !== 'FunctionDef') {
+        if (checkNodes([item as UINode])) return true;
       }
     }
     return false;
