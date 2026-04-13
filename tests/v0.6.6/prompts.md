@@ -1,10 +1,13 @@
 # Igni Cold-LLM Test Prompts (v0.6.6)
 
-First cold tests against the v0.6.6 cheatsheet (learning-order restructure). Testing with cheatsheet only — no full spec.
+Cold tests against v0.6.6. Two rounds: cheatsheet-only (v0.6.6-cheatsheet.md) and full spec (v0.6.6.md, post-doc-fixes). Same prompts for both rounds.
 
 ## How to use
 
-Paste the full contents of `spec/v0.6.6-cheatsheet.md` FIRST, then paste the prompt BELOW it in the same chat message. Fresh conversation, no prior context.
+Paste the full contents of the spec FIRST, then paste the prompt BELOW it in the same chat message. Fresh conversation, no prior context.
+
+- **Prompt 1 (Destini):** tested with both cheatsheet (`v0.6.6-cheatsheet.md`) and full spec (`v0.6.6.md`)
+- **Prompts 2–3 (Contacts, Settings):** full spec only (`v0.6.6.md`, post-doc-fixes)
 
 ---
 
@@ -27,3 +30,53 @@ Paste the full contents of `spec/v0.6.6-cheatsheet.md` FIRST, then paste the pro
 > Story 5 (ending): "You bond with the murderer while crooning verses of Can you feel the love tonight. He drops you off at the next town. Before you go he asks you if you know any good places to dump bodies. You reply: Try the pier." — Restart button only
 >
 > Respond with only the Igni code — no explanation, no commentary, no discussion of the spec.
+
+---
+
+## 2. Contacts app (multi-screen CRUD)
+
+> Using only the Igni language spec above, write a Contacts app in Igni — a multi-screen contact manager.
+>
+> The app stores contacts in shared state, pre-populated with 3 sample contacts (each with an id, name, phone, and email).
+>
+> **Screen 1 — Contact List:**
+> - A search input at the top that filters contacts by name as you type (case-insensitive matching)
+> - A button to toggle between alphabetical (A→Z) and reverse alphabetical (Z→A) sort order
+> - Each contact shown in a reusable card component (card background, rounded corners, padding) displaying the contact's name as a small heading and phone number below it
+> - Tapping a contact navigates to the detail screen
+>
+> **Screen 2 — Contact Detail:**
+> - Fetches extra details from "/api/contacts/" + contact.id (show a spinner while loading, an error message if the fetch fails)
+> - Displays the contact's name, phone, and email with section headings
+> - An "Edit" button that toggles between view mode and edit mode (edit mode shows input fields for name, phone, email)
+> - A "Save" button that updates the contact in the shared contacts list and navigates back
+> - A "Delete" button that removes the contact from the shared list and navigates back
+>
+> Show the complete Igni code first, then briefly explain any design decisions you made.
+
+---
+
+## 3. Settings app (single-screen, input primitives)
+
+> Using only the Igni language spec above, write a Settings app in Igni — a single-screen settings page.
+>
+> The screen has four sections, each with a smaller heading style (not full-size headings):
+>
+> **"Profile" section:**
+> - Displays the user's name and email
+> - An avatar image (use "avatar.png", displayed as a circle)
+>
+> **"Location" section:**
+> - A dropdown to select country (options: "UK", "US", "France", "Germany") — when the country is changed, reset the city to empty and update the available cities for that country
+> - A dropdown to select city (options depend on the selected country)
+>
+> **"Preferences" section:**
+> - A toggle for dark mode
+> - A toggle for notifications
+> - A slider for text size (min 12, max 24)
+>
+> **"Account" section:**
+> - A checkbox for "Remember me"
+> - A "Log out" button in a danger/red colour
+>
+> Show the complete Igni code first, then briefly explain any design decisions you made.
