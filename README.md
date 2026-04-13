@@ -78,4 +78,4 @@ igni/
 
 ## License
 
-MIT. See [`LICENSE`](LICENSE).
+Dual-licensed. Transpiler and CLI: **GPL v3.0**. Spec and documentation: **CC BY-SA 4.0**. Your compiled output is yours — the GPL does not apply to generated Dart code. See [`LICENSE`](LICENSE).
