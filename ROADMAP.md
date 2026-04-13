@@ -16,6 +16,10 @@ Things to build next, roughly prioritised.
 - **Comments passthrough** — lexer skips `#` comments, should emit `//` in Dart for debugging.
 - **`igni new`** — project scaffolding. `igni run` works, needs the matching setup command.
 
+## Testing
+
+- **Angela Yu Flutter course projects** — rebuild her course projects in Igni as a real-world coverage test. Good stress test for the transpiler against progressively harder Flutter patterns, and produces concrete before/after comparisons (Flutter vs Igni) for the dissertation.
+
 ## Ideas
 
 Unfiltered. No timeline. Some of these might be bad. Signal strength noted where cold tests or reviews have data.

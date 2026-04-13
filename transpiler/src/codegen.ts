@@ -91,7 +91,7 @@ export class CodeGenerator {
 
   private genSharedState(vars: VariableDecl[]): string {
     const fields = vars.map(v => {
-      const dartType = this.inferType(v.value);
+      const dartType = this.inferType(v.value, v.typeHint);
       const dartValue = this.exprToDart(v.value);
       return `  ${dartType} ${v.name} = ${dartValue};`;
     }).join('\n');
@@ -383,7 +383,7 @@ export class CodeGenerator {
   }
 
   private genStateVar(decl: VariableDecl): string {
-    const dartType = this.inferType(decl.value);
+    const dartType = this.inferType(decl.value, decl.typeHint);
     const dartValue = this.exprToDart(decl.value);
     const needsLate = this.exprRefsParams(decl.value);
     return needsLate ? `late ${dartType} ${decl.name} = ${dartValue};` : `${dartType} ${decl.name} = ${dartValue};`;
@@ -402,7 +402,13 @@ export class CodeGenerator {
     return false;
   }
 
-  private inferType(expr: Expr): string {
+  private inferType(expr: Expr, typeHint?: string): string {
+    if (typeHint) {
+      if (typeHint.startsWith('[') && typeHint.endsWith(']')) {
+        return `List<${typeHint.slice(1, -1)}>`;
+      }
+      return typeHint;
+    }
     switch (expr.type) {
       case 'NumberLit': return expr.isFloat ? 'double' : 'int';
       case 'StringLit': return 'String';

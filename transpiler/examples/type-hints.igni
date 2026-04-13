@@ -1,0 +1,13 @@
+shared:
+  items: [Item] = [{name: "Milk"}, {name: "Bread"}]
+
+screen Home:
+  title: String = "Shopping"
+  count: int = 0
+
+  layout vertical, gap: medium, padding: large:
+    label title, style: heading
+    label count
+    button "Add", on tap: count = count + 1
+    each item in shared.items:
+      label item.name

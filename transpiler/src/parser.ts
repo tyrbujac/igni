@@ -75,10 +75,7 @@ export class Parser {
   private parseScreenBody(): ScreenItem[] {
     const items: ScreenItem[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
-      if (
-        this.check(TokenType.Identifier) &&
-        this.peek(1)?.type === TokenType.Equals
-      ) {
+      if (this.isVariableDecl()) {
         items.push(this.parseVariableDecl());
       } else if (
         this.check(TokenType.Identifier) &&
@@ -96,12 +93,35 @@ export class Parser {
 
   // -- Variable declarations --
 
+  private isVariableDecl(): boolean {
+    if (!this.check(TokenType.Identifier)) return false;
+    // name = value
+    if (this.peek(1)?.type === TokenType.Equals) return true;
+    // name: Type = value
+    if (this.peek(1)?.type === TokenType.Colon && this.peek(2)?.type === TokenType.Identifier && this.peek(3)?.type === TokenType.Equals) return true;
+    // name: [Type] = value
+    if (this.peek(1)?.type === TokenType.Colon && this.peek(2)?.type === TokenType.LBracket && this.peek(3)?.type === TokenType.Identifier && this.peek(4)?.type === TokenType.RBracket && this.peek(5)?.type === TokenType.Equals) return true;
+    return false;
+  }
+
   private parseVariableDecl(): VariableDecl {
     const name = this.consume(TokenType.Identifier, 'Expected variable name').value;
+    let typeHint: string | undefined;
+    if (this.check(TokenType.Colon)) {
+      this.advance(); // consume :
+      if (this.check(TokenType.LBracket)) {
+        this.advance(); // consume [
+        const innerType = this.consume(TokenType.Identifier, 'Expected type name').value;
+        this.consume(TokenType.RBracket, 'Expected "]"');
+        typeHint = `[${innerType}]`;
+      } else {
+        typeHint = this.consume(TokenType.Identifier, 'Expected type name').value;
+      }
+    }
     this.consume(TokenType.Equals, 'Expected "="');
     const value = this.parseExpr();
     this.consume(TokenType.Newline, 'Expected newline');
-    return { type: 'VariableDecl', name, value };
+    return { type: 'VariableDecl', name, value, typeHint };
   }
 
   // -- UI nodes --
@@ -360,7 +380,7 @@ export class Parser {
   }
 
   private parseIfBodyItem(allowAssignments: boolean): UINode | VariableDecl {
-    if (allowAssignments && this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.Equals) {
+    if (allowAssignments && this.isVariableDecl()) {
       return this.parseVariableDecl();
     }
     return this.parseUINode();

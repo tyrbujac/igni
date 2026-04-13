@@ -91,6 +91,7 @@ export interface VariableDecl {
   type: 'VariableDecl';
   name: string;
   value: Expr;
+  typeHint?: string;
 }
 
 export interface Assignment {
