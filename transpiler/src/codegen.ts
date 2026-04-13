@@ -525,12 +525,7 @@ export class CodeGenerator {
         dec += decParts.join(', ') + ')';
         code = `Container(\n${decInd}  decoration: ${dec},\n${decInd})`;
       }
-      const tapEvent = node.events.find(e => e.event === 'tap');
-      if (tapEvent) {
-        const gestInd = '  '.repeat(depth);
-        const onTap = this.genOnPressed(tapEvent, depth + 1);
-        code = `GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${gestInd}  child: ${code},\n${gestInd})`;
-      }
+      code = this.wrapWithGestures(code, node.events, depth);
       const fillProp = this.findProp(node.properties, 'fill');
       if (fillProp) {
         const fillInd = '  '.repeat(depth);
@@ -582,12 +577,7 @@ export class CodeGenerator {
       dec += decParts.join(', ') + ')';
       code = `Container(\n${decInd}  decoration: ${dec},\n${decInd}  child: ${code},\n${decInd})`;
     }
-    const tapEvent = node.events.find(e => e.event === 'tap');
-    if (tapEvent) {
-      const gestInd = '  '.repeat(depth);
-      const onTap = this.genOnPressed(tapEvent, depth + 1);
-      code = `GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${gestInd}  child: ${code},\n${gestInd})`;
-    }
+    code = this.wrapWithGestures(code, node.events, depth);
     const fillProp = this.findProp(node.properties, 'fill');
     if (fillProp) {
       const fillInd = '  '.repeat(depth);
@@ -1124,6 +1114,21 @@ export class CodeGenerator {
     code += `${ind}  ${action.target} = ${dartExpr};\n`;
     code += `${ind}},\n`;
     return code;
+  }
+
+  private wrapWithGestures(code: string, events: EventHandler[], depth: number): string {
+    const tapEvent = events.find(e => e.event === 'tap');
+    const touchEvent = events.find(e => e.event === 'touch');
+    if (!tapEvent && !touchEvent) return code;
+    const ind = '  '.repeat(depth);
+    const props: string[] = [];
+    if (tapEvent) {
+      props.push(this.genOnPressed(tapEvent, depth + 1).replace('onPressed', 'onTap'));
+    }
+    if (touchEvent) {
+      props.push(this.genOnPressed(touchEvent, depth + 1).replace('onPressed: ()', 'onTapDown: (_)'));
+    }
+    return `${ind}GestureDetector(\n${props.join('')}${ind}  child: ${code.trimStart()},\n${ind})`;
   }
 
   // -- Expression rendering --
