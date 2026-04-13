@@ -65,7 +65,8 @@ Each spec version gets its own subfolder under `tests/` containing both the prom
 - `spec/v0.6.2.md` — Igni-era historical. Documentation patch.
 - `spec/v0.6.3.md` — Igni-era historical. Five additions driven by first end-to-end cold-LLM test + human testing: (1) `toggle label:` primitives table fix, (2) `map` builtin, (3) `contains` case-insensitivity, (4) float literals, (5) `random(min, max)`. Cheatsheet companion at `spec/v0.6.3-cheatsheet.md`.
 - `spec/v0.6.4.md` — Igni-era historical. Ten additions driven by rebuilding Angela Yu's Dicee and Xylophone Flutter course projects.
-- `spec/v0.6.5.md` — **current canonical version.** Five documentation clarifications driven by 4-model spec review: (1) `fill: true` is layout-only, (2) multiple events can coexist, (3) `card` is a background token not a colour, (4) `fill: true` siblings split equally, (5) property applicability table. Cheatsheet at `spec/v0.6.5-cheatsheet.md`.
+- `spec/v0.6.5.md` — **current canonical spec.** Five documentation clarifications driven by 4-model spec review, plus list indexing driven by Quizzler cold test. Cheatsheet at `spec/v0.6.5-cheatsheet.md`.
+- `spec/v0.6.6-cheatsheet.md` — **current canonical cheatsheet.** Same content as v0.6.5 cheatsheet, restructured in learning order (hello world → showing things → variables → interaction → layout → logic → components → navigation). Rules moved to end as reference. Optimised for both human learning progression and LLM code generation.
 
 When proposing spec changes, **work from `spec/v0.6.5.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
 
