@@ -175,15 +175,19 @@ export class Parser {
     const dirToken = this.consume(TokenType.Identifier, 'Expected direction (vertical/horizontal)');
     const direction = dirToken.value as 'vertical' | 'horizontal';
     const { properties, events } = this.parseArgs();
-    this.consume(TokenType.Colon, 'Expected ":" to open block');
-    this.consume(TokenType.Newline, 'Expected newline');
     const children: UINode[] = [];
-    if (this.check(TokenType.Indent)) {
-      this.advance();
-      while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
-        children.push(this.parseUINode());
+    if (this.check(TokenType.Colon)) {
+      this.advance(); // consume :
+      this.consume(TokenType.Newline, 'Expected newline');
+      if (this.check(TokenType.Indent)) {
+        this.advance();
+        while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+          children.push(this.parseUINode());
+        }
+        this.consume(TokenType.Dedent, 'Expected dedent');
       }
-      this.consume(TokenType.Dedent, 'Expected dedent');
+    } else {
+      this.consume(TokenType.Newline, 'Expected newline');
     }
     return { type: 'Layout', direction, properties, events, children };
   }
