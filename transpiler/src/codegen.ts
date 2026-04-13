@@ -24,6 +24,13 @@ const COLOR_MAP: Record<string, string> = {
   subtle: 'Colors.grey',
   danger: 'Colors.red',
   green: 'Colors.green',
+  red: 'Colors.red',
+  blue: 'Colors.blue',
+  white: 'Colors.white',
+  black: 'Colors.black',
+  yellow: 'Colors.yellow',
+  orange: 'Colors.orange',
+  purple: 'Colors.purple',
 };
 
 const ALIGN_MAP: Record<string, string> = {
@@ -298,11 +305,32 @@ export class CodeGenerator {
     if (preBuild) {
       stateClass += preBuild + '\n\n';
     }
+    // Screen-level properties
+    const titleProp = this.findProp(screen.properties, 'title');
+    const screenBgProp = this.findProp(screen.properties, 'background');
+    const scaffoldBg = screenBgProp ? this.resolveBackground(screenBgProp.value) : '';
+
     stateClass += `  @override\n  Widget build(BuildContext context) {\n`;
     if (buildLocals.length > 0) {
       stateClass += buildLocals.join('\n') + '\n';
     }
-    stateClass += `    return Scaffold(\n      body: SingleChildScrollView(\n        child: ${bodyWidget.trimStart()},\n      ),\n    );\n`;
+
+    // Build Scaffold parts
+    const scaffoldParts: string[] = [];
+    if (titleProp) {
+      const titleStr = this.exprToDart(titleProp.value);
+      const appBarBg = scaffoldBg ? `, backgroundColor: ${scaffoldBg}, foregroundColor: Colors.white` : '';
+      scaffoldParts.push(`      appBar: AppBar(title: Text(${titleStr})${appBarBg})`);
+    }
+    if (scaffoldBg) {
+      scaffoldParts.push(`      backgroundColor: ${scaffoldBg}`);
+    }
+    if (titleProp || scaffoldBg) {
+      scaffoldParts.push(`      body: ${bodyWidget.trimStart()}`);
+    } else {
+      scaffoldParts.push(`      body: SingleChildScrollView(\n        child: ${bodyWidget.trimStart()},\n      )`);
+    }
+    stateClass += `    return Scaffold(\n${scaffoldParts.join(',\n')},\n    );\n`;
     stateClass += `  }\n}\n`;
 
     return widgetClass + '\n' + stateClass;
@@ -514,6 +542,11 @@ export class CodeGenerator {
       const onTap = this.genOnPressed(tapEvent, depth + 1);
       code = `GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${gestInd}  child: ${code},\n${gestInd})`;
     }
+    const fillProp = this.findProp(node.properties, 'fill');
+    if (fillProp) {
+      const fillInd = '  '.repeat(depth);
+      code = `Expanded(\n${fillInd}  child: ${code},\n${fillInd})`;
+    }
     return '  '.repeat(depth) + code;
   }
 
@@ -652,15 +685,31 @@ export class CodeGenerator {
     return map[name] ?? `Icons.${name.replace(/-/g, '_')}`;
   }
 
+  private isNetworkImage(expr: Expr): boolean {
+    if (expr.type === 'StringLit') return expr.value.startsWith('http');
+    if (expr.type === 'BinaryExpr' && expr.op === '+') return this.isNetworkImage(expr.left);
+    return false;
+  }
+
   private genImage(node: ImageNode, depth: number): string {
     const ind = '  '.repeat(depth);
-    const url = this.exprToDart(node.url);
     const sizeProp = this.findProp(node.properties, 'size');
     const roundProp = this.findProp(node.properties, 'round');
     const size = sizeProp ? this.resolveDesignToken(sizeProp.value) : 48;
     const isRound = roundProp !== undefined;
 
-    let code = `${ind}Image.network(\n${ind}  ${url},\n${ind}  width: ${size},\n${ind}  height: ${size},\n${ind}  fit: BoxFit.cover,\n${ind})`;
+    const isNetwork = this.isNetworkImage(node.url);
+    let src: string;
+    if (isNetwork) {
+      src = this.exprToDart(node.url);
+    } else if (node.url.type === 'StringLit') {
+      src = `'assets/${node.url.value}'`;
+    } else {
+      src = `'assets/' + ${this.exprToDart(node.url)}`;
+    }
+
+    const imageType = isNetwork ? 'Image.network' : 'Image.asset';
+    let code = `${ind}${imageType}(\n${ind}  ${src},\n${ind}  width: ${size},\n${ind}  height: ${size},\n${ind}  fit: BoxFit.cover,\n${ind})`;
     if (isRound) {
       code = `${ind}ClipOval(\n${ind}  child: ${code.trimStart()},\n${ind})`;
     }
@@ -1255,6 +1304,7 @@ export class CodeGenerator {
     if (expr.type === 'Ident') {
       if (expr.name === 'card') return 'Theme.of(context).cardColor';
       if (expr.name === 'overlay') return 'Colors.black54';
+      if (expr.name in COLOR_MAP) return COLOR_MAP[expr.name];
     }
     return 'Theme.of(context).cardColor'; // fallback
   }

@@ -13,3 +13,11 @@ Paste the full contents of `spec/v0.6.3.md` FIRST, then paste the prompt BELOW i
 > Using only the Igni language spec above, write a contacts app in Igni. The main screen shows a list of contacts sorted alphabetically by name. Each contact has a name, phone number, and a "favourite" boolean. There's a search bar at the top that filters contacts as you type. A toggle switches between showing all contacts and showing only favourites. Tapping a contact navigates to a detail screen showing their full info. The detail screen has a button to toggle the favourite status. Use filter, sorted, and contains from the spec's builtins.
 >
 > Respond with only the Igni code — no explanation, no commentary, no discussion of the spec.
+
+---
+
+## 2. Dicee app (Angela Yu Flutter Course)
+
+> Using only the Igni language spec above, write a Dicee app in Igni. The app shows two dice side by side. Each die displays a dice face image — use image URLs like "https://example.com/dice1.png" through "https://example.com/dice6.png" where the number matches the face value. A "Roll" button below the dice randomizes both dice to new values between 1 and 6. The dice should be large and centered. Use random(min, max) from the spec's builtins.
+>
+> Respond with only the Igni code — no explanation, no commentary, no discussion of the spec.

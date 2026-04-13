@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, readdirSync, statSync, copyFileSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import { spawn, execSync } from 'node:child_process';
 import { watch } from 'chokidar';
@@ -95,6 +95,37 @@ function ensureFlutterProject(): void {
   console.log('Flutter project created.\n');
 }
 
+// --- Image assets ---
+
+function syncImages(): void {
+  const imagesDir = join(cwd, 'images');
+  const assetsDir = join(igniDir, 'assets');
+
+  if (!existsSync(imagesDir)) return;
+
+  mkdirSync(assetsDir, { recursive: true });
+
+  const files = readdirSync(imagesDir).filter(f => {
+    try { return statSync(join(imagesDir, f)).isFile(); } catch { return false; }
+  });
+
+  for (const file of files) {
+    copyFileSync(join(imagesDir, file), join(assetsDir, file));
+  }
+
+  if (files.length > 0) {
+    const pubspecPath = join(igniDir, 'pubspec.yaml');
+    let pubspec = readFileSync(pubspecPath, 'utf-8');
+    if (!pubspec.includes('  assets:')) {
+      pubspec = pubspec.replace(
+        /(\s*uses-material-design:\s*true)/,
+        '$1\n\n  assets:\n    - assets/'
+      );
+      writeFileSync(pubspecPath, pubspec);
+    }
+  }
+}
+
 // --- Main ---
 
 async function run(): Promise<void> {
@@ -105,6 +136,7 @@ async function run(): Promise<void> {
   }
 
   ensureFlutterProject();
+  syncImages();
   mkdirSync(join(igniDir, 'lib'), { recursive: true });
   writeOutput(dart);
 

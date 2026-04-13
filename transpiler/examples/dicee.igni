@@ -1,0 +1,11 @@
+screen Dicee, title: "Dicee", background: red:
+  die1 = 1
+  die2 = 1
+
+  layout horizontal, gap: large, align: center:
+    image "dice" + die1 + ".png", size: 120, on tap: roll()
+    image "dice" + die2 + ".png", size: 120, on tap: roll()
+
+  roll():
+    die1 = random(1, 6)
+    die2 = random(1, 6)

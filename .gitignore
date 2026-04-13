@@ -24,6 +24,7 @@ desktop.ini
 # Transpiler
 node_modules/
 transpiler/test_app/
+transpiler/test_apps/
 transpiler/dist/
 
 # Private docs

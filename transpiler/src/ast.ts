@@ -268,6 +268,7 @@ export interface Screen {
   type: 'Screen';
   name: string;
   params: string[];
+  properties: Property[];
   body: ScreenItem[];
 }
 

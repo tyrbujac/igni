@@ -9,7 +9,7 @@ Where Igni is going. Near term is actively planned; ideas are unstructured thoug
 Things to build next, roughly prioritised.
 
 - **Identity semantics** — reference identity + immutable data creates friction. **4/4 models flagged it across two test rounds.** Biggest open design question. Need to decide: `key:` field on objects, structural equality, or something else. The mutation model depends on identity but the identity model is fragile (ChatGPT's diagnosis).
-- **Type hints in transpiler** — `name: Type = value` is in the spec, 2/3 models use it, transpiler doesn't support it. Last remaining fix needed for Claude and ChatGPT cold test output.
+- ~~**Type hints in transpiler**~~ — **DONE.** 3/3 zero-fix on Contacts after this change.
 - **Error inspection** — `is error` tells you something failed but not what. 3/4 models flagged it. Need at least `user.error.message` and 404 vs 500 distinction. Real apps need this.
 - **`on change:` event** — needed for dropdowns and validated inputs. Transpiler gap.
 - **`fetch` mutations** — `method:` / `body:` for POST/PUT/PATCH/DELETE. Spec has it, transpiler doesn't.
@@ -19,6 +19,7 @@ Things to build next, roughly prioritised.
 ## Testing
 
 - **Angela Yu Flutter course projects** — rebuild her course projects in Igni as a real-world coverage test. Good stress test for the transpiler against progressively harder Flutter patterns, and produces concrete before/after comparisons (Flutter vs Igni) for the dissertation.
+  - ~~**Dicee**~~ — **DONE.** 4/4 zero-fix cold test, 13 lines vs 56 lines Flutter (4.3x reduction). Drove: screen properties (`title:`, `background:`), local image assets, extended colours, `fill: true` layouts, AppBar support.
 
 ## Ideas
 

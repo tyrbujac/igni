@@ -64,12 +64,17 @@ export class Parser {
       }
       this.consume(TokenType.RParen, 'Expected ")"');
     }
+    const properties: Property[] = [];
+    while (this.check(TokenType.Comma)) {
+      this.advance();
+      properties.push(this.parseProperty());
+    }
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
     this.consume(TokenType.Indent, 'Expected indent');
     const body = this.parseScreenBody();
     this.consume(TokenType.Dedent, 'Expected dedent');
-    return { type: 'Screen', name, params, body };
+    return { type: 'Screen', name, params, properties, body };
   }
 
   private parseScreenBody(): ScreenItem[] {
