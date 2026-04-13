@@ -10,12 +10,10 @@ npm install
 npx tsx src/cli.ts examples/counter.igni
 ```
 
-This prints the generated Dart to stdout. To run in a browser:
+This prints the generated Dart to stdout. To run in a browser, use the CLI from any directory containing `.igni` files:
 
 ```bash
-npx tsx src/cli.ts examples/fetch.igni > test_app/lib/main.dart
-cd test_app
-flutter run -d chrome
+igni run
 ```
 
 ## Pipeline
@@ -43,7 +41,7 @@ flutter run -d chrome
 | `each item in list:` | Collection-for with spread |
 | `navigate to` / `navigate back` | Navigator.push / Navigator.pop |
 | `shared:` block | ChangeNotifier + ListenableBuilder |
-| `fetch(url)` | http.get + async state management |
+| `fetch(url)` / `method:` / `body:` | http.get/post/put/patch/delete + async state |
 | `is loading` / `is error` / `is empty` / `is not empty` | Boolean flags / .isEmpty / .isNotEmpty |
 | `without`/`replace`/`find`/`count`/`length`/`filter`/`sorted`/`reversed`/`map` | Dart list methods |
 | Lambda expressions `item => expr` | Dart closures |
@@ -54,10 +52,12 @@ flutter run -d chrome
 | `and`/`or`, `not`, `>` `<` `>=` `<=` | `&&`/`||`, `!`, comparison operators |
 | `items[index]` (list indexing) | Bounds-checked access |
 | Object literals `{key: val}` / field access `obj.field` | Dart Maps / bracket notation |
+| `on change:` event on bind primitives | Callback after setState |
+| `background: "image.png"` on screens/layouts | BoxDecoration with AssetImage |
 
 ## Examples
 
-Twenty-three apps in `examples/`, each with source (`.igni`) and reference output (`.expected.dart`):
+27 apps in `examples/`, each with source (`.igni`) and reference output (`.expected.dart`):
 
 | Example | What it tests |
 |---|---|
@@ -72,6 +72,8 @@ Twenty-three apps in `examples/`, each with source (`.igni`) and reference outpu
 | `components` | Component definition + invocation |
 | `shared` | Cross-screen shared state, ChangeNotifier |
 | `fetch` | Async HTTP, loading/error states, spinner |
+| `fetch-mutation` | POST/PUT/PATCH/DELETE with method: and body: |
+| `fetch-reactive` | Reactive re-fetch when URL dependencies change |
 | `dice` | random builtin |
 | `dicee` | Screen properties, local images, AppBar, fill layouts |
 | `dashboard` | Complex layouts, badges, dividers |
@@ -83,6 +85,8 @@ Twenty-three apps in `examples/`, each with source (`.igni`) and reference outpu
 | `logic` | and/or boolean operators |
 | `type-hints` | Typed variable declarations |
 | `contacts` | List indexing, comparison operators |
+| `on-change` | on change: event on all bind primitives |
+| `bg-image` | Background images on screens and layouts |
 | `tutorial` | Smoke test (no expected output) |
 
 ## Running tests

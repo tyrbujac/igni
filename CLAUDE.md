@@ -1,6 +1,6 @@
 # Igni Language
 
-UI-first language being designed by Tyr (sole author and sole decision-maker). North star: *"Flutter, without the bracket hell"* — same cross-platform power, but code that reads like a design spec. The hypothesis is that LLM accuracy and human readability correlate tightly, so removing the ambiguity that trips LLMs up also makes the language nicer for humans.
+A programming language for building UIs — designed to be read. Created by Tyr (sole author and sole decision-maker). The hypothesis is that LLM accuracy and human readability correlate tightly, so removing the ambiguity that trips LLMs up also makes the language nicer for humans.
 
 **Status: transpiler stage.** The TypeScript-to-Dart transpiler exists and covers most of the v0.6.6 spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter.
 
@@ -25,54 +25,37 @@ Indentation for blocks. Colons end the line that opens one. Lowercase for built-
 igni/
 ├── README.md                # public-facing project summary
 ├── CLAUDE.md                # this file (notes for AI assistants)
-├── LICENSE                  # MIT
+├── LICENSE                  # GPL v3 (transpiler) + CC BY-SA 4.0 (spec/docs)
+├── CHANGELOG.md             # spec evolution history
+├── ROADMAP.md               # near-term plans + ideas
+├── assets/                  # logo and branding (igni.svg)
 ├── spec/                    # all spec versions
-│   ├── v0.2.md → v0.6.5.md # historical snapshots (never edited after shipping)
 │   ├── v0.6.6.md            # current canonical spec
 │   ├── v0.6.6-cheatsheet.md # current canonical cheatsheet (learning order)
+│   ├── v0.2.md → v0.6.5.md  # historical snapshots (never edited after shipping)
 │   └── v0.6.1 → v0.6.5-cheatsheet.md  # historical cheatsheets
 ├── tests/                   # cold-LLM test infrastructure
 │   ├── README.md            # test methodology
-│   ├── v0.3.2/              # Calculator, Todo, Weather — fed v0.4
-│   ├── v0.4/                # Chat (PASS), MusicPlayer (PARTIAL), Notes (MIXED)
-│   ├── v0.5/                # Notes re-run (PASS), Shopping (PARTIAL) — fed v0.5.1
-│   ├── v0.5.1/              # Settings, Greeting (first transpiler-validated)
-│   ├── v0.6/                # Contacts, Shopping (post-transpiler)
-│   ├── v0.6.1/              # Todo, Dashboard, Shopping
-│   ├── v0.6.2/              # Contacts (first end-to-end 3-model + transpiler test)
-│   ├── v0.6.3/              # Contacts re-run (3/3 zero-fix)
-│   ├── v0.6.4/              # Angela Yu project prompts
-│   ├── v0.6.5/              # Quizzler cold test prompts
-│   └── v0.6.6/              # Destini cold test prompts (cheatsheet-only)
+│   └── v0.3.2/ → v0.6.6/   # prompts + results per spec version
 ├── transpiler/              # TypeScript-to-Dart transpiler
 │   ├── src/                 # lexer, parser, codegen, CLI
-│   ├── examples/            # 28 .igni sources + .expected.dart reference outputs
+│   ├── bin/igni             # CLI entry point
+│   ├── examples/            # 27 .igni sources + .expected.dart reference outputs
 │   ├── run-tests.sh         # automated diff test runner
 │   ├── package.json
 │   └── tsconfig.json
-└── docs/                    # tutorial + private project docs
+└── docs/                    # tutorial + project docs
+    ├── tutorial.md           # beginner tutorial (no programming experience needed)
+    └── private/              # gitignored project docs (proposals, analyses, ratings)
 ```
 
 Each spec version gets its own subfolder under `tests/` containing both the prompts that were used and the result files. Test result filenames drop the `Cold_Test_` prefix and the version suffix (the folder carries the version).
 
 ## Spec files
 
-- `spec/v0.2.md` — Rocket-era historical snapshot. The original draft.
-- `spec/v0.3.md` — Rocket-era historical. Adds async data, mutations, screen-internal functions, the lexical reactivity rule, and the *"spec as budget"* and *"three commands to first pixel"* principles.
-- `spec/v0.3.1.md` — Rocket-era historical. Last version under the Rocket name. Patches v0.3 with a structurally-correct mutation example, the `icon` primitive, object literals, the no-interpolation rule, and the intrinsic-dimensions carve-out.
-- `spec/v0.3.2.md` — Igni-era historical. Rename only — no language changes from v0.3.1.
-- `spec/v0.4.md` — Igni-era historical. The first version drafted from cold-LLM test data (Calculator, Todo, Weather under v0.3.2). Adds arithmetic operators, `is X` for arbitrary equality, `null`, `+` for lists, `without`, `each` in non-rendering contexts, functional list updates, comments, cross-component function calls, and the reactive re-fetch example.
-- `spec/v0.4.1.md` — Igni-era historical. Documentation patch over v0.4 with five one-line additions grounded in the v0.4 acceptance test findings: single-screen multi-view pattern (with caveats), icon button example, functions-as-expressions, `image round:` vs `layout rounded:`, no-cross-screen-function-calls rule.
-- `spec/v0.5.md` — Igni-era historical. Closes the cross-screen state gap from the Notes test plus three other v0.5 design items. Adds: (1) cross-screen shared state via top-level `shared:` block, (2) wrapper components with `body` slot keyword (zero-or-once invocation supports conditional wrappers like LoadingWrapper / AuthGuard / Modal), (3) list builtins `replace` / `find` / `count` / `length` plus `is in` / `is not in` operators, (4) prominent input-debounce common-pitfall callout in Async Data section. Three new language features and one documentation upgrade. **No lambdas, no named slots — both deferred to v0.6.**
-- `spec/v0.5.1.md` — Documentation patch over v0.5 with five clarifications grounded in the v0.5 cold-LLM Shopping test findings: (1) `find` identity warning with counter-example, (2) `spread: true` as the canonical boolean form, (3) "wrapper component" terminology cross-reference to `body`, (4) `count`-for-quantity idiom from Gemini's Shopping output, (5) no-arg component invocation clarification. No new language features; zero budget impact. Last spec before the transpiler.
-- `spec/v0.6.md` — Igni-era historical. First post-transpiler spec. Adds: (1) lambda expressions for list builtins, (2) `filter`/`sorted`/`reversed` builtins, (3) `return` in functions, (4) `contains()` string builtin, (5) `and`/`or` boolean operators. Designed from developer experience building real apps with the transpiler.
-- `spec/v0.6.1.md` — Igni-era historical. Adds: (1) implicit vertical layout for screen/component bodies, (2) comparison operators (`>`/`<`/`>=`/`<=`).
-- `spec/v0.6.2.md` — Igni-era historical. Documentation patch.
-- `spec/v0.6.3.md` — Igni-era historical. Five additions driven by first end-to-end cold-LLM test + human testing: (1) `toggle label:` primitives table fix, (2) `map` builtin, (3) `contains` case-insensitivity, (4) float literals, (5) `random(min, max)`. Cheatsheet companion at `spec/v0.6.3-cheatsheet.md`.
-- `spec/v0.6.4.md` — Igni-era historical. Ten additions driven by rebuilding Angela Yu's Dicee and Xylophone Flutter course projects.
-- `spec/v0.6.5.md` — Igni-era historical. Five documentation clarifications driven by 4-model spec review, plus list indexing driven by Quizzler cold test. Cheatsheet at `spec/v0.6.5-cheatsheet.md`.
-- `spec/v0.6.6.md` — **current canonical spec.** Full spec reorganised into learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference). Background images on layouts and screens. Cheatsheet at `spec/v0.6.6-cheatsheet.md`.
-- `spec/v0.6.6-cheatsheet.md` — **current canonical cheatsheet.** Learning order, background image support. Optimised for both human learning progression and LLM code generation.
+- `spec/v0.6.6.md` — **current canonical spec.** Full spec in learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference). Background images on layouts and screens.
+- `spec/v0.6.6-cheatsheet.md` — **current canonical cheatsheet.** Same content condensed. Optimised for both human learning progression and LLM code generation.
+- `spec/v0.2.md` → `spec/v0.6.5.md` — historical snapshots (never edited after shipping). The language was originally called Rocket (v0.2–v0.3.1) and renamed to Igni at v0.3.2. See `CHANGELOG.md` for what each version added.
 
 When proposing spec changes, **work from `spec/v0.6.6.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
 
@@ -86,9 +69,9 @@ The transpiler lives in `transpiler/` — a TypeScript project that compiles `.i
 
 **Currently supported:** `screen` (StatefulWidget), screen properties (`title:` for AppBar, `background:` for Scaffold colour), `component` (StatelessWidget), wrapper components with `body` slot, variables (int/double/String/bool/List), optional type hints (`name: Type = value`, `items: [Type] = []`), `layout` (vertical/horizontal, align, gap, padding, background, rounded, spread, `fill: true` for Expanded), implicit vertical layout for screen bodies, `label` (with `align: center/end` for text alignment), `button` + `on tap`, `input bind:` + `placeholder:`, `toggle bind:`, `image` (size, round, `on tap:`, local assets via `images/` folder + network URLs), `icon` (size, color, `on tap:`), `slider` (bind, min, max), `checkbox` (bind, label), `dropdown` (bind, options), `badge` (color), `spinner`, `if`/`else`/`else if`, `not`, `is`/`is not` (general equality), `is empty`/`is not empty`, `is null`/`is not null`, `is in`/`is not in`, `is loading`/`is error`, comparison operators (`>`/`<`/`>=`/`<=`), `and`/`or` boolean operators, `each` loops, `navigate to`/`navigate back` (multi-screen with params), `shared:` state (ChangeNotifier), `fetch` + `spinner`, `without`/`replace`/`find`/`count`/`length`/`filter`/`sorted`/`reversed` builtins, `contains()` string builtin, `random(min, max)`, lambda expressions (`item => expr`), `return` in functions, screen-internal functions with params, list literals `[]`, object literals `{key: val}`, field access `obj.field`, list indexing `items[index]` (zero-based, null on out-of-bounds), arithmetic (`+`/`-`/`*`/`/`), float literals, string concatenation with `+`, extended colour names (`red`, `blue`, `white`, `black`, `yellow`, `orange`, `purple`, `teal` + semantic `brand`, `subtle`, `danger`, `green`), `play("file.wav")` audio builtin with `audio/` folder convention, `on touch:` event (fires on finger contact, vs `on tap:` which fires on release).
 
-**Twenty-eight example apps:** counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full (with delete), components, shared (cross-screen state), fetch (async API call), dice (random), dicee (Angela Yu course project — screen properties, local images, AppBar), dashboard, fn-return, lambda (filter/sorted/reversed), primitives, shopping (full e-commerce), wrapper (body slot), logic (and/or), type-hints (typed variable declarations), contacts (list indexing, comparisons), on-change (on change: event on all bind primitives), bg-image (background images on screens and layouts). All pass diff tests and run in the browser.
+**Twenty-seven example apps** in `transpiler/examples/`, each with a `.igni` source and `.expected.dart` reference. All pass diff tests and run in the browser. Covers: counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full (with delete), components, shared (cross-screen state), fetch (async API call), fetch-mutation (POST/PUT/DELETE), fetch-reactive (reactive re-fetch), dice (random), dicee (Angela Yu course project — screen properties, local images, AppBar), dashboard, fn-return, lambda (filter/sorted/reversed), primitives, shopping (full e-commerce), wrapper (body slot), logic (and/or), type-hints (typed variable declarations), contacts (list indexing, comparisons), on-change (on change: event on all bind primitives), bg-image (background images on screens and layouts), tutorial (smoke test).
 
-**Testing:** Each example in `transpiler/examples/` has a `.igni` source and a `.expected.dart` reference. Run `npm test` in `transpiler/` to execute all 27 diff tests (the 28th, `tutorial.igni`, is a smoke test with no expected output). Browser testing via a gitignored `test_app/` Flutter project.
+**Testing:** Run `npm test` in `transpiler/` to execute all 27 diff tests. Zero diff = pass. Browser testing via a gitignored `test_app/` Flutter project.
 
 **Not yet supported (v0.6.6 spec features):** `theme:` block, `paginate:` on `each`.
 

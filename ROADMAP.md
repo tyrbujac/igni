@@ -8,15 +8,7 @@ Where Igni is going. Near term is actively planned; ideas are unstructured thoug
 
 ### ~~Stream 1 — Transpiler: close the spec gap~~ DONE
 
-All major v0.6.6 spec features now have transpiler support. 27 diff tests, 0 failures.
-
-- ~~**`on change:` event**~~ — **DONE.** All 5 bind primitives. Fires after setState (event ordering matches spec). Validated end-to-end: spec documented → cold-tested (4/4 Settings) → transpiler implemented.
-- ~~**`background:` with image filenames**~~ — **DONE.** Was already implemented, diff test added to confirm.
-- ~~**`fetch` mutations**~~ — **DONE.** `method:` / `body:` named args. Generates `http.post`/`put`/`patch`/`delete` with JSON body.
-- ~~**Reactive re-fetch**~~ — **DONE.** URL comparison in `build()` — when a fetch URL's dependencies change, the fetch automatically re-runs.
-- ~~**Comments passthrough**~~ — **DONE.** `#` in Igni → `//` in Dart. Full-line and inline.
-
-**Remaining (low priority, moved to Ideas):** `theme:` block, `paginate:` on `each`.
+All major v0.6.6 spec features now have transpiler support. 27 diff tests, 0 failures. Remaining low-priority items (`theme:` block, `paginate:` on `each`) moved to Ideas.
 
 ### Stream 2 — Tooling: close the human experience gap (START HERE)
 
