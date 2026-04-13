@@ -40,6 +40,7 @@ Unfiltered. No timeline. Some of these might be bad. Signal strength noted where
 - Package/module system for sharing components across projects
 - Scroll behaviour (scroll-to-bottom on chat append)
 - Deep links, query params, modal stacks, back-stack management
+- `button background:` — full-width coloured buttons currently require a `layout horizontal, background: color` workaround. If 2-3 cold tests show models using this pattern, add `background:` to `button` directly
 - String interpolation — 2/4 models flagged `+` concatenation as verbose. Intentional trade, but worth revisiting
 - Async cancellation / stale response handling — ChatGPT flagged race conditions
 - Error boundaries / component-level fallback — ChatGPT flagged no crash isolation
