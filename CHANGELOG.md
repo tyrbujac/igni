@@ -66,7 +66,7 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 - `contains()` string builtin
 - `and`/`or` boolean operators
 
-## v0.5.1 — 2025
+## v0.5.1 — 2026-04-12
 *Documentation patch from v0.5 Shopping cold test. Last spec before the transpiler.*
 
 - `find` identity warning with counter-example
@@ -75,7 +75,7 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 - `count`-for-quantity idiom
 - No-arg component invocation clarification
 
-## v0.5 — 2025
+## v0.5 — 2026-04-11
 *Closes the cross-screen state gap from the Notes test.*
 
 - `shared:` block for cross-screen state
@@ -84,7 +84,7 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 - `is in` / `is not in` operators
 - Input-debounce common-pitfall callout
 
-## v0.4.1 — 2025
+## v0.4.1 — 2026-04-11
 *Documentation patch from v0.4 acceptance tests.*
 
 - Single-screen multi-view pattern (with caveats)
@@ -93,7 +93,7 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 - `image round:` vs `layout rounded:` distinction
 - No-cross-screen-function-calls rule
 
-## v0.4 — 2025
+## v0.4 — 2026-04-11
 *First spec drafted from cold-LLM test data (Calculator, Todo, Weather).*
 
 - Arithmetic operators (`+`, `-`, `*`, `/`)
@@ -106,10 +106,10 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 - Cross-component function calls
 - Reactive re-fetch example
 
-## v0.3.2 — 2025
+## v0.3.2 — 2026-04-11
 *Rename from Rocket to Igni. No language changes.*
 
-## v0.3.1 — 2025
+## v0.3.1 — 2026-04-11
 *Last version under the Rocket name.*
 
 - Structurally-correct mutation example
@@ -118,7 +118,7 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 - No-interpolation rule
 - Intrinsic-dimensions carve-out
 
-## v0.3 — 2025
+## v0.3 — 2026-04-11
 *First major expansion.*
 
 - Async data (`fetch`)
@@ -127,5 +127,5 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 - Lexical reactivity rule
 - "Spec as budget" and "three commands to first pixel" principles
 
-## v0.2 — 2025
+## v0.2 — 2026-04-11
 *The original draft under the Rocket name.*
