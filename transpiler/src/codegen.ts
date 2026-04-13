@@ -350,6 +350,7 @@ export class CodeGenerator {
   private exprRefsAny(expr: Expr, names: Set<string>): boolean {
     if (expr.type === 'Ident') return names.has(expr.name);
     if (expr.type === 'FieldAccess') return this.exprRefsAny(expr.object, names);
+    if (expr.type === 'IndexAccess') return this.exprRefsAny(expr.object, names) || this.exprRefsAny(expr.index, names);
     if (expr.type === 'BinaryExpr') return this.exprRefsAny(expr.left, names) || this.exprRefsAny(expr.right, names);
     if (expr.type === 'UnaryExpr') return this.exprRefsAny(expr.operand, names);
     if (expr.type === 'FunctionCall') return expr.args.some(a => this.exprRefsAny(a, names));
@@ -431,6 +432,7 @@ export class CodeGenerator {
   private exprRefsParams(expr: Expr): boolean {
     if (expr.type === 'Ident') return this.screenParams.includes(expr.name);
     if (expr.type === 'FieldAccess') return this.exprRefsParams(expr.object);
+    if (expr.type === 'IndexAccess') return this.exprRefsParams(expr.object) || this.exprRefsParams(expr.index);
     if (expr.type === 'BinaryExpr') return this.exprRefsParams(expr.left) || this.exprRefsParams(expr.right);
     if (expr.type === 'UnaryExpr') return this.exprRefsParams(expr.operand);
     if (expr.type === 'FunctionCall') return expr.args.some(a => this.exprRefsParams(a));
@@ -1180,6 +1182,11 @@ export class CodeGenerator {
           return `shared.${expr.field}`;
         }
         return `${this.exprToDart(expr.object)}['${expr.field}']`;
+      case 'IndexAccess': {
+        const list = this.exprToDart(expr.object);
+        const idx = this.exprToDart(expr.index);
+        return `(${idx} >= 0 && ${idx} < ${list}.length ? ${list}[${idx}] : null)`;
+      }
       case 'FunctionCall':
         return this.genFunctionCallExpr(expr);
     }
@@ -1240,6 +1247,8 @@ export class CodeGenerator {
         return expr;
       case 'FieldAccess':
         return { type: 'FieldAccess', object: this.substituteLambdaParam(expr.object, param, replacement), field: expr.field };
+      case 'IndexAccess':
+        return { type: 'IndexAccess', object: this.substituteLambdaParam(expr.object, param, replacement), index: this.substituteLambdaParam((expr as any).index, param, replacement) } as any;
       case 'BinaryExpr':
         return { type: 'BinaryExpr', left: this.substituteLambdaParam(expr.left, param, replacement), op: expr.op, right: this.substituteLambdaParam(expr.right, param, replacement) };
       case 'EqualityExpr':

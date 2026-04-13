@@ -51,6 +51,12 @@ export interface FieldAccess {
   field: string;
 }
 
+export interface IndexAccess {
+  type: 'IndexAccess';
+  object: Expr;
+  index: Expr;
+}
+
 export interface LambdaExpr {
   type: 'LambdaExpr';
   param: string;
@@ -71,7 +77,7 @@ export interface InExpr {
   negated: boolean;
 }
 
-export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr | LambdaExpr | EqualityExpr | InExpr | ListLit | ObjectLit | FieldAccess | FunctionCall;
+export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr | LambdaExpr | EqualityExpr | InExpr | ListLit | ObjectLit | FieldAccess | IndexAccess | FunctionCall;
 
 // -- Properties and events --
 

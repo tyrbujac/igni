@@ -782,10 +782,17 @@ export class Parser {
   }
 
   private parsePostfix(expr: Expr): Expr {
-    while (this.check(TokenType.Dot)) {
-      this.advance(); // consume .
-      const field = this.consume(TokenType.Identifier, 'Expected field name').value;
-      expr = { type: 'FieldAccess', object: expr, field } as FieldAccess;
+    while (this.check(TokenType.Dot) || this.check(TokenType.LBracket)) {
+      if (this.check(TokenType.Dot)) {
+        this.advance(); // consume .
+        const field = this.consume(TokenType.Identifier, 'Expected field name').value;
+        expr = { type: 'FieldAccess', object: expr, field } as FieldAccess;
+      } else {
+        this.advance(); // consume [
+        const index = this.parseExpr();
+        this.consume(TokenType.RBracket, 'Expected "]"');
+        expr = { type: 'IndexAccess', object: expr, index } as any;
+      }
     }
     return expr;
   }
