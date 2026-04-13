@@ -5,40 +5,11 @@ import {
   Property, EventHandler, FunctionDef, Statement, Expr, IsExpr,
   LambdaExpr, EqualityExpr,
 } from './ast.js';
-
-const DESIGN_TOKENS: Record<string, number> = {
-  small: 8,
-  medium: 16,
-  large: 24,
-};
-
-const STYLE_MAP: Record<string, string> = {
-  heading: 'Theme.of(context).textTheme.headlineLarge!',
-  'heading.small': 'Theme.of(context).textTheme.headlineSmall!',
-  body: 'Theme.of(context).textTheme.bodyLarge!',
-  caption: 'Theme.of(context).textTheme.bodySmall!',
-};
-
-const COLOR_MAP: Record<string, string> = {
-  brand: 'Theme.of(context).colorScheme.primary',
-  subtle: 'Colors.grey',
-  danger: 'Colors.red',
-  green: 'Colors.green',
-  red: 'Colors.red',
-  blue: 'Colors.blue',
-  white: 'Colors.white',
-  black: 'Colors.black',
-  yellow: 'Colors.yellow',
-  orange: 'Colors.orange',
-  purple: 'Colors.purple',
-  teal: 'Colors.teal',
-};
-
-const ALIGN_MAP: Record<string, string> = {
-  start: 'MainAxisAlignment.start',
-  center: 'MainAxisAlignment.center',
-  end: 'MainAxisAlignment.end',
-};
+import {
+  findProp, resolveIdentName, resolveDesignToken, resolveStyle,
+  resolveAlign, resolveBackground, resolveColor, mapIconName,
+  inferType, isStringExpr, substituteLambdaParam,
+} from './codegen-helpers.js';
 
 export class CodeGenerator {
   private stateVars: string[] = [];
@@ -103,7 +74,7 @@ export class CodeGenerator {
 
   private genSharedState(vars: VariableDecl[]): string {
     const fields = vars.map(v => {
-      const dartType = this.inferType(v.value, v.typeHint);
+      const dartType = inferType(v.value, v.typeHint);
       const dartValue = this.exprToDart(v.value);
       return `  ${dartType} ${v.name} = ${dartValue};`;
     }).join('\n');
@@ -317,9 +288,9 @@ export class CodeGenerator {
       stateClass += preBuild + '\n\n';
     }
     // Screen-level properties
-    const titleProp = this.findProp(screen.properties, 'title');
-    const screenBgProp = this.findProp(screen.properties, 'background');
-    const scaffoldBg = screenBgProp ? this.resolveBackground(screenBgProp.value) : '';
+    const titleProp = findProp(screen.properties, 'title');
+    const screenBgProp = findProp(screen.properties, 'background');
+    const scaffoldBg = screenBgProp ? resolveBackground(screenBgProp.value) : '';
 
     stateClass += `  @override\n  Widget build(BuildContext context) {\n`;
     if (buildLocals.length > 0) {
@@ -423,7 +394,7 @@ export class CodeGenerator {
   }
 
   private genStateVar(decl: VariableDecl): string {
-    const dartType = this.inferType(decl.value, decl.typeHint);
+    const dartType = inferType(decl.value, decl.typeHint);
     const dartValue = this.exprToDart(decl.value);
     const needsLate = this.exprRefsParams(decl.value);
     return needsLate ? `late ${dartType} ${decl.name} = ${dartValue};` : `${dartType} ${decl.name} = ${dartValue};`;
@@ -441,24 +412,6 @@ export class CodeGenerator {
     if (expr.type === 'IsExpr') return this.exprRefsParams(expr.target);
     if (expr.type === 'InExpr') return this.exprRefsParams(expr.target) || this.exprRefsParams(expr.list);
     return false;
-  }
-
-  private inferType(expr: Expr, typeHint?: string): string {
-    if (typeHint) {
-      if (typeHint.startsWith('[') && typeHint.endsWith(']')) {
-        return `List<${typeHint.slice(1, -1)}>`;
-      }
-      return typeHint;
-    }
-    switch (expr.type) {
-      case 'NumberLit': return expr.isFloat ? 'double' : 'int';
-      case 'StringLit': return 'String';
-      case 'Ident':
-        if (expr.name === 'true' || expr.name === 'false') return 'bool';
-        return 'var';
-      case 'ListLit': return 'List<dynamic>';
-      default: return 'var';
-    }
   }
 
   // -- UI node generation --
@@ -487,12 +440,12 @@ export class CodeGenerator {
 
   private genLayout(node: Layout, depth: number): string {
     const widget = node.direction === 'vertical' ? 'Column' : 'Row';
-    const alignProp = this.findProp(node.properties, 'align');
-    const gapProp = this.findProp(node.properties, 'gap');
-    const paddingProp = this.findProp(node.properties, 'padding');
-    const gapSize = gapProp ? this.resolveDesignToken(gapProp.value) : null;
+    const alignProp = findProp(node.properties, 'align');
+    const gapProp = findProp(node.properties, 'gap');
+    const paddingProp = findProp(node.properties, 'padding');
+    const gapSize = gapProp ? resolveDesignToken(gapProp.value) : null;
     const gapDimension = node.direction === 'vertical' ? 'height' : 'width';
-    const isCenter = alignProp && this.resolveIdentName(alignProp.value) === 'center';
+    const isCenter = alignProp && resolveIdentName(alignProp.value) === 'center';
     const hasPadding = paddingProp !== undefined;
 
     // Wrappers push the Column deeper
@@ -514,12 +467,12 @@ export class CodeGenerator {
     // Empty layout: skip Column, just use Container for background/fill
     if (node.children.length === 0) {
       let code = 'const SizedBox()';
-      const bgProp = this.findProp(node.properties, 'background');
-      const roundedProp = this.findProp(node.properties, 'rounded');
+      const bgProp = findProp(node.properties, 'background');
+      const roundedProp = findProp(node.properties, 'rounded');
       if (bgProp || roundedProp) {
         const decInd = '  '.repeat(depth);
-        const bgColor = bgProp ? this.resolveBackground(bgProp.value) : null;
-        const radius = roundedProp ? this.resolveDesignToken(roundedProp.value) : null;
+        const bgColor = bgProp ? resolveBackground(bgProp.value) : null;
+        const radius = roundedProp ? resolveDesignToken(roundedProp.value) : null;
         let dec = 'BoxDecoration(';
         const decParts: string[] = [];
         if (bgColor) decParts.push(`color: ${bgColor}`);
@@ -528,7 +481,7 @@ export class CodeGenerator {
         code = `Container(\n${decInd}  decoration: ${dec},\n${decInd})`;
       }
       code = this.wrapWithGestures(code, node.events, depth);
-      const fillProp = this.findProp(node.properties, 'fill');
+      const fillProp = findProp(node.properties, 'fill');
       if (fillProp) {
         const fillInd = '  '.repeat(depth);
         code = `Expanded(\n${fillInd}  child: ${code},\n${fillInd})`;
@@ -537,17 +490,17 @@ export class CodeGenerator {
     }
 
     let code = `${widget}(\n`;
-    const spreadProp = this.findProp(node.properties, 'spread');
+    const spreadProp = findProp(node.properties, 'spread');
     if (isCenter) {
       code += `${ind}  mainAxisSize: MainAxisSize.min,\n`;
     } else if (spreadProp) {
       code += `${ind}  mainAxisAlignment: MainAxisAlignment.spaceBetween,\n`;
     } else if (alignProp) {
-      const alignment = this.resolveAlign(alignProp.value);
+      const alignment = resolveAlign(alignProp.value);
       code += `${ind}  mainAxisAlignment: ${alignment},\n`;
     }
     // Stretch children to full width when parent has fill children
-    const hasFillChildren = node.children.some(c => c.type === 'Layout' && this.findProp(c.properties, 'fill'));
+    const hasFillChildren = node.children.some(c => c.type === 'Layout' && findProp(c.properties, 'fill'));
     if (hasFillChildren) {
       code += `${ind}  crossAxisAlignment: CrossAxisAlignment.stretch,\n`;
     }
@@ -562,16 +515,16 @@ export class CodeGenerator {
       code = `Center(\n${centerInd}  child: ${code},\n${centerInd})`;
     }
     if (hasPadding) {
-      const padSize = this.resolveDesignToken(paddingProp!.value);
+      const padSize = resolveDesignToken(paddingProp!.value);
       const padInd = '  '.repeat(depth);
       code = `Padding(\n${padInd}  padding: const EdgeInsets.all(${padSize}),\n${padInd}  child: ${code},\n${padInd})`;
     }
-    const bgProp = this.findProp(node.properties, 'background');
-    const roundedProp = this.findProp(node.properties, 'rounded');
+    const bgProp = findProp(node.properties, 'background');
+    const roundedProp = findProp(node.properties, 'rounded');
     if (bgProp || roundedProp) {
       const decInd = '  '.repeat(depth);
-      const bgColor = bgProp ? this.resolveBackground(bgProp.value) : null;
-      const radius = roundedProp ? this.resolveDesignToken(roundedProp.value) : null;
+      const bgColor = bgProp ? resolveBackground(bgProp.value) : null;
+      const radius = roundedProp ? resolveDesignToken(roundedProp.value) : null;
       let dec = 'BoxDecoration(';
       const decParts: string[] = [];
       if (bgColor) decParts.push(`color: ${bgColor}`);
@@ -580,7 +533,7 @@ export class CodeGenerator {
       code = `Container(\n${decInd}  decoration: ${dec},\n${decInd}  child: ${code},\n${decInd})`;
     }
     code = this.wrapWithGestures(code, node.events, depth);
-    const fillProp = this.findProp(node.properties, 'fill');
+    const fillProp = findProp(node.properties, 'fill');
     if (fillProp) {
       const fillInd = '  '.repeat(depth);
       code = `Expanded(\n${fillInd}  child: ${code},\n${fillInd})`;
@@ -590,23 +543,23 @@ export class CodeGenerator {
 
   private genLabel(node: LabelNode, depth: number): string {
     const ind = '  '.repeat(depth);
-    const styleProp = this.findProp(node.properties, 'style');
-    const colorProp = this.findProp(node.properties, 'color');
+    const styleProp = findProp(node.properties, 'style');
+    const colorProp = findProp(node.properties, 'color');
 
     const displayStr = this.exprToDisplayStr(node.value);
 
-    const alignProp = this.findProp(node.properties, 'align');
+    const alignProp = findProp(node.properties, 'align');
 
     let code = `${ind}Text(\n`;
     code += `${ind}  ${displayStr},\n`;
     if (alignProp) {
-      const alignName = this.resolveIdentName(alignProp.value);
+      const alignName = resolveIdentName(alignProp.value);
       if (alignName === 'center') code += `${ind}  textAlign: TextAlign.center,\n`;
       else if (alignName === 'end') code += `${ind}  textAlign: TextAlign.end,\n`;
     }
     if (styleProp || colorProp) {
-      const styleBase = styleProp ? this.resolveStyle(styleProp.value) : null;
-      const colorStr = colorProp ? this.resolveColor(colorProp.value) : null;
+      const styleBase = styleProp ? resolveStyle(styleProp.value) : null;
+      const colorStr = colorProp ? resolveColor(colorProp.value) : null;
       if (styleBase && colorStr) {
         code += `${ind}  style: ${styleBase}.copyWith(color: ${colorStr}),\n`;
       } else if (styleBase) {
@@ -627,11 +580,11 @@ export class CodeGenerator {
   private genButton(node: ButtonNode, depth: number): string {
     const ind = '  '.repeat(depth);
     const tapEvent = node.events.find(e => e.event === 'tap');
-    const colorProp = this.findProp(node.properties, 'color');
+    const colorProp = findProp(node.properties, 'color');
 
     let code = `${ind}ElevatedButton(\n`;
     if (colorProp) {
-      const colorStr = this.resolveColor(colorProp.value);
+      const colorStr = resolveColor(colorProp.value);
       code += `${ind}  style: ElevatedButton.styleFrom(backgroundColor: ${colorStr}),\n`;
     }
     if (tapEvent) {
@@ -646,7 +599,7 @@ export class CodeGenerator {
 
   private genInput(node: InputNode, depth: number): string {
     const ind = '  '.repeat(depth);
-    const placeholder = this.findProp(node.properties, 'placeholder');
+    const placeholder = findProp(node.properties, 'placeholder');
 
     let code = `${ind}TextField(\n`;
     code += `${ind}  controller: _${node.bind}Controller,\n`;
@@ -665,7 +618,7 @@ export class CodeGenerator {
 
   private genToggle(node: ToggleNode, depth: number): string {
     const ind = '  '.repeat(depth);
-    const labelProp = this.findProp(node.properties, 'label');
+    const labelProp = findProp(node.properties, 'label');
     const labelStr = labelProp ? this.exprToDart(labelProp.value) : null;
 
     if (labelStr) {
@@ -695,14 +648,14 @@ export class CodeGenerator {
   private genIcon(node: IconNode, depth: number): string {
     const ind = '  '.repeat(depth);
     const nameStr = this.exprToDart(node.name);
-    const sizeProp = this.findProp(node.properties, 'size');
-    const colorProp = this.findProp(node.properties, 'color');
+    const sizeProp = findProp(node.properties, 'size');
+    const colorProp = findProp(node.properties, 'color');
     const tapEvent = node.events.find(e => e.event === 'tap');
 
-    const iconName = node.name.type === 'StringLit' ? this.mapIconName(node.name.value) : nameStr;
+    const iconName = node.name.type === 'StringLit' ? mapIconName(node.name.value) : nameStr;
     const parts: string[] = [`${ind}Icon(\n${ind}  ${iconName}`];
-    if (sizeProp) parts.push(`size: ${this.resolveDesignToken(sizeProp.value)}`);
-    if (colorProp) parts.push(`color: ${this.resolveColor(colorProp.value)}`);
+    if (sizeProp) parts.push(`size: ${resolveDesignToken(sizeProp.value)}`);
+    if (colorProp) parts.push(`color: ${resolveColor(colorProp.value)}`);
 
     let code = parts[0];
     for (let i = 1; i < parts.length; i++) {
@@ -717,19 +670,6 @@ export class CodeGenerator {
     return code;
   }
 
-  private mapIconName(name: string): string {
-    const map: Record<string, string> = {
-      play: 'Icons.play_arrow', pause: 'Icons.pause', stop: 'Icons.stop',
-      skip: 'Icons.skip_next', back: 'Icons.arrow_back', close: 'Icons.close',
-      search: 'Icons.search', settings: 'Icons.settings', plus: 'Icons.add',
-      trash: 'Icons.delete', edit: 'Icons.edit', phone: 'Icons.phone',
-      cart: 'Icons.shopping_cart', 'shopping-cart': 'Icons.shopping_cart',
-      heart: 'Icons.favorite', star: 'Icons.star', check: 'Icons.check',
-      user: 'Icons.person', person: 'Icons.person', home: 'Icons.home', mail: 'Icons.mail',
-    };
-    return map[name] ?? `Icons.${name.replace(/-/g, '_')}`;
-  }
-
   private isNetworkImage(expr: Expr): boolean {
     if (expr.type === 'StringLit') return expr.value.startsWith('http');
     if (expr.type === 'BinaryExpr' && expr.op === '+') return this.isNetworkImage(expr.left);
@@ -738,9 +678,9 @@ export class CodeGenerator {
 
   private genImage(node: ImageNode, depth: number): string {
     const ind = '  '.repeat(depth);
-    const sizeProp = this.findProp(node.properties, 'size');
-    const roundProp = this.findProp(node.properties, 'round');
-    const size = sizeProp ? this.resolveDesignToken(sizeProp.value) : 48;
+    const sizeProp = findProp(node.properties, 'size');
+    const roundProp = findProp(node.properties, 'round');
+    const size = sizeProp ? resolveDesignToken(sizeProp.value) : 48;
     const isRound = roundProp !== undefined;
 
     const isNetwork = this.isNetworkImage(node.url);
@@ -768,8 +708,8 @@ export class CodeGenerator {
 
   private genSlider(node: SliderNode, depth: number): string {
     const ind = '  '.repeat(depth);
-    const minProp = this.findProp(node.properties, 'min');
-    const maxProp = this.findProp(node.properties, 'max');
+    const minProp = findProp(node.properties, 'min');
+    const maxProp = findProp(node.properties, 'max');
     const min = minProp ? this.exprToDart(minProp.value) : '0';
     const max = maxProp ? this.exprToDart(maxProp.value) : '100';
 
@@ -793,7 +733,7 @@ export class CodeGenerator {
 
   private genCheckbox(node: CheckboxNode, depth: number): string {
     const ind = '  '.repeat(depth);
-    const labelProp = this.findProp(node.properties, 'label');
+    const labelProp = findProp(node.properties, 'label');
     const labelStr = labelProp ? this.exprToDart(labelProp.value) : null;
 
     if (labelStr) {
@@ -832,7 +772,7 @@ export class CodeGenerator {
 
   private genDropdown(node: DropdownNode, depth: number): string {
     const ind = '  '.repeat(depth);
-    const optionsProp = this.findProp(node.properties, 'options');
+    const optionsProp = findProp(node.properties, 'options');
     const optionsExpr = optionsProp ? this.exprToDart(optionsProp.value) : '[]';
 
     let code = `${ind}DropdownButton<dynamic>(\n`;
@@ -855,8 +795,8 @@ export class CodeGenerator {
   private genBadge(node: BadgeNode, depth: number): string {
     const ind = '  '.repeat(depth);
     const textStr = this.exprToDisplayStr(node.text);
-    const colorProp = this.findProp(node.properties, 'color');
-    const colorStr = colorProp ? this.resolveColor(colorProp.value) : null;
+    const colorProp = findProp(node.properties, 'color');
+    const colorStr = colorProp ? resolveColor(colorProp.value) : null;
 
     let code = `${ind}Chip(\n`;
     code += `${ind}  label: Text(${textStr}),\n`;
@@ -1151,7 +1091,7 @@ export class CodeGenerator {
         if (this.screenParams.includes(expr.name)) return this.isComponent ? expr.name : `widget.${expr.name}`;
         return expr.name;
       case 'BinaryExpr':
-        if (expr.op === '+' && this.isStringExpr(expr)) {
+        if (expr.op === '+' && isStringExpr(expr)) {
           return `${this.exprToDart(expr.left)}.toString() + ${this.exprToDart(expr.right)}.toString()`;
         }
         if (expr.op === 'and') return `${this.exprToDart(expr.left)} && ${this.exprToDart(expr.right)}`;
@@ -1228,8 +1168,8 @@ export class CodeGenerator {
     }
     if (call.name === 'sorted' && args.length === 2 && call.args[1].type === 'LambdaExpr') {
       const lambda = call.args[1] as LambdaExpr;
-      const keyA = this.exprToDart(this.substituteLambdaParam(lambda.body, lambda.param, 'a'));
-      const keyB = this.exprToDart(this.substituteLambdaParam(lambda.body, lambda.param, 'b'));
+      const keyA = this.exprToDart(substituteLambdaParam(lambda.body, lambda.param, 'a'));
+      const keyB = this.exprToDart(substituteLambdaParam(lambda.body, lambda.param, 'b'));
       return `(List.from(${args[0]})..sort((a, b) => (${keyA} as Comparable).compareTo(${keyB})))`;
     }
     if (call.name === 'length' && args.length === 1) {
@@ -1245,28 +1185,6 @@ export class CodeGenerator {
       return `(Random().nextInt(${args[1]} - ${args[0]} + 1) + ${args[0]})`;
     }
     return `${call.name}(${args.join(', ')})`;
-  }
-
-  private substituteLambdaParam(expr: Expr, param: string, replacement: string): Expr {
-    switch (expr.type) {
-      case 'Ident':
-        if (expr.name === param) return { type: 'Ident', name: replacement };
-        return expr;
-      case 'FieldAccess':
-        return { type: 'FieldAccess', object: this.substituteLambdaParam(expr.object, param, replacement), field: expr.field };
-      case 'IndexAccess':
-        return { type: 'IndexAccess', object: this.substituteLambdaParam(expr.object, param, replacement), index: this.substituteLambdaParam((expr as any).index, param, replacement) } as any;
-      case 'BinaryExpr':
-        return { type: 'BinaryExpr', left: this.substituteLambdaParam(expr.left, param, replacement), op: expr.op, right: this.substituteLambdaParam(expr.right, param, replacement) };
-      case 'EqualityExpr':
-        return { type: 'EqualityExpr', left: this.substituteLambdaParam(expr.left, param, replacement), right: this.substituteLambdaParam(expr.right, param, replacement), negated: expr.negated };
-      case 'IsExpr':
-        return { type: 'IsExpr', target: this.substituteLambdaParam(expr.target, param, replacement), check: expr.check };
-      case 'UnaryExpr':
-        return { type: 'UnaryExpr', op: expr.op, operand: this.substituteLambdaParam(expr.operand, param, replacement) };
-      default:
-        return expr;
-    }
   }
 
   private exprToDisplayStr(expr: Expr): string {
@@ -1372,64 +1290,4 @@ export class CodeGenerator {
     return false;
   }
 
-  private isStringExpr(expr: Expr): boolean {
-    if (expr.type === 'StringLit') return true;
-    if (expr.type === 'BinaryExpr' && expr.op === '+') {
-      return this.isStringExpr(expr.left) || this.isStringExpr(expr.right);
-    }
-    return false;
-  }
-
-  private resolveIdentName(expr: Expr): string | null {
-    return expr.type === 'Ident' ? expr.name : null;
-  }
-
-  private findProp(props: Property[], name: string): Property | undefined {
-    return props.find(p => p.name === name);
-  }
-
-  private resolveDesignToken(expr: Expr): number {
-    if (expr.type === 'Ident' && expr.name in DESIGN_TOKENS) {
-      return DESIGN_TOKENS[expr.name];
-    }
-    if (expr.type === 'NumberLit') {
-      return expr.value;
-    }
-    return 16; // fallback
-  }
-
-  private resolveStyle(expr: Expr): string {
-    if (expr.type === 'Ident' && expr.name in STYLE_MAP) {
-      return STYLE_MAP[expr.name];
-    }
-    // Handle dotted styles like heading.small
-    if (expr.type === 'FieldAccess' && expr.object.type === 'Ident') {
-      const key = `${expr.object.name}.${expr.field}`;
-      if (key in STYLE_MAP) return STYLE_MAP[key];
-    }
-    return `Theme.of(context).textTheme.bodyLarge`; // fallback
-  }
-
-  private resolveAlign(expr: Expr): string {
-    if (expr.type === 'Ident' && expr.name in ALIGN_MAP) {
-      return ALIGN_MAP[expr.name];
-    }
-    return 'MainAxisAlignment.start'; // fallback
-  }
-
-  private resolveBackground(expr: Expr): string {
-    if (expr.type === 'Ident') {
-      if (expr.name === 'card') return 'Theme.of(context).cardColor';
-      if (expr.name === 'overlay') return 'Colors.black54';
-      if (expr.name in COLOR_MAP) return COLOR_MAP[expr.name];
-    }
-    return 'Theme.of(context).cardColor'; // fallback
-  }
-
-  private resolveColor(expr: Expr): string {
-    if (expr.type === 'Ident' && expr.name in COLOR_MAP) {
-      return COLOR_MAP[expr.name];
-    }
-    return 'Colors.grey'; // fallback
-  }
 }
