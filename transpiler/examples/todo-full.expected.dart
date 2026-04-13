@@ -67,11 +67,15 @@ class _TodoScreenState extends State<TodoScreen> {
               decoration: const InputDecoration(hintText: 'New task'),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                add();
-              },
-              child: const Text('Add'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                onPressed: () {
+                  add();
+                },
+                child: const Text('Add'),
+              ),
             ),
             const SizedBox(height: 16),
             if (items.isEmpty) ...[
@@ -86,11 +90,15 @@ class _TodoScreenState extends State<TodoScreen> {
                       item['text'].toString(),
                     ),
                     const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        remove(item);
-                      },
-                      child: const Text('Done'),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                        onPressed: () {
+                          remove(item);
+                        },
+                        child: const Text('Done'),
+                      ),
                     ),
                   ],
                 ),

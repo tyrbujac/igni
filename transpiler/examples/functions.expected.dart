@@ -91,11 +91,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                save();
-              },
-              child: const Text('Save'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                onPressed: () {
+                  save();
+                },
+                child: const Text('Save'),
+              ),
             ),
             const SizedBox(height: 16),
             if (saved) ...[

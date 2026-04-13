@@ -176,18 +176,26 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
               ),
             ],
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                toggle_fav();
-              },
-              child: const Text('Toggle Favourite'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                onPressed: () {
+                  toggle_fav();
+                },
+                child: const Text('Toggle Favourite'),
+              ),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Back'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('Back'),
+              ),
             ),
           ],
         ),

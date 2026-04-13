@@ -45,11 +45,15 @@ class _NoteListScreenState extends State<NoteListScreen> {
               ),
             ] else ...[
               for (final note in shared.notes) ...[
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => NoteDetailScreen(note: note)));
-                  },
-                  child: Text(note['title'].toString()),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => NoteDetailScreen(note: note)));
+                    },
+                    child: Text(note['title'].toString()),
+                  ),
                 ),
               ],
             ],
@@ -90,18 +94,26 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                delete(widget.note);
-              },
-              child: const Text('Delete'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                onPressed: () {
+                  delete(widget.note);
+                },
+                child: const Text('Delete'),
+              ),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Back'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('Back'),
+              ),
             ),
           ],
         ),

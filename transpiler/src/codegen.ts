@@ -8,7 +8,7 @@ import {
 import {
   findProp, resolveIdentName, resolveDesignToken, resolveStyle,
   resolveAlign, resolveBackground, resolveColor, mapIconName,
-  inferType, isStringExpr, substituteLambdaParam,
+  inferType, isStringExpr, substituteLambdaParam, isImageBackground,
 } from './codegen-helpers.js';
 
 export class CodeGenerator {
@@ -290,7 +290,8 @@ export class CodeGenerator {
     // Screen-level properties
     const titleProp = findProp(screen.properties, 'title');
     const screenBgProp = findProp(screen.properties, 'background');
-    const scaffoldBg = screenBgProp ? resolveBackground(screenBgProp.value) : '';
+    const hasImageBg = screenBgProp ? isImageBackground(screenBgProp.value) : false;
+    const scaffoldBg = (screenBgProp && !hasImageBg) ? resolveBackground(screenBgProp.value) : '';
 
     stateClass += `  @override\n  Widget build(BuildContext context) {\n`;
     if (buildLocals.length > 0) {
@@ -299,15 +300,25 @@ export class CodeGenerator {
 
     // Build Scaffold parts
     const scaffoldParts: string[] = [];
+    if (hasImageBg) {
+      scaffoldParts.push(`      extendBodyBehindAppBar: true`);
+    }
     if (titleProp) {
       const titleStr = this.exprToDart(titleProp.value);
-      const appBarBg = scaffoldBg ? `, backgroundColor: ${scaffoldBg}, foregroundColor: Colors.white` : '';
-      scaffoldParts.push(`      appBar: AppBar(title: Text(${titleStr})${appBarBg})`);
+      if (hasImageBg) {
+        scaffoldParts.push(`      appBar: AppBar(title: Text(${titleStr}), backgroundColor: Colors.transparent, foregroundColor: Colors.white, elevation: 0)`);
+      } else {
+        const appBarBg = scaffoldBg ? `, backgroundColor: ${scaffoldBg}, foregroundColor: Colors.white` : '';
+        scaffoldParts.push(`      appBar: AppBar(title: Text(${titleStr})${appBarBg})`);
+      }
     }
     if (scaffoldBg) {
       scaffoldParts.push(`      backgroundColor: ${scaffoldBg}`);
     }
-    if (titleProp || scaffoldBg) {
+    if (hasImageBg) {
+      const imgSrc = this.exprToDart(screenBgProp!.value);
+      scaffoldParts.push(`      body: Container(\n        width: double.infinity,\n        height: double.infinity,\n        decoration: const BoxDecoration(\n          image: DecorationImage(\n            image: AssetImage('assets/' + ${imgSrc}),\n            fit: BoxFit.cover,\n          ),\n        ),\n        child: SafeArea(\n          child: ${bodyWidget.trimStart()},\n        ),\n      )`);
+    } else if (titleProp || scaffoldBg) {
       scaffoldParts.push(`      body: ${bodyWidget.trimStart()}`);
     } else {
       scaffoldParts.push(`      body: SingleChildScrollView(\n        child: ${bodyWidget.trimStart()},\n      )`);
@@ -471,11 +482,14 @@ export class CodeGenerator {
       const roundedProp = findProp(node.properties, 'rounded');
       if (bgProp || roundedProp) {
         const decInd = '  '.repeat(depth);
-        const bgColor = bgProp ? resolveBackground(bgProp.value) : null;
         const radius = roundedProp ? resolveDesignToken(roundedProp.value) : null;
         let dec = 'BoxDecoration(';
         const decParts: string[] = [];
-        if (bgColor) decParts.push(`color: ${bgColor}`);
+        if (bgProp && isImageBackground(bgProp.value)) {
+          decParts.push(`image: DecorationImage(image: AssetImage('assets/' + ${this.exprToDart(bgProp.value)}), fit: BoxFit.cover)`);
+        } else if (bgProp) {
+          decParts.push(`color: ${resolveBackground(bgProp.value)}`);
+        }
         if (radius) decParts.push(`borderRadius: BorderRadius.circular(${radius})`);
         dec += decParts.join(', ') + ')';
         code = `Container(\n${decInd}  decoration: ${dec},\n${decInd})`;
@@ -523,11 +537,14 @@ export class CodeGenerator {
     const roundedProp = findProp(node.properties, 'rounded');
     if (bgProp || roundedProp) {
       const decInd = '  '.repeat(depth);
-      const bgColor = bgProp ? resolveBackground(bgProp.value) : null;
       const radius = roundedProp ? resolveDesignToken(roundedProp.value) : null;
       let dec = 'BoxDecoration(';
       const decParts: string[] = [];
-      if (bgColor) decParts.push(`color: ${bgColor}`);
+      if (bgProp && isImageBackground(bgProp.value)) {
+        decParts.push(`image: DecorationImage(image: AssetImage('assets/' + ${this.exprToDart(bgProp.value)}), fit: BoxFit.cover)`);
+      } else if (bgProp) {
+        decParts.push(`color: ${resolveBackground(bgProp.value)}`);
+      }
       if (radius) decParts.push(`borderRadius: BorderRadius.circular(${radius})`);
       dec += decParts.join(', ') + ')';
       code = `Container(\n${decInd}  decoration: ${dec},\n${decInd}  child: ${code},\n${decInd})`;
@@ -582,17 +599,20 @@ export class CodeGenerator {
     const tapEvent = node.events.find(e => e.event === 'tap');
     const colorProp = findProp(node.properties, 'color');
 
-    let code = `${ind}ElevatedButton(\n`;
+    let code = `${ind}SizedBox(\n${ind}  width: double.infinity,\n${ind}  child: ElevatedButton(\n`;
+    const styleParts: string[] = [];
     if (colorProp) {
-      const colorStr = resolveColor(colorProp.value);
-      code += `${ind}  style: ElevatedButton.styleFrom(backgroundColor: ${colorStr}),\n`;
+      styleParts.push(`backgroundColor: ${resolveColor(colorProp.value)}`);
     }
+    styleParts.push(`shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))`);
+    code += `${ind}    style: ElevatedButton.styleFrom(${styleParts.join(', ')}),\n`;
     if (tapEvent) {
-      code += this.genOnPressed(tapEvent, depth + 1);
+      code += this.genOnPressed(tapEvent, depth + 2);
     }
     const isConstText = node.text.type === 'StringLit';
     const textStr = isConstText ? this.exprToConstStr(node.text) : this.exprToDisplayStr(node.text);
-    code += `${ind}  child: ${isConstText ? 'const ' : ''}Text(${textStr}),\n`;
+    code += `${ind}    child: ${isConstText ? 'const ' : ''}Text(${textStr}),\n`;
+    code += `${ind}  ),\n`;
     code += `${ind})`;
     return code;
   }

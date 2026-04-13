@@ -28,11 +28,15 @@ class _NoteListScreenState extends State<NoteListScreen> {
             ),
             const SizedBox(height: 16),
             for (final note in notes) ...[
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => NoteDetailScreen(note: note)));
-                },
-                child: Text(note['title'].toString()),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => NoteDetailScreen(note: note)));
+                  },
+                  child: Text(note['title'].toString()),
+                ),
               ),
             ],
           ],
@@ -69,11 +73,15 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               widget.note['body'].toString(),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Back'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('Back'),
+              ),
             ),
           ],
         ),

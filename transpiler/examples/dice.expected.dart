@@ -56,11 +56,15 @@ class _DiceRollerScreenState extends State<DiceRollerScreen> {
                 ),
               ],
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  roll();
-                },
-                child: const Text('Roll'),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                  onPressed: () {
+                    roll();
+                  },
+                  child: const Text('Roll'),
+                ),
               ),
             ],
           ),

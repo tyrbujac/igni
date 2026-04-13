@@ -92,12 +92,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   'user@example.com',
                 ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  onPressed: () {
-                    logged_out();
-                  },
-                  child: const Text('Logout'),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                    onPressed: () {
+                      logged_out();
+                    },
+                    child: const Text('Logout'),
+                  ),
                 ),
                 ],
               ),

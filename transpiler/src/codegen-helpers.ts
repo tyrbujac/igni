@@ -70,6 +70,10 @@ export function resolveAlign(expr: Expr): string {
   return 'MainAxisAlignment.start';
 }
 
+export function isImageBackground(expr: Expr): boolean {
+  return expr.type === 'StringLit';
+}
+
 export function resolveBackground(expr: Expr): string {
   if (expr.type === 'Ident') {
     if (expr.name === 'card') return 'Theme.of(context).cardColor';
