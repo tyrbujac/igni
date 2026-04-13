@@ -64,9 +64,10 @@ Each spec version gets its own subfolder under `tests/` containing both the prom
 - `spec/v0.6.1.md` — Igni-era historical. Adds: (1) implicit vertical layout for screen/component bodies, (2) comparison operators (`>`/`<`/`>=`/`<=`).
 - `spec/v0.6.2.md` — Igni-era historical. Documentation patch.
 - `spec/v0.6.3.md` — Igni-era historical. Five additions driven by first end-to-end cold-LLM test + human testing: (1) `toggle label:` primitives table fix, (2) `map` builtin, (3) `contains` case-insensitivity, (4) float literals, (5) `random(min, max)`. Cheatsheet companion at `spec/v0.6.3-cheatsheet.md`.
-- `spec/v0.6.4.md` — **current canonical version.** Nine additions driven by rebuilding Angela Yu's Dicee and Xylophone Flutter course projects: (1) screen properties (`title:`, `background:`), (2) `fill: true` on layouts, (3) extended colour names + `teal`, (4) `background:` on screens and layouts, (5) local image assets, (6) type hints transpiler-supported, (7) `play` audio builtin, (8) `audio/` folder convention, (9) empty layout blocks.
+- `spec/v0.6.4.md` — Igni-era historical. Ten additions driven by rebuilding Angela Yu's Dicee and Xylophone Flutter course projects.
+- `spec/v0.6.5.md` — **current canonical version.** Five documentation clarifications driven by 4-model spec review: (1) `fill: true` is layout-only, (2) multiple events can coexist, (3) `card` is a background token not a colour, (4) `fill: true` siblings split equally, (5) property applicability table. Cheatsheet at `spec/v0.6.5-cheatsheet.md`.
 
-When proposing spec changes, **work from `spec/v0.6.4.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
+When proposing spec changes, **work from `spec/v0.6.5.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
 
 ## Transpiler
 
@@ -82,7 +83,7 @@ The transpiler lives in `transpiler/` — a TypeScript project that compiles `.i
 
 **Testing:** Each example in `transpiler/examples/` has a `.igni` source and a `.expected.dart` reference. `npx tsx src/cli.ts example.igni | diff - example.expected.dart` — zero diff = pass. Browser testing via a gitignored `test_app/` Flutter project.
 
-**Not yet supported (v0.6.4 spec features):** `on change:`, `fetch` with `method:`/`body:` (mutations), reactive re-fetch, `theme:` block, `paginate:` on `each`, comments passthrough to Dart.
+**Not yet supported (v0.6.5 spec features):** `on change:`, `fetch` with `method:`/`body:` (mutations), reactive re-fetch, `theme:` block, `paginate:` on `each`, comments passthrough to Dart.
 
 ## Non-negotiable design principles
 
@@ -129,7 +130,7 @@ Full methodology is in `tests/README.md`.
 - **Design by trying, not by theorising.** When working on a future v0.X, try to write the hard example in the current spec, hit the walls, and let the walls dictate the additions. This is how every version since v0.3 was designed.
 - **Be honest about defects.** If a spec example is structurally wrong, say so directly. The cold test exists precisely to catch what self-review misses.
 - **Claude's "honest no" is more valuable than a clever workaround.** If a model correctly identifies a gap and refuses to invent around it, that's the most useful diagnostic signal.
-- **v0.6.4 is the current canonical spec.** Work from it. Don't propose v0.7 design work without explicit direction.
+- **v0.6.5 is the current canonical spec.** Work from it. Don't propose v0.7 design work without explicit direction.
 
 ## Common pitfalls to avoid
 
