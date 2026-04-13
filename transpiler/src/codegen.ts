@@ -595,8 +595,15 @@ export class CodeGenerator {
 
     const displayStr = this.exprToDisplayStr(node.value);
 
+    const alignProp = this.findProp(node.properties, 'align');
+
     let code = `${ind}Text(\n`;
     code += `${ind}  ${displayStr},\n`;
+    if (alignProp) {
+      const alignName = this.resolveIdentName(alignProp.value);
+      if (alignName === 'center') code += `${ind}  textAlign: TextAlign.center,\n`;
+      else if (alignName === 'end') code += `${ind}  textAlign: TextAlign.end,\n`;
+    }
     if (styleProp || colorProp) {
       const styleBase = styleProp ? this.resolveStyle(styleProp.value) : null;
       const colorStr = colorProp ? this.resolveColor(colorProp.value) : null;
@@ -1138,7 +1145,7 @@ export class CodeGenerator {
   private exprToDart(expr: Expr): string {
     switch (expr.type) {
       case 'NumberLit': return `${expr.value}`;
-      case 'StringLit': return `'${expr.value.replace(/\$/g, '\\$')}'`;
+      case 'StringLit': return `'${expr.value.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\$/g, '\\$')}'`;
       case 'Ident':
         if (this.functionParams.includes(expr.name)) return expr.name;
         if (this.screenParams.includes(expr.name)) return this.isComponent ? expr.name : `widget.${expr.name}`;
@@ -1264,7 +1271,7 @@ export class CodeGenerator {
 
   private exprToDisplayStr(expr: Expr): string {
     switch (expr.type) {
-      case 'StringLit': return `'${expr.value}'`;
+      case 'StringLit': return `'${expr.value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
       case 'NumberLit': return `'${expr.value}'`;
       case 'Ident':     return "'" + '$' + expr.name + "'";
       case 'BinaryExpr':
@@ -1286,7 +1293,7 @@ export class CodeGenerator {
 
   private exprToConstStr(expr: Expr): string {
     switch (expr.type) {
-      case 'StringLit': return `'${expr.value}'`;
+      case 'StringLit': return `'${expr.value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
       default: return this.exprToDisplayStr(expr);
     }
   }
