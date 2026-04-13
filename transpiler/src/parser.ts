@@ -177,12 +177,14 @@ export class Parser {
     const { properties, events } = this.parseArgs();
     this.consume(TokenType.Colon, 'Expected ":" to open block');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent');
     const children: UINode[] = [];
-    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
-      children.push(this.parseUINode());
+    if (this.check(TokenType.Indent)) {
+      this.advance();
+      while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+        children.push(this.parseUINode());
+      }
+      this.consume(TokenType.Dedent, 'Expected dedent');
     }
-    this.consume(TokenType.Dedent, 'Expected dedent');
     return { type: 'Layout', direction, properties, events, children };
   }
 
@@ -619,14 +621,15 @@ export class Parser {
     this.consume(TokenType.RParen, 'Expected ")"');
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent');
     const body: Statement[] = [];
-    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
-      body.push(this.parseStatement());
-      // IfStmt consumes its own newlines; other statements need explicit newline
-      if (this.check(TokenType.Newline)) this.advance();
+    if (this.check(TokenType.Indent)) {
+      this.advance();
+      while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+        body.push(this.parseStatement());
+        if (this.check(TokenType.Newline)) this.advance();
+      }
+      this.consume(TokenType.Dedent, 'Expected dedent');
     }
-    this.consume(TokenType.Dedent, 'Expected dedent');
     return { type: 'FunctionDef', name, params, body };
   }
 

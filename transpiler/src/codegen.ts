@@ -31,6 +31,7 @@ const COLOR_MAP: Record<string, string> = {
   yellow: 'Colors.yellow',
   orange: 'Colors.orange',
   purple: 'Colors.purple',
+  teal: 'Colors.teal',
 };
 
 const ALIGN_MAP: Record<string, string> = {
