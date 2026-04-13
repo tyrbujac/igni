@@ -1,0 +1,35 @@
+screen Settings:
+  country = "UK"
+  city = ""
+  notifications = true
+  volume = 50
+  agreed = false
+  countries = ["UK", "US", "France", "Germany"]
+
+  layout vertical, gap: medium, padding: large:
+    label "Settings", style: heading
+
+    dropdown bind: country, options: countries, on change: reset_city()
+
+    toggle bind: notifications, label: "Notifications", on change: save_prefs()
+
+    slider bind: volume, min: 0, max: 100, on change: update_volume()
+
+    checkbox bind: agreed, label: "I agree", on change: check_terms()
+
+    input bind: city, placeholder: "City", on change: validate_city()
+
+  reset_city():
+    city = ""
+
+  save_prefs():
+    city = "saved"
+
+  update_volume():
+    city = "vol"
+
+  check_terms():
+    city = "terms"
+
+  validate_city():
+    city = "valid"

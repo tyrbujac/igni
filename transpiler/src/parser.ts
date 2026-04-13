@@ -13,6 +13,7 @@ import {
 export class Parser {
   private tokens: Token[];
   private pos = 0;
+  private pendingComments: string[] = [];
 
   constructor(tokens: Token[]) {
     this.tokens = tokens;
@@ -80,6 +81,8 @@ export class Parser {
   private parseScreenBody(): ScreenItem[] {
     const items: ScreenItem[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      this.drainComments(items);
+      if (this.check(TokenType.Dedent) || this.check(TokenType.EOF)) break;
       if (this.isVariableDecl()) {
         items.push(this.parseVariableDecl());
       } else if (
@@ -134,6 +137,9 @@ export class Parser {
   private parseUINode(): UINode {
     const token = this.current();
     switch (token.type) {
+      case TokenType.Comment:
+        this.advance();
+        return { type: 'Comment', text: token.value };
       case TokenType.Layout: return this.parseLayout();
       case TokenType.Label:  return this.parseLabel();
       case TokenType.Button: return this.parseButton();
@@ -182,8 +188,11 @@ export class Parser {
       if (this.check(TokenType.Indent)) {
         this.advance();
         while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+          this.drainComments(children);
+          if (this.check(TokenType.Dedent) || this.check(TokenType.EOF)) break;
           children.push(this.parseUINode());
         }
+        this.drainComments(children);
         this.consume(TokenType.Dedent, 'Expected dedent');
       }
     } else {
@@ -210,7 +219,7 @@ export class Parser {
 
   private parseInput(): InputNode {
     this.consume(TokenType.Input, 'Expected "input"');
-    const { properties: allProps } = this.parsePropsNoPositional();
+    const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
     if (!bindProp || bindProp.value.type !== 'Ident') {
@@ -220,12 +229,13 @@ export class Parser {
       type: 'Input',
       bind: bindProp.value.name,
       properties: allProps.filter(p => p.name !== 'bind'),
+      events,
     };
   }
 
   private parseToggle(): ToggleNode {
     this.consume(TokenType.Toggle, 'Expected "toggle"');
-    const { properties: allProps } = this.parsePropsNoPositional();
+    const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
     if (!bindProp || bindProp.value.type !== 'Ident') {
@@ -235,6 +245,7 @@ export class Parser {
       type: 'Toggle',
       bind: bindProp.value.name,
       properties: allProps.filter(p => p.name !== 'bind'),
+      events,
     };
   }
 
@@ -600,15 +611,29 @@ export class Parser {
     const name = this.consume(TokenType.Identifier, 'Expected function name').value;
     this.consume(TokenType.LParen, 'Expected "("');
     const args: Expr[] = [];
+    const namedArgs: { name: string; value: Expr }[] = [];
     if (!this.check(TokenType.RParen)) {
-      args.push(this.parseExpr());
+      // Check if first arg is named (identifier followed by colon)
+      if (this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.Colon) {
+        const argName = this.advance().value;
+        this.advance(); // consume :
+        namedArgs.push({ name: argName, value: this.parseExpr() });
+      } else {
+        args.push(this.parseExpr());
+      }
       while (this.check(TokenType.Comma)) {
         this.advance();
-        args.push(this.parseExpr());
+        if (this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.Colon) {
+          const argName = this.advance().value;
+          this.advance(); // consume :
+          namedArgs.push({ name: argName, value: this.parseExpr() });
+        } else {
+          args.push(this.parseExpr());
+        }
       }
     }
     this.consume(TokenType.RParen, 'Expected ")"');
-    return { type: 'FunctionCall', name, args };
+    return { type: 'FunctionCall', name, args, namedArgs: namedArgs.length > 0 ? namedArgs : undefined };
   }
 
   private parseFunctionDef(): FunctionDef {
@@ -844,6 +869,12 @@ export class Parser {
   }
 
   private check(type: TokenType): boolean {
+    // Skip comments when checking for structural tokens
+    if (type !== TokenType.Comment) {
+      while (this.current().type === TokenType.Comment) {
+        this.pendingComments.push(this.advance().value);
+      }
+    }
     return this.current().type === type;
   }
 
@@ -854,10 +885,24 @@ export class Parser {
   }
 
   private consume(type: TokenType, message: string): Token {
+    this.skipComments();
     if (this.current().type === type) {
       return this.advance();
     }
     return this.error(`${message} (got "${this.current().value}" [${TokenType[this.current().type]}] at line ${this.current().line})`);
+  }
+
+  private skipComments(): void {
+    while (this.current().type === TokenType.Comment) {
+      this.pendingComments.push(this.advance().value);
+    }
+  }
+
+  private drainComments(items: any[]): void {
+    for (const text of this.pendingComments) {
+      items.push({ type: 'Comment', text });
+    }
+    this.pendingComments = [];
   }
 
   private error(message: string): never {

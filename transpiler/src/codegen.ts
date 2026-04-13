@@ -21,7 +21,7 @@ export class CodeGenerator {
   private allScreens: Screen[] = [];
 
   private allComponents: ComponentDef[] = [];
-  private fetchVars: { name: string; url: string }[] = [];
+  private fetchVars: { name: string; url: string; urlExpr: Expr; method?: string; body?: string; reactive: boolean }[] = [];
 
   private hasShared = false;
   private hasFetch = false;
@@ -87,26 +87,46 @@ export class CodeGenerator {
     return code;
   }
 
-  private genFetchMethod(varName: string, url: string): string {
-    const methodName = `_fetch${varName[0].toUpperCase() + varName.slice(1)}`;
+  private genFetchMethod(fv: { name: string; url: string; method?: string; body?: string }): string {
+    const methodName = `_fetch${fv.name[0].toUpperCase() + fv.name.slice(1)}`;
     let code = `  Future<void> ${methodName}() async {\n`;
     code += `    try {\n`;
-    code += `      final response = await http.get(Uri.parse(${url}));\n`;
+
+    // Determine HTTP method
+    const httpMethod = fv.method
+      ? fv.method.replace(/'/g, '').toLowerCase()
+      : 'get';
+    const dartMethod = httpMethod === 'delete' ? 'delete'
+      : httpMethod === 'patch' ? 'patch'
+      : httpMethod === 'put' ? 'put'
+      : httpMethod === 'post' ? 'post'
+      : 'get';
+
+    if (fv.body && dartMethod !== 'get') {
+      code += `      final response = await http.${dartMethod}(\n`;
+      code += `        Uri.parse(${fv.url}),\n`;
+      code += `        headers: {'Content-Type': 'application/json'},\n`;
+      code += `        body: jsonEncode(${fv.body}),\n`;
+      code += `      );\n`;
+    } else {
+      code += `      final response = await http.${dartMethod}(Uri.parse(${fv.url}));\n`;
+    }
+
     code += `      if (response.statusCode == 200) {\n`;
     code += `        setState(() {\n`;
-    code += `          ${varName} = jsonDecode(response.body);\n`;
-    code += `          _${varName}Loading = false;\n`;
+    code += `          ${fv.name} = jsonDecode(response.body);\n`;
+    code += `          _${fv.name}Loading = false;\n`;
     code += `        });\n`;
     code += `      } else {\n`;
     code += `        setState(() {\n`;
-    code += `          _${varName}Error = true;\n`;
-    code += `          _${varName}Loading = false;\n`;
+    code += `          _${fv.name}Error = true;\n`;
+    code += `          _${fv.name}Loading = false;\n`;
     code += `        });\n`;
     code += `      }\n`;
     code += `    } catch (e) {\n`;
     code += `      setState(() {\n`;
-    code += `        _${varName}Error = true;\n`;
-    code += `        _${varName}Loading = false;\n`;
+    code += `        _${fv.name}Error = true;\n`;
+    code += `        _${fv.name}Loading = false;\n`;
     code += `      });\n`;
     code += `    }\n`;
     code += `  }`;
@@ -168,7 +188,18 @@ export class CodeGenerator {
         // Detect fetch variables
         if (item.value.type === 'FunctionCall' && item.value.name === 'fetch') {
           const url = item.value.args[0];
-          this.fetchVars.push({ name: item.name, url: this.exprToDart(url) });
+          const methodArg = item.value.namedArgs?.find(a => a.name === 'method');
+          const bodyArg = item.value.namedArgs?.find(a => a.name === 'body');
+          const stateNames = new Set(this.stateVars);
+          const reactive = this.exprRefsAny(url, stateNames);
+          this.fetchVars.push({
+            name: item.name,
+            url: this.exprToDart(url),
+            urlExpr: url,
+            method: methodArg ? this.exprToDart(methodArg.value) : undefined,
+            body: bodyArg ? this.exprToDart(bodyArg.value) : undefined,
+            reactive,
+          });
           this.stateVars.push(item.name);
         } else if (buildLocalVars.has(item.name) || inBuildLocals) {
           // Variable is conditionally reassigned or follows one — build() local
@@ -184,6 +215,14 @@ export class CodeGenerator {
         }
       } else if (item.type === 'FunctionDef') {
         funcDefs.push(item);
+      } else if ((item as any).type === 'Comment') {
+        if (inBuildLocals) {
+          buildLocals.push(`    // ${(item as any).text}`);
+        } else if (uiNodes.length === 0 && funcDefs.length === 0) {
+          stateDecls.push(`  // ${(item as any).text}`);
+        } else {
+          uiNodes.push(item as UINode);
+        }
       } else if (item.type === 'If' && this.ifContainsAssignments(item)) {
         inBuildLocals = true;
         buildLocals.push(this.genImperativeIf(item));
@@ -204,7 +243,7 @@ export class CodeGenerator {
       bodyWidget = this.genUINode(uiNodes[0], 3);
     } else {
       // Implicit vertical layout — multiple children without explicit layout wrapper
-      const children = uiNodes.map(n => this.genUINode(n, 4) + ',').join('\n');
+      const children = uiNodes.map(n => n.type === 'Comment' ? this.genUINode(n, 4) : this.genUINode(n, 4) + ',').join('\n');
       bodyWidget = `      Column(\n        crossAxisAlignment: CrossAxisAlignment.start,\n        children: [\n${children}\n        ],\n      )`;
     }
     const hasControllers = this.boundInputVars.length > 0;
@@ -234,9 +273,13 @@ export class CodeGenerator {
 
     // Fetch variable fields
     if (hasFetchVars) {
-      const fetchDecls = this.fetchVars.map(f =>
-        `  dynamic ${f.name};\n  bool _${f.name}Loading = true;\n  bool _${f.name}Error = false;`
-      ).join('\n');
+      const fetchDecls = this.fetchVars.map(f => {
+        let decl = `  dynamic ${f.name};\n  bool _${f.name}Loading = true;\n  bool _${f.name}Error = false;`;
+        if (f.reactive) {
+          decl += `\n  String? _last${f.name[0].toUpperCase() + f.name.slice(1)}Url;`;
+        }
+        return decl;
+      }).join('\n');
       preBuild += (preBuild ? '\n' : '') + fetchDecls;
     }
 
@@ -276,7 +319,7 @@ export class CodeGenerator {
 
     // Fetch methods
     for (const f of this.fetchVars) {
-      preBuild += '\n\n' + this.genFetchMethod(f.name, f.url);
+      preBuild += '\n\n' + this.genFetchMethod(f);
     }
 
     for (const func of funcDefs) {
@@ -296,6 +339,20 @@ export class CodeGenerator {
     stateClass += `  @override\n  Widget build(BuildContext context) {\n`;
     if (buildLocals.length > 0) {
       stateClass += buildLocals.join('\n') + '\n';
+    }
+
+    // Reactive re-fetch: check if URL changed since last fetch
+    for (const f of this.fetchVars) {
+      if (f.reactive) {
+        const capName = f.name[0].toUpperCase() + f.name.slice(1);
+        stateClass += `    final _current${capName}Url = ${f.url};\n`;
+        stateClass += `    if (_current${capName}Url != _last${capName}Url) {\n`;
+        stateClass += `      _last${capName}Url = _current${capName}Url;\n`;
+        stateClass += `      _${f.name}Loading = true;\n`;
+        stateClass += `      _${f.name}Error = false;\n`;
+        stateClass += `      _fetch${capName}();\n`;
+        stateClass += `    }\n`;
+      }
     }
 
     // Build Scaffold parts
@@ -438,6 +495,7 @@ export class CodeGenerator {
       case 'Each':   return this.genEach(node, depth);
       case 'Spinner': return `${'  '.repeat(depth)}const CircularProgressIndicator()`;
       case 'Divider': return `${'  '.repeat(depth)}const Divider()`;
+      case 'Comment': return `${'  '.repeat(depth)}// ${node.text}`;
       case 'Icon':    return this.genIcon(node, depth);
       case 'Image':   return this.genImage(node, depth);
       case 'Slider':  return this.genSlider(node, depth);
@@ -469,9 +527,14 @@ export class CodeGenerator {
     // Build children with spacers
     const childLines: string[] = [];
     for (let i = 0; i < node.children.length; i++) {
-      childLines.push(`${this.genUINode(node.children[i], colDepth + 2)},`);
-      if (gapSize !== null && i < node.children.length - 1) {
-        childLines.push(`${ind}    const SizedBox(${gapDimension}: ${gapSize}),`);
+      const child = node.children[i];
+      if (child.type === 'Comment') {
+        childLines.push(this.genUINode(child, colDepth + 2));
+      } else {
+        childLines.push(`${this.genUINode(child, colDepth + 2)},`);
+        if (gapSize !== null && i < node.children.length - 1 && node.children[i + 1].type !== 'Comment') {
+          childLines.push(`${ind}    const SizedBox(${gapDimension}: ${gapSize}),`);
+        }
       }
     }
 
@@ -620,6 +683,7 @@ export class CodeGenerator {
   private genInput(node: InputNode, depth: number): string {
     const ind = '  '.repeat(depth);
     const placeholder = findProp(node.properties, 'placeholder');
+    const changeEvent = node.events.find(e => e.event === 'change');
 
     let code = `${ind}TextField(\n`;
     code += `${ind}  controller: _${node.bind}Controller,\n`;
@@ -627,6 +691,9 @@ export class CodeGenerator {
     code += `${ind}    setState(() {\n`;
     code += `${ind}      ${node.bind} = value;\n`;
     code += `${ind}    });\n`;
+    if (changeEvent) {
+      code += this.genChangeActionBody(changeEvent, depth + 2);
+    }
     code += `${ind}  },\n`;
     if (placeholder) {
       const hint = this.exprToConstStr(placeholder.value);
@@ -640,6 +707,7 @@ export class CodeGenerator {
     const ind = '  '.repeat(depth);
     const labelProp = findProp(node.properties, 'label');
     const labelStr = labelProp ? this.exprToDart(labelProp.value) : null;
+    const changeEvent = node.events.find(e => e.event === 'change');
 
     if (labelStr) {
       let code = `${ind}SwitchListTile(\n`;
@@ -649,6 +717,9 @@ export class CodeGenerator {
       code += `${ind}    setState(() {\n`;
       code += `${ind}      ${node.bind} = value;\n`;
       code += `${ind}    });\n`;
+      if (changeEvent) {
+        code += this.genChangeActionBody(changeEvent, depth + 2);
+      }
       code += `${ind}  },\n`;
       code += `${ind})`;
       return code;
@@ -660,6 +731,9 @@ export class CodeGenerator {
     code += `${ind}    setState(() {\n`;
     code += `${ind}      ${node.bind} = value;\n`;
     code += `${ind}    });\n`;
+    if (changeEvent) {
+      code += this.genChangeActionBody(changeEvent, depth + 2);
+    }
     code += `${ind}  },\n`;
     code += `${ind})`;
     return code;
@@ -732,6 +806,7 @@ export class CodeGenerator {
     const maxProp = findProp(node.properties, 'max');
     const min = minProp ? this.exprToDart(minProp.value) : '0';
     const max = maxProp ? this.exprToDart(maxProp.value) : '100';
+    const changeEvent = node.events.find(e => e.event === 'change');
 
     let code = `${ind}Slider(\n`;
     code += `${ind}  value: ${node.bind}.toDouble(),\n`;
@@ -741,6 +816,9 @@ export class CodeGenerator {
     code += `${ind}    setState(() {\n`;
     code += `${ind}      ${node.bind} = value.round();\n`;
     code += `${ind}    });\n`;
+    if (changeEvent) {
+      code += this.genChangeActionBody(changeEvent, depth + 2);
+    }
     code += `${ind}  },\n`;
     code += `${ind})`;
     const tapEventS = node.events.find(e => e.event === 'tap');
@@ -755,6 +833,7 @@ export class CodeGenerator {
     const ind = '  '.repeat(depth);
     const labelProp = findProp(node.properties, 'label');
     const labelStr = labelProp ? this.exprToDart(labelProp.value) : null;
+    const changeEvent = node.events.find(e => e.event === 'change');
 
     if (labelStr) {
       let code = `${ind}CheckboxListTile(\n`;
@@ -764,6 +843,9 @@ export class CodeGenerator {
       code += `${ind}    setState(() {\n`;
       code += `${ind}      ${node.bind} = value ?? false;\n`;
       code += `${ind}    });\n`;
+      if (changeEvent) {
+        code += this.genChangeActionBody(changeEvent, depth + 2);
+      }
       code += `${ind}  },\n`;
       code += `${ind})`;
       const tapEventCL = node.events.find(e => e.event === 'tap');
@@ -780,6 +862,9 @@ export class CodeGenerator {
     code += `${ind}    setState(() {\n`;
     code += `${ind}      ${node.bind} = value ?? false;\n`;
     code += `${ind}    });\n`;
+    if (changeEvent) {
+      code += this.genChangeActionBody(changeEvent, depth + 2);
+    }
     code += `${ind}  },\n`;
     code += `${ind})`;
     const tapEventC = node.events.find(e => e.event === 'tap');
@@ -794,6 +879,7 @@ export class CodeGenerator {
     const ind = '  '.repeat(depth);
     const optionsProp = findProp(node.properties, 'options');
     const optionsExpr = optionsProp ? this.exprToDart(optionsProp.value) : '[]';
+    const changeEvent = node.events.find(e => e.event === 'change');
 
     let code = `${ind}DropdownButton<dynamic>(\n`;
     code += `${ind}  value: ${node.bind},\n`;
@@ -802,6 +888,9 @@ export class CodeGenerator {
     code += `${ind}    setState(() {\n`;
     code += `${ind}      ${node.bind} = value;\n`;
     code += `${ind}    });\n`;
+    if (changeEvent) {
+      code += this.genChangeActionBody(changeEvent, depth + 2);
+    }
     code += `${ind}  },\n`;
     code += `${ind})`;
     const tapEventD = node.events.find(e => e.event === 'tap');
@@ -930,7 +1019,7 @@ export class CodeGenerator {
 
     // Wrapper invocation: wrap children in Column and pass as child
     if (node.children.length > 0) {
-      const childLines = node.children.map(c => this.genUINode(c, depth + 2) + ',').join('\n');
+      const childLines = node.children.map(c => c.type === 'Comment' ? this.genUINode(c, depth + 2) : this.genUINode(c, depth + 2) + ',').join('\n');
       const childWidget = `Column(\n${ind}    crossAxisAlignment: CrossAxisAlignment.start,\n${ind}    children: [\n${childLines}\n${ind}    ],\n${ind}  )`;
       namedArgs.push(`child: ${childWidget}`);
       return `${ind}${node.name}(\n${ind}  ${namedArgs.join(`,\n${ind}  `)},\n${ind})`;
@@ -1083,6 +1172,39 @@ export class CodeGenerator {
     code += `${ind}  ${action.target} = ${dartExpr};\n`;
     code += `${ind}},\n`;
     return code;
+  }
+
+  private genChangeActionBody(event: EventHandler, depth: number): string {
+    const ind = '  '.repeat(depth);
+    const action = event.action;
+
+    if (action.type === 'NavigateBack') {
+      return `${ind}Navigator.pop(context);\n`;
+    }
+    if (action.type === 'NavigateTo') {
+      const targetScreen = this.allScreens.find(s => s.name === action.screen);
+      const argStr = action.arg ? this.exprToDart(action.arg) : null;
+      const paramName = targetScreen?.params[0];
+      const ctorArgs = paramName && argStr ? `${paramName}: ${argStr}` : '';
+      return `${ind}Navigator.push(context, MaterialPageRoute(builder: (context) => ${action.screen}Screen(${ctorArgs})));\n`;
+    }
+    if (action.type === 'FunctionCall') {
+      if (action.name === 'play' && action.args.length === 1) {
+        const src = this.exprToDart(action.args[0]);
+        return `${ind}_audioPlayer.play(AssetSource(${src}));\n`;
+      }
+      const args = action.args.map(a => this.exprToDart(a)).join(', ');
+      return `${ind}${action.name}(${args});\n`;
+    }
+
+    const dartExpr = this.exprToDart(action.value);
+    if (this.stateVars.includes(action.target)) {
+      let code = `${ind}setState(() {\n`;
+      code += `${ind}  ${action.target} = ${dartExpr};\n`;
+      code += `${ind}});\n`;
+      return code;
+    }
+    return `${ind}${action.target} = ${dartExpr};\n`;
   }
 
   private wrapWithGestures(code: string, events: EventHandler[], depth: number): string {

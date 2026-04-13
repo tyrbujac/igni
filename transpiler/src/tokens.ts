@@ -62,6 +62,7 @@ export enum TokenType {
   Indent,
   Dedent,
   EOF,
+  Comment,
 }
 
 export interface Token {

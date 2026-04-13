@@ -1,0 +1,6 @@
+screen Hero, background: "hero.jpg":
+  layout vertical, fill: true, align: center:
+    label "Welcome", style: heading, color: white
+
+  layout vertical, background: "card-bg.png", rounded: medium, padding: medium:
+    label "Card with image background"

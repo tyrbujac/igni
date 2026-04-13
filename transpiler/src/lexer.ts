@@ -73,11 +73,13 @@ export class Lexer {
       return;
     }
 
-    // 3. Skip comment lines
+    // 3. Comment-only lines — emit token without affecting indentation
     if (this.source[this.pos] === '#') {
+      const start = this.pos + 1;
       while (this.pos < this.source.length && this.source[this.pos] !== '\n') {
         this.pos++;
       }
+      this.emit(TokenType.Comment, this.source.slice(start, this.pos).trim());
       if (this.pos < this.source.length) {
         this.pos++;
         this.line++;
@@ -111,11 +113,13 @@ export class Lexer {
       this.skipSpaces();
       if (this.pos >= this.source.length || this.source[this.pos] === '\n') break;
 
-      // Inline comment — skip rest of line
+      // Comment — emit token and consume rest of line
       if (this.source[this.pos] === '#') {
+        const start = this.pos + 1; // skip the #
         while (this.pos < this.source.length && this.source[this.pos] !== '\n') {
           this.pos++;
         }
+        this.emit(TokenType.Comment, this.source.slice(start, this.pos).trim());
         break;
       }
 

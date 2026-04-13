@@ -110,6 +110,7 @@ export interface FunctionCall {
   type: 'FunctionCall';
   name: string;
   args: Expr[];
+  namedArgs?: { name: string; value: Expr }[];
 }
 
 export interface NavigateTo {
@@ -178,12 +179,14 @@ export interface InputNode {
   type: 'Input';
   bind: string;
   properties: Property[];
+  events: EventHandler[];
 }
 
 export interface ToggleNode {
   type: 'Toggle';
   bind: string;
   properties: Property[];
+  events: EventHandler[];
 }
 
 export interface IfNode {
@@ -207,6 +210,11 @@ export interface SpinnerNode {
 
 export interface DividerNode {
   type: 'Divider';
+}
+
+export interface CommentNode {
+  type: 'Comment';
+  text: string;
 }
 
 export interface IconNode {
@@ -264,7 +272,7 @@ export interface ComponentInvocation {
   children: UINode[];
 }
 
-export type UINode = Layout | LabelNode | ButtonNode | InputNode | ToggleNode | IfNode | EachNode | SpinnerNode | DividerNode | IconNode | ImageNode | SliderNode | CheckboxNode | DropdownNode | BadgeNode | BodyNode | ComponentInvocation;
+export type UINode = Layout | LabelNode | ButtonNode | InputNode | ToggleNode | IfNode | EachNode | SpinnerNode | DividerNode | CommentNode | IconNode | ImageNode | SliderNode | CheckboxNode | DropdownNode | BadgeNode | BodyNode | ComponentInvocation;
 
 // -- Top-level --
 

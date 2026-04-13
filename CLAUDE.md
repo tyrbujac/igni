@@ -46,7 +46,7 @@ igni/
 │   └── v0.6.6/              # Destini cold test prompts (cheatsheet-only)
 ├── transpiler/              # TypeScript-to-Dart transpiler
 │   ├── src/                 # lexer, parser, codegen, CLI
-│   ├── examples/            # 23 .igni sources + .expected.dart reference outputs
+│   ├── examples/            # 28 .igni sources + .expected.dart reference outputs
 │   ├── run-tests.sh         # automated diff test runner
 │   ├── package.json
 │   └── tsconfig.json
@@ -86,11 +86,11 @@ The transpiler lives in `transpiler/` — a TypeScript project that compiles `.i
 
 **Currently supported:** `screen` (StatefulWidget), screen properties (`title:` for AppBar, `background:` for Scaffold colour), `component` (StatelessWidget), wrapper components with `body` slot, variables (int/double/String/bool/List), optional type hints (`name: Type = value`, `items: [Type] = []`), `layout` (vertical/horizontal, align, gap, padding, background, rounded, spread, `fill: true` for Expanded), implicit vertical layout for screen bodies, `label` (with `align: center/end` for text alignment), `button` + `on tap`, `input bind:` + `placeholder:`, `toggle bind:`, `image` (size, round, `on tap:`, local assets via `images/` folder + network URLs), `icon` (size, color, `on tap:`), `slider` (bind, min, max), `checkbox` (bind, label), `dropdown` (bind, options), `badge` (color), `spinner`, `if`/`else`/`else if`, `not`, `is`/`is not` (general equality), `is empty`/`is not empty`, `is null`/`is not null`, `is in`/`is not in`, `is loading`/`is error`, comparison operators (`>`/`<`/`>=`/`<=`), `and`/`or` boolean operators, `each` loops, `navigate to`/`navigate back` (multi-screen with params), `shared:` state (ChangeNotifier), `fetch` + `spinner`, `without`/`replace`/`find`/`count`/`length`/`filter`/`sorted`/`reversed` builtins, `contains()` string builtin, `random(min, max)`, lambda expressions (`item => expr`), `return` in functions, screen-internal functions with params, list literals `[]`, object literals `{key: val}`, field access `obj.field`, list indexing `items[index]` (zero-based, null on out-of-bounds), arithmetic (`+`/`-`/`*`/`/`), float literals, string concatenation with `+`, extended colour names (`red`, `blue`, `white`, `black`, `yellow`, `orange`, `purple`, `teal` + semantic `brand`, `subtle`, `danger`, `green`), `play("file.wav")` audio builtin with `audio/` folder convention, `on touch:` event (fires on finger contact, vs `on tap:` which fires on release).
 
-**Twenty-three example apps:** counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full (with delete), components, shared (cross-screen state), fetch (async API call), dice (random), dicee (Angela Yu course project — screen properties, local images, AppBar), dashboard, fn-return, lambda (filter/sorted/reversed), primitives, shopping (full e-commerce), wrapper (body slot), logic (and/or), type-hints (typed variable declarations), contacts (list indexing, comparisons). All pass diff tests and run in the browser.
+**Twenty-eight example apps:** counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full (with delete), components, shared (cross-screen state), fetch (async API call), dice (random), dicee (Angela Yu course project — screen properties, local images, AppBar), dashboard, fn-return, lambda (filter/sorted/reversed), primitives, shopping (full e-commerce), wrapper (body slot), logic (and/or), type-hints (typed variable declarations), contacts (list indexing, comparisons), on-change (on change: event on all bind primitives), bg-image (background images on screens and layouts). All pass diff tests and run in the browser.
 
-**Testing:** Each example in `transpiler/examples/` has a `.igni` source and a `.expected.dart` reference. Run `npm test` in `transpiler/` to execute all 22 diff tests (the 23rd, `tutorial.igni`, is a smoke test with no expected output). Browser testing via a gitignored `test_app/` Flutter project.
+**Testing:** Each example in `transpiler/examples/` has a `.igni` source and a `.expected.dart` reference. Run `npm test` in `transpiler/` to execute all 27 diff tests (the 28th, `tutorial.igni`, is a smoke test with no expected output). Browser testing via a gitignored `test_app/` Flutter project.
 
-**Not yet supported (v0.6.6 spec features):** `on change:`, `fetch` with `method:`/`body:` (mutations), reactive re-fetch, `theme:` block, `paginate:` on `each`, comments passthrough to Dart, `background:` with image filenames.
+**Not yet supported (v0.6.6 spec features):** `theme:` block, `paginate:` on `each`.
 
 ## Non-negotiable design principles
 
@@ -146,7 +146,7 @@ Full methodology is in `tests/README.md`.
 - **Don't write Dart, Flutter, React, or TypeScript** in proposals. Only Igni and prose. If you need to demonstrate something, write it in Igni.
 - **Don't use brackets, braces, parentheses on component invocation, ternary operators, or string interpolation.** These are explicitly out.
 - **Don't bind a `fetch` URL directly to a text input** — that's the v0.5-documented common pitfall. Use the trigger-variable pattern (see Async Data in the spec).
-- **Test transpiler changes by running `npm test` in `transpiler/`.** This runs all 22 example diffs automatically. Zero diff = pass. Then browser-test via `test_app/`.
+- **Test transpiler changes by running `npm test` in `transpiler/`.** This runs all 27 example diffs automatically. Zero diff = pass. Then browser-test via `test_app/`.
 
 ## What this project is *not*
 

@@ -6,23 +6,50 @@ Where Igni is going. Near term is actively planned; ideas are unstructured thoug
 
 ## Near term
 
-Things to build next, roughly prioritised.
+Things to build next, roughly prioritised into three streams.
 
-- **Identity semantics** — reference identity + immutable data creates friction. **4/4 models flagged it across two test rounds.** Biggest open design question. Need to decide: `key:` field on objects, structural equality, or something else. The mutation model depends on identity but the identity model is fragile (ChatGPT's diagnosis).
-- ~~**Type hints in transpiler**~~ — **DONE.** 3/3 zero-fix on Contacts after this change.
-- **Error inspection** — `is error` tells you something failed but not what. 3/4 models flagged it. Need at least `user.error.message` and 404 vs 500 distinction. Real apps need this.
-- **`on change:` event** — needed for dropdowns and validated inputs. Transpiler gap.
+### Stream 1 — Transpiler: close the spec gap
+
+Features that exist in the v0.6.6 spec but the transpiler doesn't support yet. These are the tightest feedback loops — the spec is written, cold tests validate LLM output, and implementation unlocks full pipeline (spec → LLM → transpiler → browser).
+
+- **`on change:` event** — spec-complete, cold-tested (4/4 models used it correctly on Settings). Transpiler gap. Needed for dependent dropdowns, validated inputs, any side effect on selection.
+- **`background:` with image filenames** — spec-complete, cold-tested (4/4 models used `background: "background.png"` correctly on Destini full-spec rerun). Transpiler only handles colour names. Extends existing `background:` property — quoted strings are images, unquoted are colours.
 - **`fetch` mutations** — `method:` / `body:` for POST/PUT/PATCH/DELETE. Spec has it, transpiler doesn't.
+- **Reactive re-fetch** — `fetch` at screen body level re-runs when dependencies change. Spec documents it, transpiler doesn't implement it.
 - **Comments passthrough** — lexer skips `#` comments, should emit `//` in Dart for debugging.
+
+### Stream 2 — Tooling: close the human experience gap
+
+The v0.6.6 rating assessment identified tooling (4/10) and debugging (3/10) as the biggest drags on the human experience. These don't require spec changes and don't risk LLM accuracy regressions.
+
+- **VS Code syntax highlighting** — `.igni` files with coloured keywords, strings, comments. Quick win. Most visible improvement to the daily editing experience.
+- **Better transpiler error messages** — map Dart errors back to Igni line numbers. Currently errors reference generated Dart code the user didn't write. Source maps or line-number tracking in codegen.
+- **`print()` builtin** — logs to browser console. No debug output currently exists. Even basic `print(value)` transforms the debugging experience.
 - **`igni new`** — project scaffolding. `igni run` works, needs the matching setup command.
+
+### Stream 3 — Spec: v0.7 design exploration
+
+Language-level improvements identified by cold tests and the rating assessment. These require spec changes and should be cold-tested before committing.
+
+- **Object spread/update syntax** — #1 human writability pain point. `replace(items, target, {text: target.text, done: not target.done})` requires enumerating every field. Something like `{target with done: not target.done}` would eliminate the boilerplate. High impact on both writing and reading code. Needs careful design to not add LLM confusion.
+- **Derived state clarity** — `current = stories[index]` appeared in all 8 Destini model outputs. 7/8 trust reactivity to update it; 1/8 defensively reassigns. One-line spec clarification: "Assignments at screen body level re-evaluate on every render."
+- **Variable-placement rules** — 1/4 Contacts models put filter/sort logic inside a layout block. Spec says "Variables, layouts, and functions all live inside the screen body" but the boundary isn't explicit. One sentence: "Variable assignments go at the screen body level, not inside layout blocks."
+- **Identity semantics** — reference identity + immutable data creates friction. **4/4 models flagged it across two test rounds.** Biggest open design question. Need to decide: `key:` field on objects, structural equality, or something else.
+- **Error inspection** — `is error` tells you something failed but not what. 3/4 models flagged it. Need at least `user.error.message` and 404 vs 500 distinction.
+
+---
 
 ## Testing
 
+- ~~**Type hints in transpiler**~~ — **DONE.** 3/3 zero-fix on Contacts after this change.
 - **Angela Yu Flutter course projects** — rebuild her course projects in Igni as a real-world coverage test. Good stress test for the transpiler against progressively harder Flutter patterns, and produces concrete before/after comparisons (Flutter vs Igni) for the dissertation.
   - ~~**Dicee**~~ — **DONE.** 4/4 zero-fix cold test, 13 lines vs 56 lines Flutter (4.3x reduction). Drove: screen properties (`title:`, `background:`), local image assets, extended colours, `fill: true` layouts, AppBar support.
-  - ~~**Xylophone**~~ — **DONE.** 4/4 transpile (after empty-block fix), 10 lines vs 45 lines Flutter (4.5x reduction). Drove: `play` audio builtin, `audio/` folder convention, `teal` colour, empty layout blocks. Weaker model convergence than Dicee — 2/4 extracted components, 2/4 inlined. Audio gap handled gracefully by all models (placeholder functions).
-  - ~~**Quizzler**~~ — **DONE.** 4/4 zero-fix (after list indexing added), ~50 lines vs ~120 lines Flutter (~2.4x reduction). Drove: list indexing (`items[index]`), apostrophe escaping, label `align:` property. Most revealing cold test — 4 distinct approaches before indexing, near-identical after. Divergence-as-signal methodology validated. Also validated cheatsheet-only methodology (3/4 correct from 300-line cheatsheet vs 4/4 from 1100-line full spec).
-  - ~~**Destini**~~ — **DONE.** Cheatsheet-only (v0.6.6). 3/4 data-driven architecture, 1 hardcoded if/else. First test with branching logic (choose-your-own-adventure). Surfaced: background image gap (4/4 models), `image fill: true` (2/4 models). No new transpiler features needed. Architecture divergence is design choice, not spec gap.
+  - ~~**Xylophone**~~ — **DONE.** 4/4 transpile (after empty-block fix), 10 lines vs 45 lines Flutter (4.5x reduction). Drove: `play` audio builtin, `audio/` folder convention, `teal` colour, empty layout blocks. Weaker model convergence than Dicee — 2/4 extracted components, 2/4 inlined.
+  - ~~**Quizzler**~~ — **DONE.** 4/4 zero-fix (after list indexing added), ~50 lines vs ~120 lines Flutter (~2.4x reduction). Drove: list indexing (`items[index]`), apostrophe escaping, label `align:` property. Most revealing cold test — 4 distinct approaches before indexing, near-identical after.
+  - ~~**Destini**~~ — **DONE.** Cheatsheet-only: 3/4 data-driven, 1 hardcoded if/else. Full-spec rerun: **4/4 data-driven** (Gemini Pro switched from hardcoded to data-driven). Background image **0/4 → 4/4** after spec addition. Architecture convergence restored by full spec.
+- **v0.6.6 full-spec cold tests** — stress-tested advanced features with 3 apps:
+  - ~~**Contacts**~~ — **DONE.** 4/4 identical architecture. Tested: `shared:`, `filter`/`sorted`/`reversed` + lambdas, `replace`/`without`, `fetch` + `is loading`/`is error`, navigation + params, wrapper component. 1 typo (Opus), 0 invented syntax. Strongest convergence in any cold test. Trigger-variable understanding: 4/4 correct.
+  - ~~**Settings**~~ — **DONE.** 4/4 perfect — first cold test with zero errors across all models. Tested: `on change:` (4/4 correct, 3 distinct approaches), `heading.small` (4/4 correct), `dropdown`/`toggle`/`slider`/`checkbox`/`image round:`/`button color: danger`. Surfaced `bind:`/`on change:` event ordering gap (now documented).
 
 ## Ideas
 
@@ -41,9 +68,10 @@ Unfiltered. No timeline. Some of these might be bad. Signal strength noted where
 - Package/module system for sharing components across projects
 - Scroll behaviour (scroll-to-bottom on chat append)
 - Deep links, query params, modal stacks, back-stack management
-- Background image on layouts (`background: "image.png"`) — **4/4 Destini models** tried to use an image as a backdrop. Igni has `background: red` for colours but no image backgrounds. Real gap for apps with background imagery. Options: extend `background:` to accept filenames, or add `backgroundImage:` property
-- `image fill: true` — **2/4 Destini models** wrote it. `fill: true` is layout-only. Intent is to make an image fill available space (e.g. background images). Needs design thought — could extend `fill:` to images or add a `fit:` property
-- `button background:` — full-width coloured buttons currently require a `layout horizontal, background: color` workaround. If 2-3 cold tests show models using this pattern, add `background:` to `button` directly
-- String interpolation — 2/4 models flagged `+` concatenation as verbose. Intentional trade, but worth revisiting
+- Map/dictionary type — Settings cold test showed 4/4 models using if/else chains for country→cities mapping. `cities_for[country]` would be cleaner. Comes up in settings, localisation, routing, form options
+- String interpolation — 2/4 models flagged `+` concatenation as verbose. Rating assessment flagged as medium-high impact for human writability
+- ~~`button background:`~~ — resolved by full-width rounded buttons (v0.6.6)
+- ~~Background image on layouts~~ — **resolved.** `background: "image.png"` added to spec in v0.6.6. Transpiler implementation in Stream 1.
+- ~~`image fill: true`~~ — **resolved.** Background image feature on screens/layouts eliminated the need. 2/4 Destini models tried it; with `background:` on screens, no model attempts it.
 - Async cancellation / stale response handling — ChatGPT flagged race conditions
 - Error boundaries / component-level fallback — ChatGPT flagged no crash isolation

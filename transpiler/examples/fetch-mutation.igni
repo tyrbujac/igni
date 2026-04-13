@@ -1,0 +1,12 @@
+screen CreatePost:
+  title = "New Post"
+  result = fetch("/api/posts", method: "POST", body: {title: title, published: true})
+
+  layout vertical, gap: medium, padding: large:
+    if result is loading:
+      spinner
+    else if result is error:
+      label "Failed to create post", color: danger
+    else:
+      label "Post created!", style: heading
+      label result.id

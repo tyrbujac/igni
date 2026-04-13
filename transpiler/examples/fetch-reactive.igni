@@ -1,0 +1,15 @@
+screen Search:
+  query = ""
+  active = ""
+  results = fetch("/api/search?q=" + active)
+
+  layout vertical, padding: large, gap: medium:
+    layout horizontal, gap: small:
+      input bind: query, placeholder: "Search..."
+      button "Search", on tap: active = query
+    if results is loading:
+      spinner
+    else if results is error:
+      label "Search failed", color: danger
+    else:
+      label "Results for: " + active, style: heading
