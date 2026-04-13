@@ -2,7 +2,7 @@
 
 UI-first language being designed by Tyr (sole author and sole decision-maker). North star: *"Flutter, without the bracket hell"* — same cross-platform power, but code that reads like a design spec. The hypothesis is that LLM accuracy and human readability correlate tightly, so removing the ambiguity that trips LLMs up also makes the language nicer for humans.
 
-**Status: transpiler stage.** The TypeScript-to-Dart transpiler exists and covers most of the v0.6.2 spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter.
+**Status: transpiler stage.** The TypeScript-to-Dart transpiler exists and covers most of the v0.6.5 spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter.
 
 *Project history: the language was originally named Rocket and was renamed to Igni at v0.3.2. Spec files in `spec/` are immutable historical snapshots — never edited after they ship. Each new version is a new file.*
 
@@ -27,25 +27,30 @@ igni/
 ├── CLAUDE.md                # this file (notes for AI assistants)
 ├── LICENSE                  # MIT
 ├── spec/                    # all spec versions
-│   ├── v0.2.md              # Rocket-era historical
-│   ├── v0.3.md              # Rocket-era historical
-│   ├── v0.3.1.md            # Rocket-era historical
-│   ├── v0.3.2.md            # Igni-era historical (rename only)
-│   ├── v0.4.md              # Igni-era historical (acceptance round)
-│   ├── v0.4.1.md            # Igni-era historical (docs patch)
-│   ├── v0.5.md              # Igni-era historical (shared state, body slots, list builtins)
-│   └── v0.5.1.md            # current canonical (docs patch from v0.5 Shopping test)
+│   ├── v0.2.md → v0.6.4.md # historical snapshots (never edited after shipping)
+│   ├── v0.6.5.md            # current canonical spec
+│   ├── v0.6.6-cheatsheet.md # current canonical cheatsheet (learning order)
+│   └── v0.6.1 → v0.6.5-cheatsheet.md  # historical cheatsheets
 ├── tests/                   # cold-LLM test infrastructure
 │   ├── README.md            # test methodology
 │   ├── v0.3.2/              # Calculator, Todo, Weather — fed v0.4
 │   ├── v0.4/                # Chat (PASS), MusicPlayer (PARTIAL), Notes (MIXED)
-│   └── v0.5/                # Notes re-run (PASS), Shopping (PARTIAL) — fed v0.5.1
+│   ├── v0.5/                # Notes re-run (PASS), Shopping (PARTIAL) — fed v0.5.1
+│   ├── v0.5.1/              # Settings, Greeting (first transpiler-validated)
+│   ├── v0.6/                # Contacts, Shopping (post-transpiler)
+│   ├── v0.6.1/              # Todo, Dashboard, Shopping
+│   ├── v0.6.2/              # Contacts (first end-to-end 3-model + transpiler test)
+│   ├── v0.6.3/              # Contacts re-run (3/3 zero-fix)
+│   ├── v0.6.4/              # Angela Yu project prompts
+│   ├── v0.6.5/              # Quizzler cold test prompts
+│   └── v0.6.6/              # Destini cold test prompts (cheatsheet-only)
 ├── transpiler/              # TypeScript-to-Dart transpiler
 │   ├── src/                 # lexer, parser, codegen, CLI
-│   ├── examples/            # .igni sources + .expected.dart reference outputs
+│   ├── examples/            # 23 .igni sources + .expected.dart reference outputs
+│   ├── run-tests.sh         # automated diff test runner
 │   ├── package.json
 │   └── tsconfig.json
-└── docs/                    # project docs (private, gitignored)
+└── docs/                    # tutorial + private project docs
 ```
 
 Each spec version gets its own subfolder under `tests/` containing both the prompts that were used and the result files. Test result filenames drop the `Cold_Test_` prefix and the version suffix (the folder carries the version).
@@ -80,9 +85,9 @@ The transpiler lives in `transpiler/` — a TypeScript project that compiles `.i
 
 **Currently supported:** `screen` (StatefulWidget), screen properties (`title:` for AppBar, `background:` for Scaffold colour), `component` (StatelessWidget), wrapper components with `body` slot, variables (int/double/String/bool/List), optional type hints (`name: Type = value`, `items: [Type] = []`), `layout` (vertical/horizontal, align, gap, padding, background, rounded, spread, `fill: true` for Expanded), implicit vertical layout for screen bodies, `label` (with `align: center/end` for text alignment), `button` + `on tap`, `input bind:` + `placeholder:`, `toggle bind:`, `image` (size, round, `on tap:`, local assets via `images/` folder + network URLs), `icon` (size, color, `on tap:`), `slider` (bind, min, max), `checkbox` (bind, label), `dropdown` (bind, options), `badge` (color), `spinner`, `if`/`else`/`else if`, `not`, `is`/`is not` (general equality), `is empty`/`is not empty`, `is null`/`is not null`, `is in`/`is not in`, `is loading`/`is error`, comparison operators (`>`/`<`/`>=`/`<=`), `and`/`or` boolean operators, `each` loops, `navigate to`/`navigate back` (multi-screen with params), `shared:` state (ChangeNotifier), `fetch` + `spinner`, `without`/`replace`/`find`/`count`/`length`/`filter`/`sorted`/`reversed` builtins, `contains()` string builtin, `random(min, max)`, lambda expressions (`item => expr`), `return` in functions, screen-internal functions with params, list literals `[]`, object literals `{key: val}`, field access `obj.field`, list indexing `items[index]` (zero-based, null on out-of-bounds), arithmetic (`+`/`-`/`*`/`/`), float literals, string concatenation with `+`, extended colour names (`red`, `blue`, `white`, `black`, `yellow`, `orange`, `purple`, `teal` + semantic `brand`, `subtle`, `danger`, `green`), `play("file.wav")` audio builtin with `audio/` folder convention, `on touch:` event (fires on finger contact, vs `on tap:` which fires on release).
 
-**Twenty-two example apps:** counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full (with delete), components, shared (cross-screen state), fetch (async API call), dice (random), dicee (Angela Yu course project — screen properties, local images, AppBar), dashboard, fn-return, lambda (filter/sorted/reversed), primitives, shopping (full e-commerce), wrapper (body slot), logic (and/or), type-hints (typed variable declarations). All pass diff tests and run in the browser.
+**Twenty-three example apps:** counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full (with delete), components, shared (cross-screen state), fetch (async API call), dice (random), dicee (Angela Yu course project — screen properties, local images, AppBar), dashboard, fn-return, lambda (filter/sorted/reversed), primitives, shopping (full e-commerce), wrapper (body slot), logic (and/or), type-hints (typed variable declarations), contacts (list indexing, comparisons). All pass diff tests and run in the browser.
 
-**Testing:** Each example in `transpiler/examples/` has a `.igni` source and a `.expected.dart` reference. `npx tsx src/cli.ts example.igni | diff - example.expected.dart` — zero diff = pass. Browser testing via a gitignored `test_app/` Flutter project.
+**Testing:** Each example in `transpiler/examples/` has a `.igni` source and a `.expected.dart` reference. Run `npm test` in `transpiler/` to execute all 22 diff tests (the 23rd, `tutorial.igni`, is a smoke test with no expected output). Browser testing via a gitignored `test_app/` Flutter project.
 
 **Not yet supported (v0.6.5 spec features):** `on change:`, `fetch` with `method:`/`body:` (mutations), reactive re-fetch, `theme:` block, `paginate:` on `each`, comments passthrough to Dart.
 
@@ -140,7 +145,7 @@ Full methodology is in `tests/README.md`.
 - **Don't write Dart, Flutter, React, or TypeScript** in proposals. Only Igni and prose. If you need to demonstrate something, write it in Igni.
 - **Don't use brackets, braces, parentheses on component invocation, ternary operators, or string interpolation.** These are explicitly out.
 - **Don't bind a `fetch` URL directly to a text input** — that's the v0.5-documented common pitfall. Use the trigger-variable pattern (see Async Data in the spec).
-- **Test transpiler changes by running all example diffs.** `npx tsx src/cli.ts examples/<app>.igni | diff - examples/<app>.expected.dart` for each example. Zero diff = pass. Then browser-test via `test_app/`.
+- **Test transpiler changes by running `npm test` in `transpiler/`.** This runs all 22 example diffs automatically. Zero diff = pass. Then browser-test via `test_app/`.
 
 ## What this project is *not*
 
@@ -161,4 +166,4 @@ Items deferred that will be designed once enough test data accumulates:
 - **Named slots** for wrapper components (multiple `body` regions per wrapper) — deferred because single slot covers 90% of cases.
 - **Submit modifier on inputs** — currently the trigger-variable pattern handles this.
 
-The current and authoritative list lives at the bottom of `spec/v0.6.3.md`.
+The current and authoritative list lives at the bottom of `spec/v0.6.5.md`.

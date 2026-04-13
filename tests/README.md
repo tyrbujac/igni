@@ -9,7 +9,7 @@ The point of these tests is **not** to demonstrate the spec works on cherry-pick
 For each combination of (app × model):
 
 1. **Open a fresh conversation** in the target LLM (Claude.ai, Gemini, ChatGPT). Actually fresh — new thread, no system prompt, no prior messages, no custom instructions enabled. Contamination from earlier context kills the test.
-2. **Paste the full current spec verbatim.** Currently `spec/v0.5.1.md`. No editing. No commentary. No "here's a language I designed."
+2. **Paste the full current spec verbatim.** Currently `spec/v0.6.5.md` (or the `spec/v0.6.6-cheatsheet.md` for cheatsheet-only rounds). No editing. No commentary. No "here's a language I designed."
 3. **In the same message**, paste the prompt verbatim from the matching `tests/v<spec_version>/prompts.md` (e.g. `tests/v0.5/prompts.md`). **If the model asks follow-up questions, don't answer them** — that refusal-to-commit is itself a finding.
 4. **Capture the entire response** (code plus any narration) into the matching test result file: `tests/v<spec_version>/<App>.md` (e.g. `tests/v0.5/Shopping.md`) under the appropriate model's section.
 5. **Note metadata:** date, model version, whether the output came in one shot or got split across messages.
@@ -26,7 +26,7 @@ Now that the transpiler exists, LLM output can be objectively validated:
 
 This is the key upgrade over spec-only testing. Before, "valid Igni" was a subjective judgment. Now it's an objective test — the code either compiles and runs or it doesn't. Transpiler errors also directly prioritise what to build next: if 2/3 models use a feature the transpiler doesn't handle, that feature moves to the top of the backlog.
 
-**Not all LLM output will transpile yet.** The transpiler currently handles a subset of the spec (screen, variables, layout, label, button, input, toggle, if/else, not, arithmetic). LLM output that uses features like `each`, functions, `navigate to`, or `fetch` will fail at the transpiler step — but that failure is useful data about what to implement next.
+**Most LLM output will transpile now.** The transpiler covers the majority of the v0.6.5 spec — screens, components, wrapper components, layouts, conditionals, loops, functions, lambdas, navigation, shared state, fetch, list operations, and more. Remaining gaps: `on change:`, `fetch` mutations, reactive re-fetch, `theme:` blocks, `paginate:`, and comment passthrough.
 
 ## Grading rubric
 
@@ -73,25 +73,17 @@ The full suite has grown over time. Each spec version's subfolder contains the p
 ```text
 tests/
 ├── README.md                  # this file (test methodology)
-├── v0.3.2/                    # tests run against the v0.3.2 spec
-│   ├── prompts.md
-│   ├── Calculator.md          # complete
-│   ├── Todo.md                # complete
-│   ├── Weather.md             # complete
-│   └── summary.md             # cross-app aggregation that fed the v0.4 backlog
-├── v0.4/                      # tests run against the v0.4 spec
-│   ├── prompts.md
-│   ├── Chat.md                # PASS
-│   ├── MusicPlayer.md         # PARTIAL
-│   ├── Notes.md               # MIXED
-│   └── summary.md             # final v0.4 acceptance summary
-├── v0.5/                      # tests run against the v0.5 spec
-│   ├── prompts.md             # Notes re-run + new Shopping app
-│   ├── Notes.md               # PASS — re-run validates shared state
-│   ├── Shopping.md            # PARTIAL — `find` misuse → v0.5.1 docs patch
-│   └── summary.md             # final v0.5 acceptance summary
-└── v0.5.1/                    # tests run against v0.5.1 (current — first transpiler-validated round)
-    └── prompts.md             # Settings + Greeting (transpiler-validated)
+├── v0.3.2/                    # Calculator, Todo, Weather — fed v0.4 backlog
+├── v0.4/                      # Chat (PASS), MusicPlayer (PARTIAL), Notes (MIXED)
+├── v0.5/                      # Notes re-run (PASS), Shopping (PARTIAL)
+├── v0.5.1/                    # Settings, Greeting (first transpiler-validated)
+├── v0.6/                      # Contacts, Shopping (post-transpiler)
+├── v0.6.1/                    # Todo, Dashboard, Shopping
+├── v0.6.2/                    # Contacts (first end-to-end 3-model + transpiler test)
+├── v0.6.3/                    # Contacts re-run (3/3 zero-fix after type hints)
+├── v0.6.4/                    # Angela Yu course project prompts (Dicee, Xylophone)
+├── v0.6.5/                    # Quizzler cold test prompts
+└── v0.6.6/                    # Destini cold test prompts (cheatsheet-only round)
 ```
 
 Each spec version gets its own subfolder containing both the prompts that were tested against it AND the result files. Test result filenames inside drop both the version (the folder carries it) and the `Cold_Test_` prefix.

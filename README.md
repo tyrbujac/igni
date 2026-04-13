@@ -47,9 +47,9 @@ Under the hood, a hidden `.igni/` Flutter project is created automatically. You 
 
 ## Status
 
-**Language spec:** [`spec/v0.6.3.md`](spec/v0.6.3.md) is the current version. Designed iteratively through cold-LLM testing (pasting the spec into fresh Claude, Gemini, and ChatGPT sessions) and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+**Language spec:** [`spec/v0.6.5.md`](spec/v0.6.5.md) is the current canonical spec. Companion cheatsheet at [`spec/v0.6.6-cheatsheet.md`](spec/v0.6.6-cheatsheet.md) (same language surface, restructured in learning order). Designed iteratively through cold-LLM testing (pasting the spec into fresh Claude, Gemini, and ChatGPT sessions) and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
-**Transpiler:** Working. Twenty example apps compile and run in the browser. Covers screens, components, wrapper components with `body` slot, layouts, conditionals, loops, functions with `return`, lambdas, navigation, shared state, async data fetching, two-way data binding, list operations (`map`/`filter`/`sorted`/`reversed`/`find`/`replace`/`without`/`count`/`length`), `and`/`or` boolean operators, comparison operators, float literals, and more.
+**Transpiler:** Working. Twenty-three example apps compile and run in the browser. Covers screens, components, wrapper components with `body` slot, layouts, conditionals, loops, functions with `return`, lambdas, navigation, shared state, async data fetching, two-way data binding, list operations (`map`/`filter`/`sorted`/`reversed`/`find`/`replace`/`without`/`count`/`length`), `and`/`or` boolean operators, comparison operators, float literals, list indexing, screen properties, local images/audio, and more.
 
 **CLI:** `igni run` — one command to transpile, watch, and serve. Save `.igni` file, browser updates.
 
@@ -58,17 +58,19 @@ Under the hood, a hidden `.igni/` Flutter project is created automatically. You 
 ```
 igni/
 ├── spec/                    # language spec (versioned snapshots)
-│   ├── v0.6.3.md            # current canonical
-│   └── v0.2 → v0.6.2.md    # historical (never edited after shipping)
+│   ├── v0.6.5.md            # current canonical spec
+│   ├── v0.6.6-cheatsheet.md # current canonical cheatsheet
+│   └── v0.2 → v0.6.4.md    # historical (never edited after shipping)
 ├── tests/                   # cold-LLM test results
 │   ├── v0.3.2/              # Calculator, Todo, Weather
 │   ├── v0.4/                # Chat, MusicPlayer, Notes
 │   ├── v0.5/                # Notes re-run, Shopping
-│   └── v0.6.2/              # Contacts (first end-to-end transpiler-validated)
+│   ├── v0.6 → v0.6.3/      # Contacts, Shopping, Dashboard, Todo (transpiler-validated)
+│   └── v0.6.4 → v0.6.6/    # prompts for Angela Yu projects + cold tests
 ├── transpiler/              # TypeScript-to-Dart transpiler
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point
-│   └── examples/            # 20 .igni apps + .expected.dart references
+│   └── examples/            # 23 .igni apps + .expected.dart references
 ├── CHANGELOG.md             # spec evolution history
 ├── ROADMAP.md               # near-term plans + ideas
 └── docs/                    # tutorial + project docs

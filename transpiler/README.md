@@ -32,28 +32,32 @@ flutter run -d chrome
 
 | Igni | Dart/Flutter |
 |---|---|
-| `screen Name:` | StatefulWidget |
+| `screen Name:` / `screen Name, title: "T":` | StatefulWidget + Scaffold + AppBar |
 | `component Name(args):` | StatelessWidget |
-| `layout vertical/horizontal` | Column / Row |
+| Wrapper components with `body` | StatelessWidget with child slot |
+| `layout vertical/horizontal` | Column / Row + Center, Padding, Expanded |
 | `label`, `button`, `input`, `toggle`, `spinner` | Text, ElevatedButton, TextField, Switch, CircularProgressIndicator |
+| `image`, `icon`, `slider`, `checkbox`, `dropdown`, `badge` | Image, Icon, Slider, Checkbox, DropdownButton, Chip |
 | `bind:` | TextEditingController + onChanged + setState |
 | `if`/`else`/`else if` | Collection-if with spread |
 | `each item in list:` | Collection-for with spread |
 | `navigate to` / `navigate back` | Navigator.push / Navigator.pop |
 | `shared:` block | ChangeNotifier + ListenableBuilder |
 | `fetch(url)` | http.get + async state management |
-| `is loading` / `is error` | Boolean flags |
-| `is empty` / `is not empty` | .isEmpty / .isNotEmpty |
-| `without(list, item)` | .where().toList() |
-| `replace(list, old, new)` | .map().toList() |
-| Functions with params | Methods with setState |
-| `not expr` | `!expr` |
-| Object literals `{key: val}` | Dart Maps |
-| Field access `obj.field` | Bracket notation `obj['field']` |
+| `is loading` / `is error` / `is empty` / `is not empty` | Boolean flags / .isEmpty / .isNotEmpty |
+| `without`/`replace`/`find`/`count`/`length`/`filter`/`sorted`/`reversed`/`map` | Dart list methods |
+| Lambda expressions `item => expr` | Dart closures |
+| `contains(str, term)` | .toLowerCase().contains() |
+| `random(min, max)` | Random().nextInt() |
+| `play("file.wav")` | audioplayers AssetSource |
+| Functions with params + `return` | Methods with setState |
+| `and`/`or`, `not`, `>` `<` `>=` `<=` | `&&`/`||`, `!`, comparison operators |
+| `items[index]` (list indexing) | Bounds-checked access |
+| Object literals `{key: val}` / field access `obj.field` | Dart Maps / bracket notation |
 
 ## Examples
 
-Eleven test apps in `examples/`, each with source (`.igni`) and reference output (`.expected.dart`):
+Twenty-three apps in `examples/`, each with source (`.igni`) and reference output (`.expected.dart`):
 
 | Example | What it tests |
 |---|---|
@@ -68,12 +72,25 @@ Eleven test apps in `examples/`, each with source (`.igni`) and reference output
 | `components` | Component definition + invocation |
 | `shared` | Cross-screen shared state, ChangeNotifier |
 | `fetch` | Async HTTP, loading/error states, spinner |
+| `dice` | random builtin |
+| `dicee` | Screen properties, local images, AppBar, fill layouts |
+| `dashboard` | Complex layouts, badges, dividers |
+| `fn-return` | Functions with return values |
+| `lambda` | filter/sorted/reversed with lambdas |
+| `primitives` | slider, checkbox, dropdown, image, icon |
+| `shopping` | Full e-commerce with shared state |
+| `wrapper` | Body slot wrapper components |
+| `logic` | and/or boolean operators |
+| `type-hints` | Typed variable declarations |
+| `contacts` | List indexing, comparison operators |
+| `tutorial` | Smoke test (no expected output) |
 
 ## Running tests
 
 ```bash
 # Run all diff tests
-for f in counter settings toggle functions greeting todo notes todo-full components shared fetch; do
-  npx tsx src/cli.ts examples/$f.igni | diff - examples/$f.expected.dart && echo "$f: PASS"
-done
+npm test
+
+# Or manually for one example
+npx tsx src/cli.ts examples/counter.igni | diff - examples/counter.expected.dart
 ```

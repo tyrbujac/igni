@@ -4,6 +4,37 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.6.6 — 2026-04-13
+*Cheatsheet restructured in learning order.*
+
+- No new language features — same surface as v0.6.5
+- Cheatsheet reorganised: hello world → showing things → variables → interaction → layout → logic → components → navigation
+- Rules moved to end as reference section
+- Optimised for both human learning progression and LLM code generation
+
+## v0.6.5 — 2026-04-13
+*Five documentation clarifications from 4-model spec review, plus list indexing from Quizzler cold test.*
+
+- `fill: true` is layout-only (not primitives)
+- Multiple events on one element (`on tap:` + `on touch:` coexist)
+- `card` clarified as background token, not a general colour
+- `fill: true` siblings split equally
+- Property applicability table
+- List indexing (`items[0]`, `questions[index]`) — zero-based, null on out-of-bounds
+
+## v0.6.4 — 2026-04-13
+*Ten additions from rebuilding Angela Yu's Dicee and Xylophone Flutter projects.*
+
+- Screen properties (`title:`, `background:`)
+- `fill: true` on layouts (expand to fill remaining space)
+- Extended colour names (`red`, `blue`, `white`, `black`, `yellow`, `orange`, `purple`, `teal`)
+- `background:` on screens and layouts
+- Local image assets (`image "photo.png"` from `images/` folder)
+- Type hints transpiler-supported (`name: Type = value`)
+- `play("file.wav")` audio builtin with `audio/` folder convention
+- Empty layout blocks (background + events, no children)
+- `on touch:` event (fires on finger contact, vs `on tap:` on release)
+
 ## v0.6.3 — 2026-04-12
 *Driven by first end-to-end cold-LLM test (Contacts app, 3 models) + human tutorial testing.*
 
