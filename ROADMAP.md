@@ -6,26 +6,31 @@ Where Igni is going. Near term is actively planned; ideas are unstructured thoug
 
 ## Near term
 
-Things to build next, roughly prioritised into three streams.
+### ~~Stream 1 — Transpiler: close the spec gap~~ DONE
 
-### Stream 1 — Transpiler: close the spec gap
+All major v0.6.6 spec features now have transpiler support. 27 diff tests, 0 failures.
 
-Features that exist in the v0.6.6 spec but the transpiler doesn't support yet. These are the tightest feedback loops — the spec is written, cold tests validate LLM output, and implementation unlocks full pipeline (spec → LLM → transpiler → browser).
+- ~~**`on change:` event**~~ — **DONE.** All 5 bind primitives. Fires after setState (event ordering matches spec). Validated end-to-end: spec documented → cold-tested (4/4 Settings) → transpiler implemented.
+- ~~**`background:` with image filenames**~~ — **DONE.** Was already implemented, diff test added to confirm.
+- ~~**`fetch` mutations**~~ — **DONE.** `method:` / `body:` named args. Generates `http.post`/`put`/`patch`/`delete` with JSON body.
+- ~~**Reactive re-fetch**~~ — **DONE.** URL comparison in `build()` — when a fetch URL's dependencies change, the fetch automatically re-runs.
+- ~~**Comments passthrough**~~ — **DONE.** `#` in Igni → `//` in Dart. Full-line and inline.
 
-- **`on change:` event** — spec-complete, cold-tested (4/4 models used it correctly on Settings). Transpiler gap. Needed for dependent dropdowns, validated inputs, any side effect on selection.
-- **`background:` with image filenames** — spec-complete, cold-tested (4/4 models used `background: "background.png"` correctly on Destini full-spec rerun). Transpiler only handles colour names. Extends existing `background:` property — quoted strings are images, unquoted are colours.
-- **`fetch` mutations** — `method:` / `body:` for POST/PUT/PATCH/DELETE. Spec has it, transpiler doesn't.
-- **Reactive re-fetch** — `fetch` at screen body level re-runs when dependencies change. Spec documents it, transpiler doesn't implement it.
-- **Comments passthrough** — lexer skips `#` comments, should emit `//` in Dart for debugging.
+**Remaining (low priority, moved to Ideas):** `theme:` block, `paginate:` on `each`.
 
-### Stream 2 — Tooling: close the human experience gap
+### Stream 2 — Tooling: close the human experience gap (START HERE)
 
 The v0.6.6 rating assessment identified tooling (4/10) and debugging (3/10) as the biggest drags on the human experience. These don't require spec changes and don't risk LLM accuracy regressions.
 
-- **VS Code syntax highlighting** — `.igni` files with coloured keywords, strings, comments. Quick win. Most visible improvement to the daily editing experience.
-- **Better transpiler error messages** — map Dart errors back to Igni line numbers. Currently errors reference generated Dart code the user didn't write. Source maps or line-number tracking in codegen.
-- **`print()` builtin** — logs to browser console. No debug output currently exists. Even basic `print(value)` transforms the debugging experience.
-- **`igni new`** — project scaffolding. `igni run` works, needs the matching setup command.
+**Next session priorities:**
+
+1. **Browser-test new transpiler features** — run `on-change`, `fetch-mutation`, `fetch-reactive` examples in the browser via `test_app/`. Diff tests confirm the Dart compiles correctly but don't prove it runs correctly. Reactive re-fetch has runtime behaviour (URL comparison in `build()`) that only shows up in the browser.
+2. **VS Code syntax highlighting** — `.igni` files with coloured keywords, strings, comments. Quick win. Most visible improvement to the daily editing experience.
+3. **`print()` builtin** — logs to browser console. No debug output currently exists. Even basic `print(value)` transforms the debugging experience.
+4. **Better transpiler error messages** — map Dart errors back to Igni line numbers. Currently errors reference generated Dart code the user didn't write. Source maps or line-number tracking in codegen.
+5. **`igni new`** — project scaffolding. `igni run` works, needs the matching setup command.
+
+**Optional:** end-to-end cold test — now that the transpiler covers `on change:` and fetch mutations, a full pipeline test (spec → LLM → transpile → run in browser) is possible for the first time with these features.
 
 ### Stream 3 — Spec: v0.7 design exploration
 
@@ -49,12 +54,14 @@ Language-level improvements identified by cold tests and the rating assessment. 
   - ~~**Destini**~~ — **DONE.** Cheatsheet-only: 3/4 data-driven, 1 hardcoded if/else. Full-spec rerun: **4/4 data-driven** (Gemini Pro switched from hardcoded to data-driven). Background image **0/4 → 4/4** after spec addition. Architecture convergence restored by full spec.
 - **v0.6.6 full-spec cold tests** — stress-tested advanced features with 3 apps:
   - ~~**Contacts**~~ — **DONE.** 4/4 identical architecture. Tested: `shared:`, `filter`/`sorted`/`reversed` + lambdas, `replace`/`without`, `fetch` + `is loading`/`is error`, navigation + params, wrapper component. 1 typo (Opus), 0 invented syntax. Strongest convergence in any cold test. Trigger-variable understanding: 4/4 correct.
-  - ~~**Settings**~~ — **DONE.** 4/4 perfect — first cold test with zero errors across all models. Tested: `on change:` (4/4 correct, 3 distinct approaches), `heading.small` (4/4 correct), `dropdown`/`toggle`/`slider`/`checkbox`/`image round:`/`button color: danger`. Surfaced `bind:`/`on change:` event ordering gap (now documented).
+  - ~~**Settings**~~ — **DONE.** 4/4 perfect — first cold test with zero errors across all models. Tested: `on change:` (4/4 correct, 3 distinct approaches), `heading.small` (4/4 correct), `dropdown`/`toggle`/`slider`/`checkbox`/`image round:`/`button color: danger`. Surfaced `bind:`/`on change:` event ordering gap (now documented and implemented).
 
 ## Ideas
 
 Unfiltered. No timeline. Some of these might be bad. Signal strength noted where cold tests or reviews have data.
 
+- `theme:` block — spec-defined but transpiler not implemented. Low priority (default theme works)
+- `paginate:` on `each` — spec-defined but transpiler not implemented. Low priority (no cold test has exercised it)
 - `lower()` / `upper()` / `trim()` string builtins — Claude flagged string manipulation gaps
 - `unique(list, item => key)` for deduplication
 - Date/time primitives — Claude flagged in v0.6.2 review
@@ -71,7 +78,7 @@ Unfiltered. No timeline. Some of these might be bad. Signal strength noted where
 - Map/dictionary type — Settings cold test showed 4/4 models using if/else chains for country→cities mapping. `cities_for[country]` would be cleaner. Comes up in settings, localisation, routing, form options
 - String interpolation — 2/4 models flagged `+` concatenation as verbose. Rating assessment flagged as medium-high impact for human writability
 - ~~`button background:`~~ — resolved by full-width rounded buttons (v0.6.6)
-- ~~Background image on layouts~~ — **resolved.** `background: "image.png"` added to spec in v0.6.6. Transpiler implementation in Stream 1.
-- ~~`image fill: true`~~ — **resolved.** Background image feature on screens/layouts eliminated the need. 2/4 Destini models tried it; with `background:` on screens, no model attempts it.
+- ~~Background image on layouts~~ — **resolved.** Spec and transpiler both done.
+- ~~`image fill: true`~~ — **resolved.** Background image feature on screens/layouts eliminated the need.
 - Async cancellation / stale response handling — ChatGPT flagged race conditions
 - Error boundaries / component-level fallback — ChatGPT flagged no crash isolation
