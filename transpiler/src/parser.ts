@@ -1,4 +1,5 @@
 import { Token, TokenType } from './tokens.js';
+import { TranspileError } from './errors.js';
 import {
   Program, Screen, ScreenItem, VariableDecl, UINode,
   Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
@@ -889,7 +890,7 @@ export class Parser {
     if (this.current().type === type) {
       return this.advance();
     }
-    return this.error(`${message} (got "${this.current().value}" [${TokenType[this.current().type]}] at line ${this.current().line})`);
+    return this.error(`${message}, got "${this.current().value}"`);
   }
 
   private skipComments(): void {
@@ -907,6 +908,6 @@ export class Parser {
 
   private error(message: string): never {
     const tok = this.current();
-    throw new Error(`Parse error: ${message} at line ${tok.line}, column ${tok.column}`);
+    throw new TranspileError(message, tok.line, tok.column);
   }
 }

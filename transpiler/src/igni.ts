@@ -8,6 +8,7 @@ import { watch } from 'chokidar';
 import { Lexer } from './lexer.js';
 import { Parser } from './parser.js';
 import { CodeGenerator } from './codegen.js';
+import { TranspileError, formatError } from './errors.js';
 
 const command = process.argv[2];
 const explicitFile = process.argv[3]; // optional: igni run myfile.igni
@@ -63,7 +64,11 @@ function transpile(): string | null {
     const dart = new CodeGenerator().generate(ast);
     return dart;
   } catch (err: any) {
-    console.error(`\n  Transpile error: ${err.message}\n`);
+    if (err instanceof TranspileError) {
+      process.stderr.write(formatError(err, combined));
+    } else {
+      console.error(`\n  Error: ${err.message}\n`);
+    }
     return null;
   }
 }

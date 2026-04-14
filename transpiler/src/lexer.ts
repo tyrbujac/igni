@@ -1,4 +1,5 @@
 import { Token, TokenType, KEYWORDS } from './tokens.js';
+import { TranspileError } from './errors.js';
 
 export class Lexer {
   private source: string;
@@ -296,6 +297,6 @@ export class Lexer {
   }
 
   private error(message: string): never {
-    throw new Error(`Lexer error: ${message} at line ${this.line}, column ${this.col}`);
+    throw new TranspileError(message, this.line, this.col);
   }
 }
