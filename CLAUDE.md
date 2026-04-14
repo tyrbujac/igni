@@ -2,7 +2,7 @@
 
 A programming language for building UIs — designed to be read. Created by Tyr (sole author and sole decision-maker). The hypothesis is that LLM accuracy and human readability correlate tightly, so removing the ambiguity that trips LLMs up also makes the language nicer for humans.
 
-**Status: transpiler stage.** The TypeScript-to-Dart transpiler exists and covers most of the v0.6.8 spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter.
+**Status: transpiler stage.** The TypeScript-to-Dart transpiler exists and covers most of the v0.6.9 spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter.
 
 *Project history: the language was originally named Rocket and was renamed to Igni at v0.3.2. Spec files in `spec/` are immutable historical snapshots — never edited after they ship. Each new version is a new file.*
 
@@ -30,9 +30,9 @@ igni/
 ├── ROADMAP.md               # near-term plans + ideas
 ├── assets/                  # logo and branding (igni.svg)
 ├── spec/                    # all spec versions
-│   ├── v0.6.8.md            # current canonical spec
-│   ├── v0.6.8-cheatsheet.md # current canonical cheatsheet (learning order)
-│   ├── v0.2.md → v0.6.5.md  # historical snapshots (never edited after shipping)
+│   ├── v0.6.9.md            # current canonical spec
+│   ├── v0.6.9-cheatsheet.md # current canonical cheatsheet (learning order)
+│   ├── v0.2.md → v0.6.8.md  # historical snapshots (never edited after shipping)
 │   └── v0.6.1 → v0.6.5-cheatsheet.md  # historical cheatsheets
 ├── tests/                   # cold-LLM test infrastructure
 │   ├── README.md            # test methodology
@@ -55,11 +55,11 @@ Each spec version gets its own subfolder under `tests/` containing both the prom
 
 ## Spec files
 
-- `spec/v0.6.8.md` — **current canonical spec.** Full spec in learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference). Breaking change from v0.6.7: `body` slot now renders exactly one widget (caller wraps multi-child content in an explicit `layout:`).
-- `spec/v0.6.8-cheatsheet.md` — **current canonical cheatsheet.** Same content condensed. Optimised for both human learning progression and LLM code generation.
-- `spec/v0.2.md` → `spec/v0.6.7.md` — historical snapshots (never edited after shipping). The language was originally called Rocket (v0.2–v0.3.1) and renamed to Igni at v0.3.2. See `CHANGELOG.md` for what each version added.
+- `spec/v0.6.9.md` — **current canonical spec.** Full spec in learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference). Adds the `round(value, places)` builtin for number formatting (non-breaking addition over v0.6.8).
+- `spec/v0.6.9-cheatsheet.md` — **current canonical cheatsheet.** Same content condensed. Optimised for both human learning progression and LLM code generation.
+- `spec/v0.2.md` → `spec/v0.6.8.md` — historical snapshots (never edited after shipping). The language was originally called Rocket (v0.2–v0.3.1) and renamed to Igni at v0.3.2. See `CHANGELOG.md` for what each version added.
 
-When proposing spec changes, **work from `spec/v0.6.8.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
+When proposing spec changes, **work from `spec/v0.6.9.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
 
 ## Transpiler
 
@@ -75,7 +75,7 @@ The transpiler lives in `transpiler/` — a TypeScript project that compiles `.i
 
 **Testing:** Run `npm test` in `transpiler/` to execute all 27 diff tests. Zero diff = pass. Browser testing via `igni run` from any directory with `.igni` files (e.g. `transpiler/test_apps/`).
 
-**Not yet supported (v0.6.8 spec features):** `theme:` block, `paginate:` on `each`.
+**Not yet supported (v0.6.9 spec features):** `theme:` block, `paginate:` on `each`.
 
 **VS Code / Cursor extension:** TextMate grammar in `editors/vscode/`, symlinked into Cursor. Highlights keywords, UI primitives, events, properties, builtins, inline function calls, component parameters, type hints, colours, navigation, and operators.
 
@@ -124,7 +124,7 @@ Full methodology is in `tests/README.md`.
 - **Design by trying, not by theorising.** When working on a future v0.X, try to write the hard example in the current spec, hit the walls, and let the walls dictate the additions. This is how every version since v0.3 was designed.
 - **Be honest about defects.** If a spec example is structurally wrong, say so directly. The cold test exists precisely to catch what self-review misses.
 - **Claude's "honest no" is more valuable than a clever workaround.** If a model correctly identifies a gap and refuses to invent around it, that's the most useful diagnostic signal.
-- **v0.6.8 is the current canonical spec.** Work from it. Don't propose v0.7 design work without explicit direction.
+- **v0.6.9 is the current canonical spec.** Work from it. Don't propose v0.7 design work without explicit direction.
 
 ## Common pitfalls to avoid
 
@@ -154,4 +154,4 @@ Items deferred that will be designed once enough test data accumulates:
 - **Named slots** for wrapper components (multiple `body` regions per wrapper) — deferred because single slot covers 90% of cases.
 - **Submit modifier on inputs** — currently the trigger-variable pattern handles this.
 
-The current and authoritative list lives at the bottom of `spec/v0.6.8.md`.
+The current and authoritative list lives at the bottom of `spec/v0.6.9.md`.

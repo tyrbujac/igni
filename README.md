@@ -66,7 +66,7 @@ my-app/
 
 ## Status
 
-**Language spec:** [`spec/v0.6.8.md`](spec/v0.6.8.md) is the current canonical spec. Companion cheatsheet at [`spec/v0.6.8-cheatsheet.md`](spec/v0.6.8-cheatsheet.md). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+**Language spec:** [`spec/v0.6.9.md`](spec/v0.6.9.md) is the current canonical spec. Companion cheatsheet at [`spec/v0.6.9-cheatsheet.md`](spec/v0.6.9-cheatsheet.md). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
 **Transpiler:** Working. 27 example apps compile and run in the browser. Covers screens, components, wrapper components, layouts, conditionals, loops, functions, lambdas, navigation, shared state, async data fetching, two-way binding, list operations, boolean and comparison operators, list indexing, screen properties, local images/audio, and more.
 
@@ -77,15 +77,15 @@ my-app/
 ```
 igni/
 ├── spec/                    # language spec (versioned snapshots)
-│   ├── v0.6.8.md            # current canonical spec
-│   ├── v0.6.8-cheatsheet.md # current canonical cheatsheet
-│   └── v0.2 → v0.6.7.md    # historical (never edited after shipping)
+│   ├── v0.6.9.md            # current canonical spec
+│   ├── v0.6.9-cheatsheet.md # current canonical cheatsheet
+│   └── v0.2 → v0.6.8.md    # historical (never edited after shipping)
 ├── transpiler/              # TypeScript-to-Dart transpiler
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point
 │   └── examples/            # 27 .igni apps + .expected.dart references
 ├── tests/                   # cold-LLM test results
-│   └── v0.3.2 → v0.6.8/    # prompts + results per spec version
+│   └── v0.3.2 → v0.6.9/    # prompts + results per spec version
 ├── docs/                    # tutorial + project docs
 │   └── tutorial.md          # beginner tutorial (no programming experience needed)
 ├── assets/                  # logo and branding

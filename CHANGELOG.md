@@ -4,6 +4,12 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.6.9 — 2026-04-14
+*`round(value, places)` builtin for number formatting.*
+
+- **`round(value, places)`** — returns a string with `value` rounded to `places` decimals. Standard rounding, works on int and double. `round(bmi, 1)` → `"21.5"`. Motivation: 4/4 cold-test models across v0.6.7 and v0.6.8 produced raw-float BMI displays because there was no way to format a computed float. Opus flagged the gap explicitly in both test runs. Smallest possible addition to close the strongest remaining signal after colour-as-variable. Non-breaking.
+- Codegen maps to Dart's `toStringAsFixed()`. Two-line change.
+
 ## v0.6.8 — 2026-04-14
 *Breaking: `body` slot renders exactly one widget. Caller wraps multi-child content explicitly.*
 

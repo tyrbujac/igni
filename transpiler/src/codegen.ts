@@ -1477,6 +1477,13 @@ export class CodeGenerator {
 
   private genFunctionCallExpr(call: { name: string; args: Expr[] }): string {
     const args = call.args.map(a => this.exprToDart(a));
+    if (call.name === 'round' && args.length === 2) {
+      // `round(value, places)` returns a string with `places` decimals —
+      // Dart's toStringAsFixed uses standard rounding and works on both int
+      // and double. Added in v0.6.9 as a targeted fix to the "BMI displays
+      // 21.456734..." gap flagged by 4/4 cold-test models.
+      return `${args[0]}.toStringAsFixed(${args[1]})`;
+    }
     if (call.name === 'without' && args.length === 2) {
       return `${args[0]}.where((e) => e != ${args[1]}).toList()`;
     }
