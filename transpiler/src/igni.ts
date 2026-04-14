@@ -203,6 +203,22 @@ function syncAudio(): void {
   }
 }
 
+// --- Dependencies ---
+
+function ensureDependencies(dart: string): void {
+  const pubspecPath = join(igniDir, 'pubspec.yaml');
+  if (!existsSync(pubspecPath)) return;
+  let pubspec = readFileSync(pubspecPath, 'utf-8');
+
+  if (dart.includes("package:http/") && !pubspec.includes('http:')) {
+    pubspec = pubspec.replace(
+      /(\s*cupertino_icons:[^\n]*)/,
+      '$1\n  http: ^1.2.0'
+    );
+    writeFileSync(pubspecPath, pubspec);
+  }
+}
+
 // --- Main ---
 
 async function run(): Promise<void> {
@@ -215,6 +231,7 @@ async function run(): Promise<void> {
   ensureFlutterProject();
   syncImages();
   syncAudio();
+  ensureDependencies(dart);
   mkdirSync(join(igniDir, 'lib'), { recursive: true });
   writeOutput(dart);
 
