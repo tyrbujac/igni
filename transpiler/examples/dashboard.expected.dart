@@ -27,7 +27,7 @@ class StatCard extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall!,
               ),
               Icon(
-                icon_name,
+                _iconFromName(icon_name),
                 size: 16,
                 color: Theme.of(context).colorScheme.primary,
               ),
@@ -170,5 +170,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       ),
     );
+  }
+}
+
+IconData _iconFromName(dynamic name) {
+  if (name is IconData) return name;
+  switch (name as String) {
+    case 'play': return Icons.play_arrow;
+    case 'pause': return Icons.pause;
+    case 'stop': return Icons.stop;
+    case 'skip': return Icons.skip_next;
+    case 'back': return Icons.arrow_back;
+    case 'close': return Icons.close;
+    case 'search': return Icons.search;
+    case 'settings': return Icons.settings;
+    case 'plus': return Icons.add;
+    case 'minus': return Icons.remove;
+    case 'add': return Icons.add;
+    case 'remove': return Icons.remove;
+    case 'trash': return Icons.delete;
+    case 'edit': return Icons.edit;
+    case 'phone': return Icons.phone;
+    case 'cart': return Icons.shopping_cart;
+    case 'shopping-cart': return Icons.shopping_cart;
+    case 'heart': return Icons.favorite;
+    case 'star': return Icons.star;
+    case 'check': return Icons.check;
+    case 'user': return Icons.person;
+    case 'person': return Icons.person;
+    case 'home': return Icons.home;
+    case 'mail': return Icons.mail;
+    case 'male': return Icons.male;
+    case 'female': return Icons.female;
+    default: return Icons.help_outline;
   }
 }

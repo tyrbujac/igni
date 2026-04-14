@@ -116,7 +116,7 @@ export interface FunctionCall {
 export interface NavigateTo {
   type: 'NavigateTo';
   screen: string;
-  arg: Expr | null;
+  args: Expr[];
 }
 
 export interface NavigateBack {

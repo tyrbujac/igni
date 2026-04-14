@@ -9,6 +9,7 @@ import {
   findProp, resolveIdentName, resolveDesignToken, resolveStyle,
   resolveAlign, resolveBackground, resolveColor, mapIconName,
   inferType, isStringExpr, substituteLambdaParam, isImageBackground,
+  generateIconLookupHelper,
 } from './codegen-helpers.js';
 
 export class CodeGenerator {
@@ -25,6 +26,7 @@ export class CodeGenerator {
 
   private hasShared = false;
   private hasFetch = false;
+  private needsIconLookup = false;
 
   generate(program: Program): string {
     this.allScreens = program.screens;
@@ -67,6 +69,10 @@ export class CodeGenerator {
 
     for (const screen of program.screens) {
       code += '\n' + this.genScreen(screen);
+    }
+
+    if (this.needsIconLookup) {
+      code += '\n' + generateIconLookupHelper() + '\n';
     }
 
     return code;
@@ -241,6 +247,11 @@ export class CodeGenerator {
       bodyWidget = 'const SizedBox()';
     } else if (uiNodes.length === 1) {
       bodyWidget = this.genUINode(uiNodes[0], 3);
+      // `fill: true` on the screen's root layout wraps it in Expanded, but
+      // Expanded must live inside a Flex widget — as a Scaffold body it throws
+      // at render time. Strip the outer wrapper; the Scaffold body already
+      // fills available space.
+      bodyWidget = this.unwrapScreenRootExpanded(bodyWidget);
     } else {
       // Implicit vertical layout — multiple children without explicit layout wrapper
       const children = uiNodes.map(n => n.type === 'Comment' ? this.genUINode(n, 4) : this.genUINode(n, 4) + ',').join('\n');
@@ -569,7 +580,13 @@ export class CodeGenerator {
 
     let code = `${widget}(\n`;
     const spreadProp = findProp(node.properties, 'spread');
-    if (isCenter) {
+    const fillPropForSize = findProp(node.properties, 'fill');
+    // A vertical layout with `fill: true` gets wrapped in `Expanded`. If the
+    // Expanded lands inside a Row, its cross-axis (this Column's main axis)
+    // is unbounded — so the Column must shrink-wrap. Setting MainAxisSize.min
+    // is a no-op when Expanded lands inside a Column (tight main-axis wins),
+    // so it's safe to always set when fill is present on a vertical layout.
+    if (isCenter || (!isRow && fillPropForSize)) {
       code += `${ind}  mainAxisSize: MainAxisSize.min,\n`;
     } else if (spreadProp) {
       code += `${ind}  mainAxisAlignment: MainAxisAlignment.spaceBetween,\n`;
@@ -577,9 +594,13 @@ export class CodeGenerator {
       const alignment = resolveAlign(alignProp.value);
       code += `${ind}  mainAxisAlignment: ${alignment},\n`;
     }
-    // Stretch children to full width when parent has fill children
+    // Stretch children to full width when parent is a vertical layout with
+    // fill children (cross-axis = horizontal). For horizontal layouts the
+    // cross-axis is vertical, and stretching Expanded(Column) children there
+    // creates unbounded-constraint crashes because Row doesn't know its
+    // height yet.
     const hasFillChildren = node.children.some(c => c.type === 'Layout' && findProp(c.properties, 'fill'));
-    if (hasFillChildren) {
+    if (hasFillChildren && !isRow) {
       code += `${ind}  crossAxisAlignment: CrossAxisAlignment.stretch,\n`;
     }
     code += `${ind}  children: [\n`;
@@ -764,7 +785,13 @@ export class CodeGenerator {
     const colorProp = findProp(node.properties, 'color');
     const tapEvent = node.events.find(e => e.event === 'tap');
 
-    const iconName = node.name.type === 'StringLit' ? mapIconName(node.name.value) : nameStr;
+    let iconName: string;
+    if (node.name.type === 'StringLit') {
+      iconName = mapIconName(node.name.value);
+    } else {
+      this.needsIconLookup = true;
+      iconName = `_iconFromName(${nameStr})`;
+    }
     const parts: string[] = [`${ind}Icon(\n${ind}  ${iconName}`];
     if (sizeProp) parts.push(`size: ${resolveDesignToken(sizeProp.value)}`);
     if (colorProp) parts.push(`color: ${resolveColor(colorProp.value)}`);
@@ -988,7 +1015,6 @@ export class CodeGenerator {
     const hasBody = this.componentHasBody(comp.body);
     const paramFields = comp.params.map(p => `  final dynamic ${p};`).join('\n');
     const ctorParams = comp.params.map(p => `required this.${p}`).join(', ');
-    const bodyWidget = comp.body.length > 0 ? this.genUINode(comp.body[0], 2) : '    const SizedBox()';
 
     let code = `class ${name} extends StatelessWidget {\n`;
     if (comp.params.length > 0) {
@@ -1002,11 +1028,68 @@ export class CodeGenerator {
     if (hasBody) allCtorParams.push('required this.child');
     code += `  const ${name}({super.key${allCtorParams.length > 0 ? ', ' + allCtorParams.join(', ') : ''}});\n\n`;
     code += `  @override\n  Widget build(BuildContext context) {\n`;
-    code += `    return ${bodyWidget.trimStart()};\n`;
+    code += this.genComponentBodyReturn(comp.body, 2);
     code += `  }\n}\n`;
 
     this.screenParams = prevParams;
     this.isComponent = prevIsComponent;
+    return code;
+  }
+
+  // Emit the component's build() body. Most components have a single root UINode
+  // (typically a Layout) — for those we emit `return Widget;`. If the root is an
+  // If node we can't use the spread-if pattern (it's only valid inside list
+  // literals), so we emit sequential conditional `return` statements instead.
+  private genComponentBodyReturn(body: UINode[], depth: number): string {
+    const ind = '  '.repeat(depth);
+    if (body.length === 0) {
+      return `${ind}return const SizedBox();\n`;
+    }
+    const root = body[0];
+    if (root.type === 'If') {
+      return this.genRootConditionalReturn(root, depth);
+    }
+    const widget = this.genUINode(root, depth);
+    return `${ind}return ${widget.trimStart()};\n`;
+  }
+
+  private genRootConditionalReturn(node: IfNode, depth: number): string {
+    const ind = '  '.repeat(depth);
+    let code = '';
+    code += `${ind}if (${this.exprToDart(node.condition)}) {\n`;
+    code += this.genBranchReturn(node.then, depth + 1);
+    code += `${ind}}\n`;
+    for (const branch of node.elseIfs) {
+      code += `${ind}if (${this.exprToDart(branch.condition)}) {\n`;
+      code += this.genBranchReturn(branch.body, depth + 1);
+      code += `${ind}}\n`;
+    }
+    if (node.else_) {
+      code += this.genBranchReturn(node.else_, depth);
+    } else {
+      code += `${ind}return const SizedBox();\n`;
+    }
+    return code;
+  }
+
+  private genBranchReturn(body: (UINode | VariableDecl)[], depth: number): string {
+    const ind = '  '.repeat(depth);
+    const uiNodes = body.filter((n): n is UINode => n.type !== 'VariableDecl');
+    if (uiNodes.length === 0) {
+      return `${ind}return const SizedBox();\n`;
+    }
+    if (uiNodes.length === 1) {
+      const widget = this.genUINode(uiNodes[0], depth);
+      return `${ind}return ${widget.trimStart()};\n`;
+    }
+    let code = `${ind}return Column(\n`;
+    code += `${ind}  mainAxisSize: MainAxisSize.min,\n`;
+    code += `${ind}  children: [\n`;
+    for (const child of uiNodes) {
+      code += this.genUINode(child, depth + 2) + ',\n';
+    }
+    code += `${ind}  ],\n`;
+    code += `${ind});\n`;
     return code;
   }
 
@@ -1061,6 +1144,39 @@ export class CodeGenerator {
     return code;
   }
 
+  // If `gen` output is an `Expanded(child: X)` at its outermost level, return
+  // the inner `X` with matching indentation. Used on the screen root because
+  // `Expanded` can't be a Scaffold body (must be in a Flex parent). Looks for
+  // the well-known shape produced by `genLayout` when `fill: true` is set.
+  private unwrapScreenRootExpanded(code: string): string {
+    const trimmed = code.trimStart();
+    const leadingWs = code.slice(0, code.length - trimmed.length);
+    if (!trimmed.startsWith('Expanded(')) return code;
+    const childMarker = 'child: ';
+    const childStart = trimmed.indexOf(childMarker);
+    if (childStart === -1) return code;
+    const inner = trimmed.slice(childStart + childMarker.length);
+    // Strip the trailing `,\n...)` that closes the Expanded wrapper.
+    const closeMatch = inner.match(/,\s*\)\s*$/);
+    if (!closeMatch) return code;
+    const innerBody = inner.slice(0, inner.length - closeMatch[0].length);
+    return leadingWs + innerBody;
+  }
+
+  // Builds the constructor argument list for `navigate to Screen a, b, c` —
+  // pairs each positional arg with the target screen's parameter name so the
+  // generated Dart uses named args: `ScreenName(p1: a, p2: b, p3: c)`.
+  private genNavigateCtorArgs(screenName: string, args: Expr[]): string {
+    if (args.length === 0) return '';
+    const targetScreen = this.allScreens.find(sc => sc.name === screenName);
+    const params = targetScreen?.params ?? [];
+    return args.map((a, i) => {
+      const paramName = params[i];
+      const argStr = this.exprToDart(a);
+      return paramName ? `${paramName}: ${argStr}` : argStr;
+    }).join(', ');
+  }
+
   private stmtHasReturn(s: Statement): boolean {
     if (s.type === 'Return') return true;
     if (s.type === 'IfStmt') {
@@ -1110,10 +1226,7 @@ export class CodeGenerator {
       case 'NavigateBack':
         return `${ind}Navigator.pop(context);\n`;
       case 'NavigateTo': {
-        const targetScreen = this.allScreens.find(sc => sc.name === s.screen);
-        const argStr = s.arg ? this.exprToDart(s.arg) : null;
-        const paramName = targetScreen?.params[0];
-        const ctorArgs = paramName && argStr ? `${paramName}: ${argStr}` : '';
+        const ctorArgs = this.genNavigateCtorArgs(s.screen, s.args);
         return `${ind}Navigator.push(context, MaterialPageRoute(builder: (context) => ${s.screen}Screen(${ctorArgs})));\n`;
       }
       case 'Return':
@@ -1152,10 +1265,7 @@ export class CodeGenerator {
     }
 
     if (action.type === 'NavigateTo') {
-      const targetScreen = this.allScreens.find(s => s.name === action.screen);
-      const argStr = action.arg ? this.exprToDart(action.arg) : null;
-      const paramName = targetScreen?.params[0];
-      const ctorArgs = paramName && argStr ? `${paramName}: ${argStr}` : '';
+      const ctorArgs = this.genNavigateCtorArgs(action.screen, action.args);
       let code = `${ind}onPressed: () {\n`;
       code += `${ind}  Navigator.push(context, MaterialPageRoute(builder: (context) => ${action.screen}Screen(${ctorArgs})));\n`;
       code += `${ind}},\n`;
@@ -1200,10 +1310,7 @@ export class CodeGenerator {
       return `${ind}Navigator.pop(context);\n`;
     }
     if (action.type === 'NavigateTo') {
-      const targetScreen = this.allScreens.find(s => s.name === action.screen);
-      const argStr = action.arg ? this.exprToDart(action.arg) : null;
-      const paramName = targetScreen?.params[0];
-      const ctorArgs = paramName && argStr ? `${paramName}: ${argStr}` : '';
+      const ctorArgs = this.genNavigateCtorArgs(action.screen, action.args);
       return `${ind}Navigator.push(context, MaterialPageRoute(builder: (context) => ${action.screen}Screen(${ctorArgs})));\n`;
     }
     if (action.type === 'FunctionCall') {
@@ -1250,13 +1357,36 @@ export class CodeGenerator {
         if (this.functionParams.includes(expr.name)) return expr.name;
         if (this.screenParams.includes(expr.name)) return this.isComponent ? expr.name : `widget.${expr.name}`;
         return expr.name;
-      case 'BinaryExpr':
+      case 'BinaryExpr': {
+        // Preserve grouping through Dart's left-to-right evaluation. Without
+        // this, `a / (b * c)` emits `a / b * c` (which Dart reads as
+        // `(a / b) * c`). Paren only when precedence requires it, so simple
+        // left-associative chains like `a + b + c` stay clean.
+        const prec = (e: Expr): number => {
+          if (e.type !== 'BinaryExpr') return 100;
+          if (e.op === 'or') return 1;
+          if (e.op === 'and') return 2;
+          if (e.op === '+' || e.op === '-') return 3;
+          if (e.op === '*' || e.op === '/') return 4;
+          return 100;
+        };
+        const myPrec = prec(expr);
+        const nonAssocRight = expr.op === '-' || expr.op === '/';
+        const leftStr = prec(expr.left) < myPrec
+          ? `(${this.exprToDart(expr.left)})`
+          : this.exprToDart(expr.left);
+        const rightNeedsParen = prec(expr.right) < myPrec
+          || (prec(expr.right) === myPrec && nonAssocRight);
+        const rightStr = rightNeedsParen
+          ? `(${this.exprToDart(expr.right)})`
+          : this.exprToDart(expr.right);
         if (expr.op === '+' && isStringExpr(expr)) {
-          return `${this.exprToDart(expr.left)}.toString() + ${this.exprToDart(expr.right)}.toString()`;
+          return `${leftStr}.toString() + ${rightStr}.toString()`;
         }
-        if (expr.op === 'and') return `${this.exprToDart(expr.left)} && ${this.exprToDart(expr.right)}`;
-        if (expr.op === 'or') return `${this.exprToDart(expr.left)} || ${this.exprToDart(expr.right)}`;
-        return `${this.exprToDart(expr.left)} ${expr.op} ${this.exprToDart(expr.right)}`;
+        if (expr.op === 'and') return `${leftStr} && ${rightStr}`;
+        if (expr.op === 'or') return `${leftStr} || ${rightStr}`;
+        return `${leftStr} ${expr.op} ${rightStr}`;
+      }
       case 'UnaryExpr':
         return `!${this.exprToDart(expr.operand)}`;
       case 'IsExpr':

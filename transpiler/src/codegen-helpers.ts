@@ -90,17 +90,37 @@ export function resolveColor(expr: Expr): string {
   return 'Colors.grey';
 }
 
+const ICON_MAP: Record<string, string> = {
+  play: 'Icons.play_arrow', pause: 'Icons.pause', stop: 'Icons.stop',
+  skip: 'Icons.skip_next', back: 'Icons.arrow_back', close: 'Icons.close',
+  search: 'Icons.search', settings: 'Icons.settings', plus: 'Icons.add',
+  minus: 'Icons.remove', add: 'Icons.add', remove: 'Icons.remove',
+  trash: 'Icons.delete', edit: 'Icons.edit', phone: 'Icons.phone',
+  cart: 'Icons.shopping_cart', 'shopping-cart': 'Icons.shopping_cart',
+  heart: 'Icons.favorite', star: 'Icons.star', check: 'Icons.check',
+  user: 'Icons.person', person: 'Icons.person', home: 'Icons.home', mail: 'Icons.mail',
+  male: 'Icons.male', female: 'Icons.female',
+};
+
 export function mapIconName(name: string): string {
-  const map: Record<string, string> = {
-    play: 'Icons.play_arrow', pause: 'Icons.pause', stop: 'Icons.stop',
-    skip: 'Icons.skip_next', back: 'Icons.arrow_back', close: 'Icons.close',
-    search: 'Icons.search', settings: 'Icons.settings', plus: 'Icons.add',
-    trash: 'Icons.delete', edit: 'Icons.edit', phone: 'Icons.phone',
-    cart: 'Icons.shopping_cart', 'shopping-cart': 'Icons.shopping_cart',
-    heart: 'Icons.favorite', star: 'Icons.star', check: 'Icons.check',
-    user: 'Icons.person', person: 'Icons.person', home: 'Icons.home', mail: 'Icons.mail',
-  };
-  return map[name] ?? `Icons.${name.replace(/-/g, '_')}`;
+  return ICON_MAP[name] ?? `Icons.${name.replace(/-/g, '_')}`;
+}
+
+// Generates a Dart helper that resolves an icon name (or IconData) at runtime.
+// Emitted only when a program uses an icon whose name comes from a variable
+// (e.g. `icon icon_name` where `icon_name` is a component parameter). Literal
+// names are resolved at compile time via mapIconName.
+export function generateIconLookupHelper(): string {
+  const cases = Object.entries(ICON_MAP)
+    .map(([name, icon]) => `    case '${name}': return ${icon};`)
+    .join('\n');
+  return `IconData _iconFromName(dynamic name) {
+  if (name is IconData) return name;
+  switch (name as String) {
+${cases}
+    default: return Icons.help_outline;
+  }
+}`;
 }
 
 export function inferType(expr: Expr, typeHint?: string): string {

@@ -371,14 +371,19 @@ export class Parser {
       args.push(this.parseExpr());
     }
 
-    // Rest: positional args, named props, or events
+    // Rest: positional args, named props, or events.
+    // Disambiguation: `identifier:` followed by a value is a named arg
+    // (`value: weight`), but `identifier:` followed immediately by a newline
+    // is a positional arg (`weight`) plus the body-opening colon — so the
+    // trailing `:` belongs to the body, not a named arg without its value.
     while (this.check(TokenType.Comma)) {
       this.advance();
       if (this.check(TokenType.On)) {
         events.push(this.parseEventHandler());
       } else if (
         this.check(TokenType.Identifier) &&
-        this.peek(1)?.type === TokenType.Colon
+        this.peek(1)?.type === TokenType.Colon &&
+        this.peek(2)?.type !== TokenType.Newline
       ) {
         properties.push(this.parseProperty());
       } else {
@@ -587,16 +592,19 @@ export class Parser {
     }
     if (direction === 'to') {
       const screen = this.consume(TokenType.Identifier, 'Expected screen name').value;
-      let arg: Expr | null = null;
-      // Check if there's an argument (not newline, not comma, not colon)
+      const args: Expr[] = [];
+      // Read comma-separated arguments until newline/EOF
       if (
         !this.check(TokenType.Newline) &&
-        !this.check(TokenType.Comma) &&
         !this.check(TokenType.EOF)
       ) {
-        arg = this.parseExpr();
+        args.push(this.parseExpr());
+        while (this.check(TokenType.Comma)) {
+          this.advance();
+          args.push(this.parseExpr());
+        }
       }
-      return { type: 'NavigateTo', screen, arg };
+      return { type: 'NavigateTo', screen, args };
     }
     return this.error(`Expected "to" or "back" after "navigate", got "${direction}"`);
   }

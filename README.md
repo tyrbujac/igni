@@ -48,9 +48,25 @@ Save `app.igni`, browser updates automatically. That's it.
 
 Under the hood, a hidden `.igni/` Flutter project is created automatically. You never touch it — just edit `.igni` files and save.
 
+## Project structure
+
+Igni files are much shorter than their Flutter equivalents — a screen is typically 10-40 lines, not 100-300. Flat file structure works well:
+
+- **Under 200 lines:** fine as a single file
+- **Over 200 lines:** consider splitting by screen or feature
+- **No folders needed** until 15+ files — auto-discovery means every screen and component is available everywhere with no imports
+
+```
+my-app/
+  app.igni           # entry point
+  settings.igni      # another screen (optional)
+  images/            # local images
+  audio/             # audio files
+```
+
 ## Status
 
-**Language spec:** [`spec/v0.6.6.md`](spec/v0.6.6.md) is the current canonical spec. Companion cheatsheet at [`spec/v0.6.6-cheatsheet.md`](spec/v0.6.6-cheatsheet.md). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+**Language spec:** [`spec/v0.6.7.md`](spec/v0.6.7.md) is the current canonical spec. Companion cheatsheet at [`spec/v0.6.7-cheatsheet.md`](spec/v0.6.7-cheatsheet.md). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
 **Transpiler:** Working. 27 example apps compile and run in the browser. Covers screens, components, wrapper components, layouts, conditionals, loops, functions, lambdas, navigation, shared state, async data fetching, two-way binding, list operations, boolean and comparison operators, list indexing, screen properties, local images/audio, and more.
 
@@ -61,15 +77,15 @@ Under the hood, a hidden `.igni/` Flutter project is created automatically. You 
 ```
 igni/
 ├── spec/                    # language spec (versioned snapshots)
-│   ├── v0.6.6.md            # current canonical spec
-│   ├── v0.6.6-cheatsheet.md # current canonical cheatsheet
+│   ├── v0.6.7.md            # current canonical spec
+│   ├── v0.6.7-cheatsheet.md # current canonical cheatsheet
 │   └── v0.2 → v0.6.5.md    # historical (never edited after shipping)
 ├── transpiler/              # TypeScript-to-Dart transpiler
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point
 │   └── examples/            # 27 .igni apps + .expected.dart references
 ├── tests/                   # cold-LLM test results
-│   └── v0.3.2 → v0.6.6/    # prompts + results per spec version
+│   └── v0.3.2 → v0.6.7/    # prompts + results per spec version
 ├── docs/                    # tutorial + project docs
 │   └── tutorial.md          # beginner tutorial (no programming experience needed)
 ├── assets/                  # logo and branding
