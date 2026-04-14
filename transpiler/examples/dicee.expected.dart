@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 void main() {
-  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DiceeScreen()));
+  runApp(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555))), home: DiceeScreen()));
 }
 
 class DiceeScreen extends StatefulWidget {

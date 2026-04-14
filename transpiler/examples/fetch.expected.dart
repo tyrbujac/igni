@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 void main() {
-  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: UserProfileScreen()));
+  runApp(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555))), home: UserProfileScreen()));
 }
 
 class UserProfileScreen extends StatefulWidget {

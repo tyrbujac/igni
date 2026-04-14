@@ -9,7 +9,7 @@ import {
   findProp, resolveIdentName, resolveDesignToken, resolveStyle,
   resolveAlign, resolveBackground, resolveColor, mapIconName,
   inferType, isStringExpr, substituteLambdaParam, isImageBackground,
-  generateIconLookupHelper,
+  generateIconLookupHelper, isDarkBackgroundExpr,
 } from './codegen-helpers.js';
 import { TranspileError } from './errors.js';
 
@@ -57,11 +57,27 @@ export class CodeGenerator {
     }
     code += '\n';
 
+    // Igni's brand colour applied app-wide via the MaterialApp's theme.
+    // `brand` (== colorScheme.primary) renders as this warm pink-red across
+    // every generated app — the language's visual identity.
+    //
+    // If any screen declares a dark background, the whole app uses a dark
+    // ColorScheme so `Theme.of(context).cardColor` and other derived tokens
+    // resolve to dark-theme variants. The MaterialApp theme is at the top of
+    // the widget tree, so inline `Theme.of(context)` calls inside screen
+    // State.build methods correctly see these values (a per-screen Theme
+    // wrap does not — inline children use the state's context, which is
+    // above the wrap).
+    const anyDarkScreen = program.screens.some(s =>
+      isDarkBackgroundExpr(findProp(s.properties, 'background')?.value)
+    );
+    const brightness = anyDarkScreen ? ', brightness: Brightness.dark' : '';
+    const igniTheme = `theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)${brightness}))`;
     if (this.hasShared) {
       code += this.genSharedState(program.shared) + '\n';
-      code += `void main() {\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, home: ${firstName}Screen()),\n  ));\n}\n`;
+      code += `void main() {\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, ${igniTheme}, home: ${firstName}Screen()),\n  ));\n}\n`;
     } else {
-      code += `void main() {\n  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: ${firstName}Screen()));\n}\n`;
+      code += `void main() {\n  runApp(MaterialApp(debugShowCheckedModeBanner: false, ${igniTheme}, home: ${firstName}Screen()));\n}\n`;
     }
 
     for (const comp of program.components) {
@@ -392,6 +408,10 @@ export class CodeGenerator {
     } else {
       scaffoldParts.push(`      body: SingleChildScrollView(\n        child: ${bodyWidget.trimStart()},\n      )`);
     }
+    // Dark theme (when any screen declares a dark background) is applied at
+    // the MaterialApp level in generate() — per-screen Theme wrapping would
+    // not work here because inline Theme.of(context) calls in this build
+    // method use the State's own context, which sits above any wrap we emit.
     stateClass += `    return Scaffold(\n${scaffoldParts.join(',\n')},\n    );\n`;
     stateClass += `  }\n}\n`;
 
@@ -687,7 +707,15 @@ export class CodeGenerator {
 
     const styleParts: string[] = [];
     if (colorProp) {
+      // When a button has an explicit background colour, force white
+      // foreground so the text contrasts. Material derives `onPrimary`
+      // appropriately for colorScheme.primary, but raw named colours like
+      // `brand`/`danger`/`red` have no paired `onX`. Default ElevatedButton
+      // foreground on a pink-ish button renders invisible-on-pink. White is
+      // the right answer for every vivid Igni colour (brand, danger, red,
+      // blue, orange, green, purple, teal, black).
       styleParts.push(`backgroundColor: ${resolveColor(colorProp.value)}`);
+      styleParts.push(`foregroundColor: Colors.white`);
     }
     styleParts.push(`shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))`);
 
@@ -1131,13 +1159,20 @@ export class CodeGenerator {
         1, 1
       );
     }
+    let code: string;
     if (renderableChildren.length === 1) {
       const childWidget = this.genUINode(renderableChildren[0], depth + 1).trimStart();
       namedArgs.push(`child: ${childWidget}`);
-      return `${ind}${node.name}(\n${ind}  ${namedArgs.join(`,\n${ind}  `)},\n${ind})`;
+      code = `${ind}${node.name}(\n${ind}  ${namedArgs.join(`,\n${ind}  `)},\n${ind})`;
+    } else {
+      code = `${ind}${node.name}(${namedArgs.join(', ')})`;
     }
 
-    return `${ind}${node.name}(${namedArgs.join(', ')})`;
+    // Events attached to the invocation (e.g. `GenderCard ... on tap: ...`)
+    // wrap the rendered component in a GestureDetector. Without this the
+    // event is silently dropped — a real bug caught by hands-on testing
+    // rather than diff or transpiler validation.
+    return this.wrapWithGestures(code, node.events, depth);
   }
 
   private genFunctionDef(func: FunctionDef): string {

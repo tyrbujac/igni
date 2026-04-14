@@ -74,6 +74,18 @@ export function isImageBackground(expr: Expr): boolean {
   return expr.type === 'StringLit';
 }
 
+// Color names that, when used as a screen's `background:`, should flip the
+// screen into a dark Material theme so that theme-derived tokens (cardColor,
+// default text colour, etc.) render correctly over a dark surface. Initially
+// just `black`; extend here when new dark-leaning named colours are added.
+const DARK_BACKGROUND_NAMES = new Set<string>(['black']);
+
+export function isDarkBackgroundExpr(expr: Expr | undefined): boolean {
+  if (!expr) return false;
+  if (expr.type !== 'Ident') return false;
+  return DARK_BACKGROUND_NAMES.has(expr.name);
+}
+
 export function resolveBackground(expr: Expr): string {
   if (expr.type === 'Ident') {
     if (expr.name === 'card') return 'Theme.of(context).cardColor';

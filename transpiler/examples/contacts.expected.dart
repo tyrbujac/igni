@@ -14,7 +14,7 @@ final shared = SharedState();
 void main() {
   runApp(ListenableBuilder(
     listenable: shared,
-    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, home: ContactListScreen()),
+    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555))), home: ContactListScreen()),
   ));
 }
 
@@ -122,7 +122,12 @@ class _ContactListScreenState extends State<ContactListScreen> {
               ),
             ] else ...[
               for (final contact in visible()) ...[
-                ContactRow(contact: contact),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => ContactDetailScreen(contact: contact)));
+                  },
+                  child: ContactRow(contact: contact),
+                ),
               ],
             ],
           ],

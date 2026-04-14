@@ -14,7 +14,7 @@ final shared = SharedState();
 void main() {
   runApp(ListenableBuilder(
     listenable: shared,
-    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, home: ProductListScreen()),
+    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555))), home: ProductListScreen()),
   ));
 }
 
@@ -59,7 +59,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   style: Theme.of(context).textTheme.headlineLarge!,
                 ),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                   onPressed: () {
                     Navigator.push(context, MaterialPageRoute(builder: (context) => CartScreen()));
                   },
@@ -174,7 +174,7 @@ class _CartScreenState extends State<CartScreen> {
                         ],
                       ),
                       ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                         onPressed: () {
                           remove_item(item);
                         },
