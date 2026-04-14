@@ -28,14 +28,25 @@ This is the key upgrade over spec-only testing. Before, "valid Igni" was a subje
 
 **Most LLM output transpiles zero-fix.** Across the current cold-test suite, the dominant pattern is now "first output compiles" rather than "manual repair required." The transpiler covers almost all of the current language surface used in tests — screens, components, wrapper components, layouts, conditionals, loops, functions, lambdas, navigation, shared state, fetch, mutations, reactive re-fetch, list operations, list indexing, images/audio, and more. The notable remaining spec-defined gaps are still `theme:` blocks and `paginate:` on `each`.
 
-## Latest result: v0.6.11 BMI methodology experiment
+## Latest result: v0.7.0 styling-tokens-as-values
 
-The BMI re-run against `v0.6.11` is the strongest methodology result in the repo so far:
+The v0.7.0 round is the strongest methodology result in the repo so far, and the first application of the narrower-hypothesis methodology announced at the end of v0.6.11:
+
+- **Feature landed 4/4 on all three axes.** Value reassignment, function-returns-colour, and component-takes-colour-argument each produced 4/4 unanimous adoption across Gemini 3 Flash, Gemini 3.1 Pro, GPT 5.3, and Claude Opus 4.6.
+- **Largest v0.x → v0.(x+1) convergence jump in project history.** BMI rerun against the identical v0.6.11 prompt: 0/4 → 4/4 on `status_color = green`. The single longest-running signal of the v0.6.x series closed in one version.
+- **Two-stream validation.** Cold-test data (what models produce) and qualitative-review data (what models critique) converged on the same gaps when both were run against the same version. The methodology going forward is one cold-test round plus one ship-review round per version, with priority ordering backed by compounded signal rather than either stream alone.
+- **Two new gap signals surfaced:** string case conversion (4/4 Alert Dashboard friction + 4/4 ship-review flags = 8/8 compounded — strongest evidence in project history, v0.7.1 candidate) and event handlers as component arguments (2/4 BMI invention + 3/4 ship-review flags = 5/8 — leading v0.8 design question).
+- **No regressions.** All v0.6.x patches held: `round()` 4/4, `shape: circle` 4/4, bottom-anchor pattern ~3/4. First v0.x → v0.(x+1) transition where the new feature landed and nothing prior slipped.
+
+The detailed write-ups live in `tests/v0.7.0/BMI_Calculator.md` and `tests/v0.7.0/Alert_Dashboard.md`.
+
+## Previous landmark result: v0.6.11 BMI methodology experiment
+
+The v0.6.11 BMI re-run closed the v0.6.x patch arc with three categorically different additions all landing:
 
 - **Named additions propagate almost perfectly.** `round(value, places)` went from `0/4` usage in `v0.6.8` to `4/4`. `shape: circle` on `button` landed `4/4` on first exposure.
 - **Documentation-only patches also move behaviour.** The bottom-anchored actions pattern (`fill: true` on content sections so the CTA sits at the bottom) went from `0/4` to roughly `3.5/4` with no new syntax.
-- **This matters for language design.** It validates the spec-budget principle: many gaps can be closed by documentation and worked examples instead of adding new keywords.
-- **One unresolved signal remains strongest for v0.7.** Colour/background token assignability still reappears across BMI rounds, even after other BMI gaps were closed.
+- **This validates the spec-budget principle.** Many gaps can be closed by documentation and worked examples instead of adding new keywords.
 
 The detailed write-up lives in `tests/v0.6.11/BMI_Calculator.md`.
 
@@ -106,6 +117,11 @@ The full suite has grown over time. Each spec version's subfolder contains the p
 20. **BMI Calculator (v0.6.8)** — same app after the `body` slot change and transpiler fixes. Closed the wrapper crash by construction and isolated the surviving signals more clearly.
 21. **BMI Calculator (v0.6.11)** — same prompt, same four models, after three non-breaking patches. **All three additions changed output.** This is the clearest evidence yet that Igni's spec can be improved by a mix of syntax changes and documentation-only patches.
 
+**v0.7.0 narrower-hypothesis round (styling-tokens-as-values, 4/4 across both prompts):**
+
+22. **BMI Calculator (v0.7.0)** — identical-to-v0.6.11 prompt. **4/4 spontaneous `status_color = green` adoption**, closing the single longest-running signal from the v0.6.x series. 4/4 on `bg = card` for gender-card selection backgrounds. No regressions on any prior v0.6.x addition. 2/4 independently invented syntax for first-class event handlers as component arguments — strongest unresolved structural signal for v0.8.
+23. **Alert Dashboard (v0.7.0)** — new prompt targeting the architecture-flow patterns the spec added examples for (function-returns-colour, component-takes-colour-argument). 4/4 on both axes. 4/4 hit the missing `upper()` builtin in four distinct ways — strongest compounded signal in project history (8/8 with ship review), v0.7.1 candidate.
+
 **Don't run all of them in one sitting.** One app per session, write up the results before moving to the next.
 
 ## Cheatsheet-only methodology
@@ -132,7 +148,8 @@ tests/
 ├── v0.6.6/                    # Destini (cheatsheet-only, 3 architectures)
 ├── v0.6.7/                    # BMI exploratory baseline
 ├── v0.6.8/                    # BMI delta after body-slot change
-└── v0.6.11/                   # BMI methodology experiment
+├── v0.6.11/                   # BMI methodology experiment
+└── v0.7.0/                    # BMI rerun (4/4) + Alert Dashboard (4/4) — styling-tokens feature landed
 ```
 
 Each spec version gets its own subfolder containing both the prompts that were tested against it AND the result files. Test result filenames inside drop both the version (the folder carries it) and the `Cold_Test_` prefix.

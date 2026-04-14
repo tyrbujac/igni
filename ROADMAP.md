@@ -27,7 +27,7 @@ The v0.6.6 rating assessment identified tooling (4/10) and debugging (3/10) as t
 2. **Browser-test remaining features** — `on-change` and `fetch-mutation` now diff-test cleanly, but browser passes would confirm runtime behaviour rather than just generated Dart shape.
 3. **`igni new`** — project scaffolding. `igni run` works; it now needs the matching setup command.
 
-**Methodology state:** the v0.6.11 BMI re-run closed the v0.6.x patch arc. All three non-breaking additions changed model behaviour, including the documentation-only bottom-anchor pattern. That lowers the pressure to add syntax reactively; docs patches are now a validated tool, not a fallback.
+**Methodology state:** the v0.6.11 BMI re-run closed the v0.6.x patch arc. All three non-breaking additions changed model behaviour, including the documentation-only bottom-anchor pattern. That lowers the pressure to add syntax reactively; docs patches are now a validated tool, not a fallback. The v0.7.0 round added the second validation: cold-test data (what models produce) and qualitative ship-review data (what models critique) converge on the same gaps when both are run against the same version. Future versions use one narrower cold-test round plus one ship-review round, with priority ordering backed by compounded signal across both streams.
 
 ### Stream 3 — Spec: v0.7.0 locked, v0.8 next
 
@@ -37,14 +37,24 @@ Language-level improvements identified by cold tests and the rating assessment. 
 
 - **Colour/background token assignability** — **SHIPPED in v0.7.0.** BMI cold test: 3/4 models independently invented `bg = card` / `status_color = green` and used them in `background: bg` / `color: status_color` to style conditionally. The language now matches that natural pattern. `card` remains background-only at the property boundary.
 - ~~**`body` slot inside horizontal layouts + button width**~~ **FIXED 2026-04-14 in v0.6.8.** `body` now renders exactly one widget. Callers wrap multi-child content in explicit `layout vertical:` / `layout horizontal:`. Fixes the BMI crash by construction — buttons wrapped in an explicit horizontal layout become direct Row children with intrinsic widths instead of `SizedBox(width: infinity)` inside an unconstrained Column.
-- **Object spread/update syntax** — **defer to v0.8 unless a much smaller form emerges.** #1 human writability pain point. `replace(items, target, {text: target.text, done: not target.done})` requires enumerating every field. Something like `{target with done: not target.done}` would eliminate the boilerplate, but this touches object syntax directly and is too large to bundle into the same release as colour assignability without blowing the spec budget.
+- **Object spread/update syntax** — **v0.8 backlog, no longer first in line.** Biggest remaining human writability pain point. `replace(items, target, {text: target.text, done: not target.done})` requires enumerating every field. Something like `{target with done: not target.done}` would eliminate the boilerplate, but this touches object syntax directly and is larger than the two items that overtook it in v0.7.0 testing.
+- **Event handlers as component arguments** — **leading v0.8 design question.** 2/4 BMI invention in v0.7.0 (Gemini 3 Flash invented `on_tap_handler` as a named parameter; GPT 5.3 invented `on decrease:` / `body.decrease()`). 3/4 ship-review flags (Gemini 3.1 Pro, GPT 5.3, Opus 4.6) = 5/8 compounded. The spec-legal workaround is string-key dispatch — verbose enough that half the frontier models reach past the spec. Structurally a question about the component reusability model: can a reusable input component drive parent state without knowing the parent's function names? Needs a full design note and candidate cold test before landing syntax.
 - **Derived state clarity** — `current = stories[index]` appeared in all 8 Destini model outputs. 7/8 trust reactivity to update it; 1/8 defensively reassigns. One-line spec clarification: "Assignments at screen body level re-evaluate on every render."
 - **Variable-placement rules** — 1/4 Contacts models put filter/sort logic inside a layout block. Spec says "Variables, layouts, and functions all live inside the screen body" but the boundary isn't explicit. One sentence: "Variable assignments go at the screen body level, not inside layout blocks."
 - **Identity semantics** — reference identity + immutable data creates friction. **4/4 models flagged it across two test rounds.** Biggest open design question. Need to decide: `key:` field on objects, structural equality, or something else.
 - **Error inspection** — `is error` tells you something failed but not what. 3/4 models flagged it. Need at least `user.error.message` and 404 vs 500 distinction.
 - **Dictionary/map type** — Settings cold test showed 4/4 models using if/else chains for country→cities mapping. `cities_for[country]` with `{"UK": [...], "France": [...]}` syntax would be cleaner. Comes up in settings, localisation, routing, form options. Strong signal.
 
-**How to approach Stream 3 now:** use Tyr's own writing friction as the primary driver, and use cold tests to validate a specific candidate once the shape is clear. The BMI sequence was the end of the broad "patch, rerun, compare everything" phase. The next language question after v0.7.0 should be object update ergonomics or strings, but not both at once.
+**How to approach Stream 3 now:** v0.7.0 cold test + ship review produced clean priority signal. String case (`upper` / `lower`) is the v0.7.1 candidate with the strongest compounded evidence in the project's history (4/4 Alert Dashboard friction + 4/4 ship-review flags = 8/8). Event handlers as component arguments are the leading v0.8 design question (2/4 BMI invention + 3/4 ship review = 5/8), structurally larger than object update ergonomics because it concerns the component reusability model. Object update ergonomics remains a known human-writability friction but is now third in line, not first.
+
+### Stream 3a — v0.7.1 candidate: string case builtins
+
+Shipping target for v0.7.1, not v0.8. Evidence: 4/4 Alert Dashboard friction + 4/4 ship review = 8/8 compounded, strongest evidence in project history. Every frontier model hit the missing `upper()` on Alert Dashboard (Gemini 3.1 Pro wrote a mapper function, Opus 4.6 honest-flagged, Gemini 3 Flash ignored, GPT 5.3 invented `upper()` with a broken placeholder). Two candidate resolutions:
+
+- **(a) Add `upper(string)` / `lower(string)` as builtins** — spec-budget cost: two names, one Reference paragraph.
+- **(b) Doc note: "store strings in their display form; Igni has no case conversion"** — zero syntax cost, forces data to match UI, matches the "one way" principle.
+
+Design decision belongs in a future numbered doc in `docs/private/`. The 8/8 signal has already removed the "is this a real gap" question — only the resolution shape remains open.
 
 ---
 
@@ -66,7 +76,7 @@ Unfiltered. No timeline. Some of these might be bad. Signal strength noted where
 
 - `theme:` block — spec-defined but transpiler not implemented. Low priority (default theme works)
 - `paginate:` on `each` — spec-defined but transpiler not implemented. Low priority (no cold test has exercised it)
-- `lower()` / `upper()` / `trim()` string builtins — Claude flagged string manipulation gaps
+- `trim()` string builtin — Claude flagged in v0.6.2 review; `upper`/`lower` now promoted to Stream 3a as a v0.7.1 candidate
 - `unique(list, item => key)` for deduplication
 - Date/time primitives — Claude flagged in v0.6.2 review
 - Form validation pattern (multi-field, cross-field)
@@ -75,7 +85,7 @@ Unfiltered. No timeline. Some of these might be bad. Signal strength noted where
 - Shared state namespacing or grouping — 4/4 models flagged flat namespace scaling
 - Animations and transitions
 - `debounce:` modifier on `input bind:` — 4/4 models flagged the async footgun
-- Derived state / memoisation — 3/4 models flagged recompute-on-every-render concern (note: Flutter handles render efficiency, but explicit computed values might still be useful)
+- Derived state / memoisation — 3/4 v0.7.0 ship-review flags (Gemini 3.1 Pro, GPT 5.3, Gemini 3 Flash) on the reactive-recompute-at-scale concern. No cold-test evidence yet because no existing test app exercises reactivity over a large enough dataset. **Action:** design a targeted cold-test app (moderately large filtered list with a bound input field) to verify whether the predicted O(N)-per-keystroke is a real problem or theoretical. Flutter's render engine may already absorb it for typical sizes; measure before adding syntax
 - Package/module system for sharing components across projects
 - Scroll behaviour (scroll-to-bottom on chat append)
 - Deep links, query params, modal stacks, back-stack management
