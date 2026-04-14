@@ -4,6 +4,13 @@ screen Demo:
   selected = "Option A"
   options = ["Option A", "Option B", "Option C"]
   favorites = ["Alice", "Charlie"]
+  chosen = true
+  bg = card
+  status_color = green
+
+  if chosen:
+    bg = brand
+    status_color = white
 
   layout vertical, gap: medium, padding: large:
     label "Primitives Demo", style: heading
@@ -27,3 +34,8 @@ screen Demo:
       label "Alice is a favorite"
     if "Bob" is not in favorites:
       label "Bob is not a favorite"
+
+    divider
+
+    layout vertical, background: bg, rounded: medium, padding: medium:
+      label "Styled with variables", color: status_color

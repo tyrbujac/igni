@@ -10,7 +10,7 @@ Where Igni is going. Near term is actively planned; ideas are unstructured thoug
 
 All major v0.6.6 spec features now have transpiler support. 27 diff tests, 0 failures. Remaining low-priority items (`theme:` block, `paginate:` on `each`) moved to Ideas.
 
-### Stream 2 — Tooling: close the human experience gap (START HERE)
+### Stream 2 — Tooling: close the human experience gap
 
 The v0.6.6 rating assessment identified tooling (4/10) and debugging (3/10) as the biggest drags on the human experience. These don't require spec changes and don't risk LLM accuracy regressions.
 
@@ -21,32 +21,30 @@ The v0.6.6 rating assessment identified tooling (4/10) and debugging (3/10) as t
 3. ~~**`igni run` CLI cleanup**~~ — Igni-branded messages, build animation with timing, debug banner removed, tab title + favicon set to Igni.
 4. ~~**Browser-test row layout fix**~~ — `fetch-reactive` (input + button in horizontal layout) confirmed working in browser.
 
-**Next session priorities:**
+**Current priorities:**
 
-1. **Fix BMI cold-test transpiler bugs** — surfaced by Opus's BMI output (see `tests/v0.6.7/BMI_Calculator.md`):
-   - ~~**Critical:** `if/else` with sibling layouts at component body root emits invalid Dart~~ **FIXED 2026-04-14** — added `genComponentBodyReturn`/`genRootConditionalReturn`/`genBranchReturn` helpers. Spec-correct conditional styling now works.
-   - ~~**High:** icon name through component parameter — codegen emits `Icon(icon_name, ...)` where `icon_name` is a String, but Flutter's `Icon()` wants `IconData`.~~ **FIXED 2026-04-14** — added `_iconFromName` runtime helper emitted on demand. Extended `ICON_MAP` with `male`, `female`, `minus`, `remove`, `add`. Updated `dashboard.expected.dart` (previous output had a latent runtime bug).
-   - ~~**High:** multi-param navigation (`navigate to Screen a, b, c`) — parser and AST only support one arg.~~ **FIXED 2026-04-14** — changed `NavigateTo.arg: Expr | null` to `args: Expr[]` in AST. Parser reads comma-separated args. Codegen generates all as named constructor arguments. Extracted `genNavigateCtorArgs` helper.
-   - ~~**Bonus:** binary expression parens were dropped~~ **FIXED 2026-04-14** — discovered while testing Bug 2. `weight / (h * h)` was emitting `weight / h * h`, silently corrupting arithmetic. Added precedence-aware parenthesisation in `exprToDart`.
-   - ~~**Medium:** wrapper component with 2+ positional args + body colon — parser sees `identifier:` as named-arg start.~~ **FIXED 2026-04-14** — added one-token lookahead in `parseComponentInvocation`: `identifier : newline` is now treated as positional arg + body-opening colon. `identifier : value` remains a named arg.
-2. **Browser-test remaining features** — `on-change`, `fetch-mutation` examples not yet browser-tested. Diff tests confirm Dart compiles correctly but don't prove it runs correctly.
-3. **Better transpiler error messages** — map Dart errors back to Igni line numbers. Currently errors reference generated Dart code the user didn't write. Source maps or line-number tracking in codegen.
-4. **`igni new`** — project scaffolding. `igni run` works, needs the matching setup command.
+1. **Better transpiler error messages** — map Dart errors back to Igni line numbers. Currently errors reference generated Dart code the user didn't write. Source maps or line-number tracking in codegen.
+2. **Browser-test remaining features** — `on-change` and `fetch-mutation` now diff-test cleanly, but browser passes would confirm runtime behaviour rather than just generated Dart shape.
+3. **`igni new`** — project scaffolding. `igni run` works; it now needs the matching setup command.
 
-**Optional:** end-to-end cold test — now that the transpiler covers `on change:` and fetch mutations, a full pipeline test (spec → LLM → transpile → run in browser) is possible for the first time with these features.
+**Methodology state:** the v0.6.11 BMI re-run closed the v0.6.x patch arc. All three non-breaking additions changed model behaviour, including the documentation-only bottom-anchor pattern. That lowers the pressure to add syntax reactively; docs patches are now a validated tool, not a fallback.
 
-### Stream 3 — Spec: v0.7 design exploration
+### Stream 3 — Spec: v0.7.0 locked, v0.8 next
 
-Language-level improvements identified by cold tests and the rating assessment. These require spec changes and should be cold-tested before committing.
+Language-level improvements identified by cold tests and the rating assessment. These require spec changes and should be explored one target at a time, then cold-tested before committing.
 
-- **Colour/background token assignability** — **TOP PRIORITY.** BMI cold test: 3/4 models independently invented `bg = card` / `status_color = green` and used them in `background: bg` / `color: status_color` to style conditionally. Pattern doesn't work — colour names are tokens, not values. Options: (a) make colour tokens first-class values that can be stored in variables (what models expect), (b) document the `if`/`else` duplicate-layout workaround as canonical, (c) introduce an expression form for property values (`color: if bmi < 18.5 then danger else green`). Strongest convergent signal of any cold test on a styling issue. Blocks any app with conditional styling (status pills, form validation, selection states).
+**Locked for v0.7.0:** ship exactly one language feature — colour/background token assignability. Strings stay `+`-only in this release. Object update ergonomics is assessed as too large for the same version and should be treated as a likely `v0.8` candidate unless a much smaller shape appears.
+
+- **Colour/background token assignability** — **SHIPPED in v0.7.0.** BMI cold test: 3/4 models independently invented `bg = card` / `status_color = green` and used them in `background: bg` / `color: status_color` to style conditionally. The language now matches that natural pattern. `card` remains background-only at the property boundary.
 - ~~**`body` slot inside horizontal layouts + button width**~~ **FIXED 2026-04-14 in v0.6.8.** `body` now renders exactly one widget. Callers wrap multi-child content in explicit `layout vertical:` / `layout horizontal:`. Fixes the BMI crash by construction — buttons wrapped in an explicit horizontal layout become direct Row children with intrinsic widths instead of `SizedBox(width: infinity)` inside an unconstrained Column.
-- **Object spread/update syntax** — #1 human writability pain point. `replace(items, target, {text: target.text, done: not target.done})` requires enumerating every field. Something like `{target with done: not target.done}` would eliminate the boilerplate. High impact on both writing and reading code. Needs careful design to not add LLM confusion.
+- **Object spread/update syntax** — **defer to v0.8 unless a much smaller form emerges.** #1 human writability pain point. `replace(items, target, {text: target.text, done: not target.done})` requires enumerating every field. Something like `{target with done: not target.done}` would eliminate the boilerplate, but this touches object syntax directly and is too large to bundle into the same release as colour assignability without blowing the spec budget.
 - **Derived state clarity** — `current = stories[index]` appeared in all 8 Destini model outputs. 7/8 trust reactivity to update it; 1/8 defensively reassigns. One-line spec clarification: "Assignments at screen body level re-evaluate on every render."
 - **Variable-placement rules** — 1/4 Contacts models put filter/sort logic inside a layout block. Spec says "Variables, layouts, and functions all live inside the screen body" but the boundary isn't explicit. One sentence: "Variable assignments go at the screen body level, not inside layout blocks."
 - **Identity semantics** — reference identity + immutable data creates friction. **4/4 models flagged it across two test rounds.** Biggest open design question. Need to decide: `key:` field on objects, structural equality, or something else.
 - **Error inspection** — `is error` tells you something failed but not what. 3/4 models flagged it. Need at least `user.error.message` and 404 vs 500 distinction.
 - **Dictionary/map type** — Settings cold test showed 4/4 models using if/else chains for country→cities mapping. `cities_for[country]` with `{"UK": [...], "France": [...]}` syntax would be cleaner. Comes up in settings, localisation, routing, form options. Strong signal.
+
+**How to approach Stream 3 now:** use Tyr's own writing friction as the primary driver, and use cold tests to validate a specific candidate once the shape is clear. The BMI sequence was the end of the broad "patch, rerun, compare everything" phase. The next language question after v0.7.0 should be object update ergonomics or strings, but not both at once.
 
 ---
 
@@ -82,7 +80,7 @@ Unfiltered. No timeline. Some of these might be bad. Signal strength noted where
 - Scroll behaviour (scroll-to-bottom on chat append)
 - Deep links, query params, modal stacks, back-stack management
 - ~~Map/dictionary type~~ — moved to Stream 3 as v0.7 candidate
-- String interpolation — 2/4 models flagged `+` concatenation as verbose. Rating assessment flagged as medium-high impact for human writability
+- String interpolation — 2/4 models flagged `+` concatenation as verbose. Rating assessment flagged it as medium-high impact for human writability. Explicitly deferred from `v0.7.0`; if revisited, the next step is a `{}`-only design note with exact syntax and error behavior, then a focused cold test.
 - ~~`button background:`~~ — resolved by full-width rounded buttons (v0.6.6)
 - ~~Background image on layouts~~ — **resolved.** Spec and transpiler both done.
 - ~~`image fill: true`~~ — **resolved.** Background image feature on screens/layouts eliminated the need.

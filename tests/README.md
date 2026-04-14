@@ -9,7 +9,7 @@ The point of these tests is **not** to demonstrate the spec works on cherry-pick
 For each combination of (app × model):
 
 1. **Open a fresh conversation** in the target LLM (Claude.ai, Gemini, ChatGPT). Actually fresh — new thread, no system prompt, no prior messages, no custom instructions enabled. Contamination from earlier context kills the test.
-2. **Paste the full current spec verbatim.** Currently `spec/v0.6.5.md` (or the `spec/v0.6.6-cheatsheet.md` for cheatsheet-only rounds). No editing. No commentary. No "here's a language I designed."
+2. **Paste the full current spec verbatim.** Currently `spec/v0.7.0.md` (or the current cheatsheet when running a cheatsheet-only round). No editing. No commentary. No "here's a language I designed."
 3. **In the same message**, paste the prompt verbatim from the matching `tests/v<spec_version>/prompts.md` (e.g. `tests/v0.5/prompts.md`). **If the model asks follow-up questions, don't answer them** — that refusal-to-commit is itself a finding.
 4. **Capture the entire response** (code plus any narration) into the matching test result file: `tests/v<spec_version>/<App>.md` (e.g. `tests/v0.5/Shopping.md`) under the appropriate model's section.
 5. **Note metadata:** date, model version, whether the output came in one shot or got split across messages.
@@ -26,7 +26,18 @@ Now that the transpiler exists, LLM output can be objectively validated:
 
 This is the key upgrade over spec-only testing. Before, "valid Igni" was a subjective judgment. Now it's an objective test — the code either compiles and runs or it doesn't. Transpiler errors also directly prioritise what to build next: if 2/3 models use a feature the transpiler doesn't handle, that feature moves to the top of the backlog.
 
-**Most LLM output transpiles zero-fix.** Across four Angela Yu apps and 19 model outputs, every one transpiles without modification (15/15 full-spec, 4/4 cheatsheet-only). The transpiler covers the majority of the v0.6.5 spec — screens, components, wrapper components, layouts, conditionals, loops, functions, lambdas, navigation, shared state, fetch, list operations, list indexing, and more. Remaining transpiler gaps: `on change:`, `fetch` mutations, reactive re-fetch, `theme:` blocks, `paginate:`, and comment passthrough.
+**Most LLM output transpiles zero-fix.** Across the current cold-test suite, the dominant pattern is now "first output compiles" rather than "manual repair required." The transpiler covers almost all of the current language surface used in tests — screens, components, wrapper components, layouts, conditionals, loops, functions, lambdas, navigation, shared state, fetch, mutations, reactive re-fetch, list operations, list indexing, images/audio, and more. The notable remaining spec-defined gaps are still `theme:` blocks and `paginate:` on `each`.
+
+## Latest result: v0.6.11 BMI methodology experiment
+
+The BMI re-run against `v0.6.11` is the strongest methodology result in the repo so far:
+
+- **Named additions propagate almost perfectly.** `round(value, places)` went from `0/4` usage in `v0.6.8` to `4/4`. `shape: circle` on `button` landed `4/4` on first exposure.
+- **Documentation-only patches also move behaviour.** The bottom-anchored actions pattern (`fill: true` on content sections so the CTA sits at the bottom) went from `0/4` to roughly `3.5/4` with no new syntax.
+- **This matters for language design.** It validates the spec-budget principle: many gaps can be closed by documentation and worked examples instead of adding new keywords.
+- **One unresolved signal remains strongest for v0.7.** Colour/background token assignability still reappears across BMI rounds, even after other BMI gaps were closed.
+
+The detailed write-up lives in `tests/v0.6.11/BMI_Calculator.md`.
 
 ## Grading rubric
 
@@ -89,13 +100,19 @@ The full suite has grown over time. Each spec version's subfolder contains the p
 
 18. **Destini** — choose-your-own-adventure story game. v0.6.6-cheatsheet.md only. **3 distinct architectures** — 3/4 data-driven, 1 hardcoded if/else. Surfaced background image gap (4/4 models). Cheatsheet-only continues to work.
 
+**v0.6.7-v0.6.11 BMI sequence (methodology experiment):**
+
+19. **BMI Calculator (v0.6.7)** — exploratory baseline. Surfaced multiple styling and layout gaps plus several transpiler bugs.
+20. **BMI Calculator (v0.6.8)** — same app after the `body` slot change and transpiler fixes. Closed the wrapper crash by construction and isolated the surviving signals more clearly.
+21. **BMI Calculator (v0.6.11)** — same prompt, same four models, after three non-breaking patches. **All three additions changed output.** This is the clearest evidence yet that Igni's spec can be improved by a mix of syntax changes and documentation-only patches.
+
 **Don't run all of them in one sitting.** One app per session, write up the results before moving to the next.
 
 ## Cheatsheet-only methodology
 
 Starting with v0.6.5, tests can be run against the cheatsheet (~300 lines) instead of the full spec (~1100 lines). The v0.6.5 cheatsheet-only Quizzler test showed that **the 300-line cheatsheet produces structurally identical outputs to the 1100-line full spec** — approximately 70% of the full spec is explanatory context that aids human comprehension but isn't required for LLM code generation.
 
-The cheatsheet is now the primary document for LLM consumption. Cold tests should run against both formats when validating a new spec version. The v0.6.6 round (Destini) was cheatsheet-only.
+The cheatsheet is now the primary document for LLM consumption. Cold tests should run against both formats when validating a new spec version. After the v0.6.11 BMI methodology experiment, the project has enough evidence that future cold tests can be narrower and hypothesis-driven rather than broad re-runs of the whole app suite.
 
 ## Folder layout
 
@@ -112,7 +129,10 @@ tests/
 ├── v0.6.3/                    # Contacts re-run (3/3 zero-fix after type hints)
 ├── v0.6.4/                    # Dicee (4/4), Xylophone (4/4)
 ├── v0.6.5/                    # Quizzler (4/4 post-indexing), Quizzler-Cheatsheet (3/4)
-└── v0.6.6/                    # Destini (cheatsheet-only, 3 architectures)
+├── v0.6.6/                    # Destini (cheatsheet-only, 3 architectures)
+├── v0.6.7/                    # BMI exploratory baseline
+├── v0.6.8/                    # BMI delta after body-slot change
+└── v0.6.11/                   # BMI methodology experiment
 ```
 
 Each spec version gets its own subfolder containing both the prompts that were tested against it AND the result files. Test result filenames inside drop both the version (the folder carries it) and the `Cold_Test_` prefix.
@@ -122,6 +142,6 @@ Each spec version gets its own subfolder containing both the prompts that were t
 - **Use the chat UI, not the API.** Chat UI is what real developers use; it's the truest test. Move to API only if you need to scale beyond ~50 runs.
 - **Don't prompt-engineer mid-test.** When a model produces wrong output, the temptation is to add "make sure to use `shared.cart`." Resist it. Add the issue to the gap list and let the spec do the work.
 - **Capture line counts.** Spec line count vs LLM output line count is part of the pitch and worth tracking per app.
-- **Each spec version gets its own subfolder.** When you ship a new version, create the next folder with its own `prompts.md` (a copy of the prompts you actually want to run against it) and run the suite again. The diff between two version folders is the proof that the new version fixed the right things.
-- **The transpiler is real.** After cold-testing, try running LLM output through `npx tsx src/cli.ts <file>.igni` in the `transpiler/` directory. The transpiler handles a subset of the spec — errors tell you what to build next. See "Step 2: Transpiler validation" above.
+- **Each spec version gets its own subfolder.** When you ship a new version, create the next folder with its own `prompts.md` (a copy of the prompts you actually want to run against it) and run the focused tests you actually need. The diff between two version folders is the proof that the new version fixed the right things.
+- **The transpiler is real.** After cold-testing, try running LLM output through `npx tsx src/cli.ts <file>.igni` in the `transpiler/` directory. The transpiler now covers almost all of the language surface exercised by the suite; when it fails, the error tells you exactly what to build next. See "Step 2: Transpiler validation" above.
 - **Record both grades.** Test result files should now include the spec-level grading (inventions, misuse, valid) AND the transpiler result (transpiles, runs, errors). Two-stage validation is the new workflow.

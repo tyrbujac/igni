@@ -9,7 +9,8 @@ import {
   findProp, resolveIdentName, resolveDesignToken, resolveStyle,
   resolveAlign, resolveBackground, resolveColor, mapIconName,
   inferType, isStringExpr, substituteLambdaParam, isImageBackground,
-  generateIconLookupHelper, isDarkBackgroundExpr,
+  generateIconLookupHelper, isDarkBackgroundExpr, generateStyleValueResolvers,
+  isColorTokenName, isStyleValueName, isStyleValueExpr,
 } from './codegen-helpers.js';
 import { TranspileError } from './errors.js';
 
@@ -28,6 +29,7 @@ export class CodeGenerator {
   private hasShared = false;
   private hasFetch = false;
   private needsIconLookup = false;
+  private needsStyleResolvers = false;
 
   generate(program: Program): string {
     this.allScreens = program.screens;
@@ -68,9 +70,7 @@ export class CodeGenerator {
     // State.build methods correctly see these values (a per-screen Theme
     // wrap does not — inline children use the state's context, which is
     // above the wrap).
-    const anyDarkScreen = program.screens.some(s =>
-      isDarkBackgroundExpr(findProp(s.properties, 'background')?.value)
-    );
+    const anyDarkScreen = program.screens.some(s => this.screenHasDarkBackground(s));
     const brightness = anyDarkScreen ? ', brightness: Brightness.dark' : '';
     const igniTheme = `theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)${brightness}))`;
     if (this.hasShared) {
@@ -90,6 +90,9 @@ export class CodeGenerator {
 
     if (this.needsIconLookup) {
       code += '\n' + generateIconLookupHelper() + '\n';
+    }
+    if (this.needsStyleResolvers) {
+      code += '\n' + generateStyleValueResolvers() + '\n';
     }
 
     return code;
@@ -156,6 +159,55 @@ export class CodeGenerator {
     return code;
   }
 
+  private isUserDeclaredName(name: string): boolean {
+    return this.functionParams.includes(name)
+      || this.screenParams.includes(name)
+      || this.stateVars.includes(name)
+      || this.declaredLocals.has(name);
+  }
+
+  private isBuiltinStyleValue(expr: Expr): boolean {
+    return expr.type === 'Ident' && isStyleValueName(expr.name) && !this.isUserDeclaredName(expr.name);
+  }
+
+  private genColorValue(expr: Expr): string {
+    if (expr.type === 'Ident' && expr.name === 'card' && !this.isUserDeclaredName(expr.name)) {
+      throw new TranspileError('`card` is background-only. Use it with `background:`, not `color:`.', 1, 1);
+    }
+    if (this.isBuiltinStyleValue(expr) && expr.type === 'Ident' && isColorTokenName(expr.name)) {
+      return resolveColor(expr);
+    }
+    this.needsStyleResolvers = true;
+    return `_igniColorValue(context, ${this.exprToDart(expr)})`;
+  }
+
+  private genBackgroundValue(expr: Expr): string {
+    if (this.isBuiltinStyleValue(expr)) {
+      return resolveBackground(expr);
+    }
+    this.needsStyleResolvers = true;
+    return `_igniBackgroundValue(context, ${this.exprToDart(expr)})`;
+  }
+
+  private screenHasDarkBackground(screen: Screen): boolean {
+    const screenBg = findProp(screen.properties, 'background')?.value;
+    if (!screenBg) return false;
+    const vars = new Map<string, Expr>();
+    for (const item of screen.body) {
+      if (item.type === 'VariableDecl') vars.set(item.name, item.value);
+    }
+    const visit = (expr: Expr, seen = new Set<string>()): boolean => {
+      if (isDarkBackgroundExpr(expr)) return true;
+      if (expr.type !== 'Ident') return false;
+      if (seen.has(expr.name)) return false;
+      const value = vars.get(expr.name);
+      if (!value) return false;
+      seen.add(expr.name);
+      return visit(value, seen);
+    };
+    return visit(screenBg);
+  }
+
   private genScreen(screen: Screen): string {
     this.stateVars = [];
     this.boundInputVars = [];
@@ -185,7 +237,11 @@ export class CodeGenerator {
       const allDecls = screen.body.filter(i => i.type === 'VariableDecl') as VariableDecl[];
       const isSimpleLiteral = (v: VariableDecl) => {
         const t = v.value.type;
-        return t === 'StringLit' || t === 'NumberLit' || (t === 'Ident' && (v.value as any).name === 'true' || (v.value as any).name === 'false') || t === 'ListLit';
+        return t === 'StringLit'
+          || t === 'NumberLit'
+          || (t === 'Ident' && ((v.value as any).name === 'true' || (v.value as any).name === 'false'))
+          || isStyleValueExpr(v.value)
+          || t === 'ListLit';
       };
       const scanned = new Set<string>();
       let changed = true;
@@ -362,7 +418,7 @@ export class CodeGenerator {
     const titleProp = findProp(screen.properties, 'title');
     const screenBgProp = findProp(screen.properties, 'background');
     const hasImageBg = screenBgProp ? isImageBackground(screenBgProp.value) : false;
-    const scaffoldBg = (screenBgProp && !hasImageBg) ? resolveBackground(screenBgProp.value) : '';
+    const scaffoldBg = (screenBgProp && !hasImageBg) ? this.genBackgroundValue(screenBgProp.value) : '';
 
     stateClass += `  @override\n  Widget build(BuildContext context) {\n`;
     if (buildLocals.length > 0) {
@@ -584,7 +640,7 @@ export class CodeGenerator {
         if (bgProp && isImageBackground(bgProp.value)) {
           decParts.push(`image: DecorationImage(image: AssetImage('assets/' + ${this.exprToDart(bgProp.value)}), fit: BoxFit.cover)`);
         } else if (bgProp) {
-          decParts.push(`color: ${resolveBackground(bgProp.value)}`);
+          decParts.push(`color: ${this.genBackgroundValue(bgProp.value)}`);
         }
         if (radius) decParts.push(`borderRadius: BorderRadius.circular(${radius})`);
         dec += decParts.join(', ') + ')';
@@ -649,7 +705,7 @@ export class CodeGenerator {
       if (bgProp && isImageBackground(bgProp.value)) {
         decParts.push(`image: DecorationImage(image: AssetImage('assets/' + ${this.exprToDart(bgProp.value)}), fit: BoxFit.cover)`);
       } else if (bgProp) {
-        decParts.push(`color: ${resolveBackground(bgProp.value)}`);
+        decParts.push(`color: ${this.genBackgroundValue(bgProp.value)}`);
       }
       if (radius) decParts.push(`borderRadius: BorderRadius.circular(${radius})`);
       dec += decParts.join(', ') + ')';
@@ -682,7 +738,7 @@ export class CodeGenerator {
     }
     if (styleProp || colorProp) {
       const styleBase = styleProp ? resolveStyle(styleProp.value) : null;
-      const colorStr = colorProp ? resolveColor(colorProp.value) : null;
+      const colorStr = colorProp ? this.genColorValue(colorProp.value) : null;
       if (styleBase && colorStr) {
         code += `${ind}  style: ${styleBase}.copyWith(color: ${colorStr}),\n`;
       } else if (styleBase) {
@@ -716,7 +772,7 @@ export class CodeGenerator {
       // foreground on a pink-ish button renders invisible-on-pink. White is
       // the right answer for every vivid Igni colour (brand, danger, red,
       // blue, orange, green, purple, teal, black).
-      styleParts.push(`backgroundColor: ${resolveColor(colorProp.value)}`);
+      styleParts.push(`backgroundColor: ${this.genColorValue(colorProp.value)}`);
       styleParts.push(`foregroundColor: Colors.white`);
     }
     if (isCircle) {
@@ -838,7 +894,7 @@ export class CodeGenerator {
     }
     const parts: string[] = [`${ind}Icon(\n${ind}  ${iconName}`];
     if (sizeProp) parts.push(`size: ${resolveDesignToken(sizeProp.value)}`);
-    if (colorProp) parts.push(`color: ${resolveColor(colorProp.value)}`);
+    if (colorProp) parts.push(`color: ${this.genColorValue(colorProp.value)}`);
 
     let code = parts[0];
     for (let i = 1; i < parts.length; i++) {
@@ -994,7 +1050,7 @@ export class CodeGenerator {
     const ind = '  '.repeat(depth);
     const textStr = this.exprToDisplayStr(node.text);
     const colorProp = findProp(node.properties, 'color');
-    const colorStr = colorProp ? resolveColor(colorProp.value) : null;
+    const colorStr = colorProp ? this.genColorValue(colorProp.value) : null;
 
     let code = `${ind}Chip(\n`;
     code += `${ind}  label: Text(${textStr}),\n`;
@@ -1415,8 +1471,11 @@ export class CodeGenerator {
       case 'NumberLit': return `${expr.value}`;
       case 'StringLit': return `'${expr.value.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\$/g, '\\$')}'`;
       case 'Ident':
+        if (this.declaredLocals.has(expr.name)) return expr.name;
         if (this.functionParams.includes(expr.name)) return expr.name;
+        if (this.stateVars.includes(expr.name)) return expr.name;
         if (this.screenParams.includes(expr.name)) return this.isComponent ? expr.name : `widget.${expr.name}`;
+        if (isStyleValueName(expr.name)) return `'${expr.name}'`;
         return expr.name;
       case 'BinaryExpr': {
         // Preserve grouping through Dart's left-to-right evaluation. Without

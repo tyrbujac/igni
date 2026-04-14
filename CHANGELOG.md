@@ -4,6 +4,13 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.7.0 — 2026-04-14
+*Styling tokens become assignable values.*
+
+- **Assignable styling values** — colour tokens (`brand`, `subtle`, `danger`, `green`, `red`, `blue`, `white`, `black`, `yellow`, `orange`, `purple`, `teal`) can now be stored in variables, passed around, and reassigned using the normal conditional-assignment pattern. Motivation: the BMI cold-test sequence repeatedly showed both humans and frontier models reaching for `bg = card` / `status_color = green` as the natural way to express conditional styling.
+- **`card` is now assignable too, but stays background-only** — `bg = card` then `layout vertical, background: bg:` is valid. `color: card` remains invalid by design. This keeps the semantic surface token distinction from v0.6.5 while removing duplicate-layout boilerplate for selection states and status cards.
+- **Strings explicitly unchanged in v0.7.0** — string concatenation stays `+` only. Interpolation was analysed and parked for a later version rather than bundled into the same release. This keeps v0.7.0 to one real language feature.
+
 ## v0.6.11 — 2026-04-14
 *`shape: circle` property on `button` for compact circular controls.*
 

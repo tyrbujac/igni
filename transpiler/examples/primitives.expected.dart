@@ -17,9 +17,16 @@ class _DemoScreenState extends State<DemoScreen> {
   String selected = 'Option A';
   List<dynamic> options = ['Option A', 'Option B', 'Option C'];
   List<dynamic> favorites = ['Alice', 'Charlie'];
+  bool chosen = true;
 
   @override
   Widget build(BuildContext context) {
+    var bg = 'card';
+    var status_color = 'green';
+    if (chosen) {
+      bg = 'brand';
+      status_color = 'white';
+    }
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
@@ -105,10 +112,70 @@ class _DemoScreenState extends State<DemoScreen> {
                 'Bob is not a favorite',
               ),
             ],
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(color: _igniBackgroundValue(context, bg), borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Text(
+                    'Styled with variables',
+                    style: TextStyle(color: _igniColorValue(context, status_color)),
+                  ),
+                ],
+              ),
+            ),
+            ),
           ],
         ),
       ),
       ),
     );
+  }
+}
+
+Color _igniColorValue(BuildContext context, dynamic value) {
+  if (value is Color) return value;
+  switch (value) {
+    case 'brand': return Theme.of(context).colorScheme.primary;
+    case 'subtle': return Colors.grey;
+    case 'danger': return Colors.red;
+    case 'green': return Colors.green;
+    case 'red': return Colors.red;
+    case 'blue': return Colors.blue;
+    case 'white': return Colors.white;
+    case 'black': return Colors.black;
+    case 'yellow': return Colors.yellow;
+    case 'orange': return Colors.orange;
+    case 'purple': return Colors.purple;
+    case 'teal': return Colors.teal;
+    case 'card':
+      throw FlutterError('Igni: `card` is background-only. Use it with `background:`, not `color:`.');
+    default:
+      return Colors.grey;
+  }
+}
+
+Color _igniBackgroundValue(BuildContext context, dynamic value) {
+  if (value is Color) return value;
+  switch (value) {
+    case 'card': return Theme.of(context).cardColor;
+    case 'brand': return Theme.of(context).colorScheme.primary;
+    case 'subtle': return Colors.grey;
+    case 'danger': return Colors.red;
+    case 'green': return Colors.green;
+    case 'red': return Colors.red;
+    case 'blue': return Colors.blue;
+    case 'white': return Colors.white;
+    case 'black': return Colors.black;
+    case 'yellow': return Colors.yellow;
+    case 'orange': return Colors.orange;
+    case 'purple': return Colors.purple;
+    case 'teal': return Colors.teal;
+    default:
+      return Theme.of(context).cardColor;
   }
 }

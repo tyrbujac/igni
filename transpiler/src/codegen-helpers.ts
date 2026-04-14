@@ -28,6 +28,8 @@ export const COLOR_MAP: Record<string, string> = {
   teal: 'Colors.teal',
 };
 
+export const BACKGROUND_ONLY_TOKENS = new Set<string>(['card']);
+
 export const ALIGN_MAP: Record<string, string> = {
   start: 'MainAxisAlignment.start',
   center: 'MainAxisAlignment.center',
@@ -40,6 +42,22 @@ export function findProp(props: Property[], name: string): Property | undefined 
 
 export function resolveIdentName(expr: Expr): string | null {
   return expr.type === 'Ident' ? expr.name : null;
+}
+
+export function isColorTokenName(name: string): boolean {
+  return name in COLOR_MAP;
+}
+
+export function isBackgroundOnlyTokenName(name: string): boolean {
+  return BACKGROUND_ONLY_TOKENS.has(name);
+}
+
+export function isStyleValueName(name: string): boolean {
+  return isColorTokenName(name) || isBackgroundOnlyTokenName(name);
+}
+
+export function isStyleValueExpr(expr: Expr): boolean {
+  return expr.type === 'Ident' && isStyleValueName(expr.name);
 }
 
 export function resolveDesignToken(expr: Expr): number {
@@ -102,6 +120,35 @@ export function resolveColor(expr: Expr): string {
   return 'Colors.grey';
 }
 
+export function generateStyleValueResolvers(): string {
+  const colorCases = Object.entries(COLOR_MAP)
+    .map(([name, color]) => `    case '${name}': return ${color};`)
+    .join('\n');
+  const backgroundCases = [
+    `    case 'card': return Theme.of(context).cardColor;`,
+    ...Object.entries(COLOR_MAP).map(([name, color]) => `    case '${name}': return ${color};`),
+  ].join('\n');
+  return `Color _igniColorValue(BuildContext context, dynamic value) {
+  if (value is Color) return value;
+  switch (value) {
+${colorCases}
+    case 'card':
+      throw FlutterError('Igni: \`card\` is background-only. Use it with \`background:\`, not \`color:\`.');
+    default:
+      return Colors.grey;
+  }
+}
+
+Color _igniBackgroundValue(BuildContext context, dynamic value) {
+  if (value is Color) return value;
+  switch (value) {
+${backgroundCases}
+    default:
+      return Theme.of(context).cardColor;
+  }
+}`;
+}
+
 const ICON_MAP: Record<string, string> = {
   play: 'Icons.play_arrow', pause: 'Icons.pause', stop: 'Icons.stop',
   skip: 'Icons.skip_next', back: 'Icons.arrow_back', close: 'Icons.close',
@@ -147,6 +194,7 @@ export function inferType(expr: Expr, typeHint?: string): string {
     case 'StringLit': return 'String';
     case 'Ident':
       if (expr.name === 'true' || expr.name === 'false') return 'bool';
+      if (isStyleValueName(expr.name)) return 'String';
       return 'var';
     case 'ListLit': return 'List<dynamic>';
     default: return 'var';

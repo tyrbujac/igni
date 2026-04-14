@@ -66,7 +66,11 @@ my-app/
 
 ## Status
 
-**Language spec:** [`spec/v0.6.11.md`](spec/v0.6.11.md) is the current canonical spec. Companion cheatsheet at [`spec/v0.6.11-cheatsheet.md`](spec/v0.6.11-cheatsheet.md). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+**Language spec:** [`spec/v0.7.0.md`](spec/v0.7.0.md) is the current canonical spec. Companion cheatsheet at [`spec/v0.7.0-cheatsheet.md`](spec/v0.7.0-cheatsheet.md). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+
+**Latest language change:** `v0.7.0` adds assignable styling values, so patterns like `bg = card` / `status_color = green` now work without duplicated layout branches. Strings are intentionally unchanged in this release — `+` remains the only string-building form.
+
+**Latest methodology result:** the v0.6.11 BMI cold test shows that each v0.6.9-v0.6.11 patch produced measurable output change, including a documentation-only patch (`fill: true` bottom-anchoring) that moved model behaviour from `0/4` to roughly `3.5/4`. That's strong evidence for the spec-budget principle: many gaps can be closed by better documentation rather than new syntax.
 
 **Transpiler:** Working. 27 example apps compile and run in the browser. Covers screens, components, wrapper components, layouts, conditionals, loops, functions, lambdas, navigation, shared state, async data fetching, two-way binding, list operations, boolean and comparison operators, list indexing, screen properties, local images/audio, and more.
 
@@ -77,14 +81,14 @@ my-app/
 ```
 igni/
 ├── spec/                    # language spec (versioned snapshots)
-│   ├── v0.6.11.md            # current canonical spec
-│   ├── v0.6.11-cheatsheet.md # current canonical cheatsheet
-│   └── v0.2 → v0.6.10.md   # historical (never edited after shipping)
+│   ├── v0.7.0.md             # current canonical spec
+│   ├── v0.7.0-cheatsheet.md  # current canonical cheatsheet
+│   └── v0.2 → v0.6.11.md     # historical (never edited after shipping)
 ├── transpiler/              # TypeScript-to-Dart transpiler
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point
 │   └── examples/            # 27 .igni apps + .expected.dart references
-├── tests/                   # cold-LLM test results
+├── tests/                   # cold-LLM test results + methodology
 │   └── v0.3.2 → v0.6.11/    # prompts + results per spec version
 ├── docs/                    # tutorial + project docs
 │   └── tutorial.md          # beginner tutorial (no programming experience needed)
