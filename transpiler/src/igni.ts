@@ -1,6 +1,9 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, readdirSync, statSync, copyFileSync } from 'node:fs';
-import { join, basename } from 'node:path';
+import { join, basename, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawn, execSync } from 'node:child_process';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 import { watch } from 'chokidar';
 import { Lexer } from './lexer.js';
 import { Parser } from './parser.js';
@@ -75,12 +78,12 @@ function writeOutput(dart: string): void {
 function ensureFlutterProject(): void {
   if (existsSync(join(igniDir, 'pubspec.yaml'))) return;
 
-  console.log('Setting up Flutter project...');
+  console.log('Setting up Igni project...');
 
   try {
     execSync('flutter --version', { stdio: 'ignore' });
   } catch {
-    console.error('Flutter not found. Install it from https://flutter.dev');
+    console.error('Igni requires Flutter. Install it from https://flutter.dev');
     process.exit(1);
   }
 
@@ -93,6 +96,32 @@ function ensureFlutterProject(): void {
   const testDir = join(igniDir, 'test');
   if (existsSync(testDir)) rmSync(testDir, { recursive: true });
 
+  // Set tab title to project name
+  const indexPath = join(igniDir, 'web', 'index.html');
+  if (existsSync(indexPath)) {
+    let html = readFileSync(indexPath, 'utf-8');
+    const displayName = basename(cwd);
+    html = html.replace(/<title>[^<]*<\/title>/, `<title>${displayName}</title>`);
+    writeFileSync(indexPath, html);
+  }
+
+  // Replace Flutter favicon with Igni icon
+  const igniIcon = join(__dirname, '..', '..', 'assets', 'igni.svg');
+  const faviconPath = join(igniDir, 'web', 'favicon.png');
+  if (existsSync(igniIcon) && existsSync(faviconPath)) {
+    // Use SVG favicon instead of PNG
+    const indexForFavicon = join(igniDir, 'web', 'index.html');
+    if (existsSync(indexForFavicon)) {
+      let html = readFileSync(indexForFavicon, 'utf-8');
+      html = html.replace(
+        /<link rel="icon" type="image\/png" href="favicon\.png"\s*\/?>/,
+        '<link rel="icon" type="image/svg+xml" href="favicon.svg">'
+      );
+      writeFileSync(indexForFavicon, html);
+      copyFileSync(igniIcon, join(igniDir, 'web', 'favicon.svg'));
+    }
+  }
+
   const gitignore = join(cwd, '.gitignore');
   if (existsSync(gitignore)) {
     const content = readFileSync(gitignore, 'utf-8');
@@ -101,7 +130,7 @@ function ensureFlutterProject(): void {
     }
   }
 
-  console.log('Flutter project created.\n');
+  console.log('Igni project created.\n');
 }
 
 // --- Image assets ---
@@ -189,7 +218,16 @@ async function run(): Promise<void> {
   mkdirSync(join(igniDir, 'lib'), { recursive: true });
   writeOutput(dart);
 
-  console.log('Starting...\n');
+  const projectName = basename(cwd);
+  const buildStart = Date.now();
+
+  // Dot animation while building
+  let dots = 0;
+  const spinner = setInterval(() => {
+    dots = (dots % 3) + 1;
+    process.stdout.write(`\r  Building${'.'.repeat(dots)}${' '.repeat(3 - dots)}`);
+  }, 500);
+  process.stdout.write('  Building.');
 
   // Start flutter run
   const flutter = spawn('flutter', ['run', '-d', 'chrome'], {
@@ -197,21 +235,46 @@ async function run(): Promise<void> {
     stdio: ['pipe', 'pipe', 'pipe'],
   });
 
-  // Filter Flutter output
+  // Filter Flutter output — suppress implementation details
+  let appReady = false;
   flutter.stdout.on('data', (data: Buffer) => {
-    const line = data.toString();
-    if (
-      line.includes('localhost') ||
-      line.includes('127.0.0.1') ||
-      line.includes('Error') ||
-      line.includes('error') ||
-      line.includes('Restarted') ||
-      line.includes('Reloaded') ||
-      line.includes('ready') ||
-      line.includes('lib/main.dart') ||
-      line.includes('Application finished')
-    ) {
-      process.stdout.write(line);
+    const lines = data.toString().split('\n');
+    for (const line of lines) {
+      // Suppress all Flutter debug noise, but use the first debug service
+      // line as the "app ready" signal — it only appears after the build
+      // finishes and the browser is actually open
+      if (
+        line.includes('Debug service') ||
+        line.includes('Dart VM Service') ||
+        line.includes('DevTools') ||
+        line.includes('debug mode') ||
+        line.includes('linked to the debug service') ||
+        line.includes('Launching lib/main.dart') ||
+        line.includes('localhost') ||
+        line.includes('127.0.0.1')
+      ) {
+        if (!appReady && line.includes('Debug service listening')) {
+          appReady = true;
+          clearInterval(spinner);
+          const elapsed = ((Date.now() - buildStart) / 1000).toFixed(1);
+          process.stdout.write(`\r  ${projectName} ready (${elapsed}s)\n\n`);
+          console.log('  Press r to reload, q to quit.\n');
+        }
+        continue;
+      }
+
+      // Pass through errors and reload confirmations
+      if (
+        line.includes('Error') ||
+        line.includes('error') ||
+        line.includes('Restarted') ||
+        line.includes('Reloaded') ||
+        line.includes('Application finished')
+      ) {
+        if (appReady) {
+          console.log(line);
+        }
+      }
     }
   });
 
@@ -244,7 +307,7 @@ async function run(): Promise<void> {
   });
 
   watcher.on('ready', () => {
-    console.log(`Watching ${igniFiles.length} file(s) for changes...\n`);
+    // Watcher ready — no output needed, building animation is already showing
   });
 
   watcher.on('change', (filePath) => {

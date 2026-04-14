@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MaterialApp(home: AccessScreen()));
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: AccessScreen()));
 }
 
 class AccessScreen extends StatefulWidget {

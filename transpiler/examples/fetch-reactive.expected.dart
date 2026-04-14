@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 void main() {
-  runApp(const MaterialApp(home: SearchScreen()));
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: SearchScreen()));
 }
 
 class SearchScreen extends StatefulWidget {

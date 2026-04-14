@@ -14,7 +14,7 @@ final shared = SharedState();
 void main() {
   runApp(ListenableBuilder(
     listenable: shared,
-    builder: (context, child) => MaterialApp(home: ProductListScreen()),
+    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, home: ProductListScreen()),
   ));
 }
 

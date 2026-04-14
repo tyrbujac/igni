@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MaterialApp(home: SettingsScreen()));
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: SettingsScreen()));
 }
 
 class SettingsScreen extends StatefulWidget {

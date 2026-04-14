@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MaterialApp(home: ToggleScreen()));
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: ToggleScreen()));
 }
 
 class ToggleScreen extends StatefulWidget {

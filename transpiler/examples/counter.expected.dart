@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MaterialApp(home: CounterScreen()));
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: CounterScreen()));
 }
 
 class CounterScreen extends StatefulWidget {

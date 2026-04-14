@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MaterialApp(home: TodoScreen()));
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: TodoScreen()));
 }
 
 class TodoScreen extends StatefulWidget {

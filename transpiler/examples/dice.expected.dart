@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 void main() {
-  runApp(const MaterialApp(home: DiceRollerScreen()));
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DiceRollerScreen()));
 }
 
 class DiceRollerScreen extends StatefulWidget {

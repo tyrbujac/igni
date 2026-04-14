@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MaterialApp(home: HeroScreen()));
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: HeroScreen()));
 }
 
 class HeroScreen extends StatefulWidget {

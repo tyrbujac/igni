@@ -56,9 +56,9 @@ export class CodeGenerator {
 
     if (this.hasShared) {
       code += this.genSharedState(program.shared) + '\n';
-      code += `void main() {\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(home: ${firstName}Screen()),\n  ));\n}\n`;
+      code += `void main() {\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, home: ${firstName}Screen()),\n  ));\n}\n`;
     } else {
-      code += `void main() {\n  runApp(const MaterialApp(home: ${firstName}Screen()));\n}\n`;
+      code += `void main() {\n  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: ${firstName}Screen()));\n}\n`;
     }
 
     for (const comp of program.components) {

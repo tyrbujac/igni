@@ -14,7 +14,7 @@ final shared = SharedState();
 void main() {
   runApp(ListenableBuilder(
     listenable: shared,
-    builder: (context, child) => MaterialApp(home: ContactListScreen()),
+    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, home: ContactListScreen()),
   ));
 }
 

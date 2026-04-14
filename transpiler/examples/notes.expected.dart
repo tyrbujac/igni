@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MaterialApp(home: NoteListScreen()));
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: NoteListScreen()));
 }
 
 class NoteListScreen extends StatefulWidget {

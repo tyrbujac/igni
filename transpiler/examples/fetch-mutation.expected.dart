@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 void main() {
-  runApp(const MaterialApp(home: CreatePostScreen()));
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: CreatePostScreen()));
 }
 
 class CreatePostScreen extends StatefulWidget {

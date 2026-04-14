@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MaterialApp(home: ContactsScreen()));
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: ContactsScreen()));
 }
 
 class ContactsScreen extends StatefulWidget {

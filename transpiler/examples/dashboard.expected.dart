@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MaterialApp(home: DashboardScreen()));
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DashboardScreen()));
 }
 
 class StatCard extends StatelessWidget {

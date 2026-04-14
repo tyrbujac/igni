@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MaterialApp(home: GreetingScreen()));
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: GreetingScreen()));
 }
 
 class GreetingScreen extends StatefulWidget {
