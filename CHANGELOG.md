@@ -4,6 +4,12 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.6.10 — 2026-04-14
+*Documentation-only. "Bottom-anchored actions" pattern added to the layout section.*
+
+- **Bottom-anchored actions pattern** — documented how to use existing `fill: true` on content sections so a CTA button naturally sits at the bottom of the screen (common mobile form layout). No new syntax. Motivation: BMI cold tests across v0.6.7 and v0.6.8 showed 4/4 models produced shrink-wrapped layouts with the CALCULATE button floating mid-screen, even though Igni already supported the correct pattern. Discoverability fix.
+- Matching one-liner example added to the cheatsheet.
+
 ## v0.6.9 — 2026-04-14
 *`round(value, places)` builtin for number formatting.*
 
