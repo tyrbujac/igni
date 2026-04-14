@@ -1,7 +1,7 @@
 # Settings Cold Test Results
 
 **Date:** 2026-04-13
-**Models tested:** Claude Opus 4.6, ChatGPT 5.3, Gemini 3.1 Fast, Gemini 3.1 Pro
+**Models tested:** Claude Opus 4.6, ChatGPT 5.3, Gemini 3 Flash, Gemini 3.1 Pro
 **Input:** v0.6.6.md (full spec, post-doc-fixes)
 **App:** Settings — single-screen settings page with dependent dropdowns, input primitives
 
@@ -107,7 +107,7 @@ screen Settings, title: "Settings":
 
 `title: "Settings"` app bar. Profile uses `layout horizontal` for avatar + text side-by-side. No `divider` between sections — uses section headings directly inside the main layout. All primitives correct. `logout()` function stubs behaviour without inventing navigation.
 
-### Gemini 3.1 Fast — function return for city options
+### Gemini 3 Flash — function return for city options
 
 ```igni
 screen Settings:
@@ -194,7 +194,7 @@ screen Settings, title: "Settings":
 
 ## Feature grading
 
-| Feature | Opus | ChatGPT | Gemini Fast | Gemini Pro |
+| Feature | Opus | ChatGPT | Gemini Flash | Gemini Pro |
 |---|---|---|---|---|
 | `heading.small` for sections | **4/4** | **4/4** | **4/4** | **4/4** |
 | `on change:` on dropdown | Correct | Correct | Correct | Correct |
@@ -221,10 +221,10 @@ screen Settings, title: "Settings":
 |---|---|---|
 | Opus | Reactive conditional assignment at screen body level | Resets city only |
 | ChatGPT | Named city list variables, swapped imperatively | Resets city + swaps available_cities |
-| Gemini Fast | `get_cities()` function called in `options:` | Resets city only |
+| Gemini Flash | `get_cities()` function called in `options:` | Resets city only |
 | Gemini Pro | Cities list swapped imperatively | Resets city + swaps cities |
 
-Opus and Gemini Fast use reactivity for the dependent data — `on change:` only handles the side effect (clearing stale city). ChatGPT and Gemini Pro do everything imperatively in the handler. Both approaches are valid Igni. Opus's is the most idiomatic (uses reactivity where possible, `on change:` only for what reactivity can't do).
+Opus and Gemini Flash use reactivity for the dependent data — `on change:` only handles the side effect (clearing stale city). ChatGPT and Gemini Pro do everything imperatively in the handler. Both approaches are valid Igni. Opus's is the most idiomatic (uses reactivity where possible, `on change:` only for what reactivity can't do).
 
 ## `divider` usage
 
@@ -248,5 +248,5 @@ Useful findings from the commentary:
 
 - **Opus:** Cleanest architectural reasoning — reactivity for dependent data, `on change:` only for side effects
 - **ChatGPT:** Explicit about why everything is local state (single screen, no shared state needed)
-- **Gemini Fast:** Noted the slider label as a live-updating display — unprompted addition that demonstrates reactivity understanding
+- **Gemini Flash:** Noted the slider label as a live-updating display — unprompted addition that demonstrates reactivity understanding
 - **Gemini Pro:** Nesting budget awareness — explicitly managed depth to stay within 4 levels. Also surfaced the `bind:`/`on change:` ordering question

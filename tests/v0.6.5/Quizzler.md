@@ -1,7 +1,7 @@
 # Quizzler Cold Test Results
 
 **Date:** 2026-04-13
-**Models tested:** Claude Opus 4.6, Gemini 3.1 Pro, Gemini 3.1 Fast, ChatGPT 5.3
+**Models tested:** Claude Opus 4.6, Gemini 3.1 Pro, Gemini 3 Flash, ChatGPT 5.3
 **Spec:** v0.6.5 (first run was pre-indexing; re-run was post-indexing)
 **Source:** Angela Yu's "Complete Flutter Development Bootcamp" — Quizzler app (Section 9)
 
@@ -29,7 +29,7 @@ answer(choice):
 
 **Invented syntax:** None.
 
-### Gemini 3.1 Fast — invented `questions[index]`
+### Gemini 3 Flash — invented `questions[index]`
 
 ```igni
 index = 0
@@ -79,7 +79,7 @@ index_of(target):
 | Model | Indexing approach | Invented syntax? | Lines | Would transpile? |
 |---|---|---|---|---|
 | Gemini Pro | Removal pattern (`without`) | No | ~45 | Likely (cleanest) |
-| Gemini Fast | `questions[index]` directly | Yes | ~40 | No (before indexing) |
+| Gemini Flash | `questions[index]` directly | Yes | ~40 | No (before indexing) |
 | ChatGPT | `questions[index]` in `find` predicate | Yes | ~35 | No |
 | Claude | Manual `each` loop with counter | No | ~65 | Partially |
 
@@ -91,7 +91,7 @@ index_of(target):
 
 | Model | Transpiles? | Fixes needed | Notable |
 |---|---|---|---|
-| Gemini Fast | Yes | 0 | String-based score tracking (`"check"`/`"close"`) |
+| Gemini Flash | Yes | 0 | String-based score tracking (`"check"`/`"close"`) |
 | ChatGPT | Yes | 0 | Used `title:`, `current = questions[index]` local var |
 | Gemini Pro | Yes | 0 | `questions[index] is not null` for end detection |
 | Claude | Yes | 0 | `count_correct()` helper, `title:`, score on completion screen |

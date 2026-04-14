@@ -1,7 +1,7 @@
 # BMI Calculator Cold Test Results
 
 **Date:** 2026-04-14
-**Models tested:** Claude Opus 4.6, ChatGPT 5.3, Gemini 3.1 Fast, Gemini 3.1 Pro
+**Models tested:** Claude Opus 4.6, ChatGPT 5.3, Gemini 3 Flash, Gemini 3.1 Pro
 **Input:** v0.6.7.md (full spec)
 **App:** BMI Calculator — two-screen body mass index calculator (Angela Yu Flutter Course #5)
 
@@ -187,7 +187,7 @@ screen BMIResult(height, weight, gender), title: "BMI CALCULATOR":
 
 ---
 
-### Gemini 3.1 Fast — two spec violations + color-as-variable
+### Gemini 3 Flash — two spec violations + color-as-variable
 
 ```igni
 screen Input, title: "BMI CALCULATOR":

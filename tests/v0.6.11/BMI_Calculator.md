@@ -1,7 +1,7 @@
 # BMI Calculator Cold Test Results — v0.6.11
 
 **Date:** 2026-04-14
-**Models tested:** Claude Opus 4.6, ChatGPT 5.3, Gemini 3.1 Fast, Gemini 3.1 Pro
+**Models tested:** Claude Opus 4.6, ChatGPT 5.3, Gemini 3 Flash, Gemini 3.1 Pro
 **Input:** v0.6.11.md (full spec) + identical-to-v0.6.8 BMI prompt
 **App:** BMI Calculator — Angela Yu Flutter Course #5
 
@@ -19,7 +19,7 @@ This is the final cold test in the pure-prompt-grade-and-compare methodology. v0
 
 ## Headline result — every addition landed
 
-| | ChatGPT | Gemini Fast | Gemini Pro | Opus 4.6 | v0.6.8 | v0.6.11 | Delta |
+| | ChatGPT | Gemini Flash | Gemini Pro | Opus 4.6 | v0.6.8 | v0.6.11 | Delta |
 |---|---|---|---|---|---|---|---|
 | **`round()` on BMI** | ✓ | ✓ | ✓ | ✓ | 0/4 | **4/4** | +4 |
 | **Bottom-anchor `fill:true`** | ✓ | ✓ | ✓ | 1/2 screens | 0/4 | **~3.5/4** | +3.5 |
@@ -37,7 +37,7 @@ Every model produced `round(bmi, 1)` on first exposure. All four correctly:
 - Passed `1` for the BMI display, matching Angela's `toStringAsFixed(1)` convention
 - Chose `label round(bmi, 1)` as the idiomatic call site (not a variable assignment first)
 
-Three of four placed the call inside the Results screen's body. Gemini Fast alone used an intermediate variable (`bmi = round(bmi_val, 1)`) rather than calling `round()` at the render site — arguably cleaner, but the end result is identical.
+Three of four placed the call inside the Results screen's body. Gemini Flash alone used an intermediate variable (`bmi = round(bmi_val, 1)`) rather than calling `round()` at the render site — arguably cleaner, but the end result is identical.
 
 **Interpretation:** adding a builtin to the Reference section with a one-line example is a near-perfect channel from spec to model output. This is the strongest propagation signal we've measured across any addition.
 
@@ -51,13 +51,13 @@ Three distinct forms emerged:
 
 **Empty-spacer (ChatGPT):** `layout vertical, fill: true` as an empty layout placed before the button, used as a pure vertical spacer.
 
-**Outside-the-padded-wrapper (Gemini Fast):** put all content in an outer `layout vertical, fill: true` and the button at the **screen body level** after it. Screen body stacks vertically by default, so the fill:true layout expands and the button lands at the edge. Arguably cleaner than the documented form.
+**Outside-the-padded-wrapper (Gemini Flash):** put all content in an outer `layout vertical, fill: true` and the button at the **screen body level** after it. Screen body stacks vertically by default, so the fill:true layout expands and the button lands at the edge. Arguably cleaner than the documented form.
 
 **Partial (Opus):** used the pattern on the Results screen only, left the Input screen shrink-wrapped.
 
 **Interpretation:** documentation-only patterns propagate at roughly 75-90% effectiveness compared to named primitives (100%). The variety of forms also says something useful — when the spec shows one canonical pattern, models find the *idea* but express it in their own way. Two of three adopters did something not literally in the example, just spiritually adherent to it.
 
-A small observation worth logging: Gemini Fast's "button at screen body level, outside the padded layout" is a pattern the spec doesn't document but is arguably more elegant than the canonical form (the button naturally sits edge-to-edge because it escapes the outer padding). Worth considering for a future docs patch.
+A small observation worth logging: Gemini Flash's "button at screen body level, outside the padded layout" is a pattern the spec doesn't document but is arguably more elegant than the canonical form (the button naturally sits edge-to-edge because it escapes the outer padding). Worth considering for a future docs patch.
 
 ### `shape: circle` — unanimous adoption on first exposure
 
@@ -70,7 +70,7 @@ A small observation worth logging: Gemini Fast's "button at screen body level, o
 
 ### Colour-as-variable — 3/4 → 2/4
 
-Down from 3/4 in both v0.6.7 and v0.6.8. Two models (Gemini Fast, ChatGPT) still used it; two (Gemini Pro, Opus) did not.
+Down from 3/4 in both v0.6.7 and v0.6.8. Two models (Gemini Flash, ChatGPT) still used it; two (Gemini Pro, Opus) did not.
 
 Notable: **Gemini Pro used it heavily in both v0.6.7 and v0.6.8 cold tests but dropped it this round**, using the duplicate-layout pattern for the GenderCard and the if/else-label pattern for the category color. This is the first time Gemini Pro hasn't produced the pattern.
 
@@ -203,7 +203,7 @@ Used all three patches correctly, in the exact forms the spec documents:
 
 Also kept its spec-correct cross-component function dispatch (`decrement(type)`, `increment(type)`, `select_gender(type)`).
 
-### Gemini 3.1 Fast — adopted all three, novel bottom-anchor
+### Gemini 3 Flash — adopted all three, novel bottom-anchor
 
 `round()` via intermediate variable (`bmi = round(bmi_val, 1)`), then `label bmi`.
 
@@ -245,7 +245,7 @@ Colour-as-variable still heavy: `bg = card`, `bg = brand`, `colour = green/dange
 
 **2. Documentation-only patterns propagate at 75-90% of named additions.** The bottom-anchor pattern moved 3-4/4 models despite introducing no new syntax. **This matters for the spec budget.** It means we can fix many gaps via documentation rather than adding new keywords. The "spec is a budget" principle is vindicated — not every gap needs new syntax.
 
-**3. Documented patterns get reinterpreted, not copied.** Only Gemini Pro used the exact canonical form from the spec example. ChatGPT and Gemini Fast each invented a variant that captures the pattern's intent but expresses it differently. This is good — it means we're teaching the *concept*, not the specific code shape. But it argues for documenting multiple forms when they're all spec-correct, so models aren't artificially constrained to one pattern.
+**3. Documented patterns get reinterpreted, not copied.** Only Gemini Pro used the exact canonical form from the spec example. ChatGPT and Gemini Flash each invented a variant that captures the pattern's intent but expresses it differently. This is good — it means we're teaching the *concept*, not the specific code shape. But it argues for documenting multiple forms when they're all spec-correct, so models aren't artificially constrained to one pattern.
 
 **4. Some patterns are model-specific and won't be fixed by spec changes.** ChatGPT's callback invention is now 3-for-3 across different invention forms. Adding more spec won't fix it — it's a mismatch between training priors and Igni's constraints. Only recourse: keep cross-vendor cold tests so we don't generalize Opus+Gemini behavior as universal.
 
@@ -268,7 +268,7 @@ All four outputs would need individual investigation for end-to-end transpilatio
 
 - **Opus:** transpiles after typo fixes; renders closest to Angela
 - **Gemini Pro:** transpiles cleanly, valid end-to-end
-- **Gemini Fast:** fails to transpile due to `navigate to Results(height, weight)` (parens on nav — Bug 2 pattern)
+- **Gemini Flash:** fails to transpile due to `navigate to Results(height, weight)` (parens on nav — Bug 2 pattern)
 - **ChatGPT:** fails to transpile due to `navigate to Result height weight gender` (missing commas) AND the callback invention syntax
 
 Not run this round — the primary goal was the spec-propagation experiment. Left as a follow-up if end-to-end validation is needed.

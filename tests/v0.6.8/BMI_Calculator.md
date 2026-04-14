@@ -1,7 +1,7 @@
 # BMI Calculator Cold Test Results — v0.6.8
 
 **Date:** 2026-04-14
-**Models tested:** Claude Opus 4.6, ChatGPT 5.3, Gemini 3.1 Fast, Gemini 3.1 Pro
+**Models tested:** Claude Opus 4.6, ChatGPT 5.3, Gemini 3 Flash, Gemini 3.1 Pro
 **Input:** v0.6.8.md (full spec) + BMI Calculator prompt with explicit styling paragraph
 **App:** BMI Calculator — Angela Yu Flutter Course #5, re-run against the new spec
 
@@ -21,7 +21,7 @@ Questions this re-run answers:
 
 ## Headline result — 2/4 likely to transpile
 
-| | Opus 4.6 | Gemini Pro | Gemini Fast | ChatGPT 5.3 |
+| | Opus 4.6 | Gemini Pro | Gemini Flash | ChatGPT 5.3 |
 |---|---|---|---|---|
 | **Valid syntax** | Yes | Yes (with colour-as-variable) | No (invented callback params) | No (invented `on decrement:`) |
 | **Invented features** | None | None | `on tap` as param, `size:` on layout | `on decrement:` / `on increment:` custom events (same as v0.6.7) |
@@ -80,7 +80,7 @@ else:
 
 Two different models from different vendors independently invented callback-passing syntax:
 
-**Gemini Fast** — declares `on tap` as a component parameter, then uses `on tap: on tap:` on the layout:
+**Gemini Flash** — declares `on tap` as a component parameter, then uses `on tap: on tap:` on the layout:
 ```igni
 component GenderCard(label_text, value, current, on tap):
   # ...
@@ -324,7 +324,7 @@ component CounterCard(title, value, type):
 
 **Notes (Gemini Pro):** doesn't use `body` at all — uses cross-component function dispatch with string type discrimination (`decrease("weight")`, `decrease("age")`). This is the one spec-correct alternative to body. Heavy use of colour-as-variable (`bg`, `text_col`, `cat_color`). Still uses object-literal navigation workaround despite the Bug 2 fix making direct multi-param work.
 
-### Gemini 3.1 Fast — invented callback parameter syntax
+### Gemini 3 Flash — invented callback parameter syntax
 
 ```igni
 screen Input, title: "BMI CALCULATOR", background: black:
@@ -403,7 +403,7 @@ component RoundButton(text):
     label text, style: heading, color: white
 ```
 
-**Issues (Gemini Fast):**
+**Issues (Gemini Flash):**
 - Invented syntax: `component GenderCard(label_text, value, current, on tap):` — `on tap` as a parameter name. Then `on tap: on tap:` on the layout. Parser would fail.
 - Invalid property: `size: 56` on `layout vertical` inside `RoundButton`. Layouts don't have a `size:` property.
 - `icon value, size: 80` — numeric icon size (spec uses design tokens like `size: large`).
@@ -535,7 +535,7 @@ The evidence now strongly favours (a). Models treat tokens as values in their me
 
 **3. `theme:` block is a false priority.** 0/4 models tried to use it. The "design stage" caveat is doing its job. Per-layout `background:` + named colours + `color:` is expressive enough that models don't feel the gap. Lower priority than the ROADMAP currently implies.
 
-**4. Icon sizing should be documented as design-token-only.** Gemini Fast used `size: 48` and `size: 80` (numeric). The spec examples always use design tokens (`size: large`). A one-line clarification would help.
+**4. Icon sizing should be documented as design-token-only.** Gemini Flash used `size: 48` and `size: 80` (numeric). The spec examples always use design tokens (`size: large`). A one-line clarification would help.
 
 ## Transpiler validation
 

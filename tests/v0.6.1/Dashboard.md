@@ -15,7 +15,7 @@
 
 ## Cross-model results
 
-| Feature | ChatGPT 5.3 | Gemini 3 Fast | Gemini 3.1 Pro | Claude Opus 4.6 |
+| Feature | ChatGPT 5.3 | Gemini 3 Flash | Gemini 3.1 Pro | Claude Opus 4.6 |
 | --- | --- | --- | --- | --- |
 | Wrapper with `body` | Partial (empty body) | **Yes** (badges inside) | **Yes** (values inside) | **Yes** (values inside) |
 | `icon` | ✓ | ✓ | ✓ | ✓ |
@@ -31,9 +31,9 @@
 
 ### 1. Wrapper `body` slot: 3/4 discovered from cheat sheet
 
-Gemini Fast, Gemini Pro, and Opus all correctly defined a wrapper component with `body` and invoked it with caller-provided content. The cheat sheet's 4-line wrapper example was sufficient. ChatGPT understood the structure (placed `body` in the def) but didn't provide content in the invocations.
+Gemini Flash, Gemini Pro, and Opus all correctly defined a wrapper component with `body` and invoked it with caller-provided content. The cheat sheet's 4-line wrapper example was sufficient. ChatGPT understood the structure (placed `body` in the def) but didn't provide content in the invocations.
 
-### 2. Gemini Fast produced the most creative output
+### 2. Gemini Flash produced the most creative output
 
 Used `body` to inject different badges inside each stat card:
 ```igni

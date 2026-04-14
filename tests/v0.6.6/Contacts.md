@@ -1,7 +1,7 @@
 # Contacts Cold Test Results
 
 **Date:** 2026-04-13
-**Models tested:** Gemini 3.1 Fast, ChatGPT 5.3, Gemini 3.1 Pro, Claude Opus 4.6
+**Models tested:** Gemini 3 Flash, ChatGPT 5.3, Gemini 3.1 Pro, Claude Opus 4.6
 **Input:** v0.6.6.md (full spec, post-doc-fixes)
 **App:** Contacts — multi-screen contact manager with search, sort, edit, delete (CRUD)
 
@@ -22,7 +22,7 @@ The most complex cold test to date. Tests features that Destini didn't exercise:
 
 ## Results — strong convergence
 
-### Gemini 3.1 Fast — correct but misplaced filter logic
+### Gemini 3 Flash — correct but misplaced filter logic
 
 ```igni
 shared:
@@ -372,7 +372,7 @@ component ContactCard(contact):
 
 ## Architecture comparison
 
-| Feature | Gemini Fast | ChatGPT | Gemini Pro | Opus |
+| Feature | Gemini Flash | ChatGPT | Gemini Pro | Opus |
 |---|---|---|---|---|
 | `shared:` correct | Yes (typed) | Yes | Yes | Yes |
 | `filter` + `contains` + lambda | Yes | Yes | Yes | Yes |
@@ -409,7 +409,7 @@ This is the strongest convergence seen in any Igni cold test. The architecture i
 
 ### 1. Variable assignments inside layout blocks
 
-Gemini Fast placed `display = filter(...)` as a child of `layout vertical:`. The spec says "Variables, layouts, and functions all live inside the screen body" — but the boundary between "screen body" and "inside a layout" isn't explicit. Adding a one-line clarification ("Variable assignments go at the screen body level, not inside layout blocks") would close this.
+Gemini Flash placed `display = filter(...)` as a child of `layout vertical:`. The spec says "Variables, layouts, and functions all live inside the screen body" — but the boundary between "screen body" and "inside a layout" isn't explicit. Adding a one-line clarification ("Variable assignments go at the screen body level, not inside layout blocks") would close this.
 
 Signal: 1/4 models. Low severity — the intent is clear even if placement is wrong.
 

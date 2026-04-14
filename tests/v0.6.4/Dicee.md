@@ -1,7 +1,7 @@
 # Dicee Cold Test Results
 
 **Date:** 2026-04-13
-**Models tested:** Claude Opus 4.6, Gemini 3.1 Pro, Gemini 3.1 Fast, ChatGPT 5.3
+**Models tested:** Claude Opus 4.6, Gemini 3.1 Pro, Gemini 3 Flash, ChatGPT 5.3
 **Spec:** v0.6.3
 **Source:** Angela Yu's "Complete Flutter Development Bootcamp" — Dicee app (Section 5)
 
@@ -15,7 +15,7 @@ Two-dice roller. Two dice images side by side, tap either to roll it. Red backgr
 |---|---|---|---|
 | Claude Opus 4.6 | Yes | 0 | `random()` as initial value |
 | Gemini 3.1 Pro | Yes | 0 | Most minimal |
-| Gemini 3.1 Fast | Yes | 0 | Title label included |
+| Gemini 3 Flash | Yes | 0 | Title label included |
 | ChatGPT 5.3 | Yes | 0 | |
 
 **4/4 zero-fix.** All four models produced nearly identical code — same screen name, same URL construction with `+` concatenation, same `random(1, 6)`, same horizontal layout. Strongest convergence yet.

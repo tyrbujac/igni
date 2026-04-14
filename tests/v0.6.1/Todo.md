@@ -15,7 +15,7 @@
 
 ## Cross-model results
 
-| Feature | Gemini 3 Fast | ChatGPT 5.3 | Gemini 3.1 Pro | Claude Opus 4.6 |
+| Feature | Gemini 3 Flash | ChatGPT 5.3 | Gemini 3.1 Pro | Claude Opus 4.6 |
 | --- | --- | --- | --- | --- |
 | No parens on screen | ✓ | ✓ | ✓ | ✓ |
 | Functions inside screen | ✓ | No (inline on tap) | ✓ | ✓ |
@@ -33,7 +33,7 @@
 
 The two fixes from the Shopping round both worked:
 - **No-arg screen:** 4/4 now write `screen Name:` without parentheses (was 0/4 before fix)
-- **Each-in-function:** Gemini Fast now defines functions with if/else and list operations (failed in Shopping round)
+- **Each-in-function:** Gemini Flash now defines functions with if/else and list operations (failed in Shopping round)
 
 ### 2. ChatGPT still inlines multi-statement on tap
 
@@ -45,7 +45,7 @@ Three models checked for empty string with `is not ""` instead of the canonical 
 
 ### 4. `without` vs `filter` for removal
 
-Prompt said "removes it" without specifying a builtin. Gemini Fast and Pro used `without` (identity-based). ChatGPT and Opus used `filter` with lambda. Both are correct — `without` works because the item reference comes from the `each` loop.
+Prompt said "removes it" without specifying a builtin. Gemini Flash and Pro used `without` (identity-based). ChatGPT and Opus used `filter` with lambda. Both are correct — `without` works because the item reference comes from the `each` loop.
 
 ## Cheat sheet effectiveness summary (across both rounds)
 

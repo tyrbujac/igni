@@ -1,7 +1,7 @@
 # Xylophone Cold Test Results
 
 **Date:** 2026-04-13
-**Models tested:** Claude Opus 4.6, Gemini 3.1 Pro, Gemini 3.1 Fast, ChatGPT 5.3
+**Models tested:** Claude Opus 4.6, Gemini 3.1 Pro, Gemini 3 Flash, ChatGPT 5.3
 **Spec:** v0.6.4
 **Source:** Angela Yu's "Complete Flutter Development Bootcamp" — Xylophone app (Section 7)
 
@@ -13,7 +13,7 @@ Seven coloured bars stacked vertically, each filling equal screen space. Tap a b
 
 | Model | Transpiles? | Approach | Audio handling | `teal` |
 |---|---|---|---|---|
-| Gemini 3.1 Fast | Yes | Component extraction (`XylophoneBar`) | `play_note()` + `return null` | Used `brand` |
+| Gemini 3 Flash | Yes | Component extraction (`XylophoneBar`) | `play_note()` + `return null` | Used `brand` |
 | Gemini 3.1 Pro | Yes | Component extraction (`NoteBar`) | `play_note()` sets `active_note` | Used `teal` |
 | ChatGPT 5.3 | Yes (after fix) | Inline layouts, empty blocks | `play()` + comment | Used `teal` |
 | Claude Opus 4.6 | Yes (after fix) | Inline layouts, `label ""` placeholders | `play_note()` + comment | Used `brand` |
@@ -22,7 +22,7 @@ Seven coloured bars stacked vertically, each filling equal screen space. Tap a b
 
 **Weaker convergence than Dicee.** Two distinct approaches:
 
-1. **Component extraction (Gemini Fast, Gemini Pro):** Extracted a reusable `XylophoneBar`/`NoteBar` component with colour and note as parameters. DRYer but more complex.
+1. **Component extraction (Gemini Flash, Gemini Pro):** Extracted a reusable `XylophoneBar`/`NoteBar` component with colour and note as parameters. DRYer but more complex.
 2. **Inline repetition (ChatGPT, Claude):** Seven inline layouts with explicit colours and tap handlers. More verbose but simpler to read.
 
 Both are valid Igni. The divergence is a design choice the spec doesn't guide — and shouldn't.

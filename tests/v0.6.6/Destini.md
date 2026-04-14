@@ -1,7 +1,7 @@
 # Destini Cold Test Results
 
 **Date:** 2026-04-13
-**Models tested:** Claude Opus 4.6, Gemini 3.1 Pro, Gemini 3.1 Fast, ChatGPT 5.3
+**Models tested:** Claude Opus 4.6, Gemini 3.1 Pro, Gemini 3 Flash, ChatGPT 5.3
 **Input:** Two rounds — cheatsheet-only (v0.6.6-cheatsheet.md) and full spec (v0.6.6.md, post-doc-fixes)
 **App:** Destini — choose-your-own-adventure story game (Angela Yu Flutter Course)
 
@@ -18,7 +18,7 @@ No new transpiler features needed — everything was already built.
 
 ## Results — 3 distinct architectures
 
-### Gemini 3.1 Fast — data-driven with null sentinel (4 seconds)
+### Gemini 3 Flash — data-driven with null sentinel (4 seconds)
 
 ```igni
 stories = [
@@ -100,7 +100,7 @@ Similar to ChatGPT but includes all fields on endings. Explicitly reassigns `cur
 
 | Model | Data structure | Lines | Scalable? | Button visibility |
 |---|---|---|---|---|
-| Gemini Fast | Objects + null sentinel | ~40 | Yes | `choice2 is not null` |
+| Gemini Flash | Objects + null sentinel | ~40 | Yes | `choice2 is not null` |
 | Gemini Pro | Hardcoded if/else | ~80 | No | `show_choice2` boolean |
 | ChatGPT | Objects + `end` flag | ~35 | Yes | `if current.end:` branch |
 | Claude | Objects + `ending` flag | ~45 | Yes | `ending is not true` |
@@ -115,7 +115,7 @@ All 4 models wrote `image "background.png"` as a child inside the layout — but
 
 ### 2. `image fill: true` not supported
 
-Gemini Fast and ChatGPT wrote `image "background.png", fill: true`. `fill: true` only works on layouts. 2/4 signal.
+Gemini Flash and ChatGPT wrote `image "background.png", fill: true`. `fill: true` only works on layouts. 2/4 signal.
 
 ### 3. `current = stories[index]` reactivity
 
@@ -143,12 +143,12 @@ Gemini Fast and ChatGPT wrote `image "background.png", fill: true`. `fill: true`
 
 **Date:** 2026-04-13
 **Input:** v0.6.6.md (full spec, post-doc-fixes: `on change:` example, `heading.small` definition, fetch distinction, theme caveat)
-**Models tested:** Gemini 3.1 Fast, ChatGPT 5.3, Gemini 3.1 Pro, Claude Opus 4.6
+**Models tested:** Gemini 3 Flash, ChatGPT 5.3, Gemini 3.1 Pro, Claude Opus 4.6
 **Prompt:** Same as cheatsheet test (see prompts.md)
 
 Same prompt, same models, full spec instead of cheatsheet. The full spec includes the background image documentation (`background: "photo.png"`) that was the #1 gap from the cheatsheet test.
 
-### Gemini 3.1 Fast — data-driven, empty-string sentinel
+### Gemini 3 Flash — data-driven, empty-string sentinel
 
 ```igni
 screen Destini, background: "background.png":
@@ -251,7 +251,7 @@ Nearly identical to cheatsheet version. Same `ending: boolean` flag. Same explic
 
 | Model | Cheatsheet architecture | Full spec architecture | Change |
 |---|---|---|---|
-| Gemini Fast | Data-driven, null sentinel | Data-driven, empty-string sentinel | Minor (sentinel strategy) |
+| Gemini Flash | Data-driven, null sentinel | Data-driven, empty-string sentinel | Minor (sentinel strategy) |
 | ChatGPT | Data-driven, `end` flag, short names | Data-driven, no flag, full names, functions | Cleaner |
 | Gemini Pro | **Hardcoded if/else (~80 lines)** | **Data-driven, null sentinel (~40 lines)** | **Major** |
 | Claude | Data-driven, `ending` flag, explicit reassign | Data-driven, `ending` flag, explicit reassign | Unchanged |
@@ -269,7 +269,7 @@ Nearly identical to cheatsheet version. Same `ending: boolean` flag. Same explic
 
 | Model | Cheatsheet | Full spec |
 |---|---|---|
-| Gemini Fast | `choice2 is not null` | `choice2 is not empty` |
+| Gemini Flash | `choice2 is not null` | `choice2 is not empty` |
 | ChatGPT | `if current.end:` (boolean) | `current.choice2 is not empty` |
 | Gemini Pro | `show_choice2` variable | `current.c2 is not null` |
 | Claude | `ending is not true` | `not current.ending` |

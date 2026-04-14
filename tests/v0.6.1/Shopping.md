@@ -15,7 +15,7 @@
 
 ## Cross-model results
 
-| Feature | ChatGPT 5.3 | Gemini 3.1 Pro | Gemini 3 Fast | Claude Opus 4.6 |
+| Feature | ChatGPT 5.3 | Gemini 3.1 Pro | Gemini 3 Flash | Claude Opus 4.6 |
 | --- | --- | --- | --- | --- |
 | Lambda `find` | ✓ | ✓ | ✓ | ✓ |
 | Lambda `filter` | ✓ | ✓ | ✓ | ✓ |
@@ -32,7 +32,7 @@
 
 ### 1. Lambdas: 4/4 correct from cheat sheet alone
 
-Every model — including the fast/cheap Gemini 3 Fast — used predicate `find`, `filter`, and `replace` correctly with lambda syntax. The 218-line cheat sheet teaches lambdas as effectively as the 1028-line full spec.
+Every model — including the fast/cheap Gemini 3 Flash — used predicate `find`, `filter`, and `replace` correctly with lambda syntax. The 218-line cheat sheet teaches lambdas as effectively as the 1028-line full spec.
 
 ### 2. Universal error: `screen Name()` parentheses
 
@@ -42,18 +42,18 @@ All four models added `()` to no-arg screen names. The cheat sheet only shows `s
 
 ChatGPT put the entire if/else add-to-cart logic directly after `on tap:` instead of defining a function. The spec says `on tap:` takes a single statement or function call. ChatGPT understood the logic but not the constraint.
 
-### 4. Gemini Fast: couldn't compute total
+### 4. Gemini Flash: couldn't compute total
 
 Wrote `return "Calculated"` with a comment: "Igni doesn't support reduce/fold." The cheat sheet's Functions section shows a simple return but no `each` loop inside a function. **Fix: add an each-in-function example to the cheat sheet.**
 
 ### 5. Opus was slowest but cleanest
 
-50 seconds vs ~5 seconds for Gemini Fast. Produced the most structurally correct output: functions inside screens, `length()` for badge, proper separation of concerns.
+50 seconds vs ~5 seconds for Gemini Flash. Produced the most structurally correct output: functions inside screens, `length()` for badge, proper separation of concerns.
 
 ## Cheat sheet gaps identified
 
 1. **No-arg screen example needed** — all 4 models added `()`. Add `screen Home:` example.
-2. **`each` in function body example needed** — Gemini Fast didn't know functions can loop. Add total-computation example.
+2. **`each` in function body example needed** — Gemini Flash didn't know functions can loop. Add total-computation example.
 
 ## Cheat sheet vs full spec comparison (Shopping cart)
 
@@ -61,7 +61,7 @@ Wrote `return "Calculated"` with a comment: "Igni doesn't support reduce/fold." 
 | --- | --- | --- |
 | Lambda syntax | 3/3 correct | 4/4 correct |
 | Structural errors | 0 | 2 (screen parens, inline on-tap) |
-| Total computation | 3/3 correct | 3/4 (Gemini Fast failed) |
+| Total computation | 3/3 correct | 3/4 (Gemini Flash failed) |
 | Models tested | Frontier only | Mixed (frontier + fast) |
 
 The cheat sheet successfully teaches syntax and semantics. It fails to teach structure — where functions go, how screens are declared. The fix is two examples, not more prose.
