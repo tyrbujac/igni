@@ -14,13 +14,18 @@ All major v0.6.6 spec features now have transpiler support. 27 diff tests, 0 fai
 
 The v0.6.6 rating assessment identified tooling (4/10) and debugging (3/10) as the biggest drags on the human experience. These don't require spec changes and don't risk LLM accuracy regressions.
 
+**Done:**
+
+1. ~~**VS Code syntax highlighting**~~ — TextMate grammar in `editors/vscode/`. Keywords, UI primitives, events, properties, inline function calls, component params, type hints. Verified in Cursor.
+2. ~~**`print()` builtin**~~ — works with zero code changes. Generic function call fallback produces valid `print()` in Dart. Browser-tested.
+3. ~~**`igni run` CLI cleanup**~~ — Igni-branded messages, build animation with timing, debug banner removed, tab title + favicon set to Igni.
+4. ~~**Browser-test row layout fix**~~ — `fetch-reactive` (input + button in horizontal layout) confirmed working in browser.
+
 **Next session priorities:**
 
-1. **Browser-test new transpiler features** — run `on-change`, `fetch-mutation`, `fetch-reactive` examples in the browser via `test_app/`. Diff tests confirm the Dart compiles correctly but don't prove it runs correctly. Reactive re-fetch has runtime behaviour (URL comparison in `build()`) that only shows up in the browser.
-2. **VS Code syntax highlighting** — `.igni` files with coloured keywords, strings, comments. Quick win. Most visible improvement to the daily editing experience.
-3. **`print()` builtin** — logs to browser console. No debug output currently exists. Even basic `print(value)` transforms the debugging experience.
-4. **Better transpiler error messages** — map Dart errors back to Igni line numbers. Currently errors reference generated Dart code the user didn't write. Source maps or line-number tracking in codegen.
-5. **`igni new`** — project scaffolding. `igni run` works, needs the matching setup command.
+1. **Browser-test remaining features** — `on-change`, `fetch-mutation` examples not yet browser-tested. Diff tests confirm Dart compiles correctly but don't prove it runs correctly.
+2. **Better transpiler error messages** — map Dart errors back to Igni line numbers. Currently errors reference generated Dart code the user didn't write. Source maps or line-number tracking in codegen.
+3. **`igni new`** — project scaffolding. `igni run` works, needs the matching setup command.
 
 **Optional:** end-to-end cold test — now that the transpiler covers `on change:` and fetch mutations, a full pipeline test (spec → LLM → transpile → run in browser) is possible for the first time with these features.
 
