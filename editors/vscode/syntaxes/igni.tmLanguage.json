@@ -1,0 +1,176 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Igni",
+  "scopeName": "source.igni",
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#string" },
+    { "include": "#number" },
+    { "include": "#constant" },
+    { "include": "#event" },
+    { "include": "#object-literal" },
+    { "include": "#type-hint" },
+    { "include": "#property" },
+    { "include": "#operator" },
+    { "include": "#navigation" },
+    { "include": "#screen-component-def" },
+    { "include": "#block-keyword" },
+    { "include": "#control" },
+    { "include": "#ui-primitive" },
+    { "include": "#builtin-function" },
+    { "include": "#color-value" },
+    { "include": "#enum-value" },
+    { "include": "#function-def" },
+    { "include": "#function-call" },
+    { "include": "#screen-component-name" }
+  ],
+  "repository": {
+    "comment": {
+      "match": "#.*$",
+      "name": "comment.line.number-sign.igni"
+    },
+    "string": {
+      "begin": "\"",
+      "end": "\"",
+      "name": "string.quoted.double.igni",
+      "patterns": [
+        {
+          "match": "\\\\.",
+          "name": "constant.character.escape.igni"
+        }
+      ]
+    },
+    "number": {
+      "match": "\\b\\d+(\\.\\d+)?\\b",
+      "name": "constant.numeric.igni"
+    },
+    "constant": {
+      "match": "\\b(true|false|null)\\b",
+      "name": "constant.language.igni"
+    },
+    "event": {
+      "match": "\\b(on\\s+tap|on\\s+touch|on\\s+change)\\s*:",
+      "name": "keyword.control.event.igni"
+    },
+    "object-literal": {
+      "begin": "\\{",
+      "end": "\\}",
+      "name": "meta.object-literal.igni",
+      "patterns": [
+        {
+          "match": "\\b([a-z_][a-z0-9_]*)\\s*:",
+          "captures": {
+            "1": { "name": "entity.other.attribute-name.igni" }
+          }
+        },
+        { "include": "$self" }
+      ]
+    },
+    "type-hint": {
+      "match": "^(\\s+)([a-z_][a-z0-9_]*)\\s*:\\s*(\\[?)([A-Za-z][a-zA-Z0-9]*)(\\]?)\\s*(?==)",
+      "captures": {
+        "2": { "name": "variable.other.igni" },
+        "4": { "name": "entity.name.type.igni" }
+      }
+    },
+    "property": {
+      "match": "\\b(bind|style|color|placeholder|align|gap|padding|background|rounded|fill|size|round|min|max|options|method|title|spread|url|body|label)\\s*:",
+      "name": "entity.other.attribute-name.igni"
+    },
+    "operator": {
+      "patterns": [
+        {
+          "match": "\\b(is\\s+not\\s+empty|is\\s+empty|is\\s+not\\s+null|is\\s+null|is\\s+not\\s+in|is\\s+in|is\\s+loading|is\\s+error|is\\s+not|is)\\b",
+          "name": "keyword.operator.comparison.igni"
+        },
+        {
+          "match": "\\b(not|and|or)\\b",
+          "name": "keyword.operator.logical.igni"
+        },
+        {
+          "match": "(>=|<=|>|<)",
+          "name": "keyword.operator.comparison.igni"
+        },
+        {
+          "match": "(\\+|\\-|\\*|/)",
+          "name": "keyword.operator.arithmetic.igni"
+        },
+        {
+          "match": "=>",
+          "name": "keyword.operator.arrow.igni"
+        },
+        {
+          "match": "(?<![<>!])=(?![>=])",
+          "name": "keyword.operator.assignment.igni"
+        }
+      ]
+    },
+    "navigation": {
+      "match": "\\b(navigate\\s+to|navigate\\s+back)\\b",
+      "name": "keyword.control.navigation.igni"
+    },
+    "screen-component-def": {
+      "match": "^(\\s*)(screen|component)\\s+([A-Z][a-zA-Z0-9]*)\\s*\\(([^)]*)\\)",
+      "captures": {
+        "2": { "name": "keyword.declaration.igni" },
+        "3": { "name": "entity.name.type.igni" },
+        "4": {
+          "patterns": [
+            {
+              "match": "\\b([a-z_][a-z0-9_]*)\\b",
+              "name": "variable.parameter.igni"
+            }
+          ]
+        }
+      }
+    },
+    "block-keyword": {
+      "match": "\\b(screen|component|layout|shared|fetch)\\b",
+      "name": "keyword.declaration.igni"
+    },
+    "control": {
+      "match": "\\b(if|else\\s+if|else|each|in|return)\\b",
+      "name": "keyword.control.igni"
+    },
+    "ui-primitive": {
+      "match": "\\b(label|button|input|toggle|image|icon|spinner|slider|checkbox|dropdown|badge|body)\\b",
+      "name": "support.function.ui.igni"
+    },
+    "builtin-function": {
+      "match": "\\b(without|replace|find|count|length|filter|sorted|reversed|contains|random|play)\\s*(?=\\()",
+      "name": "support.function.builtin.igni"
+    },
+    "color-value": {
+      "match": "\\b(brand|subtle|danger|green|red|blue|white|black|yellow|orange|purple|teal|card)\\b",
+      "name": "support.constant.color.igni"
+    },
+    "enum-value": {
+      "match": "\\b(heading|caption|small|medium|large|center|end|vertical|horizontal)\\b",
+      "name": "support.constant.enum.igni"
+    },
+    "function-def": {
+      "match": "^(\\s+)([a-z_][a-z0-9_]*)\\s*\\(([^)]*)\\)\\s*:",
+      "captures": {
+        "2": { "name": "entity.name.function.igni" },
+        "3": {
+          "patterns": [
+            {
+              "match": "\\b([a-z_][a-z0-9_]*)\\b",
+              "name": "variable.parameter.igni"
+            }
+          ]
+        }
+      }
+    },
+    "function-call": {
+      "match": "\\b([a-z_][a-z0-9_]*)\\s*(?=\\()",
+      "captures": {
+        "1": { "name": "entity.name.function.igni" }
+      }
+    },
+    "screen-component-name": {
+      "match": "\\b([A-Z][a-zA-Z0-9]*)\\b",
+      "name": "entity.name.type.igni"
+    }
+  }
+}

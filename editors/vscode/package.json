@@ -1,0 +1,32 @@
+{
+  "name": "igni",
+  "displayName": "Igni",
+  "description": "Syntax highlighting for the Igni language",
+  "version": "0.1.0",
+  "publisher": "igni-lang",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": ["Programming Languages"],
+  "contributes": {
+    "languages": [
+      {
+        "id": "igni",
+        "aliases": ["Igni", "igni"],
+        "extensions": [".igni"],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/igni-light.png",
+          "dark": "./icons/igni-dark.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "igni",
+        "scopeName": "source.igni",
+        "path": "./syntaxes/igni.tmLanguage.json"
+      }
+    ]
+  }
+}
