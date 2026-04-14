@@ -4,6 +4,12 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.6.7 — 2026-04-14
+*Documentation-only. `print()` builtin, updated Running It section.*
+
+- **`print()` builtin** for console debugging — `print(value)` logs to browser console. No new syntax; documents existing transpiler behaviour.
+- **Running It section updated** — describes `igni run` behaviour (build output, hot reload on save, `print()` for debugging).
+
 ## v0.6.6 — 2026-04-13
 *Full spec reorganised into learning order. Background images.*
 
