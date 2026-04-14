@@ -4,6 +4,12 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.6.11 — 2026-04-14
+*`shape: circle` property on `button` for compact circular controls.*
+
+- **`button "X", shape: circle`** — compact circular button sized to its content. Default `button` remains a rounded-rectangle full-width bar. Motivation: BMI cold test revealed no way to express the round +/- stepper controls from Angela's reference design — models fell back to ordinary rectangular buttons. One new property value (circle), no new primitive. Circular buttons skip the SizedBox full-width wrap so a row of them lays out as distinct tap targets. Non-breaking.
+- Canonical pairing: `button "-", shape: circle, color: subtle, on tap: ...` for +/- steppers; `icon "play", on tap: ...` still the right pattern for raw-glyph icon buttons without a filled background.
+
 ## v0.6.10 — 2026-04-14
 *Documentation-only. "Bottom-anchored actions" pattern added to the layout section.*
 

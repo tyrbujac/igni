@@ -704,6 +704,8 @@ export class CodeGenerator {
     const ind = '  '.repeat(depth);
     const tapEvent = node.events.find(e => e.event === 'tap');
     const colorProp = findProp(node.properties, 'color');
+    const shapeProp = findProp(node.properties, 'shape');
+    const isCircle = shapeProp?.value.type === 'Ident' && shapeProp.value.name === 'circle';
 
     const styleParts: string[] = [];
     if (colorProp) {
@@ -717,18 +719,33 @@ export class CodeGenerator {
       styleParts.push(`backgroundColor: ${resolveColor(colorProp.value)}`);
       styleParts.push(`foregroundColor: Colors.white`);
     }
-    styleParts.push(`shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))`);
+    if (isCircle) {
+      // `shape: circle` — compact fixed-size button for icon-style controls
+      // like +/-. Keeps square aspect so the CircleBorder actually draws a
+      // circle; a rectangular CircleBorder renders as a stadium shape.
+      styleParts.push(`shape: const CircleBorder()`);
+      styleParts.push(`padding: const EdgeInsets.all(16)`);
+      styleParts.push(`minimumSize: const Size(48, 48)`);
+    } else {
+      styleParts.push(`shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))`);
+    }
 
+    const isConstText = node.text.type === 'StringLit';
+    const textStr = isConstText ? this.exprToConstStr(node.text) : this.exprToDisplayStr(node.text);
+    const textChild = `${isConstText ? 'const ' : ''}Text(${textStr})`;
+
+    // Circle buttons never stretch to full width — their whole point is being
+    // a compact tap target. Row context already skipped the SizedBox wrap;
+    // circle extends that to the column case.
+    const compact = inRow || isCircle;
     let code: string;
-    if (inRow) {
+    if (compact) {
       code = `${ind}ElevatedButton(\n`;
       code += `${ind}  style: ElevatedButton.styleFrom(${styleParts.join(', ')}),\n`;
       if (tapEvent) {
         code += this.genOnPressed(tapEvent, depth + 1);
       }
-      const isConstText = node.text.type === 'StringLit';
-      const textStr = isConstText ? this.exprToConstStr(node.text) : this.exprToDisplayStr(node.text);
-      code += `${ind}  child: ${isConstText ? 'const ' : ''}Text(${textStr}),\n`;
+      code += `${ind}  child: ${textChild},\n`;
       code += `${ind})`;
     } else {
       code = `${ind}SizedBox(\n${ind}  width: double.infinity,\n${ind}  child: ElevatedButton(\n`;
@@ -736,9 +753,7 @@ export class CodeGenerator {
       if (tapEvent) {
         code += this.genOnPressed(tapEvent, depth + 2);
       }
-      const isConstText = node.text.type === 'StringLit';
-      const textStr = isConstText ? this.exprToConstStr(node.text) : this.exprToDisplayStr(node.text);
-      code += `${ind}    child: ${isConstText ? 'const ' : ''}Text(${textStr}),\n`;
+      code += `${ind}    child: ${textChild},\n`;
       code += `${ind}  ),\n`;
       code += `${ind})`;
     }
