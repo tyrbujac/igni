@@ -74,7 +74,8 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             Row(
               children: [
-                TextField(
+                Expanded(
+                  child: TextField(
                   controller: _queryController,
                   onChanged: (value) {
                     setState(() {
@@ -83,18 +84,16 @@ class _SearchScreenState extends State<SearchScreen> {
                   },
                   decoration: const InputDecoration(hintText: 'Search...'),
                 ),
+                ),
                 const SizedBox(width: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                    onPressed: () {
-                      setState(() {
-                        active = query;
-                      });
-                    },
-                    child: const Text('Search'),
-                  ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                  onPressed: () {
+                    setState(() {
+                      active = query;
+                    });
+                  },
+                  child: const Text('Search'),
                 ),
               ],
             ),

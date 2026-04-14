@@ -58,15 +58,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   'Products',
                   style: Theme.of(context).textTheme.headlineLarge!,
                 ),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => CartScreen()));
-                    },
-                    child: const Text('View Cart'),
-                  ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => CartScreen()));
+                  },
+                  child: const Text('View Cart'),
                 ),
               ],
             ),
@@ -87,15 +84,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                        onPressed: () {
-                          add_to_cart(product);
-                        },
-                        child: const Text('Add to Cart'),
-                      ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                      onPressed: () {
+                        add_to_cart(product);
+                      },
+                      child: const Text('Add to Cart'),
                     ),
                   ],
                 ),
@@ -148,15 +142,12 @@ class _CartScreenState extends State<CartScreen> {
                   'Your Cart',
                   style: Theme.of(context).textTheme.headlineLarge!,
                 ),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Back to Shop'),
-                  ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Back to Shop'),
                 ),
               ],
             ),
@@ -182,15 +173,12 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                         ],
                       ),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                          onPressed: () {
-                            remove_item(item);
-                          },
-                          child: const Text('Remove'),
-                        ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                        onPressed: () {
+                          remove_item(item);
+                        },
+                        child: const Text('Remove'),
                       ),
                     ],
                   ),

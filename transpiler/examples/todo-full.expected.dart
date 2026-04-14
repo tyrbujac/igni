@@ -90,15 +90,12 @@ class _TodoScreenState extends State<TodoScreen> {
                       item['text'].toString(),
                     ),
                     const SizedBox(width: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                        onPressed: () {
-                          remove(item);
-                        },
-                        child: const Text('Done'),
-                      ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                      onPressed: () {
+                        remove(item);
+                      },
+                      child: const Text('Done'),
                     ),
                   ],
                 ),

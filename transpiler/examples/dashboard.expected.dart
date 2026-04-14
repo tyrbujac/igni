@@ -79,15 +79,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   'Dashboard',
                   style: Theme.of(context).textTheme.headlineLarge!,
                 ),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                    onPressed: () {
-                      refresh();
-                    },
-                    child: const Text('Refresh'),
-                  ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                  onPressed: () {
+                    refresh();
+                  },
+                  child: const Text('Refresh'),
                 ),
               ],
             ),

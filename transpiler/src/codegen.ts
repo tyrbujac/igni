@@ -484,12 +484,12 @@ export class CodeGenerator {
 
   // -- UI node generation --
 
-  private genUINode(node: UINode, depth: number): string {
+  private genUINode(node: UINode, depth: number, inRow = false): string {
     switch (node.type) {
       case 'Layout': return this.genLayout(node, depth);
       case 'Label':  return this.genLabel(node, depth);
-      case 'Button': return this.genButton(node, depth);
-      case 'Input':  return this.genInput(node, depth);
+      case 'Button': return this.genButton(node, depth, inRow);
+      case 'Input':  return this.genInput(node, depth, inRow);
       case 'Toggle': return this.genToggle(node, depth);
       case 'If':     return this.genIf(node, depth);
       case 'Each':   return this.genEach(node, depth);
@@ -525,13 +525,14 @@ export class CodeGenerator {
     const ind = '  '.repeat(colDepth);
 
     // Build children with spacers
+    const isRow = node.direction === 'horizontal';
     const childLines: string[] = [];
     for (let i = 0; i < node.children.length; i++) {
       const child = node.children[i];
       if (child.type === 'Comment') {
-        childLines.push(this.genUINode(child, colDepth + 2));
+        childLines.push(this.genUINode(child, colDepth + 2, isRow));
       } else {
-        childLines.push(`${this.genUINode(child, colDepth + 2)},`);
+        childLines.push(`${this.genUINode(child, colDepth + 2, isRow)},`);
         if (gapSize !== null && i < node.children.length - 1 && node.children[i + 1].type !== 'Comment') {
           childLines.push(`${ind}    const SizedBox(${gapDimension}: ${gapSize}),`);
         }
@@ -657,30 +658,44 @@ export class CodeGenerator {
     return code;
   }
 
-  private genButton(node: ButtonNode, depth: number): string {
+  private genButton(node: ButtonNode, depth: number, inRow = false): string {
     const ind = '  '.repeat(depth);
     const tapEvent = node.events.find(e => e.event === 'tap');
     const colorProp = findProp(node.properties, 'color');
 
-    let code = `${ind}SizedBox(\n${ind}  width: double.infinity,\n${ind}  child: ElevatedButton(\n`;
     const styleParts: string[] = [];
     if (colorProp) {
       styleParts.push(`backgroundColor: ${resolveColor(colorProp.value)}`);
     }
     styleParts.push(`shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))`);
-    code += `${ind}    style: ElevatedButton.styleFrom(${styleParts.join(', ')}),\n`;
-    if (tapEvent) {
-      code += this.genOnPressed(tapEvent, depth + 2);
+
+    let code: string;
+    if (inRow) {
+      code = `${ind}ElevatedButton(\n`;
+      code += `${ind}  style: ElevatedButton.styleFrom(${styleParts.join(', ')}),\n`;
+      if (tapEvent) {
+        code += this.genOnPressed(tapEvent, depth + 1);
+      }
+      const isConstText = node.text.type === 'StringLit';
+      const textStr = isConstText ? this.exprToConstStr(node.text) : this.exprToDisplayStr(node.text);
+      code += `${ind}  child: ${isConstText ? 'const ' : ''}Text(${textStr}),\n`;
+      code += `${ind})`;
+    } else {
+      code = `${ind}SizedBox(\n${ind}  width: double.infinity,\n${ind}  child: ElevatedButton(\n`;
+      code += `${ind}    style: ElevatedButton.styleFrom(${styleParts.join(', ')}),\n`;
+      if (tapEvent) {
+        code += this.genOnPressed(tapEvent, depth + 2);
+      }
+      const isConstText = node.text.type === 'StringLit';
+      const textStr = isConstText ? this.exprToConstStr(node.text) : this.exprToDisplayStr(node.text);
+      code += `${ind}    child: ${isConstText ? 'const ' : ''}Text(${textStr}),\n`;
+      code += `${ind}  ),\n`;
+      code += `${ind})`;
     }
-    const isConstText = node.text.type === 'StringLit';
-    const textStr = isConstText ? this.exprToConstStr(node.text) : this.exprToDisplayStr(node.text);
-    code += `${ind}    child: ${isConstText ? 'const ' : ''}Text(${textStr}),\n`;
-    code += `${ind}  ),\n`;
-    code += `${ind})`;
     return code;
   }
 
-  private genInput(node: InputNode, depth: number): string {
+  private genInput(node: InputNode, depth: number, inRow = false): string {
     const ind = '  '.repeat(depth);
     const placeholder = findProp(node.properties, 'placeholder');
     const changeEvent = node.events.find(e => e.event === 'change');
@@ -700,6 +715,9 @@ export class CodeGenerator {
       code += `${ind}  decoration: const InputDecoration(hintText: ${hint}),\n`;
     }
     code += `${ind})`;
+    if (inRow) {
+      code = `${ind}Expanded(\n${ind}  child: ${code.trimStart()},\n${ind})`;
+    }
     return code;
   }
 
