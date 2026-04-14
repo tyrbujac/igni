@@ -8,12 +8,14 @@ screen Home:
     label "Wrapper Demo", style: heading
 
     Card "Settings":
-      toggle bind: dark_mode
-      toggle bind: notifications
+      layout vertical, gap: small:
+        toggle bind: dark_mode
+        toggle bind: notifications
 
     Card "Account":
-      label "user@example.com"
-      button "Logout", color: danger, on tap: logged_out()
+      layout vertical, gap: small:
+        label "user@example.com"
+        button "Logout", color: danger, on tap: logged_out()
 
   dark_mode = false
   notifications = true

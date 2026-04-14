@@ -62,24 +62,24 @@ class _HomeScreenState extends State<HomeScreen> {
             Card(
               title: 'Settings',
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                Switch(
-                  value: dark_mode,
-                  onChanged: (value) {
-                    setState(() {
-                      dark_mode = value;
-                    });
-                  },
-                ),
-                Switch(
-                  value: notifications,
-                  onChanged: (value) {
-                    setState(() {
-                      notifications = value;
-                    });
-                  },
-                ),
+                  Switch(
+                    value: dark_mode,
+                    onChanged: (value) {
+                      setState(() {
+                        dark_mode = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Switch(
+                    value: notifications,
+                    onChanged: (value) {
+                      setState(() {
+                        notifications = value;
+                      });
+                    },
+                  ),
                 ],
               ),
             ),
@@ -87,21 +87,21 @@ class _HomeScreenState extends State<HomeScreen> {
             Card(
               title: 'Account',
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                Text(
-                  'user@example.com',
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                    onPressed: () {
-                      logged_out();
-                    },
-                    child: const Text('Logout'),
+                  Text(
+                    'user@example.com',
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                      onPressed: () {
+                        logged_out();
+                      },
+                      child: const Text('Logout'),
+                    ),
+                  ),
                 ],
               ),
             ),

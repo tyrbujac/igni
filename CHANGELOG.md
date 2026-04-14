@@ -4,6 +4,14 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.6.8 — 2026-04-14
+*Breaking: `body` slot renders exactly one widget. Caller wraps multi-child content explicitly.*
+
+- **`body` is a single-widget slot** (not a container) — the implicit Column wrapper around caller content is gone. Callers passing multiple children must use `layout vertical:` or `layout horizontal:`. Motivation: the BMI cold test (v0.6.7) showed the implicit wrapper both hid layout decisions from the caller and produced runtime crashes when `body` sat inside a horizontal layout. Making the slot a literal hole aligns with the "zero magic" principle and fixes the crash by construction.
+- Transpiler now emits a clear error when a wrapper receives 2+ children.
+- Migrated `wrapper.igni` example to the new form.
+- Same transpiler bug fixes folded into v0.6.8 from BMI cold test work: multi-param `navigate to`, dynamic icon-name runtime lookup, `if/else` at component body root, binary expression parenthesisation, wrapper components with 2+ positional args, screen-root `Expanded` unwrap, scoped `CrossAxisAlignment.stretch`.
+
 ## v0.6.7 — 2026-04-14
 *Documentation-only. `print()` builtin, updated Running It section.*
 

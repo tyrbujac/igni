@@ -11,6 +11,7 @@ import {
   inferType, isStringExpr, substituteLambdaParam, isImageBackground,
   generateIconLookupHelper,
 } from './codegen-helpers.js';
+import { TranspileError } from './errors.js';
 
 export class CodeGenerator {
   private stateVars: string[] = [];
@@ -1118,10 +1119,20 @@ export class CodeGenerator {
       namedArgs.push(`${prop.name}: ${this.exprToDart(prop.value)}`);
     }
 
-    // Wrapper invocation: wrap children in Column and pass as child
-    if (node.children.length > 0) {
-      const childLines = node.children.map(c => c.type === 'Comment' ? this.genUINode(c, depth + 2) : this.genUINode(c, depth + 2) + ',').join('\n');
-      const childWidget = `Column(\n${ind}    crossAxisAlignment: CrossAxisAlignment.start,\n${ind}    children: [\n${childLines}\n${ind}    ],\n${ind}  )`;
+    // Wrapper invocation: the `body` slot renders exactly one widget (spec
+    // v0.6.8). Pass the caller's single child directly — no implicit Column
+    // wrapper. If the caller passed multiple children, reject with a clear
+    // message pointing them at `layout vertical:` / `layout horizontal:`.
+    const renderableChildren = node.children.filter(c => c.type !== 'Comment');
+    if (renderableChildren.length > 1) {
+      throw new TranspileError(
+        `Wrapper component \`${node.name}\` received ${renderableChildren.length} children. ` +
+        `The \`body\` slot renders exactly one widget — wrap multiple children in \`layout vertical:\` or \`layout horizontal:\`.`,
+        1, 1
+      );
+    }
+    if (renderableChildren.length === 1) {
+      const childWidget = this.genUINode(renderableChildren[0], depth + 1).trimStart();
       namedArgs.push(`child: ${childWidget}`);
       return `${ind}${node.name}(\n${ind}  ${namedArgs.join(`,\n${ind}  `)},\n${ind})`;
     }

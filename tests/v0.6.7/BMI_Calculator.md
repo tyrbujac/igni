@@ -757,3 +757,18 @@ The SizedBox crashes because its requested infinite width has no parent width to
 Resolving it needs a design decision (how should `body` interact with a horizontal parent? Should buttons be context-aware for width?). Deferred to v0.7 design work — noted as a v0.7 candidate in the ROADMAP.
 
 The BMI end-to-end test isn't blocked on transpiler correctness anymore; it's blocked on language design around `body` + horizontal layouts + default button widths.
+
+### Resolution — v0.6.8
+
+The body-slot design question was resolved on 2026-04-14. See spec v0.6.8: `body` now renders exactly one widget. Callers with multiple children wrap them in an explicit `layout vertical:` or `layout horizontal:`. This removes the implicit Column wrapper entirely, resolving the BMI crash by construction — the buttons, now inside an explicit horizontal layout, become direct Row children with intrinsic widths instead of `SizedBox(width: infinity)` inside an unconstrained Column.
+
+After migrating ValueSection's inner `layout horizontal: body` to just `body`, and rewriting the caller's buttons as:
+
+```igni
+ValueSection "WEIGHT", weight:
+  layout horizontal, gap: medium:
+    button "-", on tap: dec_weight()
+    button "+", on tap: inc_weight()
+```
+
+The full pipeline runs clean: spec → Opus output → transpile → Flutter build → browser render. No errors, no overflow warnings. The cold-test loop is fully closed end-to-end for the first time in project history.

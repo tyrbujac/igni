@@ -95,14 +95,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   title: 'Users',
                   value: users,
                   icon_name: 'users',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                    Chip(
-                      label: Text('+12%'),
-                      backgroundColor: Colors.green,
-                    ),
-                    ],
+                  child: Chip(
+                    label: Text('+12%'),
+                    backgroundColor: Colors.green,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -110,14 +105,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   title: 'Revenue',
                   value: revenue,
                   icon_name: 'dollar',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                    Chip(
-                      label: Text('Stable'),
-                      backgroundColor: Colors.grey,
-                    ),
-                    ],
+                  child: Chip(
+                    label: Text('Stable'),
+                    backgroundColor: Colors.grey,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -125,14 +115,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   title: 'Orders',
                   value: orders,
                   icon_name: 'cart',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                    Chip(
-                      label: Text('Active'),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                    ),
-                    ],
+                  child: Chip(
+                    label: Text('Active'),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ],
