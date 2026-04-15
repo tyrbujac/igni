@@ -4,7 +4,7 @@ import {
   Program, Screen, ScreenItem, VariableDecl, UINode,
   Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
   Property, EventHandler, FunctionDef, FunctionCall, Statement, EachNode,
-  NavigateTo, NavigateBack, ComponentDef, ComponentInvocation,
+  NavigateTo, NavigateBack, ComponentDef, ComponentItem, ComponentInvocation,
   LambdaExpr, EqualityExpr, InExpr, ReturnStmt, IfStmt, EachStmt, EmitStmt,
   IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
@@ -354,9 +354,13 @@ export class Parser {
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
     this.consume(TokenType.Indent, 'Expected indent');
-    const body: UINode[] = [];
+    const body: ComponentItem[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
-      body.push(this.parseUINode());
+      if (this.isVariableDecl()) {
+        body.push(this.parseVariableDecl());
+      } else {
+        body.push(this.parseUINode());
+      }
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
     return { type: 'ComponentDef', name, params, body };

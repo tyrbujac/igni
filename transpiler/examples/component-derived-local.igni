@@ -1,0 +1,15 @@
+screen Shop:
+  items = [
+    {name: "Apples", price: 3},
+    {name: "Bread", price: 2}
+  ]
+
+  layout vertical, gap: medium, padding: large:
+    each item in items:
+      Entry item
+
+component Entry(item):
+  label_text = item.name + ": $" + item.price
+
+  layout horizontal, gap: small, padding: small, background: card, rounded: true:
+    label label_text

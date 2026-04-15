@@ -1,7 +1,7 @@
 import {
   Program, Screen, ScreenItem, VariableDecl,
   UINode, Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode, EachNode,
-  ComponentDef, ComponentInvocation,
+  ComponentDef, ComponentItem, ComponentInvocation,
   Property, EventHandler, FunctionDef, Statement, Expr, IsExpr,
   LambdaExpr, EqualityExpr,
 } from './ast.js';
@@ -1163,6 +1163,13 @@ export class CodeGenerator {
     }
     code += `  const ${name}({super.key${allCtorParams.length > 0 ? ', ' + allCtorParams.join(', ') : ''}});\n\n`;
     code += `  @override\n  Widget build(BuildContext context) {\n`;
+    // Component-body derived locals: emit each VariableDecl as a `final` at
+    // the top of build(). Pure-derived values recompute on every rebuild,
+    // which is the correct semantics for a StatelessWidget.
+    const derivedLocals = comp.body.filter((n): n is VariableDecl => n.type === 'VariableDecl');
+    for (const decl of derivedLocals) {
+      code += `    final dynamic ${decl.name} = ${this.exprToDart(decl.value)};\n`;
+    }
     code += this.genComponentBodyReturn(comp.body, 2);
     code += `  }\n}\n`;
 
@@ -1221,13 +1228,16 @@ export class CodeGenerator {
       const uiNodes = screen.body.filter((i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef');
       checkUI(uiNodes);
     }
-    for (const comp of program.components) checkUI(comp.body);
+    for (const comp of program.components) {
+      const uiNodes = comp.body.filter((i): i is UINode => i.type !== 'VariableDecl');
+      checkUI(uiNodes);
+    }
   }
 
   // Walk a UI body collecting (event, argName?) pairs from every `emit` action
   // inside an event handler. Multiple emits of the same event must agree on
   // their argument shape — different arg names is a TranspileError.
-  private collectEmits(body: UINode[]): { event: string; argName: string | null }[] {
+  private collectEmits(body: ReadonlyArray<ComponentItem | UINode>): { event: string; argName: string | null }[] {
     const found = new Map<string, string | null>();
     const argNames = new Map<string, string | null>();
     const visitStmt = (s: Statement) => {
@@ -1272,7 +1282,7 @@ export class CodeGenerator {
         }
       }
     };
-    visit(body);
+    visit(body.filter((n): n is UINode => n.type !== 'VariableDecl'));
     return Array.from(found, ([event, argName]) => ({ event, argName }));
   }
 
@@ -1280,12 +1290,13 @@ export class CodeGenerator {
   // (typically a Layout) — for those we emit `return Widget;`. If the root is an
   // If node we can't use the spread-if pattern (it's only valid inside list
   // literals), so we emit sequential conditional `return` statements instead.
-  private genComponentBodyReturn(body: UINode[], depth: number): string {
+  private genComponentBodyReturn(body: ReadonlyArray<ComponentItem | UINode>, depth: number): string {
     const ind = '  '.repeat(depth);
-    if (body.length === 0) {
+    const uiNodes = body.filter((n): n is UINode => n.type !== 'VariableDecl');
+    if (uiNodes.length === 0) {
       return `${ind}return const SizedBox();\n`;
     }
-    const root = body[0];
+    const root = uiNodes[0];
     if (root.type === 'If') {
       return this.genRootConditionalReturn(root, depth);
     }
@@ -1333,8 +1344,9 @@ export class CodeGenerator {
     return code;
   }
 
-  private componentHasBody(nodes: UINode[]): boolean {
+  private componentHasBody(nodes: ReadonlyArray<ComponentItem | UINode>): boolean {
     for (const node of nodes) {
+      if (node.type === 'VariableDecl') continue;
       if (node.type === 'Body') return true;
       if (node.type === 'Layout' && this.componentHasBody(node.children)) return true;
       if (node.type === 'If') {

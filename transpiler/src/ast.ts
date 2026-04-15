@@ -292,11 +292,13 @@ export interface Screen {
   body: ScreenItem[];
 }
 
+export type ComponentItem = VariableDecl | UINode;
+
 export interface ComponentDef {
   type: 'ComponentDef';
   name: string;
   params: string[];
-  body: UINode[];
+  body: ComponentItem[];
 }
 
 export interface Program {
