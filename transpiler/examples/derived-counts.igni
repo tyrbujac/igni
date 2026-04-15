@@ -1,0 +1,18 @@
+screen DerivedCounts:
+  items = [
+    {level: "critical", name: "A"},
+    {level: "warning", name: "B"},
+    {level: "critical", name: "C"},
+    {level: "info", name: "D"}
+  ]
+
+  critical = length(filter(items, i => i.level is "critical"))
+  warning = length(filter(items, i => i.level is "warning"))
+  info = length(filter(items, i => i.level is "info"))
+
+  layout vertical, gap: medium, padding: large:
+    label critical + " critical", style: heading.small
+    label warning + " warning"
+    label info + " info"
+    each item in items:
+      label upper(item.level) + " — " + item.name

@@ -233,16 +233,18 @@ export class CodeGenerator {
     // If variable A is a build local and its initializer references variable B,
     // then B must also be a build local — UNLESS B has a simple literal initializer
     // (strings, numbers, booleans are real state, not derived values).
+    const allDecls = screen.body.filter(i => i.type === 'VariableDecl') as VariableDecl[];
+    const allDeclNames = new Set<string>(allDecls.map(d => d.name));
+    const isSimpleLiteral = (v: VariableDecl) => {
+      const t = v.value.type;
+      return t === 'StringLit'
+        || t === 'NumberLit'
+        || (t === 'Ident' && ((v.value as any).name === 'true' || (v.value as any).name === 'false'))
+        || isStyleValueExpr(v.value)
+        || t === 'ListLit';
+    };
+
     if (hasConditionalAssignment) {
-      const allDecls = screen.body.filter(i => i.type === 'VariableDecl') as VariableDecl[];
-      const isSimpleLiteral = (v: VariableDecl) => {
-        const t = v.value.type;
-        return t === 'StringLit'
-          || t === 'NumberLit'
-          || (t === 'Ident' && ((v.value as any).name === 'true' || (v.value as any).name === 'false'))
-          || isStyleValueExpr(v.value)
-          || t === 'ListLit';
-      };
       const scanned = new Set<string>();
       let changed = true;
       while (changed) {
@@ -257,6 +259,25 @@ export class CodeGenerator {
               }
             }
           }
+        }
+      }
+    }
+
+    // Third pass: promote derived variables to build locals.
+    // Dart forbids instance-field initializers from referencing other instance
+    // fields, so any screen-body variable whose initializer references another
+    // screen-body variable must live inside build() — where it also re-evaluates
+    // each rebuild, matching Igni's lexical reactivity semantics.
+    let changedDerived = true;
+    while (changedDerived) {
+      changedDerived = false;
+      for (const decl of allDecls) {
+        if (buildLocalVars.has(decl.name)) continue;
+        // fetch calls become stream/future state, handled separately — skip.
+        if (decl.value.type === 'FunctionCall' && (decl.value as any).name === 'fetch') continue;
+        if (this.exprRefsAny(decl.value, allDeclNames)) {
+          buildLocalVars.add(decl.name);
+          changedDerived = true;
         }
       }
     }
