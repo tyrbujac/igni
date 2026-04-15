@@ -22,7 +22,7 @@
     "attempted": true,
     "extracted_code": true,
     "passed": false,
-    "error": "Error: Unexpected token \"streak_text\" — expected a UI element\n\n    2 |   streak_text = \"Streak: \" + habit.streak\n      |              ^",
+    "error": "Error: checkbox requires bind:\n\n    11 | screen Habits, title: \"HABITS\", background: subtle:\n       | ^",
     "igni_lines": 44
   }
 }

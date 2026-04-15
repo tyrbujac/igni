@@ -22,7 +22,7 @@
     "attempted": true,
     "extracted_code": true,
     "passed": false,
-    "error": "Error: Expected event name, got \"toggle\"\n\n    28 |           HabitRow h, on toggle: toggle_habit(h)\n       |                                ^",
+    "error": "Error: checkbox requires bind:\n\n    60 | \n       | ^",
     "igni_lines": 60
   }
 }

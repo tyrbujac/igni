@@ -23,8 +23,8 @@
   "transpile": {
     "attempted": true,
     "extracted_code": true,
-    "passed": false,
-    "error": "Error: Expected event name after \"emit\", got \"toggle\"\n\n    14 |       button \"✓\", shape: circle, color: green, on tap: emit toggle\n       |                                                                   ^",
+    "passed": true,
+    "error": null,
     "igni_lines": 63
   }
 }
