@@ -48,6 +48,22 @@ Save `app.igni`, browser updates automatically. That's it.
 
 Under the hood, a hidden `.igni/` Flutter project is created automatically. You never touch it — just edit `.igni` files and save.
 
+## Mobile testing (advanced)
+
+`igni run` targets Chrome with hot reload. To preview an Igni app on an iOS simulator or Android emulator, drop into the generated `.igni/` Flutter project and use Flutter directly.
+
+```bash
+igni run              # once, to bootstrap .igni/ (Ctrl-C after the browser opens)
+cd .igni
+flutter create . --platforms=ios,android   # expand platforms
+flutter devices                             # list simulators / emulators
+flutter run -d <device-id>                  # run on a specific device
+```
+
+Recommended entry point: the iOS simulator (`open -a Simulator`, then `flutter run -d <simulator-id>`) — no USB cable, no Android SDK, fast boot.
+
+Hot reload via `igni run` is Chrome-only for now. Mobile testing is a manual re-run loop: edit `.igni`, re-run `igni run` (to regenerate `main.dart`), then re-run `flutter run` inside `.igni/`.
+
 ## Project structure
 
 Igni files are much shorter than their Flutter equivalents — a screen is typically 10-40 lines, not 100-300. Flat file structure works well:
