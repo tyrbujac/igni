@@ -280,7 +280,7 @@ async function run(): Promise<void> {
           clearInterval(spinner);
           const elapsed = ((Date.now() - buildStart) / 1000).toFixed(1);
           process.stdout.write(`\r  ${projectName} ready (${elapsed}s)\n\n`);
-          console.log('  Press r to reload, q to quit.\n');
+          console.log('  Save a .igni file to reload. Press q to quit.\n');
         }
         continue;
       }
