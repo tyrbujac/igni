@@ -1,0 +1,36 @@
+screen Alerts, title: "ALERTS":
+  alerts = [
+    {level: "critical", message: "Database connection lost"},
+    {level: "critical", message: "Payment gateway timeout"},
+    {level: "warning", message: "High memory usage on worker-3"},
+    {level: "warning", message: "API response time above 500ms"},
+    {level: "info", message: "Deployment v2.4.1 completed"}
+  ]
+
+  critical_count = length(filter(alerts, a => a.level is "critical"))
+  warning_count = length(filter(alerts, a => a.level is "warning"))
+  info_count = length(filter(alerts, a => a.level is "info"))
+
+  summary_color = green
+  if warning_count > 0:
+    summary_color = orange
+  if critical_count > 0:
+    summary_color = danger
+
+  layout vertical, gap: medium, padding: large:
+    label critical_count + " critical, " + warning_count + " warnings, " + info_count + " info", style: body, color: summary_color
+    divider
+    each alert in alerts:
+      AlertRow alert, severity_color(alert.level)
+
+  severity_color(level):
+    if level is "critical":
+      return danger
+    if level is "warning":
+      return orange
+    return green
+
+component AlertRow(alert, color):
+  layout horizontal, gap: medium, padding: medium, background: card, rounded: medium:
+    badge upper(alert.level), color: color
+    label alert.message, style: body
