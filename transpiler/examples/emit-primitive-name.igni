@@ -1,0 +1,11 @@
+screen Demo:
+  checked = false
+
+  layout vertical, gap: medium, padding: large:
+    Flip checked, on toggle: checked = not checked
+    label checked
+
+component Flip(value):
+  layout horizontal, gap: medium:
+    button "flip", shape: circle, on tap: emit toggle
+    label value

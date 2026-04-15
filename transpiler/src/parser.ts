@@ -493,10 +493,27 @@ export class Parser {
 
   private parseEventHandler(): EventHandler {
     this.consume(TokenType.On, 'Expected "on"');
-    const event = this.consume(TokenType.Identifier, 'Expected event name').value;
+    const event = this.consumeEventName('Expected event name').value;
     this.consume(TokenType.Colon, 'Expected ":"');
     const action = this.parseStatement();
     return { event, action };
+  }
+
+  // Accept either an Identifier or a UI-primitive keyword as an event name.
+  // Custom events often mirror a primitive (`emit toggle`, `on toggle:`); the
+  // spec's only reserved event names are `tap` / `change` / `touch`, which are
+  // already lexed as Identifiers.
+  private consumeEventName(msg: string): Token {
+    const PRIMITIVE_EVENT_NAMES: TokenType[] = [
+      TokenType.Label, TokenType.Button, TokenType.Input, TokenType.Toggle,
+      TokenType.Spinner, TokenType.Divider, TokenType.Icon, TokenType.Image,
+      TokenType.Slider, TokenType.Checkbox, TokenType.Dropdown, TokenType.Badge,
+    ];
+    const tok = this.peek(0);
+    if (tok && (tok.type === TokenType.Identifier || PRIMITIVE_EVENT_NAMES.includes(tok.type))) {
+      return this.advance();
+    }
+    return this.consume(TokenType.Identifier, msg);
   }
 
   private parseStatement(): Statement {
@@ -526,7 +543,7 @@ export class Parser {
 
   private parseEmit(): EmitStmt {
     this.consume(TokenType.Emit, 'Expected "emit"');
-    const eventTok = this.consume(TokenType.Identifier, 'Expected event name after "emit"');
+    const eventTok = this.consumeEventName('Expected event name after "emit"');
     const event = eventTok.value;
     if (event === 'tap' || event === 'change' || event === 'touch') {
       this.error(`"${event}" is a built-in event name, choose a different name for your custom event`);
