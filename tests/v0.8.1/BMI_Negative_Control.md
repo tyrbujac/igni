@@ -75,23 +75,43 @@ Transpile fails on line 1 because Opus used `──` box-drawing characters in a
 
 **Most diagnostic output of the control round.** The honest-no disclaimer is exactly the signal the v0.7.0 CLAUDE.md methodology flags as most valuable: *"a model that correctly names what the spec can't do is more useful for designing the next version than a model that invents a workaround."* Opus did the first while the others did the second. Worth citing directly in the dissertation.
 
-### GPT-5.4 → JavaScript / React-ish
+### GPT-5.4 → SwiftUI / Compose-ish (correction below)
 
-GPT-5.4 invents indentation-respecting syntax but with JS operators:
+GPT-5.4 produces a brace-heavy declarative-UI DSL, not indentation-based syntax:
 
 ```
-screen BMICalculator:
-  weightKg = 70
-  heightM = 1.75
-  calculate_bmi():
+app BMI_Calculator {
+  state {
+    weightKg: number = 70
+    heightCm: number = 170
+  }
+
+  computed {
+    heightM = heightCm / 100
     bmi = heightM > 0 ? weightKg / (heightM * heightM) : 0
-    if bmi < 18.5:
-      category = "Underweight"
+
+    category =
+      bmi < 18.5 ? "Underweight" :
+      bmi < 25   ? "Normal" :
+      bmi < 30   ? "Overweight" : "Obese"
+  }
+
+  ui {
+    Window(title: "BMI Calculator") {
+      Column(spacing: 16, padding: 20) {
+        NumberInput(value: bind weightKg, …)
+        Button(onTap: …) { Text("Calculate") }
+      }
+    }
+  }
+}
 ```
 
-Key drift markers: `?:` ternary (spec uses assign-default-then-override), implicit typing. Notably closer to Igni's actual syntax than the others — `screen Name:`, indentation, colons. GPT-5.4 may have seen Igni references in training or is just *very* good at pattern-matching from the language name.
+Key drift markers: curly braces throughout, `state { }` / `computed { }` / `ui { }` top-level blocks, `bind weightKg` as a value expression, `Window` / `Column` / `NumberInput` PascalCase widget constructors with named-arg parens, `?:` ternary expressions. This shape is closer to Compose / SwiftUI / Dart UI-toolkits than to anything indentation-based.
 
-Transpile fails on the `?:` ternary. Without that one line, this output is remarkably close to legal Igni — this is the **most "accidentally correct" drift of the round**. Flag for follow-up: consider whether Igni has any scraped corpus presence (CLAUDE.md, the GitHub repo).
+Transpile fails on the `?:` ternary character. The output is not "accidentally close to Igni" — it's a generic declarative-brace DSL that happens to share some vocabulary (`bind`, colons on named args) but none of Igni's structural shape.
+
+**Contamination check result:** running the identical prompt with the language name swapped to "Arboral" produces essentially the same shape (`app { state { } fn …() { } view { Screen { … } } }`). See `tests/v0.8.1/Contamination_Check.md` for full comparison. Conclusion: GPT-5.4's shape is a generic UI-DSL prior, not Igni-specific prior knowledge. Phase 1 GPT-5.4 results stand without caveats.
 
 ### Gemini 3 Flash → Rust
 
@@ -145,7 +165,7 @@ The only model to flag uncertainty before generating. 2813 output tokens includi
 
 ### GPT-5.4
 
-Closest-to-Igni drift. Uses `screen Name:` with colons and indentation — correctly infers Igni's structural shape from the name alone. Breaks on individual syntactic choices (`?:` ternary). No hedging or disclaimer — just produces the output and moves on. Fastest of the non-Ollama calls (7s).
+Brace-heavy declarative-UI DSL — `app { state { } computed { } ui { Window { Column { } } } }`. Does not use Igni-shape (no indentation, no `screen Name:`, no `label`/`button` primitives, no `on tap:`). Ternary `?:` used inside `computed` block. No hedging or disclaimer — confidently produces a plausible-sounding DSL. Fastest of the non-Ollama calls (7s). Contamination check confirms this is a generic prior, not Igni-specific (see `Contamination_Check.md`).
 
 ### Gemini 3 Flash preview
 
@@ -161,7 +181,7 @@ Longest output (2167 tokens, 146 lines) and most mixed drift. 114 seconds of loc
 
 **Opus's honest-no is the single most important output** of the Phase 1 round for methodology defensibility. It demonstrates that frontier models can accurately assess "I don't know this" when given a low-signal prompt, which means claims of "the spec taught the model" are falsifiable: if the spec did nothing, Opus would say so.
 
-**Per-model drift direction is novel diagnostic data** that wouldn't come out of spec-included runs. Opus goes SwiftUI, GPT-5.4 goes JavaScript-ish, Gemini 3 goes Rust, Gemma goes Kotlin/Swift. These are the *priors* each model brings to a "UI language called X" prompt. Useful for:
+**Per-model drift direction is novel diagnostic data** that wouldn't come out of spec-included runs. Opus goes SwiftUI, GPT-5.4 goes SwiftUI / Compose-ish, Gemini 3 goes Rust, Gemma goes Kotlin/Swift. These are the *priors* each model brings to a "UI language called X" prompt — all four produce brace-based or type-decorated drift; none produces Igni's indentation+colon shape. Useful for:
 
 - **Framing the spec's intro section.** If most frontier models' prior is "SwiftUI-shaped," the spec's opening should explicitly contrast with SwiftUI patterns (no `@State`, no `struct`, no `ViewBuilder`). If the prior is Rust-shaped (Gemini), contrast with `fn`/`&self`.
 - **Predicting which models will under-adopt which spec features.** Models with stronger "SwiftUI" prior may take more spec-reinforcement to abandon `@State`-style patterns.

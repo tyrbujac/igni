@@ -22,3 +22,23 @@ Run with `--no-spec` on the runner. Compare results directly against the same-pr
 - **Language confusion.** Which existing language does the output most resemble? SwiftUI, React/JSX, Flutter/Dart, Python, HTML?
 
 **Success bar:** 0/4 transpile. High invented-syntax counts across all four models. Any unexpected successes get flagged for deeper investigation.
+
+---
+
+## 2. BMI Calculator Arboral (contamination check — made-up language name)
+
+> Write a BMI calculator app in a UI language called Arboral. The app should let the user enter their weight and height, then show their BMI and a label describing the category (underweight, normal, overweight, obese). Show the complete code.
+
+**Purpose:** the Phase 1 BMI-no-spec round surfaced a suspicious result — GPT-5.4's no-spec output was the only one to produce indentation + colons + `screen Name:` syntax that looks almost like Igni. Possible explanations: (1) GPT-5.4 has Igni-specific content in its training data, (2) GPT-5.4 infers the shape from language names, (3) coincidence.
+
+This contamination check disambiguates by swapping the language name to something the model cannot plausibly have seen. "Arboral" was chosen because it's a made-up word with no UI-language associations.
+
+**What to grade (GPT-5.4 specifically, but run on all four for comparison):**
+
+- **Shape of output.** Does GPT-5.4 still produce indentation + colon-terminated blocks + `screen Name:` structure? Or does it default to a different DSL shape (SwiftUI braces, JSX, etc.)?
+- **Syntax identity vs the Igni-name run.** Compare `gpt-5.4_none_bmi-calculator.md` (Igni name) with the Arboral-name output. If identical or near-identical → the model is pattern-matching on language name, not recalling Igni from training. If Arboral produces a *different* shape → evidence of Igni-specific knowledge.
+
+**Interpretation rules:**
+
+- If GPT-5.4 Arboral ≈ GPT-5.4 Igni: Phase 1 GPT-5.4 results stand. Prior is generic "indentation-based UI DSL."
+- If GPT-5.4 Arboral ≠ GPT-5.4 Igni: caveat GPT-5.4's spec-included results in the dissertation. The model may have prior knowledge of Igni that contaminates baseline measurements.
