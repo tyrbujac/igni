@@ -130,6 +130,40 @@ Starting with v0.6.5, tests can be run against the cheatsheet (~300 lines) inste
 
 The cheatsheet is now the primary document for LLM consumption. Cold tests should run against both formats when validating a new spec version. After the v0.6.11 BMI methodology experiment, the project has enough evidence that future cold tests can be narrower and hypothesis-driven rather than broad re-runs of the whole app suite.
 
+## Automated runs (v0.8.1+) — canonical going forward
+
+The scripted runner at `tests/runner/` is now the canonical cold-test path. **Four providers live:**
+
+- **Anthropic** (Claude Opus 4.6 et al.) — with optional extended thinking via `--thinking`
+- **OpenAI** (GPT family) — chat completions
+- **Google** (Gemini family, including Gemini 3 Flash preview) — with thinking off by default for parity
+- **Ollama** (local models like `gemma4:e4b`) — free floor-model runs over HTTP
+
+**Phase 1 is complete.** 12 cells — 4 models × 3 prompts (Habit Tracker, Spec Comprehension, BMI Negative Control) — landed at `tests/v0.8.1/outputs/` (24 `.md` + `.json` files). Write-ups are in `tests/v0.8.1/Habit_Tracker.md`, `Spec_Comprehension.md`, and `BMI_Negative_Control.md`. See `tests/runner/README.md` for the full runner docs and result schema.
+
+**Why it beats the manual chat-UI loop:**
+
+- **Real token data.** Each `.json` sidecar carries input/output tokens, cache hits, duration, and the exact model checkpoint returned by the API — none of which chat UIs surface.
+- **Pinned checkpoints.** `--model claude-opus-4-6` hits a specific ID. Chat UIs sometimes swap versions silently.
+- **Scripted reruns.** Re-running a v0.7.1 prompt against v0.8.0 is `--spec` + `--prompts`, not a fresh-chat ritual. Spec-size sweeps (full / cheatsheet / micro) are tractable.
+- **Transpiler auto-grade.** Each run pipes the model's first fenced block through the Igni transpiler; `transpile.passed` / `.error` land in the JSON.
+
+Typical invocation:
+
+```bash
+cd tests/runner
+npx tsx run.ts \
+  --spec ../../spec/v0.8.0-cheatsheet.md \
+  --prompts ../v0.8.1/prompts.md \
+  --out ../v0.8.1/outputs \
+  --model claude-opus-4-6 \
+  --thinking 5000
+```
+
+Keys live in `tests/runner/.env` (gitignored — copy `.env.example` and fill in `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`). Ollama needs no key; the daemon must be running locally.
+
+**Manual chat-UI runs still have a place:** reader-experience checks that grade *what a developer actually sees*, as opposed to the API which grades the model. Use the UI when you want to observe whether the model asks clarifying questions, when a provider isn't in the runner yet, or when you're debugging a specific checkpoint's behaviour that differs from the API path.
+
 ## Folder layout
 
 ```text
@@ -156,7 +190,7 @@ Each spec version gets its own subfolder containing both the prompts that were t
 
 ## Practical notes
 
-- **Use the chat UI, not the API.** Chat UI is what real developers use; it's the truest test. Move to API only if you need to scale beyond ~50 runs.
+- **Chat UI runs are still canonical for Gemini and OpenAI.** The scripted Anthropic runner (`tests/runner/`) is for Anthropic models — it gives real token data and pinned checkpoints. Use the chat UI for providers the runner doesn't support yet, and whenever you want a direct "what does a developer actually see" read.
 - **Don't prompt-engineer mid-test.** When a model produces wrong output, the temptation is to add "make sure to use `shared.cart`." Resist it. Add the issue to the gap list and let the spec do the work.
 - **Capture line counts.** Spec line count vs LLM output line count is part of the pitch and worth tracking per app.
 - **Each spec version gets its own subfolder.** When you ship a new version, create the next folder with its own `prompts.md` (a copy of the prompts you actually want to run against it) and run the focused tests you actually need. The diff between two version folders is the proof that the new version fixed the right things.

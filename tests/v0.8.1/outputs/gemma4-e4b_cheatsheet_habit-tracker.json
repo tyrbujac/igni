@@ -1,0 +1,27 @@
+{
+  "provider": "ollama",
+  "requested_model": "gemma4:e4b",
+  "model_id": "gemma4:e4b",
+  "prompt_name": "Habit Tracker",
+  "prompt_slug": "habit-tracker",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.8.1/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.8.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "06815d1cacaed779a845f09672c015bad358bd85467999c385badf03c7bc0215",
+  "spec_words": 1780,
+  "timestamp": "2026-04-15T19:05:25.074Z",
+  "duration_ms": 98960,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 3704,
+    "output_tokens": 1605
+  },
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: Unexpected character: '!'\n\n    65 |         habit.completed = !habit.completed\n       |                           ^",
+    "igni_lines": 98
+  }
+}

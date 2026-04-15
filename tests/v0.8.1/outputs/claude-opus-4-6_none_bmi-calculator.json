@@ -1,0 +1,30 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-6",
+  "model_id": "claude-opus-4-6",
+  "prompt_name": "BMI Calculator",
+  "prompt_slug": "bmi-calculator",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.8.1/prompts-control.md",
+  "spec_path": null,
+  "spec_tier": "none",
+  "spec_sha256": null,
+  "spec_words": 0,
+  "timestamp": "2026-04-15T19:37:10.958Z",
+  "duration_ms": 53459,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 91,
+    "output_tokens": 2813,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: Unexpected character: '─'\n\n    1 | // ── BMI Calculator ──────────────────────────────────────\n      |    ^",
+    "igni_lines": 124
+  }
+}

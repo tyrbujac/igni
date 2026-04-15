@@ -1,0 +1,20 @@
+{
+  "name": "igni-test-runner",
+  "version": "0.1.0",
+  "description": "API-based cold-test runner for Igni spec validation.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "run": "tsx run.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.60.0",
+    "@google/generative-ai": "^0.24.0",
+    "openai": "^4.80.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "@types/node": "^22.10.0"
+  }
+}

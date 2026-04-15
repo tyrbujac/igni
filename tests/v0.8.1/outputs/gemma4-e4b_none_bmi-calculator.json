@@ -1,0 +1,27 @@
+{
+  "provider": "ollama",
+  "requested_model": "gemma4:e4b",
+  "model_id": "gemma4:e4b",
+  "prompt_name": "BMI Calculator",
+  "prompt_slug": "bmi-calculator",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.8.1/prompts-control.md",
+  "spec_path": null,
+  "spec_tier": "none",
+  "spec_sha256": null,
+  "spec_words": 0,
+  "timestamp": "2026-04-15T19:07:46.630Z",
+  "duration_ms": 114353,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 66,
+    "output_tokens": 2167
+  },
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: Unexpected character: '?'\n\n    15 |         bmi_result: Double? = null\n       |                           ^",
+    "igni_lines": 146
+  }
+}

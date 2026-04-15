@@ -1,0 +1,9 @@
+*   **Language Type:** Igni is a **declarative, functional UI language** with strong embedded state management capabilities. Its syntax is indentation-based and uses colons (`:`) to define blocks, resembling a DSL (Domain Specific Language) tailored for defining user interfaces and application logic (e.g., state mutation, event handling).
+
+*   **Best Suited For:** Building highly interactive, state-driven user interfaces, particularly those involving data display (like profiles, feeds, and dashboards), complex local component logic, and real-time data fetching (using `async` and `shared:` state).
+
+*   **Optimization Focus:** The language heavily optimizes for **declarative reactivity**. By requiring screens and components to re-evaluate automatically when any referenced variable is reassigned, it minimizes boilerplate for manual DOM manipulation or state lifecycle hooks.
+
+*   **Difference from Framework-Heavy UI Code:** Unlike frameworks requiring manual lifecycle methods or verbose component plumbing, Igni uses a unified, single-pass model where UI definition, state changes (e.g., `count = count + 1`), and event handling (`on tap:`) are declared co-located. Components are highly reusable, and the model avoids explicit cross-screen function calls by mandating the use of a global `shared:` state.
+
+*   **Main Constraints:** Programmers must adhere to strict structural rules, including: 1) Limited nesting depth (max 4); 2) The distinction between functional logic (within `functions`) and UI structure (within `screen`/`component` bodies); 3) The restriction that list elements are not mutated in place (requiring reassignment); and 4) Components and primitives can only reside within screen or component bodies.

@@ -1,0 +1,28 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.4",
+  "model_id": "gpt-5.4-2026-03-05",
+  "prompt_name": "BMI Calculator",
+  "prompt_slug": "bmi-calculator",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.8.1/prompts-control.md",
+  "spec_path": null,
+  "spec_tier": "none",
+  "spec_sha256": null,
+  "spec_words": 0,
+  "timestamp": "2026-04-15T19:56:08.131Z",
+  "duration_ms": 7198,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 56,
+    "output_tokens": 485,
+    "cache_read_tokens": 0
+  },
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: Unexpected character: '?'\n\n    9 |     bmi = heightM > 0 ? weightKg / (heightM * heightM) : 0\n      |                       ^",
+    "igni_lines": 84
+  }
+}
