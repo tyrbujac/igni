@@ -2,7 +2,7 @@
 
 A programming language for building UIs — designed to be read. Created by Tyr (sole author and sole decision-maker). The hypothesis is that LLM accuracy and human readability correlate tightly, so removing the ambiguity that trips LLMs up also makes the language nicer for humans.
 
-**Status: transpiler stage.** The TypeScript-to-Dart transpiler exists and covers most of the v0.7.1 spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter.
+**Status: transpiler stage.** The TypeScript-to-Dart transpiler exists and covers most of the v0.8.0 spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter.
 
 *Project history: the language was originally named Rocket and was renamed to Igni at v0.3.2. Spec files in `spec/` are immutable historical snapshots — never edited after they ship. Each new version is a new file.*
 
@@ -30,9 +30,9 @@ igni/
 ├── ROADMAP.md               # near-term plans + ideas
 ├── assets/                  # logo and branding (igni.svg)
 ├── spec/                    # all spec versions
-│   ├── v0.7.1.md             # current canonical spec
-│   ├── v0.7.1-cheatsheet.md  # current canonical cheatsheet (learning order)
-│   ├── v0.2.md → v0.7.0.md  # historical snapshots (never edited after shipping)
+│   ├── v0.8.0.md             # current canonical spec
+│   ├── v0.8.0-cheatsheet.md  # current canonical cheatsheet (learning order)
+│   ├── v0.2.md → v0.7.1.md  # historical snapshots (never edited after shipping)
 │   └── v0.6.1 → v0.6.5-cheatsheet.md  # historical cheatsheets
 ├── tests/                   # cold-LLM test infrastructure
 │   ├── README.md            # test methodology
@@ -55,11 +55,12 @@ Each spec version gets its own subfolder under `tests/` containing both the prom
 
 ## Spec files
 
-- `spec/v0.7.1.md` — **current canonical spec.** Full spec in learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference). v0.7.0 shipped styling tokens as assignable values (`bg = card`, `status_color = green`). v0.7.1 adds `upper(s)` / `lower(s)` string case builtins — from 8/8 Alert Dashboard compounded signal. `card` remains background-only at the property boundary; strings still concatenate with `+` only.
-- `spec/v0.7.1-cheatsheet.md` — **current canonical cheatsheet.** Same content condensed. Optimised for both human learning progression and LLM code generation.
-- `spec/v0.2.md` → `spec/v0.7.0.md` — historical snapshots (never edited after shipping). The language was originally called Rocket (v0.2–v0.3.1) and renamed to Igni at v0.3.2. See `CHANGELOG.md` for what each version added.
+- `spec/v0.8.0.md` — **current canonical spec.** Full spec in learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference). v0.7.0 shipped styling tokens as assignable values (`bg = card`, `status_color = green`). v0.7.1 added `upper(s)` / `lower(s)` string case builtins. v0.8.0 adds component event channels: `emit <event>` inside components and `on <event>:` at the call site — from 5/8 BMI compounded signal. Reserved event names: `tap`, `change`, `touch`. `emit` only valid as the action of an event handler.
+- `spec/v0.8.0-cheatsheet.md` — **current canonical cheatsheet.** Same content condensed. Optimised for both human learning progression and LLM code generation.
+- `spec/v0.2.md` → `spec/v0.7.1.md` — historical snapshots (never edited after shipping). The language was originally called Rocket (v0.2–v0.3.1) and renamed to Igni at v0.3.2. See `CHANGELOG.md` for what each version added.
 
-When proposing spec changes, **work from `spec/v0.7.1.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
+When proposing spec changes, **work from `spec/v0.8.0.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
+When drafting a new spec version, keep the **full spec and the cheatsheet aligned** on positioning, status wording, current-version framing, and canonical examples. The cheatsheet is the condensed mirror of the same language, not a separate design surface with different messaging.
 
 ## Transpiler
 
@@ -69,13 +70,13 @@ The transpiler lives in `transpiler/` — a TypeScript project that compiles `.i
 
 **CLI:** `igni run` — one command to transpile, watch, and serve. Creates a hidden `.igni/` Flutter project automatically, watches for `.igni` file changes, hot reloads the browser on save. Default entry point is `app.igni`; use `igni run hello.igni` to run a specific file. Run from any directory containing `.igni` files. Local wrapper at `transpiler/bin/igni`. Shows a dot animation during build, reports build time, sets browser tab title and favicon to Igni branding.
 
-**Currently supported:** `screen` (StatefulWidget), screen properties (`title:` for AppBar, `background:` for Scaffold colour), `component` (StatelessWidget), wrapper components with `body` slot, variables (int/double/String/bool/List), optional type hints (`name: Type = value`, `items: [Type] = []`), assignable styling values (`brand`, `subtle`, `danger`, `green`, `red`, `blue`, `white`, `black`, `yellow`, `orange`, `purple`, `teal`, plus background-only `card`), `layout` (vertical/horizontal, align, gap, padding, background, rounded, spread, `fill: true` for Expanded), implicit vertical layout for screen bodies, `label` (with `align: center/end` for text alignment), `button` + `on tap`, `input bind:` + `placeholder:`, `toggle bind:`, `image` (size, round, `on tap:`, local assets via `images/` folder + network URLs), `icon` (size, color, `on tap:`), `slider` (bind, min, max), `checkbox` (bind, label), `dropdown` (bind, options), `badge` (color), `spinner`, `if`/`else`/`else if`, `not`, `is`/`is not` (general equality), `is empty`/`is not empty`, `is null`/`is not null`, `is in`/`is not in`, `is loading`/`is error`, comparison operators (`>`/`<`/`>=`/`<=`), `and`/`or` boolean operators, `each` loops, `navigate to`/`navigate back` (multi-screen with params), `shared:` state (ChangeNotifier), `fetch` + `spinner`, `without`/`replace`/`find`/`count`/`length`/`filter`/`sorted`/`reversed` builtins, `contains()` / `upper()` / `lower()` string builtins, `random(min, max)`, lambda expressions (`item => expr`), `return` in functions, screen-internal functions with params, list literals `[]`, object literals `{key: val}`, field access `obj.field`, list indexing `items[index]` (zero-based, null on out-of-bounds), arithmetic (`+`/`-`/`*`/`/`), float literals, string concatenation with `+`, `play("file.wav")` audio builtin with `audio/` folder convention, `print()` for console debugging, `on touch:` event (fires on finger contact, vs `on tap:` which fires on release).
+**Currently supported:** `screen` (StatefulWidget), screen properties (`title:` for AppBar, `background:` for Scaffold colour), `component` (StatelessWidget), wrapper components with `body` slot, variables (int/double/String/bool/List), optional type hints (`name: Type = value`, `items: [Type] = []`), assignable styling values (`brand`, `subtle`, `danger`, `green`, `red`, `blue`, `white`, `black`, `yellow`, `orange`, `purple`, `teal`, plus background-only `card`), `layout` (vertical/horizontal, align, gap, padding, background, rounded, spread, `fill: true` for Expanded), implicit vertical layout for screen bodies, `label` (with `align: center/end` for text alignment), `button` + `on tap`, `input bind:` + `placeholder:`, `toggle bind:`, `image` (size, round, `on tap:`, local assets via `images/` folder + network URLs), `icon` (size, color, `on tap:`), `slider` (bind, min, max), `checkbox` (bind, label), `dropdown` (bind, options), `badge` (color), `spinner`, `if`/`else`/`else if`, `not`, `is`/`is not` (general equality), `is empty`/`is not empty`, `is null`/`is not null`, `is in`/`is not in`, `is loading`/`is error`, comparison operators (`>`/`<`/`>=`/`<=`), `and`/`or` boolean operators, `each` loops, `navigate to`/`navigate back` (multi-screen with params), `shared:` state (ChangeNotifier), `fetch` + `spinner`, `without`/`replace`/`find`/`count`/`length`/`filter`/`sorted`/`reversed` builtins, `contains()` / `upper()` / `lower()` string builtins, `emit <event> [<arg>]` for component event channels with `on <event>:` wiring at the call site, `random(min, max)`, lambda expressions (`item => expr`), `return` in functions, screen-internal functions with params, list literals `[]`, object literals `{key: val}`, field access `obj.field`, list indexing `items[index]` (zero-based, null on out-of-bounds), arithmetic (`+`/`-`/`*`/`/`), float literals, string concatenation with `+`, `play("file.wav")` audio builtin with `audio/` folder convention, `print()` for console debugging, `on touch:` event (fires on finger contact, vs `on tap:` which fires on release).
 
-**Twenty-nine example apps** in `transpiler/examples/`, each with a `.igni` source and `.expected.dart` reference. All pass diff tests and run in the browser. Covers: counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full (with delete), components, shared (cross-screen state), fetch (async API call), fetch-mutation (POST/PUT/DELETE), fetch-reactive (reactive re-fetch), dice (random), dicee (Angela Yu course project — screen properties, local images, AppBar), dashboard, fn-return, lambda (filter/sorted/reversed), primitives, shopping (full e-commerce), wrapper (body slot), logic (and/or), type-hints (typed variable declarations), contacts (list indexing, comparisons), on-change (on change: event on all bind primitives), bg-image (background images on screens and layouts), tutorial (smoke test), string-case (`upper`/`lower`), derived-counts (screen-body derived state promotion regression test).
+**Thirty example apps** in `transpiler/examples/`, each with a `.igni` source and `.expected.dart` reference. All pass diff tests and run in the browser. Covers: counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full (with delete), components, shared (cross-screen state), fetch (async API call), fetch-mutation (POST/PUT/DELETE), fetch-reactive (reactive re-fetch), dice (random), dicee (Angela Yu course project — screen properties, local images, AppBar), dashboard, fn-return, lambda (filter/sorted/reversed), primitives, shopping (full e-commerce), wrapper (body slot), logic (and/or), type-hints (typed variable declarations), contacts (list indexing, comparisons), on-change (on change: event on all bind primitives), bg-image (background images on screens and layouts), tutorial (smoke test), string-case (`upper`/`lower`), derived-counts (screen-body derived state promotion regression test), stepper (`emit` + `on <event>:` component events).
 
-**Testing:** Run `npm test` in `transpiler/` to execute all 29 diff tests. Zero diff = pass. Browser testing via `igni run` from any directory with `.igni` files (e.g. `transpiler/test_apps/`).
+**Testing:** Run `npm test` in `transpiler/` to execute all 30 diff tests. Zero diff = pass. Browser testing via `igni run` from any directory with `.igni` files (e.g. `transpiler/test_apps/`).
 
-**Not yet supported (v0.7.1 spec features):** `theme:` block, `paginate:` on `each`.
+**Not yet supported (v0.8.0 spec features):** `theme:` block, `paginate:` on `each`.
 
 **VS Code / Cursor extension:** TextMate grammar in `editors/vscode/`, symlinked into Cursor. Highlights keywords, UI primitives, events, properties, builtins, inline function calls, component parameters, type hints, colours, navigation, and operators.
 
@@ -121,10 +122,13 @@ Full methodology is in `tests/README.md`.
 - **For exploratory questions, give 2-3 sentences and the main tradeoff** — not an essay. Tyr will ask for depth if he wants it.
 - **For structural changes, use the plan-then-execute pattern**: explore, propose a plan, get approval, then write. Plan mode is appropriate for non-trivial spec edits.
 - **Never delete or overwrite a snapshot version.** Preserve them as historical artifacts in `spec/`.
+- **Teach the language first; don't open with release notes.** The top of a canonical spec should explain what Igni is, what it is for, and why its design helps both humans and LLMs before diving into version history.
+- **Keep the opening stable across future versions.** Prefer: positioning, status, one-line current-version delta, then `Hello World`. If older version changes matter, put them in `CHANGELOG.md`, not in a stack of top-of-file historical summaries.
+- **Keep future specs clean by default.** If an agent spots a readability or positioning improvement to the spec or cheatsheet, propose it to Tyr first and get approval before editing; don't silently "improve" the framing while making unrelated spec changes.
 - **Design by trying, not by theorising.** When working on a future v0.X, try to write the hard example in the current spec, hit the walls, and let the walls dictate the additions. This is how every version since v0.3 was designed.
 - **Be honest about defects.** If a spec example is structurally wrong, say so directly. The cold test exists precisely to catch what self-review misses.
 - **Claude's "honest no" is more valuable than a clever workaround.** If a model correctly identifies a gap and refuses to invent around it, that's the most useful diagnostic signal.
-- **v0.7.1 is the current canonical spec.** Work from it. Keep v0.7.1 narrow — colour/background assignability (v0.7.0) and `upper`/`lower` string case builtins (v0.7.1) are the shipped features. String concatenation stays `+`-only. Event handlers as component arguments is the leading v0.8 design question; object update ergonomics is the backup v0.8 candidate.
+- **v0.8.0 is the current canonical spec.** Work from it. Shipped features: colour/background assignability (v0.7.0), `upper`/`lower` string case builtins (v0.7.1), component event channels via `emit`/`on <event>:` (v0.8.0). String concatenation stays `+`-only. Object update ergonomics and `count()` predicate form are the leading v0.9 candidates; both need their own design notes before syntax lands.
 
 ## Common pitfalls to avoid
 
@@ -154,4 +158,4 @@ Items deferred that will be designed once enough test data accumulates:
 - **Named slots** for wrapper components (multiple `body` regions per wrapper) — deferred because single slot covers 90% of cases.
 - **Submit modifier on inputs** — currently the trigger-variable pattern handles this.
 
-The current and authoritative list lives at the bottom of `spec/v0.7.1.md`.
+The current and authoritative list lives at the bottom of `spec/v0.8.0.md`.
