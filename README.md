@@ -82,7 +82,7 @@ my-app/
 
 ## Status
 
-**Language spec:** [`spec/v0.8.0.md`](spec/v0.8.0.md) is the current canonical spec. Companion cheatsheet at [`spec/v0.8.0-cheatsheet.md`](spec/v0.8.0-cheatsheet.md). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+**Language spec:** [`spec/v0.8.0.md`](spec/v0.8.0.md) is the current canonical spec. Companion cheatsheet at [`spec/v0.8.0-cheatsheet.md`](spec/v0.8.0-cheatsheet.md); syntax-only micro reference at [`spec/v0.8.0-micro.md`](spec/v0.8.0-micro.md). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
 **Latest language change:** `v0.8.0` adds component event channels: `emit <event>` inside a component fires a custom event (only valid as the action of an `on tap:` / `on touch:` / `on change:` handler), and the parent attaches handlers via `on <event>:` named arguments at the call site — the same vocabulary as `on tap:` on primitives. Motivation: the v0.7.0 BMI cold test produced a 5/8 compounded signal (2/4 models invented `on_tap_handler` / `on decrease:`, 3/4 ship reviewers flagged the same gap). Reusable input controls like the BMI +/- stepper now express what they do without string-key dispatch workarounds. Preceding changes: `v0.7.1` added `upper(s)` / `lower(s)` string case builtins (8/8 Alert Dashboard signal); `v0.7.0` made styling tokens assignable values.
 

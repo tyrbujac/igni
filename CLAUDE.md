@@ -32,6 +32,7 @@ igni/
 ├── spec/                    # all spec versions
 │   ├── v0.8.0.md             # current canonical spec
 │   ├── v0.8.0-cheatsheet.md  # current canonical cheatsheet (learning order)
+│   ├── v0.8.0-micro.md       # syntax-only micro reference (~650 words)
 │   ├── v0.2.md → v0.7.1.md  # historical snapshots (never edited after shipping)
 │   └── v0.6.1 → v0.6.5-cheatsheet.md  # historical cheatsheets
 ├── tests/                   # cold-LLM test infrastructure
@@ -57,6 +58,7 @@ Each spec version gets its own subfolder under `tests/` containing both the prom
 
 - `spec/v0.8.0.md` — **current canonical spec.** Full spec in learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference). v0.7.0 shipped styling tokens as assignable values (`bg = card`, `status_color = green`). v0.7.1 added `upper(s)` / `lower(s)` string case builtins. v0.8.0 adds component event channels: `emit <event>` inside components and `on <event>:` at the call site — from 5/8 BMI compounded signal. Reserved event names: `tap`, `change`, `touch`. `emit` only valid as the action of an event handler.
 - `spec/v0.8.0-cheatsheet.md` — **current canonical cheatsheet.** Same content condensed. Optimised for both human learning progression and LLM code generation.
+- `spec/v0.8.0-micro.md` — **syntax-only micro reference.** ~650 words, no prose, no tradeoffs. Third context tier for cold tests that want to vary context size as an independent variable. Not a new spec version.
 - `spec/v0.2.md` → `spec/v0.7.1.md` — historical snapshots (never edited after shipping). The language was originally called Rocket (v0.2–v0.3.1) and renamed to Igni at v0.3.2. See `CHANGELOG.md` for what each version added.
 
 When proposing spec changes, **work from `spec/v0.8.0.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.

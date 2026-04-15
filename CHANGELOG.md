@@ -4,6 +4,13 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## Unreleased
+*Non-spec additions.*
+
+- **Micro reference** — `spec/v0.8.0-micro.md`, ~650 words, syntax-only third context tier below the full spec (~9,700 words) and cheatsheet (~1,780 words). Not a spec version; same language as v0.8.0. Lets cold tests vary context size as an independent variable.
+
+---
+
 ## v0.8.0 — 2026-04-15
 *Component event channels: `emit <event>` inside components, `on <event>:` at the call site.*
 
