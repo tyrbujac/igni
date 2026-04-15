@@ -4,6 +4,13 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.7.1 — 2026-04-15
+*`upper(s)` and `lower(s)` string case builtins.*
+
+- **`upper(string)` / `lower(string)`** — return new strings with every letter uppercased / lowercased. Motivation: v0.7.0 Alert Dashboard cold test produced the strongest single-feature signal in the project's history (8/8 compounded — 4/4 model output friction + 4/4 ship-review flags). Every frontier model hit the missing uppercase builtin on the same prompt; three invented around it, one honest-flagged the gap. Lets the data model keep natural lowercase keys (`"critical"`, `"warning"`, `"info"`) for branching/filtering while the UI converts at the render site. Non-breaking.
+- Codegen maps to Dart's `toUpperCase()` / `toLowerCase()`. Five-line change.
+- No other string case helpers. `capitalize`, `title_case`, `trim`, `split`, `replace` on strings have zero cold-test evidence and are explicitly not in v0.7.1.
+
 ## v0.7.0 — 2026-04-14
 *Styling tokens become assignable values.*
 

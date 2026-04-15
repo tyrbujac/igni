@@ -29,7 +29,7 @@ The v0.6.6 rating assessment identified tooling (4/10) and debugging (3/10) as t
 
 **Methodology state:** the v0.6.11 BMI re-run closed the v0.6.x patch arc. All three non-breaking additions changed model behaviour, including the documentation-only bottom-anchor pattern. That lowers the pressure to add syntax reactively; docs patches are now a validated tool, not a fallback. The v0.7.0 round added the second validation: cold-test data (what models produce) and qualitative ship-review data (what models critique) converge on the same gaps when both are run against the same version. Future versions use one narrower cold-test round plus one ship-review round, with priority ordering backed by compounded signal across both streams.
 
-### Stream 3 — Spec: v0.7.0 locked, v0.8 next
+### Stream 3 — Spec: v0.7.1 shipped, v0.8 next
 
 Language-level improvements identified by cold tests and the rating assessment. These require spec changes and should be explored one target at a time, then cold-tested before committing.
 
@@ -45,16 +45,11 @@ Language-level improvements identified by cold tests and the rating assessment. 
 - **Error inspection** — `is error` tells you something failed but not what. 3/4 models flagged it. Need at least `user.error.message` and 404 vs 500 distinction.
 - **Dictionary/map type** — Settings cold test showed 4/4 models using if/else chains for country→cities mapping. `cities_for[country]` with `{"UK": [...], "France": [...]}` syntax would be cleaner. Comes up in settings, localisation, routing, form options. Strong signal.
 
-**How to approach Stream 3 now:** v0.7.0 cold test + ship review produced clean priority signal. String case (`upper` / `lower`) is the v0.7.1 candidate with the strongest compounded evidence in the project's history (4/4 Alert Dashboard friction + 4/4 ship-review flags = 8/8). Event handlers as component arguments are the leading v0.8 design question (2/4 BMI invention + 3/4 ship review = 5/8), structurally larger than object update ergonomics because it concerns the component reusability model. Object update ergonomics remains a known human-writability friction but is now third in line, not first.
+**How to approach Stream 3 now:** v0.7.1 shipped the strongest-signal item. Event handlers as component arguments are now the leading v0.8 design question (2/4 BMI invention + 3/4 ship review = 5/8), structurally larger than object update ergonomics because it concerns the component reusability model. Object update ergonomics is the backup v0.8 candidate. Both need their own design notes before syntax lands. Pending validation: Alert Dashboard rerun against the same four models to measure the delta on `upper()` adoption.
 
-### Stream 3a — v0.7.1 candidate: string case builtins
+### ~~Stream 3a — v0.7.1: string case builtins~~ SHIPPED
 
-Shipping target for v0.7.1, not v0.8. Evidence: 4/4 Alert Dashboard friction + 4/4 ship review = 8/8 compounded, strongest evidence in project history. Every frontier model hit the missing `upper()` on Alert Dashboard (Gemini 3.1 Pro wrote a mapper function, Opus 4.6 honest-flagged, Gemini 3 Flash ignored, GPT 5.3 invented `upper()` with a broken placeholder). Two candidate resolutions:
-
-- **(a) Add `upper(string)` / `lower(string)` as builtins** — spec-budget cost: two names, one Reference paragraph.
-- **(b) Doc note: "store strings in their display form; Igni has no case conversion"** — zero syntax cost, forces data to match UI, matches the "one way" principle.
-
-Design decision belongs in a future numbered doc in `docs/private/`. The 8/8 signal has already removed the "is this a real gap" question — only the resolution shape remains open.
+v0.7.1 adds `upper(s)` / `lower(s)` string builtins. Evidence: 4/4 Alert Dashboard friction + 4/4 ship review = 8/8 compounded, strongest evidence in project history. Every frontier model hit the missing `upper()` on Alert Dashboard (Gemini 3.1 Pro wrote a mapper function, Opus 4.6 honest-flagged, Gemini 3 Flash ignored, GPT 5.3 invented `upper()` with a broken placeholder). Decision doc: `docs/private/31_v071_string_case.md`. Validation: Alert Dashboard rerun against the same four models, same methodology as the v0.6.11 BMI colour-assignability rerun.
 
 ---
 
@@ -76,7 +71,8 @@ Unfiltered. No timeline. Some of these might be bad. Signal strength noted where
 
 - `theme:` block — spec-defined but transpiler not implemented. Low priority (default theme works)
 - `paginate:` on `each` — spec-defined but transpiler not implemented. Low priority (no cold test has exercised it)
-- `trim()` string builtin — Claude flagged in v0.6.2 review; `upper`/`lower` now promoted to Stream 3a as a v0.7.1 candidate
+- ~~`upper()` / `lower()` string builtins~~ — **SHIPPED in v0.7.1** (8/8 compounded signal from Alert Dashboard)
+- `trim()` string builtin — Claude flagged in v0.6.2 review; no cold-test evidence yet. Would need its own signal before shipping (same bar as `upper`/`lower` cleared).
 - `unique(list, item => key)` for deduplication
 - Date/time primitives — Claude flagged in v0.6.2 review
 - Form validation pattern (multi-field, cross-field)

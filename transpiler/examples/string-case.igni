@@ -1,0 +1,9 @@
+screen StringCase:
+  level = "critical"
+  title = "Hello World"
+
+  layout vertical, gap: medium, padding: large:
+    label upper(level), style: heading
+    label lower(title), style: body
+    label upper("info"), color: green
+    button "Shout", on tap: level = upper(level)

@@ -1598,6 +1598,12 @@ export class CodeGenerator {
     if (call.name === 'contains' && args.length === 2) {
       return `${args[0]}.toString().toLowerCase().contains(${args[1]}.toString().toLowerCase())`;
     }
+    if (call.name === 'upper' && args.length === 1) {
+      return `${args[0]}.toString().toUpperCase()`;
+    }
+    if (call.name === 'lower' && args.length === 1) {
+      return `${args[0]}.toString().toLowerCase()`;
+    }
     if (call.name === 'random' && args.length === 2) {
       return `(Random().nextInt(${args[1]} - ${args[0]} + 1) + ${args[0]})`;
     }
