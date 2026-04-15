@@ -35,6 +35,7 @@ export class CodeGenerator {
     this.allScreens = program.screens;
     this.allComponents = program.components;
     this.hasShared = program.shared.length > 0;
+    this.validateEmitPlacement(program);
     const firstName = program.screens[0].name;
 
     // Detect if any screen uses fetch
@@ -1137,6 +1138,11 @@ export class CodeGenerator {
     const paramFields = comp.params.map(p => `  final dynamic ${p};`).join('\n');
     const ctorParams = comp.params.map(p => `required this.${p}`).join(', ');
 
+    // Discover custom event channels: walk the component body looking for
+    // `emit <name> [<arg>]`. Each unique event becomes an optional callback
+    // field on the widget, wired by the parent at invocation time.
+    const emits = this.collectEmits(comp.body);
+
     let code = `class ${name} extends StatelessWidget {\n`;
     if (comp.params.length > 0) {
       code += paramFields + '\n';
@@ -1144,9 +1150,17 @@ export class CodeGenerator {
     if (hasBody) {
       code += `  final Widget child;\n`;
     }
+    for (const ev of emits) {
+      const cbName = this.emitCallbackName(ev.event);
+      const sig = ev.argName ? `void Function(dynamic)?` : `void Function()?`;
+      code += `  final ${sig} ${cbName};\n`;
+    }
     const allCtorParams: string[] = [];
     if (comp.params.length > 0) allCtorParams.push(ctorParams);
     if (hasBody) allCtorParams.push('required this.child');
+    for (const ev of emits) {
+      allCtorParams.push(`this.${this.emitCallbackName(ev.event)}`);
+    }
     code += `  const ${name}({super.key${allCtorParams.length > 0 ? ', ' + allCtorParams.join(', ') : ''}});\n\n`;
     code += `  @override\n  Widget build(BuildContext context) {\n`;
     code += this.genComponentBodyReturn(comp.body, 2);
@@ -1155,6 +1169,111 @@ export class CodeGenerator {
     this.screenParams = prevParams;
     this.isComponent = prevIsComponent;
     return code;
+  }
+
+  private emitCallbackName(event: string): string {
+    return `on${event[0].toUpperCase()}${event.slice(1)}`;
+  }
+
+  // Emit the body of a callback wired into a component invocation event handler.
+  // The action runs in the parent's scope — `genStmt` already routes state-var
+  // assignments through setState because `stateVars` reflects the parent's
+  // context at the call site.
+  private genCallbackBody(action: Statement, depth: number): string {
+    return this.genStmt(action, depth);
+  }
+
+  // `emit` is only valid as the action of an event handler. Walk the program
+  // and reject any EmitStmt found in a function body, in a screen-body imperative
+  // if/each, or anywhere else. Spec rule: standalone `emit X` is a parse-time
+  // error — caught here because the parser doesn't track context.
+  private validateEmitPlacement(program: Program): void {
+    const checkStmt = (s: Statement) => {
+      if (s.type === 'EmitStmt') {
+        throw new TranspileError(
+          `\`emit ${s.event}\` is only valid as the action of an \`on tap:\`, \`on touch:\`, or \`on change:\` handler. Standalone use is not allowed.`,
+          1, 1
+        );
+      }
+      if (s.type === 'IfStmt') {
+        s.then.forEach(checkStmt);
+        if (s.else_) s.else_.forEach(checkStmt);
+      }
+      if (s.type === 'EachStmt') s.body.forEach(checkStmt);
+    };
+    const checkUI = (nodes: UINode[]) => {
+      for (const n of nodes) {
+        if (n.type === 'Layout') checkUI(n.children);
+        else if (n.type === 'If') {
+          const filterUI = (items: (UINode | VariableDecl)[]) =>
+            items.filter((x): x is UINode => x.type !== 'VariableDecl');
+          checkUI(filterUI(n.then));
+          for (const ei of n.elseIfs) checkUI(filterUI(ei.body));
+          if (n.else_) checkUI(filterUI(n.else_));
+        } else if (n.type === 'Each') checkUI(n.children);
+      }
+    };
+    for (const screen of program.screens) {
+      // Function bodies inside screens — `emit` is never valid here.
+      for (const item of screen.body) {
+        if (item.type === 'FunctionDef') item.body.forEach(checkStmt);
+      }
+      const uiNodes = screen.body.filter((i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef');
+      checkUI(uiNodes);
+    }
+    for (const comp of program.components) checkUI(comp.body);
+  }
+
+  // Walk a UI body collecting (event, argName?) pairs from every `emit` action
+  // inside an event handler. Multiple emits of the same event must agree on
+  // their argument shape — different arg names is a TranspileError.
+  private collectEmits(body: UINode[]): { event: string; argName: string | null }[] {
+    const found = new Map<string, string | null>();
+    const argNames = new Map<string, string | null>();
+    const visitStmt = (s: Statement) => {
+      if (s.type === 'EmitStmt') {
+        const argName = s.arg && s.arg.type === 'Ident' ? s.arg.name : (s.arg ? '_value' : null);
+        if (found.has(s.event)) {
+          const prev = argNames.get(s.event);
+          if ((prev === null) !== (argName === null)) {
+            throw new TranspileError(
+              `Event "${s.event}" emits both with and without an argument. Pick one shape.`, 1, 1
+            );
+          }
+        }
+        found.set(s.event, argName);
+        argNames.set(s.event, argName);
+      } else if (s.type === 'IfStmt') {
+        s.then.forEach(visitStmt);
+        if (s.else_) s.else_.forEach(visitStmt);
+      } else if (s.type === 'EachStmt') {
+        s.body.forEach(visitStmt);
+      }
+    };
+    const visitEvents = (events: EventHandler[] | undefined) => {
+      if (!events) return;
+      for (const e of events) visitStmt(e.action);
+    };
+    const visit = (nodes: UINode[]) => {
+      for (const n of nodes) {
+        visitEvents((n as any).events);
+        if (n.type === 'Layout') visit(n.children);
+        else if (n.type === 'If') {
+          const filterUI = (items: (UINode | VariableDecl)[]) =>
+            items.filter((x): x is UINode => x.type !== 'VariableDecl');
+          visit(filterUI(n.then));
+          for (const ei of n.elseIfs) visit(filterUI(ei.body));
+          if (n.else_) visit(filterUI(n.else_));
+        } else if (n.type === 'Each') visit(n.children);
+        else if (n.type === 'ComponentInvocation') {
+          // Custom event handlers attached at invocation may themselves
+          // contain `emit` calls (re-emit pattern from a wrapper component).
+          for (const e of n.events) visitStmt(e.action);
+        }
+      }
+    };
+    visit(body);
+    return Array.from(found, ([event, argName]) => ({ event, argName }));
   }
 
   // Emit the component's build() body. Most components have a single root UINode
@@ -1237,6 +1356,23 @@ export class CodeGenerator {
     }
     for (const prop of node.properties) {
       namedArgs.push(`${prop.name}: ${this.exprToDart(prop.value)}`);
+    }
+
+    // Custom event handlers (`on increment:`, etc.) at the invocation site
+    // wire to the component's `on<Event>` callback param. Built-in events
+    // (`tap`, `touch`) are still handled below by wrapWithGestures.
+    const builtInEvents = new Set(['tap', 'touch', 'change']);
+    const customEvents = node.events.filter(e => !builtInEvents.has(e.event));
+    if (customEvents.length > 0) {
+      const compEmits = comp ? this.collectEmits(comp.body) : [];
+      for (const ev of customEvents) {
+        const cbName = this.emitCallbackName(ev.event);
+        const decl = compEmits.find(e => e.event === ev.event);
+        const paramName = decl?.argName ?? null;
+        const sig = paramName ? `(${paramName})` : `()`;
+        const body = this.genCallbackBody(ev.action, depth + 1);
+        namedArgs.push(`${cbName}: ${sig} {\n${body}${ind}  }`);
+      }
     }
 
     // Wrapper invocation: the `body` slot renders exactly one widget (spec
@@ -1388,6 +1524,11 @@ export class CodeGenerator {
         code += `${ind}}\n`;
         return code;
       }
+      case 'EmitStmt': {
+        const cb = this.emitCallbackName(s.event);
+        const arg = s.arg ? this.exprToDart(s.arg) : '';
+        return `${ind}${cb}?.call(${arg});\n`;
+      }
     }
   }
 
@@ -1421,6 +1562,19 @@ export class CodeGenerator {
       }
       code += `${ind}},\n`;
       return code;
+    }
+
+    if (action.type === 'EmitStmt') {
+      const cb = this.emitCallbackName(action.event);
+      const arg = action.arg ? this.exprToDart(action.arg) : '';
+      let code = `${ind}onPressed: () {\n`;
+      code += `${ind}  ${cb}?.call(${arg});\n`;
+      code += `${ind}},\n`;
+      return code;
+    }
+
+    if (action.type !== 'Assignment') {
+      throw new TranspileError(`Unsupported event handler action type: ${action.type}`, 1, 1);
     }
 
     const dartExpr = this.exprToDart(action.value);
@@ -1458,6 +1612,16 @@ export class CodeGenerator {
       }
       const args = action.args.map(a => this.exprToDart(a)).join(', ');
       return `${ind}${action.name}(${args});\n`;
+    }
+
+    if (action.type === 'EmitStmt') {
+      const cb = this.emitCallbackName(action.event);
+      const arg = action.arg ? this.exprToDart(action.arg) : '';
+      return `${ind}${cb}?.call(${arg});\n`;
+    }
+
+    if (action.type !== 'Assignment') {
+      throw new TranspileError(`Unsupported event handler action type: ${action.type}`, 1, 1);
     }
 
     const dartExpr = this.exprToDart(action.value);

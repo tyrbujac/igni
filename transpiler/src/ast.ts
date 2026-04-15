@@ -142,7 +142,13 @@ export interface EachStmt {
   body: Statement[];
 }
 
-export type Statement = Assignment | FunctionCall | NavigateTo | NavigateBack | ReturnStmt | IfStmt | EachStmt;
+export interface EmitStmt {
+  type: 'EmitStmt';
+  event: string;
+  arg: Expr | null;
+}
+
+export type Statement = Assignment | FunctionCall | NavigateTo | NavigateBack | ReturnStmt | IfStmt | EachStmt | EmitStmt;
 
 export interface FunctionDef {
   type: 'FunctionDef';

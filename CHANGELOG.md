@@ -4,6 +4,17 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.8.0 — 2026-04-15
+*Component event channels: `emit <event>` inside components, `on <event>:` at the call site.*
+
+- **`emit <event> [<arg>]`** declares a custom event channel inside a component, valid only as the action of an `on tap:` / `on touch:` / `on change:` handler. Standalone use is a parse error.
+- **`on <event>:` at component invocation** wires a handler that runs in the parent screen scope (`weight = weight + 1` setStates correctly). Same vocabulary as `on tap:` on primitives — no new keyword for callers.
+- **Reserved event names: `tap`, `change`, `touch`** can't be custom event names. Parse-time error names the conflict.
+- **Event data:** `emit selected item` → parent `on selected: handle(item)` where `item` is a named binding inside the handler body. Component author picks the binding name; caller uses it.
+- **Optional handlers:** parent without a handler attached for a given emit just no-ops, same as `button "X"` without `on tap:`.
+- Motivation: 5/8 compounded signal from v0.7.0 BMI cold-test (2/4 model invention of `on_tap_handler` / `on decrease:` + 3/4 ship-review flags). The string-key dispatch workaround was verbose enough that half the frontier models reached past it. Decision doc: `docs/private/33_v08_event_handlers.md`.
+- Codegen emits each unique `emit X` event in a component as an optional `void Function([dynamic <arg>])? onX` field on the StatelessWidget. Standalone-emit validation runs as a pre-codegen pass.
+
 ## v0.7.1 — 2026-04-15
 *`upper(s)` and `lower(s)` string case builtins.*
 

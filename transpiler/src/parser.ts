@@ -5,7 +5,7 @@ import {
   Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
   Property, EventHandler, FunctionDef, FunctionCall, Statement, EachNode,
   NavigateTo, NavigateBack, ComponentDef, ComponentInvocation,
-  LambdaExpr, EqualityExpr, InExpr, ReturnStmt, IfStmt, EachStmt,
+  LambdaExpr, EqualityExpr, InExpr, ReturnStmt, IfStmt, EachStmt, EmitStmt,
   IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
   ListLit, ObjectLit, FieldAccess,
@@ -162,6 +162,8 @@ export class Parser {
       case TokenType.Checkbox: return this.parseCheckbox();
       case TokenType.Dropdown: return this.parseDropdown();
       case TokenType.Badge:   return this.parseBadge();
+      case TokenType.Emit:
+        return this.error(`\`emit\` is only valid as the action of an \`on tap:\`, \`on touch:\`, or \`on change:\` handler. Standalone use is not allowed.`);
       case TokenType.Identifier:
         if (token.value === 'body') {
           this.advance();
@@ -513,10 +515,27 @@ export class Parser {
     if (this.check(TokenType.Each)) {
       return this.parseEachStmt();
     }
+    if (this.check(TokenType.Emit)) {
+      return this.parseEmit();
+    }
     if (this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.LParen) {
       return this.parseFunctionCall();
     }
     return this.parseAssignment();
+  }
+
+  private parseEmit(): EmitStmt {
+    this.consume(TokenType.Emit, 'Expected "emit"');
+    const eventTok = this.consume(TokenType.Identifier, 'Expected event name after "emit"');
+    const event = eventTok.value;
+    if (event === 'tap' || event === 'change' || event === 'touch') {
+      this.error(`"${event}" is a built-in event name, choose a different name for your custom event`);
+    }
+    let arg: Expr | null = null;
+    if (!this.check(TokenType.Newline) && !this.check(TokenType.Comma) && !this.check(TokenType.RParen) && !this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      arg = this.parseExpr();
+    }
+    return { type: 'EmitStmt', event, arg };
   }
 
   private parseReturn(): ReturnStmt {

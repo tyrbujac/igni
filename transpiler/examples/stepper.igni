@@ -1,0 +1,15 @@
+screen Stats:
+  weight = 60
+  age = 25
+
+  layout vertical, gap: large, padding: large:
+    label "WEIGHT", style: caption
+    Stepper weight, on increment: weight = weight + 1, on decrement: weight = weight - 1
+    label "AGE", style: caption
+    Stepper age, on increment: age = age + 1, on decrement: age = age - 1
+
+component Stepper(value):
+  layout horizontal, gap: medium, align: center:
+    button "-", shape: circle, on tap: emit decrement
+    label value, style: heading
+    button "+", shape: circle, on tap: emit increment
