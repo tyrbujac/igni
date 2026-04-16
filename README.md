@@ -20,18 +20,8 @@ Indentation for blocks. Colons open them. One way to do everything. No imports, 
 **Prerequisites:** Node.js 18+, Flutter SDK, Chrome.
 
 ```bash
-mkdir my-app && cd my-app
-```
-
-Create a file called `app.igni`:
-
-```igni
-screen Hello:
-  count = 0
-
-  layout vertical, align: center, gap: medium, padding: large:
-    label count, style: heading
-    button "Add", on tap: count = count + 1
+igni new my-app
+cd my-app
 ```
 
 Run it:
@@ -40,11 +30,13 @@ Run it:
 igni run
 ```
 
-Save `app.igni`, browser updates automatically. That's it.
+`igni new` creates a starter `app.igni` and a `.gitignore` for the generated `.igni/` Flutter project. Save `app.igni`, browser updates automatically. That's it.
 
 ## How it works
 
 `igni run` transpiles your `.igni` files to Dart, spins up a Flutter web server, and watches for changes. Edit, save, see the result in your browser — the loop is instant.
+
+When Flutter or generated Dart reports an error from `main.dart`, Igni maps it back to the nearest `.igni` source line so the CLI points at code you actually wrote instead of only the generated file.
 
 Under the hood, a hidden `.igni/` Flutter project is created automatically. You never touch it — just edit `.igni` files and save.
 
@@ -90,7 +82,7 @@ my-app/
 
 **Transpiler:** Working. 30 example apps compile and run in the browser. Covers screens, components, wrapper components, layouts, conditionals, loops, functions, lambdas, navigation, shared state, async data fetching, two-way binding, list operations, boolean and comparison operators, list indexing, screen properties, local images/audio, and more.
 
-**CLI:** `igni run` — one command to transpile, watch, and serve.
+**CLI:** `igni new` creates a starter app. `igni run` transpiles, watches, and serves it.
 
 ## Repo structure
 
@@ -108,7 +100,7 @@ igni/
 │   └── v0.3.2 → v0.6.11/    # prompts + results per spec version
 ├── docs/                    # tutorial + project docs
 │   └── tutorial.md          # beginner tutorial (no programming experience needed)
-├── assets/                  # logo and branding
+├── assets/                  # logo (igni.svg + igni-dark-mode.svg, PNGs)
 ├── CHANGELOG.md             # spec evolution history
 ├── ROADMAP.md               # near-term plans + ideas
 └── LICENSE                  # GPL v3 (transpiler) + CC BY-SA 4.0 (spec/docs)

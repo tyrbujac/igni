@@ -28,7 +28,7 @@ igni/
 ├── LICENSE                  # GPL v3 (transpiler) + CC BY-SA 4.0 (spec/docs)
 ├── CHANGELOG.md             # spec evolution history
 ├── ROADMAP.md               # near-term plans + ideas
-├── assets/                  # logo and branding (igni.svg)
+├── assets/                  # logo (igni.svg, igni-dark-mode.svg, PNGs)
 ├── spec/                    # all spec versions
 │   ├── v0.8.0.md             # current canonical spec
 │   ├── v0.8.0-cheatsheet.md  # current canonical cheatsheet (learning order)
