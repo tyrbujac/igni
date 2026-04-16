@@ -19,7 +19,7 @@ try {
   process.stdout.write(dart);
 } catch (err: any) {
   if (err instanceof TranspileError) {
-    process.stderr.write(formatError(err, source));
+    process.stderr.write(formatError(err, source, file));
   } else {
     console.error(err.message);
   }

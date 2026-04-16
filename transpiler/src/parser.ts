@@ -21,6 +21,7 @@ export class Parser {
   }
 
   parse(): Program {
+    const start = this.current();
     const screens: Screen[] = [];
     const components: ComponentDef[] = [];
     const shared: VariableDecl[] = [];
@@ -33,7 +34,7 @@ export class Parser {
         screens.push(this.parseScreen());
       }
     }
-    return { type: 'Program', screens, components, shared };
+    return { type: 'Program', screens, components, shared, loc: this.loc(start) };
   }
 
   private parseSharedBlock(): VariableDecl[] {
@@ -52,6 +53,7 @@ export class Parser {
   // -- Top-level --
 
   private parseScreen(): Screen {
+    const start = this.current();
     this.consume(TokenType.Screen, 'Expected "screen"');
     const name = this.consume(TokenType.Identifier, 'Expected screen name').value;
     const params: string[] = [];
@@ -76,7 +78,7 @@ export class Parser {
     this.consume(TokenType.Indent, 'Expected indent');
     const body = this.parseScreenBody();
     this.consume(TokenType.Dedent, 'Expected dedent');
-    return { type: 'Screen', name, params, properties, body };
+    return { type: 'Screen', name, params, properties, body, loc: this.loc(start) };
   }
 
   private parseScreenBody(): ScreenItem[] {
@@ -114,6 +116,7 @@ export class Parser {
   }
 
   private parseVariableDecl(): VariableDecl {
+    const start = this.current();
     const name = this.consume(TokenType.Identifier, 'Expected variable name').value;
     let typeHint: string | undefined;
     if (this.check(TokenType.Colon)) {
@@ -130,7 +133,7 @@ export class Parser {
     this.consume(TokenType.Equals, 'Expected "="');
     const value = this.parseExpr();
     this.consume(TokenType.Newline, 'Expected newline');
-    return { type: 'VariableDecl', name, value, typeHint };
+    return { type: 'VariableDecl', name, value, typeHint, loc: this.loc(start) };
   }
 
   // -- UI nodes --
@@ -140,7 +143,7 @@ export class Parser {
     switch (token.type) {
       case TokenType.Comment:
         this.advance();
-        return { type: 'Comment', text: token.value };
+        return { type: 'Comment', text: token.value, loc: this.loc(token) };
       case TokenType.Layout: return this.parseLayout();
       case TokenType.Label:  return this.parseLabel();
       case TokenType.Button: return this.parseButton();
@@ -151,11 +154,11 @@ export class Parser {
       case TokenType.Spinner:
         this.advance();
         this.consume(TokenType.Newline, 'Expected newline');
-        return { type: 'Spinner' };
+        return { type: 'Spinner', loc: this.loc(token) };
       case TokenType.Divider:
         this.advance();
         this.consume(TokenType.Newline, 'Expected newline');
-        return { type: 'Divider' };
+        return { type: 'Divider', loc: this.loc(token) };
       case TokenType.Icon:    return this.parseIcon();
       case TokenType.Image:   return this.parseImage();
       case TokenType.Slider:  return this.parseSlider();
@@ -168,7 +171,7 @@ export class Parser {
         if (token.value === 'body') {
           this.advance();
           this.consume(TokenType.Newline, 'Expected newline');
-          return { type: 'Body' };
+          return { type: 'Body', loc: this.loc(token) };
         }
         if (token.value[0] >= 'A' && token.value[0] <= 'Z') {
           return this.parseComponentInvocation();
@@ -180,6 +183,7 @@ export class Parser {
   }
 
   private parseLayout(): Layout {
+    const start = this.current();
     this.consume(TokenType.Layout, 'Expected "layout"');
     const dirToken = this.consume(TokenType.Identifier, 'Expected direction (vertical/horizontal)');
     const direction = dirToken.value as 'vertical' | 'horizontal';
@@ -201,26 +205,29 @@ export class Parser {
     } else {
       this.consume(TokenType.Newline, 'Expected newline');
     }
-    return { type: 'Layout', direction, properties, events, children };
+    return { type: 'Layout', direction, properties, events, children, loc: this.loc(start) };
   }
 
   private parseLabel(): LabelNode {
+    const start = this.current();
     this.consume(TokenType.Label, 'Expected "label"');
     const value = this.parseExpr();
     const { properties, events } = this.parseArgs();
     this.consume(TokenType.Newline, 'Expected newline');
-    return { type: 'Label', value, properties, events };
+    return { type: 'Label', value, properties, events, loc: this.loc(start) };
   }
 
   private parseButton(): ButtonNode {
+    const start = this.current();
     this.consume(TokenType.Button, 'Expected "button"');
     const text = this.parseExpr();
     const { properties, events } = this.parseArgs();
     this.consume(TokenType.Newline, 'Expected newline');
-    return { type: 'Button', text, properties, events };
+    return { type: 'Button', text, properties, events, loc: this.loc(start) };
   }
 
   private parseInput(): InputNode {
+    const start = this.current();
     this.consume(TokenType.Input, 'Expected "input"');
     const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
@@ -233,10 +240,12 @@ export class Parser {
       bind: bindProp.value.name,
       properties: allProps.filter(p => p.name !== 'bind'),
       events,
+      loc: this.loc(start),
     };
   }
 
   private parseToggle(): ToggleNode {
+    const start = this.current();
     this.consume(TokenType.Toggle, 'Expected "toggle"');
     const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
@@ -249,6 +258,7 @@ export class Parser {
       bind: bindProp.value.name,
       properties: allProps.filter(p => p.name !== 'bind'),
       events,
+      loc: this.loc(start),
     };
   }
 
@@ -272,57 +282,64 @@ export class Parser {
   }
 
   private parseIcon(): IconNode {
+    const start = this.current();
     this.consume(TokenType.Icon, 'Expected "icon"');
     const name = this.parseExpr();
     const { properties, events } = this.parseArgs();
     this.consume(TokenType.Newline, 'Expected newline');
-    return { type: 'Icon', name, properties, events };
+    return { type: 'Icon', name, properties, events, loc: this.loc(start) };
   }
 
   private parseImage(): ImageNode {
+    const start = this.current();
     this.consume(TokenType.Image, 'Expected "image"');
     const url = this.parseExpr();
     const { properties, events } = this.parseArgs();
     this.consume(TokenType.Newline, 'Expected newline');
-    return { type: 'Image', url, properties, events };
+    return { type: 'Image', url, properties, events, loc: this.loc(start) };
   }
 
   private parseSlider(): SliderNode {
+    const start = this.current();
     this.consume(TokenType.Slider, 'Expected "slider"');
     const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
     if (!bindProp || bindProp.value.type !== 'Ident') return this.error('slider requires bind:');
-    return { type: 'Slider', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind'), events };
+    return { type: 'Slider', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind'), events, loc: this.loc(start) };
   }
 
   private parseCheckbox(): CheckboxNode {
+    const start = this.current();
     this.consume(TokenType.Checkbox, 'Expected "checkbox"');
     const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
     if (!bindProp || bindProp.value.type !== 'Ident') return this.error('checkbox requires bind:');
-    return { type: 'Checkbox', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind'), events };
+    return { type: 'Checkbox', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind'), events, loc: this.loc(start) };
   }
 
   private parseDropdown(): DropdownNode {
+    const start = this.current();
     this.consume(TokenType.Dropdown, 'Expected "dropdown"');
     const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
     if (!bindProp || bindProp.value.type !== 'Ident') return this.error('dropdown requires bind:');
-    return { type: 'Dropdown', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind'), events };
+    return { type: 'Dropdown', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind'), events, loc: this.loc(start) };
   }
 
   private parseBadge(): BadgeNode {
+    const start = this.current();
     this.consume(TokenType.Badge, 'Expected "badge"');
     const text = this.parseExpr();
     const { properties, events } = this.parseArgs();
     this.consume(TokenType.Newline, 'Expected newline');
-    return { type: 'Badge', text, properties, events };
+    return { type: 'Badge', text, properties, events, loc: this.loc(start) };
   }
 
   private parseEach(): EachNode {
+    const start = this.current();
     this.consume(TokenType.Each, 'Expected "each"');
     const variable = this.consume(TokenType.Identifier, 'Expected iteration variable').value;
     this.consume(TokenType.In, 'Expected "in"');
@@ -335,10 +352,11 @@ export class Parser {
       children.push(this.parseUINode());
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
-    return { type: 'Each', variable, list, children };
+    return { type: 'Each', variable, list, children, loc: this.loc(start) };
   }
 
   private parseComponentDef(): ComponentDef {
+    const start = this.current();
     this.consume(TokenType.Component, 'Expected "component"');
     const name = this.consume(TokenType.Identifier, 'Expected component name').value;
     this.consume(TokenType.LParen, 'Expected "("');
@@ -363,10 +381,11 @@ export class Parser {
       }
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
-    return { type: 'ComponentDef', name, params, body };
+    return { type: 'ComponentDef', name, params, body, loc: this.loc(start) };
   }
 
   private parseComponentInvocation(): ComponentInvocation {
+    const start = this.current();
     const name = this.consume(TokenType.Identifier, 'Expected component name').value;
     const args: Expr[] = [];
     const properties: Property[] = [];
@@ -410,7 +429,7 @@ export class Parser {
     } else {
       this.consume(TokenType.Newline, 'Expected newline');
     }
-    return { type: 'ComponentInvocation', name, args, properties, events, children };
+    return { type: 'ComponentInvocation', name, args, properties, events, children, loc: this.loc(start) };
   }
 
   private parseIfBodyItem(allowAssignments: boolean): UINode | VariableDecl {
@@ -421,6 +440,7 @@ export class Parser {
   }
 
   private parseIf(allowAssignments: boolean): IfNode {
+    const start = this.current();
     this.consume(TokenType.If, 'Expected "if"');
     const condition = this.parseExpr();
     this.consume(TokenType.Colon, 'Expected ":"');
@@ -462,7 +482,7 @@ export class Parser {
       }
     }
 
-    return { type: 'If', condition, then, elseIfs, else_ };
+    return { type: 'If', condition, then, elseIfs, else_, loc: this.loc(start) };
   }
 
   // -- Arguments: comma-separated properties and events --
@@ -492,15 +512,16 @@ export class Parser {
     const name = tok.value;
     this.consume(TokenType.Colon, 'Expected ":"');
     const value = this.parseExpr();
-    return { name, value };
+    return { name, value, loc: this.loc(tok) };
   }
 
   private parseEventHandler(): EventHandler {
+    const start = this.current();
     this.consume(TokenType.On, 'Expected "on"');
     const event = this.consumeEventName('Expected event name').value;
     this.consume(TokenType.Colon, 'Expected ":"');
     const action = this.parseStatement();
-    return { event, action };
+    return { event, action, loc: this.loc(start) };
   }
 
   // Accept either an Identifier or a UI-primitive keyword as an event name.
@@ -546,6 +567,7 @@ export class Parser {
   }
 
   private parseEmit(): EmitStmt {
+    const start = this.current();
     this.consume(TokenType.Emit, 'Expected "emit"');
     const eventTok = this.consumeEventName('Expected event name after "emit"');
     const event = eventTok.value;
@@ -556,19 +578,21 @@ export class Parser {
     if (!this.check(TokenType.Newline) && !this.check(TokenType.Comma) && !this.check(TokenType.RParen) && !this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       arg = this.parseExpr();
     }
-    return { type: 'EmitStmt', event, arg };
+    return { type: 'EmitStmt', event, arg, loc: this.loc(start) };
   }
 
   private parseReturn(): ReturnStmt {
+    const start = this.current();
     this.consume(TokenType.Return, 'Expected "return"');
     let value: Expr | null = null;
     if (!this.check(TokenType.Newline)) {
       value = this.parseExpr();
     }
-    return { type: 'Return', value };
+    return { type: 'Return', value, loc: this.loc(start) };
   }
 
   private parseIfStmt(): IfStmt {
+    const start = this.current();
     this.consume(TokenType.If, 'Expected "if"');
     const condition = this.parseExpr();
     this.consume(TokenType.Colon, 'Expected ":"');
@@ -595,10 +619,11 @@ export class Parser {
       this.consume(TokenType.Dedent, 'Expected dedent');
     }
 
-    return { type: 'IfStmt', condition, then, else_ };
+    return { type: 'IfStmt', condition, then, else_, loc: this.loc(start) };
   }
 
   private parseEachStmt(): EachStmt {
+    const start = this.current();
     this.consume(TokenType.Each, 'Expected "each"');
     const variable = this.consume(TokenType.Identifier, 'Expected variable').value;
     this.consume(TokenType.In, 'Expected "in"');
@@ -612,23 +637,25 @@ export class Parser {
       if (this.check(TokenType.Newline)) this.advance();
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
-    return { type: 'EachStmt', variable, list, body };
+    return { type: 'EachStmt', variable, list, body, loc: this.loc(start) };
   }
 
   private parseSharedAssignment(): Assignment {
+    const start = this.current();
     this.consume(TokenType.Shared, 'Expected "shared"');
     this.consume(TokenType.Dot, 'Expected "."');
     const field = this.consume(TokenType.Identifier, 'Expected field name').value;
     this.consume(TokenType.Equals, 'Expected "="');
     const value = this.parseExpr();
-    return { type: 'Assignment', target: 'shared.' + field, value };
+    return { type: 'Assignment', target: 'shared.' + field, value, loc: this.loc(start) };
   }
 
   private parseNavigate(): NavigateTo | NavigateBack {
+    const start = this.current();
     this.consume(TokenType.Navigate, 'Expected "navigate"');
     const direction = this.consume(TokenType.Identifier, 'Expected "to" or "back"').value;
     if (direction === 'back') {
-      return { type: 'NavigateBack' };
+      return { type: 'NavigateBack', loc: this.loc(start) };
     }
     if (direction === 'to') {
       const screen = this.consume(TokenType.Identifier, 'Expected screen name').value;
@@ -644,19 +671,21 @@ export class Parser {
           args.push(this.parseExpr());
         }
       }
-      return { type: 'NavigateTo', screen, args };
+      return { type: 'NavigateTo', screen, args, loc: this.loc(start) };
     }
     return this.error(`Expected "to" or "back" after "navigate", got "${direction}"`);
   }
 
   private parseAssignment(): Assignment {
+    const start = this.current();
     const target = this.consume(TokenType.Identifier, 'Expected variable name').value;
     this.consume(TokenType.Equals, 'Expected "="');
     const value = this.parseExpr();
-    return { type: 'Assignment', target, value };
+    return { type: 'Assignment', target, value, loc: this.loc(start) };
   }
 
   private parseFunctionCall(): FunctionCall {
+    const start = this.current();
     const name = this.consume(TokenType.Identifier, 'Expected function name').value;
     this.consume(TokenType.LParen, 'Expected "("');
     const args: Expr[] = [];
@@ -682,10 +711,11 @@ export class Parser {
       }
     }
     this.consume(TokenType.RParen, 'Expected ")"');
-    return { type: 'FunctionCall', name, args, namedArgs: namedArgs.length > 0 ? namedArgs : undefined };
+    return { type: 'FunctionCall', name, args, namedArgs: namedArgs.length > 0 ? namedArgs : undefined, loc: this.loc(start) };
   }
 
   private parseFunctionDef(): FunctionDef {
+    const start = this.current();
     const name = this.consume(TokenType.Identifier, 'Expected function name').value;
     this.consume(TokenType.LParen, 'Expected "("');
     const params: string[] = [];
@@ -708,7 +738,7 @@ export class Parser {
       }
       this.consume(TokenType.Dedent, 'Expected dedent');
     }
-    return { type: 'FunctionDef', name, params, body };
+    return { type: 'FunctionDef', name, params, body, loc: this.loc(start) };
   }
 
   // -- Expressions (with operator precedence) --
@@ -720,9 +750,9 @@ export class Parser {
   private parseLogicalOr(): Expr {
     let left = this.parseLogicalAnd();
     while (this.check(TokenType.Or)) {
-      this.advance();
+      const opTok = this.advance();
       const right = this.parseLogicalAnd();
-      left = { type: 'BinaryExpr', left, op: 'or', right } as BinaryExpr;
+      left = { type: 'BinaryExpr', left, op: 'or', right, loc: this.loc(opTok) } as BinaryExpr;
     }
     return left;
   }
@@ -730,9 +760,9 @@ export class Parser {
   private parseLogicalAnd(): Expr {
     let left = this.parseComparison();
     while (this.check(TokenType.And)) {
-      this.advance();
+      const opTok = this.advance();
       const right = this.parseComparison();
-      left = { type: 'BinaryExpr', left, op: 'and', right } as BinaryExpr;
+      left = { type: 'BinaryExpr', left, op: 'and', right, loc: this.loc(opTok) } as BinaryExpr;
     }
     return left;
   }
@@ -740,7 +770,7 @@ export class Parser {
   private parseComparison(): Expr {
     const left = this.parseAdditive();
     if (this.check(TokenType.Is)) {
-      this.advance(); // consume 'is'
+      const isTok = this.advance();
       const negated = this.check(TokenType.Not);
       if (negated) this.advance();
 
@@ -749,19 +779,19 @@ export class Parser {
         const word = this.current().value;
         if (word === 'empty') {
           this.advance();
-          return { type: 'IsExpr', target: left, check: negated ? 'not empty' : 'empty' } as IsExpr;
+          return { type: 'IsExpr', target: left, check: negated ? 'not empty' : 'empty', loc: this.loc(isTok) } as IsExpr;
         }
         if (word === 'null') {
           this.advance();
-          return { type: 'IsExpr', target: left, check: negated ? 'not null' : 'null' } as IsExpr;
+          return { type: 'IsExpr', target: left, check: negated ? 'not null' : 'null', loc: this.loc(isTok) } as IsExpr;
         }
         if (word === 'loading' && !negated) {
           this.advance();
-          return { type: 'IsExpr', target: left, check: 'loading' } as IsExpr;
+          return { type: 'IsExpr', target: left, check: 'loading', loc: this.loc(isTok) } as IsExpr;
         }
         if (word === 'error' && !negated) {
           this.advance();
-          return { type: 'IsExpr', target: left, check: 'error' } as IsExpr;
+          return { type: 'IsExpr', target: left, check: 'error', loc: this.loc(isTok) } as IsExpr;
         }
       }
 
@@ -769,12 +799,12 @@ export class Parser {
       if (this.check(TokenType.In)) {
         this.advance();
         const list = this.parseAdditive();
-        return { type: 'InExpr', target: left, list, negated } as InExpr;
+        return { type: 'InExpr', target: left, list, negated, loc: this.loc(isTok) } as InExpr;
       }
 
       // General equality: is <expr> / is not <expr>
       const right = this.parseAdditive();
-      return { type: 'EqualityExpr', left, right, negated } as EqualityExpr;
+      return { type: 'EqualityExpr', left, right, negated, loc: this.loc(isTok) } as EqualityExpr;
     }
     // Comparison operators: >, <, >=, <=
     if (
@@ -783,7 +813,7 @@ export class Parser {
     ) {
       const op = this.advance().value as '>' | '<' | '>=' | '<=';
       const right = this.parseAdditive();
-      return { type: 'BinaryExpr', left, op, right };
+      return { type: 'BinaryExpr', left, op, right, loc: left.loc };
     }
     return left;
   }
@@ -791,9 +821,10 @@ export class Parser {
   private parseAdditive(): Expr {
     let left = this.parseMultiplicative();
     while (this.check(TokenType.Plus) || this.check(TokenType.Minus)) {
-      const op = this.advance().value as '+' | '-';
+      const opTok = this.advance();
+      const op = opTok.value as '+' | '-';
       const right = this.parseMultiplicative();
-      left = { type: 'BinaryExpr', left, op, right } as BinaryExpr;
+      left = { type: 'BinaryExpr', left, op, right, loc: this.loc(opTok) } as BinaryExpr;
     }
     return left;
   }
@@ -801,44 +832,46 @@ export class Parser {
   private parseMultiplicative(): Expr {
     let left = this.parsePrimary();
     while (this.check(TokenType.Star) || this.check(TokenType.Slash)) {
-      const op = this.advance().value as '*' | '/';
+      const opTok = this.advance();
+      const op = opTok.value as '*' | '/';
       const right = this.parsePrimary();
-      left = { type: 'BinaryExpr', left, op, right } as BinaryExpr;
+      left = { type: 'BinaryExpr', left, op, right, loc: this.loc(opTok) } as BinaryExpr;
     }
     return left;
   }
 
   private parsePrimary(): Expr {
     if (this.check(TokenType.Not)) {
-      this.advance();
+      const tok = this.advance();
       const operand = this.parsePrimary();
-      return { type: 'UnaryExpr', op: 'not', operand };
+      return { type: 'UnaryExpr', op: 'not', operand, loc: this.loc(tok) };
     }
     if (this.check(TokenType.Number)) {
       const tok = this.advance();
-      return this.parsePostfix({ type: 'NumberLit', value: parseFloat(tok.value), isFloat: tok.value.includes('.') });
+      return this.parsePostfix({ type: 'NumberLit', value: parseFloat(tok.value), isFloat: tok.value.includes('.'), loc: this.loc(tok) });
     }
     if (this.check(TokenType.String)) {
       const tok = this.advance();
-      return this.parsePostfix({ type: 'StringLit', value: tok.value });
+      return this.parsePostfix({ type: 'StringLit', value: tok.value, loc: this.loc(tok) });
     }
     if (this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.Arrow) {
-      const param = this.advance().value;
+      const tok = this.advance();
+      const param = tok.value;
       this.advance(); // consume =>
       const body = this.parseExpr();
-      return { type: 'LambdaExpr', param, body } as LambdaExpr;
+      return { type: 'LambdaExpr', param, body, loc: this.loc(tok) } as LambdaExpr;
     }
     if (this.check(TokenType.Identifier) && this.peek(1)?.type === TokenType.LParen) {
       const call = this.parseFunctionCall();
       return this.parsePostfix(call);
     }
     if (this.check(TokenType.Shared)) {
-      this.advance();
-      return this.parsePostfix({ type: 'Ident', name: 'shared' });
+      const tok = this.advance();
+      return this.parsePostfix({ type: 'Ident', name: 'shared', loc: this.loc(tok) });
     }
     if (this.check(TokenType.Identifier)) {
       const tok = this.advance();
-      return this.parsePostfix({ type: 'Ident', name: tok.value });
+      return this.parsePostfix({ type: 'Ident', name: tok.value, loc: this.loc(tok) });
     }
     if (this.check(TokenType.LParen)) {
       this.advance();
@@ -858,20 +891,21 @@ export class Parser {
   private parsePostfix(expr: Expr): Expr {
     while (this.check(TokenType.Dot) || this.check(TokenType.LBracket)) {
       if (this.check(TokenType.Dot)) {
-        this.advance(); // consume .
+        const tok = this.advance(); // consume .
         const field = this.consume(TokenType.Identifier, 'Expected field name').value;
-        expr = { type: 'FieldAccess', object: expr, field } as FieldAccess;
+        expr = { type: 'FieldAccess', object: expr, field, loc: this.loc(tok) } as FieldAccess;
       } else {
-        this.advance(); // consume [
+        const tok = this.advance(); // consume [
         const index = this.parseExpr();
         this.consume(TokenType.RBracket, 'Expected "]"');
-        expr = { type: 'IndexAccess', object: expr, index } as any;
+        expr = { type: 'IndexAccess', object: expr, index, loc: this.loc(tok) } as any;
       }
     }
     return expr;
   }
 
   private parseListLit(): ListLit {
+    const start = this.current();
     this.consume(TokenType.LBracket, 'Expected "["');
     const elements: Expr[] = [];
     if (!this.check(TokenType.RBracket)) {
@@ -883,10 +917,11 @@ export class Parser {
       }
     }
     this.consume(TokenType.RBracket, 'Expected "]"');
-    return { type: 'ListLit', elements };
+    return { type: 'ListLit', elements, loc: this.loc(start) };
   }
 
   private parseObjectLit(): ObjectLit {
+    const start = this.current();
     this.consume(TokenType.LBrace, 'Expected "{"');
     const entries: { key: string; value: Expr }[] = [];
     if (!this.check(TokenType.RBrace)) {
@@ -904,7 +939,7 @@ export class Parser {
       }
     }
     this.consume(TokenType.RBrace, 'Expected "}"');
-    return { type: 'ObjectLit', entries };
+    return { type: 'ObjectLit', entries, loc: this.loc(start) };
   }
 
   // -- Helpers --
@@ -952,6 +987,10 @@ export class Parser {
       items.push({ type: 'Comment', text });
     }
     this.pendingComments = [];
+  }
+
+  private loc(token: Token): { line: number; column: number } {
+    return { line: token.line, column: token.column };
   }
 
   private error(message: string): never {

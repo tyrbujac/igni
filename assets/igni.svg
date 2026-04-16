@@ -1,10 +1,1 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="100%" height="100%" viewBox="0 0 469 421" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-    <g transform="matrix(1,0,0,1,-1570.666667,-1543.925283)">
-        <g transform="matrix(0.830189,0,0,0.80466,776.396226,347.793825)">
-            <path d="M1239,1559L1451,1936L1027,1936L1239,1559Z" style="fill:rgb(235,235,235);fill-opacity:0;"/>
-            <path d="M1299.777,1522.62L1511.777,1899.62C1524.388,1922.046 1524.43,1949.713 1511.889,1972.181C1499.347,1994.648 1476.13,2008.494 1451,2008.494L1027,2008.494C1001.87,2008.494 978.653,1994.648 966.111,1972.181C953.57,1949.713 953.612,1922.046 966.223,1899.62L1178.223,1522.62C1190.794,1500.265 1213.95,1486.506 1239,1486.506C1264.05,1486.506 1287.206,1500.265 1299.777,1522.62ZM1239,1559L1027,1936L1451,1936L1239,1559Z"/>
-        </g>
-    </g>
-</svg>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg width="100%" height="100%" viewBox="0 0 350 297" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><path d="M174.825,46l128.825,204.753l-257.649,0l128.825,-204.753Z" style="fill:#ebebeb;fill-opacity:0;"/><path d="M213.759,21.503l128.825,204.753c8.918,14.175 9.428,32.076 1.332,46.736c-8.096,14.66 -23.52,23.761 -40.267,23.761l-257.649,0c-16.747,0 -32.17,-9.101 -40.267,-23.761c-8.096,-14.66 -7.586,-32.561 1.332,-46.736l128.825,-204.753c8.42,-13.383 23.123,-21.503 38.935,-21.503c15.811,-0 30.515,8.121 38.935,21.503Zm-38.935,24.497l-128.825,204.753l257.649,0l-128.825,-204.753Z"/></svg>

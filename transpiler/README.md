@@ -13,8 +13,12 @@ npx tsx src/cli.ts examples/counter.igni
 This prints the generated Dart to stdout. To run in a browser, use the CLI from any directory containing `.igni` files:
 
 ```bash
+igni new my-app
+cd my-app
 igni run
 ```
+
+`igni run` now rewrites generated Dart/Flutter line references back to the nearest `.igni` source location when possible, so browser-build errors point at the source file you wrote.
 
 ## Pipeline
 

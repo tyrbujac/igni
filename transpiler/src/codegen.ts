@@ -2,8 +2,8 @@ import {
   Program, Screen, ScreenItem, VariableDecl,
   UINode, Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode, EachNode,
   ComponentDef, ComponentItem, ComponentInvocation,
-  Property, EventHandler, FunctionDef, Statement, Expr, IsExpr,
-  LambdaExpr, EqualityExpr,
+  Property, EventHandler, FunctionDef, Statement, Expr, IsExpr, NodeBase,
+  LambdaExpr, EqualityExpr, IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
 } from './ast.js';
 import {
   findProp, resolveIdentName, resolveDesignToken, resolveStyle,
@@ -13,6 +13,18 @@ import {
   isColorTokenName, isStyleValueName, isStyleValueExpr,
 } from './codegen-helpers.js';
 import { TranspileError } from './errors.js';
+
+export interface GeneratedLineMapEntry {
+  dartLine: number;
+  sourceLine: number;
+  sourceColumn: number;
+  context: string;
+}
+
+export interface GeneratedOutput {
+  dart: string;
+  lineMap: GeneratedLineMapEntry[];
+}
 
 export class CodeGenerator {
   private stateVars: string[] = [];
@@ -30,8 +42,18 @@ export class CodeGenerator {
   private hasFetch = false;
   private needsIconLookup = false;
   private needsStyleResolvers = false;
+  private emitLineMarkers = false;
 
   generate(program: Program): string {
+    return this.build(program, false).dart;
+  }
+
+  generateWithSourceMap(program: Program): GeneratedOutput {
+    return this.build(program, true);
+  }
+
+  private build(program: Program, emitLineMarkers: boolean): GeneratedOutput {
+    this.emitLineMarkers = emitLineMarkers;
     this.allScreens = program.screens;
     this.allComponents = program.components;
     this.hasShared = program.shared.length > 0;
@@ -96,14 +118,17 @@ export class CodeGenerator {
       code += '\n' + generateStyleValueResolvers() + '\n';
     }
 
-    return code;
+    if (!emitLineMarkers) {
+      return { dart: code, lineMap: [] };
+    }
+    return this.stripLineMarkers(code);
   }
 
   private genSharedState(vars: VariableDecl[]): string {
     const fields = vars.map(v => {
       const dartType = inferType(v.value, v.typeHint);
       const dartValue = this.exprToDart(v.value);
-      return `  ${dartType} ${v.name} = ${dartValue};`;
+      return this.withMarker(v, `shared:${v.name}`, `  ${dartType} ${v.name} = ${dartValue};`);
     }).join('\n');
 
     let code = `class SharedState extends ChangeNotifier {\n`;
@@ -112,6 +137,61 @@ export class CodeGenerator {
     code += `}\n\n`;
     code += `final shared = SharedState();\n`;
     return code;
+  }
+
+  private marker(node: NodeBase | undefined, context: string): string {
+    if (!this.emitLineMarkers || !node?.loc) return '';
+    return `/*__IGNI_LINE__ ${node.loc.line}:${node.loc.column} ${context}*/`;
+  }
+
+  private withMarker(node: NodeBase | undefined, context: string, code: string): string {
+    const marker = this.marker(node, context);
+    return marker ? `${marker}\n${code}` : code;
+  }
+
+  private stripLineMarkers(code: string): GeneratedOutput {
+    const lines = code.split('\n');
+    const stripped: string[] = [];
+    const lineMap: GeneratedLineMapEntry[] = [];
+    const markerPattern = /\/\*__IGNI_LINE__ (\d+):(\d+) (.+?)\*\//;
+    let current:
+      | { sourceLine: number; sourceColumn: number; context: string }
+      | null = null;
+
+    for (const line of lines) {
+      const match = line.match(markerPattern);
+      if (match) {
+        current = {
+          sourceLine: Number(match[1]),
+          sourceColumn: Number(match[2]),
+          context: match[3],
+        };
+        const strippedLine = line.replace(markerPattern, '');
+        if (strippedLine.length === 0) {
+          continue;
+        }
+        stripped.push(strippedLine);
+        lineMap.push({
+          dartLine: stripped.length,
+          sourceLine: current.sourceLine,
+          sourceColumn: current.sourceColumn,
+          context: current.context,
+        });
+        continue;
+      }
+
+      stripped.push(line);
+      if (current) {
+        lineMap.push({
+          dartLine: stripped.length,
+          sourceLine: current.sourceLine,
+          sourceColumn: current.sourceColumn,
+          context: current.context,
+        });
+      }
+    }
+
+    return { dart: stripped.join('\n'), lineMap };
   }
 
   private genFetchMethod(fv: { name: string; url: string; method?: string; body?: string }): string {
@@ -173,7 +253,7 @@ export class CodeGenerator {
 
   private genColorValue(expr: Expr): string {
     if (expr.type === 'Ident' && expr.name === 'card' && !this.isUserDeclaredName(expr.name)) {
-      throw new TranspileError('`card` is background-only. Use it with `background:`, not `color:`.', 1, 1);
+      throw new TranspileError('`card` is background-only. Use it with `background:`, not `color:`.', expr.loc?.line ?? 1, expr.loc?.column ?? 1);
     }
     if (this.isBuiltinStyleValue(expr) && expr.type === 'Ident' && isColorTokenName(expr.name)) {
       return resolveColor(expr);
@@ -307,9 +387,9 @@ export class CodeGenerator {
           inBuildLocals = true;
           this.stateVars.push(item.name);
           const alreadyDeclared = buildLocals.some(l => l.includes(`var ${item.name} `));
-          buildLocals.push(alreadyDeclared
+          buildLocals.push(this.withMarker(item, `local:${item.name}`, alreadyDeclared
             ? `    ${item.name} = ${this.exprToDart(item.value)};`
-            : `    var ${item.name} = ${this.exprToDart(item.value)};`);
+            : `    var ${item.name} = ${this.exprToDart(item.value)};`));
         } else {
           this.stateVars.push(item.name);
           stateDecls.push(this.genStateVar(item));
@@ -493,7 +573,7 @@ export class CodeGenerator {
     stateClass += `    return Scaffold(\n${scaffoldParts.join(',\n')},\n    );\n`;
     stateClass += `  }\n}\n`;
 
-    return widgetClass + '\n' + stateClass;
+    return this.withMarker(screen, `screen:${name}`, widgetClass + '\n' + stateClass);
   }
 
   private exprRefsAny(expr: Expr, names: Set<string>): boolean {
@@ -558,7 +638,7 @@ export class CodeGenerator {
       }
       code += `    }`;
     }
-    return code;
+    return this.withMarker(node, 'if', code);
   }
 
   private collectBoundInputs(nodes: UINode[]): void {
@@ -575,7 +655,8 @@ export class CodeGenerator {
     const dartType = inferType(decl.value, decl.typeHint);
     const dartValue = this.exprToDart(decl.value);
     const needsLate = this.exprRefsParams(decl.value);
-    return needsLate ? `late ${dartType} ${decl.name} = ${dartValue};` : `${dartType} ${decl.name} = ${dartValue};`;
+    const code = needsLate ? `late ${dartType} ${decl.name} = ${dartValue};` : `${dartType} ${decl.name} = ${dartValue};`;
+    return this.withMarker(decl, `state:${decl.name}`, code);
   }
 
   private exprRefsParams(expr: Expr): boolean {
@@ -595,26 +676,28 @@ export class CodeGenerator {
   // -- UI node generation --
 
   private genUINode(node: UINode, depth: number, inRow = false): string {
+    let code = '';
     switch (node.type) {
-      case 'Layout': return this.genLayout(node, depth);
-      case 'Label':  return this.genLabel(node, depth);
-      case 'Button': return this.genButton(node, depth, inRow);
-      case 'Input':  return this.genInput(node, depth, inRow);
-      case 'Toggle': return this.genToggle(node, depth);
-      case 'If':     return this.genIf(node, depth);
-      case 'Each':   return this.genEach(node, depth);
-      case 'Spinner': return `${'  '.repeat(depth)}const CircularProgressIndicator()`;
-      case 'Divider': return `${'  '.repeat(depth)}const Divider()`;
-      case 'Comment': return `${'  '.repeat(depth)}// ${node.text}`;
-      case 'Icon':    return this.genIcon(node, depth);
-      case 'Image':   return this.genImage(node, depth);
-      case 'Slider':  return this.genSlider(node, depth);
-      case 'Checkbox': return this.genCheckbox(node, depth);
-      case 'Dropdown': return this.genDropdown(node, depth);
-      case 'Badge':   return this.genBadge(node, depth);
-      case 'Body':    return `${'  '.repeat(depth)}child`;
-      case 'ComponentInvocation': return this.genComponentInvocation(node, depth);
+      case 'Layout': code = this.genLayout(node, depth); break;
+      case 'Label':  code = this.genLabel(node, depth); break;
+      case 'Button': code = this.genButton(node, depth, inRow); break;
+      case 'Input':  code = this.genInput(node, depth, inRow); break;
+      case 'Toggle': code = this.genToggle(node, depth); break;
+      case 'If':     code = this.genIf(node, depth); break;
+      case 'Each':   code = this.genEach(node, depth); break;
+      case 'Spinner': code = `${'  '.repeat(depth)}const CircularProgressIndicator()`; break;
+      case 'Divider': code = `${'  '.repeat(depth)}const Divider()`; break;
+      case 'Comment': code = `${'  '.repeat(depth)}// ${node.text}`; break;
+      case 'Icon':    code = this.genIcon(node, depth); break;
+      case 'Image':   code = this.genImage(node, depth); break;
+      case 'Slider':  code = this.genSlider(node, depth); break;
+      case 'Checkbox': code = this.genCheckbox(node, depth); break;
+      case 'Dropdown': code = this.genDropdown(node, depth); break;
+      case 'Badge':   code = this.genBadge(node, depth); break;
+      case 'Body':    code = `${'  '.repeat(depth)}child`; break;
+      case 'ComponentInvocation': code = this.genComponentInvocation(node, depth); break;
     }
+    return this.withMarker(node, `ui:${node.type}`, code);
   }
 
   private genLayout(node: Layout, depth: number): string {
@@ -1091,22 +1174,23 @@ export class CodeGenerator {
   private genIf(node: IfNode, depth: number): string {
     const ind = '  '.repeat(depth);
     const cond = this.exprToDart(node.condition);
+    const filterUI = (items: (UINode | VariableDecl)[]) => items.filter((child): child is UINode => child.type !== 'VariableDecl');
 
     let code = `${ind}if (${cond}) ...[`;
-    for (const child of node.then) {
+    for (const child of filterUI(node.then)) {
       code += '\n' + this.genUINode(child, depth + 1) + ',';
     }
 
     for (const branch of node.elseIfs) {
       code += `\n${ind}] else if (${this.exprToDart(branch.condition)}) ...[`;
-      for (const child of branch.body) {
+      for (const child of filterUI(branch.body)) {
         code += '\n' + this.genUINode(child, depth + 1) + ',';
       }
     }
 
     if (node.else_) {
       code += `\n${ind}] else ...[`;
-      for (const child of node.else_) {
+      for (const child of filterUI(node.else_)) {
         code += '\n' + this.genUINode(child, depth + 1) + ',';
       }
     }
@@ -1175,7 +1259,7 @@ export class CodeGenerator {
 
     this.screenParams = prevParams;
     this.isComponent = prevIsComponent;
-    return code;
+    return this.withMarker(comp, `component:${name}`, code);
   }
 
   private emitCallbackName(event: string): string {
@@ -1199,7 +1283,7 @@ export class CodeGenerator {
       if (s.type === 'EmitStmt') {
         throw new TranspileError(
           `\`emit ${s.event}\` is only valid as the action of an \`on tap:\`, \`on touch:\`, or \`on change:\` handler. Standalone use is not allowed.`,
-          1, 1
+          s.loc?.line ?? 1, s.loc?.column ?? 1
         );
       }
       if (s.type === 'IfStmt') {
@@ -1247,7 +1331,9 @@ export class CodeGenerator {
           const prev = argNames.get(s.event);
           if ((prev === null) !== (argName === null)) {
             throw new TranspileError(
-              `Event "${s.event}" emits both with and without an argument. Pick one shape.`, 1, 1
+              `Event "${s.event}" emits both with and without an argument. Pick one shape.`,
+              s.loc?.line ?? 1,
+              s.loc?.column ?? 1
             );
           }
         }
@@ -1396,7 +1482,8 @@ export class CodeGenerator {
       throw new TranspileError(
         `Wrapper component \`${node.name}\` received ${renderableChildren.length} children. ` +
         `The \`body\` slot renders exactly one widget — wrap multiple children in \`layout vertical:\` or \`layout horizontal:\`.`,
-        1, 1
+        node.loc?.line ?? 1,
+        node.loc?.column ?? 1
       );
     }
     let code: string;
@@ -1427,7 +1514,7 @@ export class CodeGenerator {
     code += `  }`;
     this.functionParams = [];
     this.declaredLocals = new Set();
-    return code;
+    return this.withMarker(func, `function:${func.name}`, code);
   }
 
   // If `gen` output is an `Expanded(child: X)` at its outermost level, return
@@ -1483,65 +1570,76 @@ export class CodeGenerator {
 
   private genStmt(s: Statement, depth: number): string {
     const ind = '  '.repeat(depth);
+    let code = '';
     switch (s.type) {
       case 'Assignment': {
         if (s.target.startsWith('shared.')) {
-          return `${ind}shared.update(() {\n${ind}  ${s.target} = ${this.exprToDart(s.value)};\n${ind}});\n`;
+          code = `${ind}shared.update(() {\n${ind}  ${s.target} = ${this.exprToDart(s.value)};\n${ind}});\n`;
+          break;
         }
         const isStateVar = this.stateVars.includes(s.target);
         if (isStateVar) {
-          let code = `${ind}setState(() {\n${ind}  ${s.target} = ${this.exprToDart(s.value)};\n${ind}});\n`;
+          code = `${ind}setState(() {\n${ind}  ${s.target} = ${this.exprToDart(s.value)};\n${ind}});\n`;
           if (this.boundInputVars.includes(s.target)) {
             code += `${ind}_${s.target}Controller.text = ${s.target};\n`;
           }
-          return code;
+          break;
         }
         // Local variable
         const prefix = this.declaredLocals.has(s.target) ? '' : 'dynamic ';
         this.declaredLocals.add(s.target);
-        return `${ind}${prefix}${s.target} = ${this.exprToDart(s.value)};\n`;
+        code = `${ind}${prefix}${s.target} = ${this.exprToDart(s.value)};\n`;
+        break;
       }
       case 'FunctionCall': {
         if (s.name === 'play' && s.args.length === 1) {
           const src = this.exprToDart(s.args[0]);
-          return `${ind}_audioPlayer.play(AssetSource(${src}));\n`;
+          code = `${ind}_audioPlayer.play(AssetSource(${src}));\n`;
+          break;
         }
         const args = s.args.map(a => this.exprToDart(a)).join(', ');
-        return `${ind}${s.name}(${args});\n`;
+        code = `${ind}${s.name}(${args});\n`;
+        break;
       }
       case 'NavigateBack':
-        return `${ind}Navigator.pop(context);\n`;
+        code = `${ind}Navigator.pop(context);\n`;
+        break;
       case 'NavigateTo': {
         const ctorArgs = this.genNavigateCtorArgs(s.screen, s.args);
-        return `${ind}Navigator.push(context, MaterialPageRoute(builder: (context) => ${s.screen}Screen(${ctorArgs})));\n`;
+        code = `${ind}Navigator.push(context, MaterialPageRoute(builder: (context) => ${s.screen}Screen(${ctorArgs})));\n`;
+        break;
       }
       case 'Return':
         if (s.value) {
-          return `${ind}return ${this.exprToDart(s.value)};\n`;
+          code = `${ind}return ${this.exprToDart(s.value)};\n`;
+          break;
         }
-        return `${ind}return;\n`;
+        code = `${ind}return;\n`;
+        break;
       case 'IfStmt': {
-        let code = `${ind}if (${this.exprToDart(s.condition)}) {\n`;
+        code = `${ind}if (${this.exprToDart(s.condition)}) {\n`;
         code += this.genStmtBlock(s.then, depth + 1);
         if (s.else_) {
           code += `${ind}} else {\n`;
           code += this.genStmtBlock(s.else_, depth + 1);
         }
         code += `${ind}}\n`;
-        return code;
+        break;
       }
       case 'EachStmt': {
-        let code = `${ind}for (final ${s.variable} in ${this.exprToDart(s.list)}) {\n`;
+        code = `${ind}for (final ${s.variable} in ${this.exprToDart(s.list)}) {\n`;
         code += this.genStmtBlock(s.body, depth + 1);
         code += `${ind}}\n`;
-        return code;
+        break;
       }
       case 'EmitStmt': {
         const cb = this.emitCallbackName(s.event);
         const arg = s.arg ? this.exprToDart(s.arg) : '';
-        return `${ind}${cb}?.call(${arg});\n`;
+        code = `${ind}${cb}?.call(${arg});\n`;
+        break;
       }
     }
+    return this.withMarker(s, `stmt:${s.type}`, code);
   }
 
   private genOnPressed(event: EventHandler, depth: number): string {
@@ -1586,7 +1684,7 @@ export class CodeGenerator {
     }
 
     if (action.type !== 'Assignment') {
-      throw new TranspileError(`Unsupported event handler action type: ${action.type}`, 1, 1);
+      throw new TranspileError(`Unsupported event handler action type: ${action.type}`, action.loc?.line ?? 1, action.loc?.column ?? 1);
     }
 
     const dartExpr = this.exprToDart(action.value);
@@ -1633,7 +1731,7 @@ export class CodeGenerator {
     }
 
     if (action.type !== 'Assignment') {
-      throw new TranspileError(`Unsupported event handler action type: ${action.type}`, 1, 1);
+      throw new TranspileError(`Unsupported event handler action type: ${action.type}`, action.loc?.line ?? 1, action.loc?.column ?? 1);
     }
 
     const dartExpr = this.exprToDart(action.value);
@@ -1820,6 +1918,7 @@ export class CodeGenerator {
       case 'ObjectLit':
         return "'" + '${' + this.exprToDart(expr) + "}'";
       case 'FieldAccess':
+      case 'IndexAccess':
       case 'FunctionCall':
         return this.exprToDart(expr) + '.toString()';
       case 'LambdaExpr':
@@ -1839,7 +1938,8 @@ export class CodeGenerator {
   // -- Property helpers --
 
   private detectBuiltin(program: Program, name: string): boolean {
-    const checkEvent = (n: { events?: EventHandler[] }): boolean => {
+    const filterUI = (items: (UINode | VariableDecl)[]) => items.filter((item): item is UINode => item.type !== 'VariableDecl');
+    const checkEvent = (n: any): boolean => {
       const events = (n as any).events as EventHandler[] | undefined;
       if (!events) return false;
       return events.some(e => e.action.type === 'FunctionCall' && e.action.name === name);
@@ -1848,7 +1948,7 @@ export class CodeGenerator {
       for (const n of nodes) {
         if (checkEvent(n)) return true;
         if (n.type === 'Layout' && (check(n.children) || checkEvent(n))) return true;
-        if (n.type === 'If' && (check(n.then) || (n.else_ ? check(n.else_) : false))) return true;
+        if (n.type === 'If' && (check(filterUI(n.then)) || (n.else_ ? check(filterUI(n.else_)) : false))) return true;
         if (n.type === 'Each' && check(n.children)) return true;
       }
       return false;
@@ -1884,11 +1984,12 @@ export class CodeGenerator {
       if (!events) return false;
       return events.some((e: EventHandler) => e.action.type === 'FunctionCall' && e.action.name === name);
     };
+    const filterUI = (items: (UINode | VariableDecl)[]) => items.filter((item): item is UINode => item.type !== 'VariableDecl');
     const checkNodes = (nodes: UINode[]): boolean => {
       for (const n of nodes) {
         if (checkEvent(n)) return true;
         if (n.type === 'Layout' && checkNodes(n.children)) return true;
-        if (n.type === 'If' && (checkNodes(n.then) || (n.else_ ? checkNodes(n.else_) : false))) return true;
+        if (n.type === 'If' && (checkNodes(filterUI(n.then)) || (n.else_ ? checkNodes(filterUI(n.else_)) : false))) return true;
         if (n.type === 'Each' && checkNodes(n.children)) return true;
       }
       return false;
