@@ -2,7 +2,7 @@ import {
   Program, Screen, ScreenItem, VariableDecl,
   UINode, Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode, EachNode,
   ComponentDef, ComponentItem, ComponentInvocation,
-  Property, EventHandler, FunctionDef, Statement, Expr, IsExpr, NodeBase,
+  Property, EventHandler, FunctionDef, Statement, Expr, Ident, IsExpr, NodeBase,
   LambdaExpr, EqualityExpr, IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
 } from './ast.js';
 import {
@@ -73,6 +73,7 @@ export class CodeGenerator {
     this.allComponents = program.components;
     this.hasShared = program.shared.length > 0;
     this.validateEmitPlacement(program);
+    this.validateAsyncReactivity(program);
     const firstName = program.screens[0].name;
 
     // Detect if any screen uses fetch
@@ -1344,6 +1345,66 @@ export class CodeGenerator {
       const uiNodes = comp.body.filter((i): i is UINode => i.type !== 'VariableDecl');
       checkUI(uiNodes);
     }
+  }
+
+  // A `fetch` URL whose reactive dependency chain reaches a variable bound to
+  // an `input` re-fires on every keystroke. Spec v0.9.0 turns this from prose
+  // guidance into an enforced rule. Narrow detection: fetch("..." + bound_var)
+  // only — string-concatenation chains. Wider detection (derived dependencies,
+  // non-input bind primitives) can land later if cold-test data justifies it.
+  private validateAsyncReactivity(program: Program): void {
+    for (const screen of program.screens) {
+      const boundInputs = this.collectInputBindTargets(screen);
+      if (boundInputs.size === 0) continue;
+      for (const item of screen.body) {
+        if (item.type !== 'VariableDecl') continue;
+        if (item.value.type !== 'FunctionCall' || item.value.name !== 'fetch') continue;
+        const urlArg = item.value.args[0];
+        if (!urlArg) continue;
+        const offender = this.findReactiveDepOnInput(urlArg, boundInputs);
+        if (offender) {
+          throw new TranspileError(
+            `\`fetch\` URL reactively depends on \`${offender.name}\`, which is bound to an input. ` +
+            `This re-fires the fetch on every keystroke. Use a trigger variable: bind the input to ` +
+            `\`${offender.name}\`, then set a separate variable from a button or \`on change:\` handler, ` +
+            `and fetch from that variable instead.`,
+            offender.loc?.line ?? 1,
+            offender.loc?.column ?? 1
+          );
+        }
+      }
+    }
+  }
+
+  private collectInputBindTargets(screen: Screen): Set<string> {
+    const targets = new Set<string>();
+    const filterUI = (items: (UINode | VariableDecl)[]) =>
+      items.filter((x): x is UINode => x.type !== 'VariableDecl');
+    const walk = (nodes: UINode[]) => {
+      for (const n of nodes) {
+        if (n.type === 'Input') targets.add(n.bind);
+        else if (n.type === 'Layout') walk(n.children);
+        else if (n.type === 'If') {
+          walk(filterUI(n.then));
+          for (const ei of n.elseIfs) walk(filterUI(ei.body));
+          if (n.else_) walk(filterUI(n.else_));
+        } else if (n.type === 'Each') walk(n.children);
+      }
+    };
+    const uiNodes = screen.body.filter(
+      (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef'
+    );
+    walk(uiNodes);
+    return targets;
+  }
+
+  private findReactiveDepOnInput(expr: Expr, targets: Set<string>): Ident | null {
+    if (expr.type === 'Ident' && targets.has(expr.name)) return expr;
+    if (expr.type === 'BinaryExpr' && expr.op === '+') {
+      return this.findReactiveDepOnInput(expr.left, targets)
+        ?? this.findReactiveDepOnInput(expr.right, targets);
+    }
+    return null;
   }
 
   // Walk a UI body collecting (event, argName?) pairs from every `emit` action

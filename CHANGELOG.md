@@ -11,6 +11,15 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.9.0 — 2026-04-16
+*Reactive-fetch footgun becomes a parse-time error.*
+
+- **`fetch` URL concatenated with an `input bind:` target is now a transpile error.** Writing `results = fetch("/api/search?q=" + query)` where `query` is bound to an `input` used to compile and silently spam the API on every keystroke. The transpiler now rejects it with a fix-it message pointing at the trigger-variable pattern.
+- **Detection is narrow on purpose:** string concatenation (`+ BinaryExpr`) inside the URL, direct `Ident` reference to a `bind:` target, `input` primitive only. `toggle` / `slider` / `checkbox` / `dropdown` stay legal — those reassign on discrete user action, and fetch-on-change is the intended pattern.
+- Motivation: violated the "no magic" non-negotiable. A per-keystroke HTTP call is the opposite of "visible cause in the source." Cold-LLM tests repeatedly surface this pattern. Promoting the v0.5-era prose guidance ("Always use a trigger variable") to enforced rule turns the spec into its own teacher. Decision doc: `docs/private/21_v09_async_footgun.md`.
+- Implementation: new `validateAsyncReactivity` pass on `Program` runs after `validateEmitPlacement`, before codegen. No parser changes. Reuses existing `TranspileError`.
+- Test coverage: `transpiler/examples-errors/async-footgun.igni` pins the exact pitfall; existing `examples/fetch-reactive.igni` (trigger-variable pattern) continues to transpile.
+
 ## v0.8.0 — 2026-04-15
 *Component event channels: `emit <event>` inside components, `on <event>:` at the call site.*
 

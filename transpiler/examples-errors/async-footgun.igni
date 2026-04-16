@@ -1,0 +1,8 @@
+screen Search:
+  query = ""
+  results = fetch("/api/search?q=" + query)
+
+  layout vertical, padding: large:
+    input bind: query, placeholder: "Search..."
+    each r in results:
+      label r.title

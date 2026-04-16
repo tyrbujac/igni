@@ -1,0 +1,5 @@
+
+  Error: `fetch` URL reactively depends on `query`, which is bound to an input. This re-fires the fetch on every keystroke. Use a trigger variable: bind the input to `query`, then set a separate variable from a button or `on change:` handler, and fetch from that variable instead.
+
+    async-footgun.igni:3 |   results = fetch("/api/search?q=" + query)
+                         |                                           ^
