@@ -232,8 +232,9 @@ export class Parser {
     const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
-    if (!bindProp || bindProp.value.type !== 'Ident') {
-      return this.error('input requires bind: <variable>');
+    if (!bindProp) return this.error('input requires bind: <variable>');
+    if (bindProp.value.type !== 'Ident') {
+      return this.error('input bind: must be a simple variable name, not a field access like obj.field');
     }
     return {
       type: 'Input',
@@ -250,8 +251,9 @@ export class Parser {
     const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
-    if (!bindProp || bindProp.value.type !== 'Ident') {
-      return this.error('toggle requires bind: <variable>');
+    if (!bindProp) return this.error('toggle requires bind: <variable>');
+    if (bindProp.value.type !== 'Ident') {
+      return this.error('toggle bind: must be a simple variable name, not a field access like obj.field');
     }
     return {
       type: 'Toggle',
@@ -305,7 +307,8 @@ export class Parser {
     const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
-    if (!bindProp || bindProp.value.type !== 'Ident') return this.error('slider requires bind:');
+    if (!bindProp) return this.error('slider requires bind: <variable>');
+    if (bindProp.value.type !== 'Ident') return this.error('slider bind: must be a simple variable name, not a field access like obj.field');
     return { type: 'Slider', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind'), events, loc: this.loc(start) };
   }
 
@@ -315,7 +318,8 @@ export class Parser {
     const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
-    if (!bindProp || bindProp.value.type !== 'Ident') return this.error('checkbox requires bind:');
+    if (!bindProp) return this.error('checkbox requires bind: <variable>');
+    if (bindProp.value.type !== 'Ident') return this.error('checkbox bind: must be a simple variable name, not a field access like obj.field');
     return { type: 'Checkbox', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind'), events, loc: this.loc(start) };
   }
 
@@ -325,7 +329,8 @@ export class Parser {
     const { properties: allProps, events } = this.parsePropsNoPositional();
     this.consume(TokenType.Newline, 'Expected newline');
     const bindProp = allProps.find(p => p.name === 'bind');
-    if (!bindProp || bindProp.value.type !== 'Ident') return this.error('dropdown requires bind:');
+    if (!bindProp) return this.error('dropdown requires bind: <variable>');
+    if (bindProp.value.type !== 'Ident') return this.error('dropdown bind: must be a simple variable name, not a field access like obj.field');
     return { type: 'Dropdown', bind: bindProp.value.name, properties: allProps.filter(p => p.name !== 'bind'), events, loc: this.loc(start) };
   }
 
