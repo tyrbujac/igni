@@ -1,0 +1,30 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Product Search",
+  "prompt_slug": "product-search",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.9.0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.9.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "db2a1cad0fec582dde581672cb5b666e374e66f8e45ec77f4e680ef9461f349d",
+  "spec_words": 1834,
+  "timestamp": "2026-04-16T19:11:05.075Z",
+  "duration_ms": 13902,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 240,
+    "output_tokens": 883,
+    "cache_creation_tokens": 4783,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "igni_lines": 33
+  }
+}
