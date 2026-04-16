@@ -22,7 +22,7 @@
     "attempted": true,
     "extracted_code": true,
     "passed": false,
-    "error": "Error: checkbox requires bind:\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-jyKT6I/app.igni:60 | \n                                                                                   | ^",
+    "error": "Error: checkbox bind: must be a simple variable name, not a field access like obj.field\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-d4azSU/app.igni:60 | \n                                                                                   | ^",
     "igni_lines": 60
   }
 }
