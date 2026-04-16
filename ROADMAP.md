@@ -65,6 +65,7 @@ v0.7.1 adds `upper(s)` / `lower(s)` string builtins. Evidence: 4/4 Alert Dashboa
 - **v0.6.6 full-spec cold tests** — stress-tested advanced features with 3 apps:
   - ~~**Contacts**~~ — **DONE.** 4/4 identical architecture. Tested: `shared:`, `filter`/`sorted`/`reversed` + lambdas, `replace`/`without`, `fetch` + `is loading`/`is error`, navigation + params, wrapper component. 1 typo (Opus), 0 invented syntax. Strongest convergence in any cold test. Trigger-variable understanding: 4/4 correct.
   - ~~**Settings**~~ — **DONE.** 4/4 perfect — first cold test with zero errors across all models. Tested: `on change:` (4/4 correct, 3 distinct approaches), `heading.small` (4/4 correct), `dropdown`/`toggle`/`slider`/`checkbox`/`image round:`/`button color: danger`. Surfaced `bind:`/`on change:` event ordering gap (now documented and implemented).
+- ~~**v0.9.0 Product Search**~~ — **DONE.** First cold test on v0.9.0-cheatsheet after the reactive-fetch footgun became a transpile error. 3/4 transpile (Opus 4.7, GPT-5.4, Gemini 3 Flash); Gemma 4 E4B drifted. All 3/3 frontier models adopted the trigger-variable pattern *syntactically* and named the footgun rule in commentary. But **only 1/3 (Gemini) used the canonical semantics** — Opus and GPT both wrote `on change: trigger = bound_var` which evades the narrow detection while preserving per-keystroke fetch behaviour. First empirical case for widening the detection in v0.10. Writeup: `tests/v0.9.0/Product_Search.md`.
 
 ## Ideas
 
