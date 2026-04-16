@@ -8,7 +8,7 @@ import {
   LambdaExpr, EqualityExpr, InExpr, ReturnStmt, IfStmt, EachStmt, EmitStmt,
   IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
-  ListLit, ObjectLit, FieldAccess,
+  ListLit, ObjectLit, FieldAccess, IndexAccess,
 } from './ast.js';
 
 export class Parser {
@@ -974,7 +974,7 @@ export class Parser {
         const tok = this.advance(); // consume [
         const index = this.parseExpr();
         this.consume(TokenType.RBracket, 'Expected "]"');
-        expr = { type: 'IndexAccess', object: expr, index, loc: this.loc(tok) } as any;
+        expr = { type: 'IndexAccess', object: expr, index, loc: this.loc(tok) } as IndexAccess;
       }
     }
     return expr;

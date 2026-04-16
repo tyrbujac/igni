@@ -217,7 +217,7 @@ export function substituteLambdaParam(expr: Expr, param: string, replacement: st
     case 'FieldAccess':
       return { type: 'FieldAccess', object: substituteLambdaParam(expr.object, param, replacement), field: expr.field };
     case 'IndexAccess':
-      return { type: 'IndexAccess', object: substituteLambdaParam(expr.object, param, replacement), index: substituteLambdaParam((expr as any).index, param, replacement) } as any;
+      return { type: 'IndexAccess', object: substituteLambdaParam(expr.object, param, replacement), index: substituteLambdaParam(expr.index, param, replacement) };
     case 'BinaryExpr':
       return { type: 'BinaryExpr', left: substituteLambdaParam(expr.left, param, replacement), op: expr.op, right: substituteLambdaParam(expr.right, param, replacement) };
     case 'EqualityExpr':
