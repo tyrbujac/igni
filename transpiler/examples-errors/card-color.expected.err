@@ -1,0 +1,5 @@
+
+  Error: `card` is background-only. Use it with `background:`, not `color:`.
+
+    card-color.igni:2 |   label "hi", color: card
+                      |                          ^

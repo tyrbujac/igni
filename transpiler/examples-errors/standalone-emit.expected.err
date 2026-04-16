@@ -1,0 +1,5 @@
+
+  Error: `emit` is only valid as the action of an `on tap:`, `on touch:`, or `on change:` handler. Standalone use is not allowed.
+
+    standalone-emit.igni:2 |   emit change
+                           |       ^

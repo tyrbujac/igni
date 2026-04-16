@@ -1,0 +1,5 @@
+
+  Error: "tap" is a built-in event name, choose a different name for your custom event
+
+    emit-reserved.igni:2 |   button "press", on tap: emit tap
+                         |                                   ^

@@ -1,0 +1,5 @@
+component Box():
+  button "press", on tap: emit tap
+
+screen Test:
+  Box

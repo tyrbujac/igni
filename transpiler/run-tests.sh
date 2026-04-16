@@ -1,11 +1,14 @@
 #!/bin/bash
 # Run all example diff tests. Zero diff = pass.
+# Positive suite: examples/*.igni → stdout == *.expected.dart
+# Negative suite: examples-errors/*.igni → non-zero exit and stderr == *.expected.err
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PASS=0
 FAIL=0
 FAILURES=()
 
+# Positive suite — transpile must succeed and output must match expected Dart.
 for f in "$SCRIPT_DIR"/examples/*.igni; do
   name=$(basename "$f" .igni)
   expected="$SCRIPT_DIR/examples/$name.expected.dart"
@@ -21,6 +24,33 @@ for f in "$SCRIPT_DIR"/examples/*.igni; do
     FAILURES+=("$name")
   fi
 done
+
+# Negative suite — transpile must fail with exit 1 and stderr byte-matching
+# the pinned .expected.err. `cd` so the filename in the error is relative and
+# portable across machines.
+if [ -d "$SCRIPT_DIR/examples-errors" ]; then
+  for f in "$SCRIPT_DIR"/examples-errors/*.igni; do
+    name=$(basename "$f" .igni)
+    expected="$SCRIPT_DIR/examples-errors/$name.expected.err"
+    if [ ! -f "$expected" ]; then
+      continue
+    fi
+    actual=$(cd "$SCRIPT_DIR/examples-errors" && npx tsx "$SCRIPT_DIR/src/cli.ts" "$name.igni" 2>&1 >/dev/null)
+    exit_code=$?
+    if [ "$exit_code" = "0" ]; then
+      echo "FAIL  err/$name  (expected non-zero exit, got 0 — transpile unexpectedly succeeded)"
+      FAIL=$((FAIL + 1))
+      FAILURES+=("err/$name")
+    elif diff -q <(echo "$actual") "$expected" >/dev/null 2>&1; then
+      echo "PASS  err/$name"
+      PASS=$((PASS + 1))
+    else
+      echo "FAIL  err/$name"
+      FAIL=$((FAIL + 1))
+      FAILURES+=("err/$name")
+    fi
+  done
+fi
 
 echo ""
 echo "$PASS passed, $FAIL failed"

@@ -1,0 +1,9 @@
+component Card(title):
+  layout vertical:
+    label title
+    body
+
+screen Test:
+  Card "Title":
+    label "one"
+    label "two"

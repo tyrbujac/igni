@@ -1,0 +1,5 @@
+
+  Error: Expected ":", got "count"
+
+    missing-colon.igni:3 |   button "hi", on tap count = count + 1
+                         |                            ^

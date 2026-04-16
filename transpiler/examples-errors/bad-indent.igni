@@ -1,0 +1,3 @@
+screen Test:
+  count = 0
+ button "tap", on tap: count = count + 1

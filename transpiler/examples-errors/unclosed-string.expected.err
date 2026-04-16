@@ -1,0 +1,5 @@
+
+  Error: Unterminated string
+
+    unclosed-string.igni:2 |   label "unterminated
+                           |                      ^

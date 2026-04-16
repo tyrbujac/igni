@@ -1,0 +1,5 @@
+
+  Error: Wrapper component `Card` received 2 children. The `body` slot renders exactly one widget — wrap multiple children in `layout vertical:` or `layout horizontal:`.
+
+    wrapper-multi.igni:7 |   Card "Title":
+                         |       ^

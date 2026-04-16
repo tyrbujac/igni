@@ -1,0 +1,5 @@
+
+  Error: Inconsistent indentation
+
+    bad-indent.igni:3 |  button "tap", on tap: count = count + 1
+                      |  ^
