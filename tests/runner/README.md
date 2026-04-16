@@ -8,7 +8,7 @@ API-based cold-test driver for four providers. Replaces the manual "paste spec i
 
 | Provider | Transport | Env var | Example model ID |
 |---|---|---|---|
-| Anthropic | Official SDK | `ANTHROPIC_API_KEY` | `claude-opus-4-6` |
+| Anthropic | Official SDK | `ANTHROPIC_API_KEY` | `claude-opus-4-7` |
 | OpenAI | Official SDK | `OPENAI_API_KEY` | `gpt-5.4` |
 | Google | Official SDK (`@google/generative-ai`) | `GOOGLE_API_KEY` (or `GEMINI_API_KEY`) | `gemini-3-flash-preview` |
 | Ollama | HTTP `POST /api/chat` | `OLLAMA_URL` (default `http://localhost:11434`) | `gemma4:e4b` |
@@ -33,8 +33,8 @@ Anthropic with full spec:
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 npx tsx run.ts \
-  --model claude-opus-4-6 \
-  --spec ../../spec/v0.8.0.md \
+  --model claude-opus-4-7 \
+  --spec ../../spec/v0.9.0.md \
   --prompts ../v0.8.1/prompts.md \
   --out ../v0.8.1/outputs
 ```
@@ -76,7 +76,7 @@ Negative control (no spec sent):
 
 ```bash
 npx tsx run.ts \
-  --model claude-opus-4-6 \
+  --model claude-opus-4-7 \
   --prompts ../v0.8.1/prompts-control.md \
   --out ../v0.8.1/outputs
 ```
@@ -84,13 +84,13 @@ npx tsx run.ts \
 Run just one prompt:
 
 ```bash
-npx tsx run.ts --model claude-opus-4-6 --spec ... --prompts ... --out ... --prompt 1
+npx tsx run.ts --model claude-opus-4-7 --spec ... --prompts ... --out ... --prompt 1
 ```
 
 Preview parsing without spending tokens:
 
 ```bash
-npx tsx run.ts --dry-run --model claude-opus-4-6 --prompts ../v0.8.1/prompts.md --out ../v0.8.1/outputs
+npx tsx run.ts --dry-run --model claude-opus-4-7 --prompts ../v0.8.1/prompts.md --out ../v0.8.1/outputs
 ```
 
 ## What it does
@@ -107,19 +107,19 @@ npx tsx run.ts --dry-run --model claude-opus-4-6 --prompts ../v0.8.1/prompts.md 
 <model-slug>_<spec-tier>_<prompt-slug>.{md,json}
 ```
 
-- `model-slug` — sanitised model ID (e.g. `claude-opus-4-6`, `gemini-3-flash`, `gemma4-e4b`)
+- `model-slug` — sanitised model ID (e.g. `claude-opus-4-7`, `gemini-3-flash`, `gemma4-e4b`)
 - `spec-tier` — `full`, `cheatsheet`, `micro`, or `none` (inferred from the spec filename; `none` when no spec)
 - `prompt-slug` — kebab-case prompt title (e.g. `habit-tracker`, `spec-comprehension`, `bmi-calculator`)
 
-Example: `claude-opus-4-6_cheatsheet_habit-tracker.json`
+Example: `claude-opus-4-7_cheatsheet_habit-tracker.json`
 
 ## Result JSON schema
 
 ```json
 {
   "provider": "anthropic",
-  "requested_model": "claude-opus-4-6",
-  "model_id": "claude-opus-4-6-20251201",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7-<checkpoint-date>",
   "prompt_name": "Habit Tracker",
   "prompt_slug": "habit-tracker",
   "prompt_index": 1,
@@ -156,11 +156,11 @@ Example: `claude-opus-4-6_cheatsheet_habit-tracker.json`
 
 ## Extended thinking (Anthropic)
 
-Claude Opus 4.6 and Sonnet 4.5+ support extended thinking — a visible "reasoning budget" the model spends before writing its final answer. Opt in via `--thinking <n>`:
+Claude Opus 4.7 and Sonnet 4.6+ support extended thinking — a visible "reasoning budget" the model spends before writing its final answer. Opt in via `--thinking <n>`:
 
 ```bash
 npx tsx run.ts \
-  --model claude-opus-4-6 \
+  --model claude-opus-4-7 \
   --thinking 10000 \
   --spec ../../spec/v0.8.0-cheatsheet.md \
   --prompts ../v0.8.1/prompts.md \
@@ -183,7 +183,7 @@ Phase 1 experience: at 10k, Opus spent most of the headroom on the *design-decis
 
 **Non-Anthropic providers:** silently ignore the flag. OpenAI reasoning models (`o1`, `o3`) and Gemini thinking are a planned follow-up, not wired up yet.
 
-**Context:** Opus 4.6's default context window is 200k tokens. No flag needed for that — the full spec (9,700 words ≈ 12,600 tokens) fits comfortably.
+**Context:** Opus 4.7's default context window is 200k tokens (a 1M-context variant also exists — see Anthropic docs for that model ID). No flag needed for 200k — the full spec (9,700 words ≈ 12,600 tokens) fits comfortably.
 
 ## Phase 1 — complete
 

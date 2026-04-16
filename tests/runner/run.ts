@@ -93,7 +93,7 @@ Optional:
                      16000+ only if stop_reason == max_tokens. Phase 1 showed
                      10k→5k cut cost ~40% with no visible code-quality loss.
                      Forces temperature=1. Other providers silently ignore.
-                     Opus 4.6 context is 200k tokens by default — no flag needed.
+                     Opus 4.7 context is 200k tokens by default — no flag needed.
   --dry-run          Parse prompts and print what would be sent; no API calls.
 
 Environment:
