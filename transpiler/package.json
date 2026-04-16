@@ -7,6 +7,7 @@
     "transpile": "tsx src/cli.ts",
     "igni": "tsx src/igni.ts",
     "test": "bash run-tests.sh",
+    "test:analyze": "bash run-analyze.sh",
     "dev": "nodemon --ext igni --watch examples --exec 'npx tsx src/cli.ts examples/tutorial.igni > test_app/lib/main.dart && echo Transpiled.'"
   },
   "devDependencies": {
