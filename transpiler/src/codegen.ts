@@ -1247,14 +1247,32 @@ export class CodeGenerator {
     }
     code += `  const ${name}({super.key${allCtorParams.length > 0 ? ', ' + allCtorParams.join(', ') : ''}});\n\n`;
     code += `  @override\n  Widget build(BuildContext context) {\n`;
-    // Component-body derived locals: emit each VariableDecl as a `final` at
-    // the top of build(). Pure-derived values recompute on every rebuild,
-    // which is the correct semantics for a StatelessWidget.
+    // Identify variables targeted by conditional reassignment inside if blocks.
+    const reassignedVars = new Set<string>();
+    for (const item of comp.body) {
+      if (item.type === 'If' && this.ifContainsAssignments(item)) {
+        this.collectAssignmentTargets(item, reassignedVars);
+      }
+    }
+    // Component-body derived locals: emit at the top of build().
+    // Use `var` for variables that are reassigned by if blocks,
+    // `final dynamic` for pure-derived values.
     const derivedLocals = comp.body.filter((n): n is VariableDecl => n.type === 'VariableDecl');
     for (const decl of derivedLocals) {
-      code += `    final dynamic ${decl.name} = ${this.exprToDart(decl.value)};\n`;
+      const keyword = reassignedVars.has(decl.name) ? 'var' : 'final dynamic';
+      code += `    ${keyword} ${decl.name} = ${this.exprToDart(decl.value)};\n`;
     }
-    code += this.genComponentBodyReturn(comp.body, 2);
+    // Emit assignment-only if blocks as imperative code.
+    for (const item of comp.body) {
+      if (item.type === 'If' && this.ifContainsAssignments(item)) {
+        code += this.genImperativeIf(item) + '\n';
+      }
+    }
+    // Filter out assignment-only if blocks before emitting the return.
+    const returnBody = comp.body.filter(item =>
+      !(item.type === 'If' && this.ifContainsAssignments(item))
+    );
+    code += this.genComponentBodyReturn(returnBody, 2);
     code += `  }\n}\n`;
 
     this.screenParams = prevParams;

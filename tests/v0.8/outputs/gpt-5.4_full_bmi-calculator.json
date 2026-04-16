@@ -1,0 +1,28 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.4",
+  "model_id": "gpt-5.4-2026-03-05",
+  "prompt_name": "BMI Calculator",
+  "prompt_slug": "bmi-calculator",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.8/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.8.0.md",
+  "spec_tier": "full",
+  "spec_sha256": "88e502249deab71b8d31881ef796a96deea2f661b0cca59d425c2a8b144797e1",
+  "spec_words": 9700,
+  "timestamp": "2026-04-16T11:00:35.577Z",
+  "duration_ms": 16534,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 16015,
+    "output_tokens": 1037,
+    "cache_read_tokens": 0
+  },
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "igni_lines": 84
+  }
+}

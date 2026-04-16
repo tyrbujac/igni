@@ -1,0 +1,18 @@
+component SelectableCard(title, selected):
+  bg = card
+  text_color = white
+  if selected:
+    bg = brand
+    text_color = black
+
+  layout vertical, background: bg, padding: medium, rounded: medium, align: center:
+    label title, style: heading, color: text_color
+
+screen Demo:
+  active = "A"
+
+  layout vertical, gap: medium, padding: large:
+    layout horizontal, gap: medium:
+      SelectableCard "Option A", active is "A", on tap: active = "A"
+      SelectableCard "Option B", active is "B", on tap: active = "B"
+    label "Selected: " + active

@@ -22,7 +22,7 @@ The prompt is identical to the v0.7.0 BMI rerun. Same app, same four models. The
 | **`round(bmi, 1)` carry-over** | ✓ | ✓ | ✓ | ✓ | 4/4 | **4/4** | stable |
 | **`shape: circle` carry-over** | ✓ | ✓ | ✓ | ✓ | 4/4 | **4/4** | stable |
 | **Conditional styling variables (`status_color` / `bg`)** | ✓ | ✓ | ✓ | ✓ | 4/4 | **4/4** | stable |
-| **Transpiler validation** | pending | pending | pending | pending | — | pending | — |
+| **Transpiler validation** | ✗ (`emit tap` reserved) | — | ✓ (GPT-5.4 rerun) | ✓ (Opus 4.6 rerun) | — | **2/3 pass** | — |
 
 ## Per-hypothesis analysis
 
@@ -140,7 +140,7 @@ Small notes:
 
 **Stage 1 (spec-level grading):** clear pass on the main feature. The Stepper event-channel signal moved from 0/4 in v0.7.0 to 4/4 in v0.8.0. One reserved-name collision (`emit tap`) appears in Gemini Flash. No standalone `emit` misuse.
 
-**Stage 2 (transpiler validation):** not yet run. The four outputs should be saved under `tests/v0.8/outputs/` and run through the transpiler plus `dart analyze` to complete the loop.
+**Stage 2 (transpiler validation):** completed 2026-04-16 via automated runner rerun (Opus 4.6, GPT-5.4, Gemini 3 Flash — Gemini Pro not re-run, no API access via runner). **2/3 pass.** Opus 4.6 (70L) and GPT-5.4 (84L) transpile cleanly. Gemini Flash (73L) fails on `emit tap` — the reserved-name collision the spec grading already flagged. The failure is a spec-compliance error, not a transpiler gap. Transpiler fix required: conditional variable reassignment inside component `if` blocks (`bg = card; if selected: bg = brand`) was rejected by the parser; fixed in the same session (parser: allow `if` with `allowAssignments: true` in component bodies; codegen: emit `var` instead of `final` for reassigned locals, emit imperative `if` blocks before the return).
 
 ## Verdict
 
@@ -154,6 +154,7 @@ Net: **feature validated.** This is not a cheatsheet-placement failure result. T
 
 ## Next steps
 
-1. Run stage-2 transpiler validation on all four outputs and record transpile / `dart analyze` results.
+1. ~~Run stage-2 transpiler validation on all four outputs and record transpile / `dart analyze` results.~~ **Done** (2/3 pass; Gemini Pro not re-run).
 2. Note reserved-name collisions (`tap`, `change`, `touch`) as the main follow-up docs issue from the batch.
 3. Move to the `v0.8.0` vs `v0.8.1` framing comparison using the Habit Tracker prompt in `tests/v0.8.1/prompts.md`.
+4. Regrade v0.8.1 Phase 1 Habit Tracker outputs with the component-conditional transpiler fix.

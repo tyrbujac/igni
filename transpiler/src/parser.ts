@@ -376,6 +376,8 @@ export class Parser {
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       if (this.isVariableDecl()) {
         body.push(this.parseVariableDecl());
+      } else if (this.check(TokenType.If)) {
+        body.push(this.parseIf(true));
       } else {
         body.push(this.parseUINode());
       }

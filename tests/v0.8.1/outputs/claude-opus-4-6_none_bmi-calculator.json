@@ -24,7 +24,7 @@
     "attempted": true,
     "extracted_code": true,
     "passed": false,
-    "error": "Error: Unexpected character: '─'\n\n    1 | // ── BMI Calculator ──────────────────────────────────────\n      |    ^",
+    "error": "Error: Unexpected character: '─'\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-LvOAdE/app.igni:1 | // ── BMI Calculator ──────────────────────────────────────\n                                                                                  |    ^",
     "igni_lines": 124
   }
 }

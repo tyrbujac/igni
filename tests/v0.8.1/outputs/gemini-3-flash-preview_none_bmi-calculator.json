@@ -22,7 +22,7 @@
     "attempted": true,
     "extracted_code": true,
     "passed": false,
-    "error": "Error: Unexpected character: '&'\n\n    10 |     fn view(&self) -> Node {\n       |             ^",
+    "error": "Error: Unexpected character: '&'\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-k308Qz/app.igni:10 |     fn view(&self) -> Node {\n                                                                                   |             ^",
     "igni_lines": 58
   }
 }
