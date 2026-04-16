@@ -1,5 +1,5 @@
 import { Token, TokenType } from './tokens.js';
-import { TranspileError } from './errors.js';
+import { TranspileError, AggregateTranspileError } from './errors.js';
 import {
   Program, Screen, ScreenItem, VariableDecl, UINode,
   Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
@@ -15,6 +15,7 @@ export class Parser {
   private tokens: Token[];
   private pos = 0;
   private pendingComments: string[] = [];
+  private errors: TranspileError[] = [];
 
   constructor(tokens: Token[]) {
     this.tokens = tokens;
@@ -26,15 +27,56 @@ export class Parser {
     const components: ComponentDef[] = [];
     const shared: VariableDecl[] = [];
     while (!this.check(TokenType.EOF)) {
-      if (this.check(TokenType.Component)) {
-        components.push(this.parseComponentDef());
-      } else if (this.check(TokenType.Shared)) {
-        shared.push(...this.parseSharedBlock());
-      } else {
-        screens.push(this.parseScreen());
+      try {
+        if (this.check(TokenType.Component)) {
+          components.push(this.parseComponentDef());
+        } else if (this.check(TokenType.Shared)) {
+          shared.push(...this.parseSharedBlock());
+        } else {
+          screens.push(this.parseScreen());
+        }
+      } catch (e) {
+        if (e instanceof TranspileError) {
+          this.errors.push(e);
+          this.synchronizeTopLevel();
+        } else {
+          throw e;
+        }
       }
     }
+    if (this.errors.length > 0) {
+      throw new AggregateTranspileError(this.errors);
+    }
     return { type: 'Program', screens, components, shared, loc: this.loc(start) };
+  }
+
+  // Advance past the current logical line: consume tokens until the next
+  // Newline (which we also consume, landing at the start of the next
+  // statement), or until we hit a structural boundary (Indent/Dedent/EOF)
+  // which the caller's body-loop condition will handle.
+  private synchronizeLine(): void {
+    while (!this.check(TokenType.EOF)) {
+      if (this.check(TokenType.Newline)) {
+        this.advance();
+        return;
+      }
+      if (this.check(TokenType.Dedent) || this.check(TokenType.Indent)) return;
+      this.advance();
+    }
+  }
+
+  // Skip ahead until we find the start of a new top-level declaration
+  // (`screen`, `component`, or `shared`) or EOF. Used to recover after a
+  // header-level parse failure so remaining declarations can still be parsed.
+  private synchronizeTopLevel(): void {
+    while (!this.check(TokenType.EOF)) {
+      if (
+        this.check(TokenType.Screen) ||
+        this.check(TokenType.Component) ||
+        this.check(TokenType.Shared)
+      ) return;
+      this.advance();
+    }
   }
 
   private parseSharedBlock(): VariableDecl[] {
@@ -44,7 +86,16 @@ export class Parser {
     this.consume(TokenType.Indent, 'Expected indent');
     const vars: VariableDecl[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
-      vars.push(this.parseVariableDecl());
+      try {
+        vars.push(this.parseVariableDecl());
+      } catch (e) {
+        if (e instanceof TranspileError) {
+          this.errors.push(e);
+          this.synchronizeLine();
+        } else {
+          throw e;
+        }
+      }
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
     return vars;
@@ -86,17 +137,26 @@ export class Parser {
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       this.drainComments(items);
       if (this.check(TokenType.Dedent) || this.check(TokenType.EOF)) break;
-      if (this.isVariableDecl()) {
-        items.push(this.parseVariableDecl());
-      } else if (
-        this.check(TokenType.Identifier) &&
-        this.peek(1)?.type === TokenType.LParen
-      ) {
-        items.push(this.parseFunctionDef());
-      } else if (this.check(TokenType.If)) {
-        items.push(this.parseIf(true));
-      } else {
-        items.push(this.parseUINode());
+      try {
+        if (this.isVariableDecl()) {
+          items.push(this.parseVariableDecl());
+        } else if (
+          this.check(TokenType.Identifier) &&
+          this.peek(1)?.type === TokenType.LParen
+        ) {
+          items.push(this.parseFunctionDef());
+        } else if (this.check(TokenType.If)) {
+          items.push(this.parseIf(true));
+        } else {
+          items.push(this.parseUINode());
+        }
+      } catch (e) {
+        if (e instanceof TranspileError) {
+          this.errors.push(e);
+          this.synchronizeLine();
+        } else {
+          throw e;
+        }
       }
     }
     return items;
@@ -379,12 +439,21 @@ export class Parser {
     this.consume(TokenType.Indent, 'Expected indent');
     const body: ComponentItem[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
-      if (this.isVariableDecl()) {
-        body.push(this.parseVariableDecl());
-      } else if (this.check(TokenType.If)) {
-        body.push(this.parseIf(true));
-      } else {
-        body.push(this.parseUINode());
+      try {
+        if (this.isVariableDecl()) {
+          body.push(this.parseVariableDecl());
+        } else if (this.check(TokenType.If)) {
+          body.push(this.parseIf(true));
+        } else {
+          body.push(this.parseUINode());
+        }
+      } catch (e) {
+        if (e instanceof TranspileError) {
+          this.errors.push(e);
+          this.synchronizeLine();
+        } else {
+          throw e;
+        }
       }
     }
     this.consume(TokenType.Dedent, 'Expected dedent');

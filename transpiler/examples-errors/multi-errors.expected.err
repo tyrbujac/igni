@@ -1,0 +1,10 @@
+
+  Error: Expected ":", got "count"
+
+    multi-errors.igni:3 |   button "hi", on tap count = count + 1
+                        |                            ^
+
+  Error: Expected ":", got "pink"
+
+    multi-errors.igni:4 |   label "bye", color pink
+                        |                          ^

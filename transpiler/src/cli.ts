@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { Lexer } from './lexer.js';
 import { Parser } from './parser.js';
 import { CodeGenerator } from './codegen.js';
-import { TranspileError, formatError } from './errors.js';
+import { TranspileError, AggregateTranspileError, formatError } from './errors.js';
 
 const file = process.argv[2];
 if (!file) {
@@ -18,7 +18,11 @@ try {
   const dart = new CodeGenerator().generate(ast);
   process.stdout.write(dart);
 } catch (err: any) {
-  if (err instanceof TranspileError) {
+  if (err instanceof AggregateTranspileError) {
+    for (const e of err.errors) {
+      process.stderr.write(formatError(e, source, file));
+    }
+  } else if (err instanceof TranspileError) {
     process.stderr.write(formatError(err, source, file));
   } else {
     console.error(err.message);

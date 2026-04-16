@@ -1,0 +1,5 @@
+screen Test:
+  count = 0
+  button "hi", on tap count = count + 1
+  label "bye", color pink
+  label "ok"

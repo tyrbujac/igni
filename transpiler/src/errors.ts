@@ -9,6 +9,16 @@ export class TranspileError extends Error {
   }
 }
 
+export class AggregateTranspileError extends Error {
+  errors: TranspileError[];
+
+  constructor(errors: TranspileError[]) {
+    super(errors.map(e => e.message).join('; '));
+    this.name = 'AggregateTranspileError';
+    this.errors = errors;
+  }
+}
+
 export interface ErrorLocation {
   file?: string;
   line: number;
