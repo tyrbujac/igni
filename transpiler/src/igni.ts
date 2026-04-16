@@ -7,21 +7,34 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 import { watch } from 'chokidar';
 import { Lexer } from './lexer.js';
 import { Parser } from './parser.js';
-import { CodeGenerator } from './codegen.js';
-import { TranspileError, formatError } from './errors.js';
+import { CodeGenerator, GeneratedLineMapEntry } from './codegen.js';
+import { TranspileError, formatMappedError } from './errors.js';
 
 const command = process.argv[2];
-const explicitFile = process.argv[3]; // optional: igni run myfile.igni
-
-if (command !== 'run') {
-  console.log('Usage: igni run [file.igni]');
-  console.log('  igni run              Run app.igni (default entry point)');
-  console.log('  igni run hello.igni   Run a specific file');
-  process.exit(1);
-}
+const commandArg = process.argv[3];
 
 const cwd = process.cwd();
 const igniDir = join(cwd, '.igni');
+
+interface SourceFileInfo {
+  file: string;
+  source: string;
+  startLine: number;
+  endLine: number;
+}
+
+interface TranspileResult {
+  dart: string;
+  lineMap: GeneratedLineMapEntry[];
+  sourceFiles: SourceFileInfo[];
+}
+
+function printUsage(): void {
+  console.log('Usage: igni <command>');
+  console.log('  igni run              Run app.igni (default entry point)');
+  console.log('  igni run hello.igni   Run a specific file');
+  console.log('  igni new my-app       Create a new Igni app');
+}
 
 // --- Find .igni files ---
 
@@ -37,9 +50,9 @@ function findIgniFiles(): string[] {
   }
 
   // Determine entry point
-  const entry = explicitFile || 'app.igni';
+  const entry = commandArg || 'app.igni';
   if (!files.includes(entry)) {
-    if (explicitFile) {
+    if (commandArg) {
       console.error(`File not found: ${entry}`);
     } else {
       console.error('No app.igni found. Create one or specify a file: igni run hello.igni');
@@ -53,19 +66,67 @@ function findIgniFiles(): string[] {
 
 // --- Transpile ---
 
-function transpile(): string | null {
+function buildSourceFiles(files: string[]): SourceFileInfo[] {
+  let nextStartLine = 1;
+  return files.map((file) => {
+    const source = readFileSync(join(cwd, file), 'utf-8');
+    const lineCount = source.split('\n').length;
+    const info = {
+      file,
+      source,
+      startLine: nextStartLine,
+      endLine: nextStartLine + lineCount - 1,
+    };
+    nextStartLine = info.endLine + 3;
+    return info;
+  });
+}
+
+function combinedSource(sourceFiles: SourceFileInfo[]): string {
+  return sourceFiles.map(file => file.source).join('\n\n');
+}
+
+function resolveSourceLocation(sourceFiles: SourceFileInfo[], line: number, column: number, context?: string) {
+  const file = sourceFiles.find(info => line >= info.startLine && line <= info.endLine);
+  if (!file) {
+    return {
+      file: undefined,
+      line,
+      column,
+      sourceLine: '',
+      context,
+    };
+  }
+
+  const localLine = line - file.startLine + 1;
+  const sourceLine = file.source.split('\n')[localLine - 1] ?? '';
+  return {
+    file: file.file,
+    line: localLine,
+    column,
+    sourceLine,
+    context,
+  };
+}
+
+function printTranspileError(err: TranspileError, sourceFiles: SourceFileInfo[]): void {
+  const location = resolveSourceLocation(sourceFiles, err.line, err.column);
+  process.stderr.write(formatMappedError(err.message, location));
+}
+
+function transpile(): TranspileResult | null {
   const files = findIgniFiles();
-  const sources = files.map(f => readFileSync(join(cwd, f), 'utf-8'));
-  const combined = sources.join('\n\n');
+  const sourceFiles = buildSourceFiles(files);
+  const combined = combinedSource(sourceFiles);
 
   try {
     const tokens = new Lexer(combined).tokenize();
     const ast = new Parser(tokens).parse();
-    const dart = new CodeGenerator().generate(ast);
-    return dart;
+    const generated = new CodeGenerator().generateWithSourceMap(ast);
+    return { dart: generated.dart, lineMap: generated.lineMap, sourceFiles };
   } catch (err: any) {
     if (err instanceof TranspileError) {
-      process.stderr.write(formatError(err, combined));
+      printTranspileError(err, sourceFiles);
     } else {
       console.error(`\n  Error: ${err.message}\n`);
     }
@@ -82,8 +143,6 @@ function writeOutput(dart: string): void {
 
 function ensureFlutterProject(): void {
   if (existsSync(join(igniDir, 'pubspec.yaml'))) return;
-
-  console.log('Setting up Igni project...');
 
   try {
     execSync('flutter --version', { stdio: 'ignore' });
@@ -134,8 +193,6 @@ function ensureFlutterProject(): void {
       writeFileSync(gitignore, content.trimEnd() + '\n.igni/\n');
     }
   }
-
-  console.log('Igni project created.\n');
 }
 
 // --- Image assets ---
@@ -224,32 +281,108 @@ function ensureDependencies(dart: string): void {
   }
 }
 
+function mapGeneratedLine(
+  transpileResult: TranspileResult,
+  dartLine: number,
+  dartColumn: number,
+  message: string,
+): string | null {
+  let entry: GeneratedLineMapEntry | undefined;
+  for (const candidate of transpileResult.lineMap) {
+    if (candidate.dartLine > dartLine) break;
+    entry = candidate;
+  }
+  if (!entry) return null;
+
+  const location = resolveSourceLocation(
+    transpileResult.sourceFiles,
+    entry.sourceLine,
+    entry.sourceColumn,
+    `Mapped from generated Dart line ${dartLine}:${dartColumn} (${entry.context})`,
+  );
+  return formatMappedError(message, location);
+}
+
+function printMappedFlutterError(line: string, transpileResult: TranspileResult): boolean {
+  const match = line.match(/(?:lib\/)?main\.dart:(\d+):(\d+):\s*(.*)/);
+  if (!match) return false;
+
+  const dartLine = Number(match[1]);
+  const dartColumn = Number(match[2]);
+  const message = match[3].trim() || 'Generated Dart error';
+  const mapped = mapGeneratedLine(transpileResult, dartLine, dartColumn, message);
+  if (!mapped) return false;
+
+  process.stderr.write(mapped);
+  return true;
+}
+
+function createNewProject(name: string | undefined): void {
+  if (!name) {
+    console.error('Usage: igni new <project-name>');
+    process.exit(1);
+  }
+
+  const projectDir = join(cwd, name);
+  if (existsSync(projectDir)) {
+    console.error(`Directory already exists: ${name}`);
+    process.exit(1);
+  }
+
+  mkdirSync(projectDir, { recursive: true });
+  writeFileSync(
+    join(projectDir, 'app.igni'),
+    [
+      'screen Hello:',
+      '  count = 0',
+      '',
+      '  layout vertical, align: center, gap: medium, padding: large:',
+      '    label count, style: heading',
+      '    button "Add", on tap: count = count + 1',
+      '',
+    ].join('\n')
+  );
+  writeFileSync(join(projectDir, '.gitignore'), '.igni/\n');
+
+  console.log(`Created ${name}\n`);
+  console.log('Next:');
+  console.log(`  cd ${name}`);
+  console.log('  igni run\n');
+}
+
 // --- Main ---
 
 async function run(): Promise<void> {
-  const dart = transpile();
-  if (!dart) {
+  const initialResult = transpile();
+  if (!initialResult) {
     console.error('Fix the error above, then run igni run again.');
     process.exit(1);
   }
+  let transpileResult = initialResult;
+  const firstRun = !existsSync(join(igniDir, 'pubspec.yaml'));
 
   ensureFlutterProject();
   syncImages();
   syncAudio();
-  ensureDependencies(dart);
+  ensureDependencies(transpileResult.dart);
   mkdirSync(join(igniDir, 'lib'), { recursive: true });
-  writeOutput(dart);
+  writeOutput(transpileResult.dart);
 
   const projectName = basename(cwd);
+  const buildHint = firstRun ? " (About 15s the first time)" : " (This may take a few seconds)";
   const buildStart = Date.now();
 
-  // Dot animation while building
+  // Spinner while the app is building
   let dots = 0;
+  const spinnerFrames = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏'];
+  const renderBuild = () => {
+    process.stdout.write(`\r\x1b[2K${spinnerFrames[dots % spinnerFrames.length]} Building your app${buildHint}`);
+  };
+  renderBuild();
   const spinner = setInterval(() => {
-    dots = (dots % 3) + 1;
-    process.stdout.write(`\r  Building${'.'.repeat(dots)}${' '.repeat(3 - dots)}`);
-  }, 500);
-  process.stdout.write('  Building.');
+    dots = (dots + 1) % spinnerFrames.length;
+    renderBuild();
+  }, 100);
 
   // Start flutter run
   const flutter = spawn('flutter', ['run', '-d', 'chrome'], {
@@ -259,6 +392,8 @@ async function run(): Promise<void> {
 
   // Filter Flutter output — suppress implementation details
   let appReady = false;
+  const stderrBuffer: string[] = [];
+
   flutter.stdout.on('data', (data: Buffer) => {
     const lines = data.toString().split('\n');
     for (const line of lines) {
@@ -278,9 +413,14 @@ async function run(): Promise<void> {
         if (!appReady && line.includes('Debug service listening')) {
           appReady = true;
           clearInterval(spinner);
-          const elapsed = ((Date.now() - buildStart) / 1000).toFixed(1);
-          process.stdout.write(`\r  ${projectName} ready (${elapsed}s)\n\n`);
-          console.log('  Save a .igni file to reload. Press q to quit.\n');
+          process.stdout.write(`\r\x1b[2K✓ ${projectName} ready\n\n`);
+          // Flush any errors that arrived during the build
+          for (const buffered of stderrBuffer) {
+            process.stderr.write(buffered + '\n');
+          }
+          stderrBuffer.length = 0;
+          console.log('Edit app.igni and save to see changes.');
+          console.log('Press q to quit.');
         }
         continue;
       }
@@ -294,16 +434,29 @@ async function run(): Promise<void> {
         line.includes('Application finished')
       ) {
         if (appReady) {
-          console.log(line);
+          if (!printMappedFlutterError(line, transpileResult)) {
+            console.log(line);
+          }
         }
       }
     }
   });
 
   flutter.stderr.on('data', (data: Buffer) => {
-    const line = data.toString();
-    if (line.includes('Error') || line.includes('error') || line.includes('Exception')) {
-      process.stderr.write(line);
+    const lines = data.toString().split('\n');
+    for (const line of lines) {
+      if (!line) continue;
+      if (!appReady) {
+        // Buffer stderr during build so it doesn't interrupt the spinner
+        if (line.includes('Error') || line.includes('error') || line.includes('Exception')) {
+          stderrBuffer.push(line);
+        }
+        continue;
+      }
+      if (printMappedFlutterError(line, transpileResult)) continue;
+      if (line.includes('Error') || line.includes('error') || line.includes('Exception')) {
+        process.stderr.write(line + '\n');
+      }
     }
   });
 
@@ -335,7 +488,8 @@ async function run(): Promise<void> {
   watcher.on('change', (filePath) => {
     const result = transpile();
     if (result) {
-      writeOutput(result);
+      transpileResult = result;
+      writeOutput(result.dart);
       // Send 'r' to Flutter to trigger hot reload
       flutter.stdin.write('r');
       console.log(`  Recompiled (${basename(filePath)})`);
@@ -348,4 +502,11 @@ async function run(): Promise<void> {
   });
 }
 
-run();
+if (command === 'run') {
+  run();
+} else if (command === 'new') {
+  createNewProject(commandArg);
+} else {
+  printUsage();
+  process.exit(1);
+}
