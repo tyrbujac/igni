@@ -55,3 +55,23 @@ Given the canonical "update one field on an object in a list" idiom and its verb
 **Success bar:** at least 3/4 frontier models converge on a single shape family. The converged shape becomes the v0.10 proposal. If models split across multiple families, ship the design note's `with`-keyword recommendation on principles (rejecting the JS/TS spread import is already a principled stance, not a cold-test-contingent one).
 
 **Context tier:** cheatsheet (`spec/v0.9.1-cheatsheet.md`). Condensed spec is the tightest teaching surface — if the cheatsheet's existing object-literal + `replace` rules are enough for the model to propose a coherent extension, the spec has succeeded at teaching its own shape.
+
+---
+
+## 2. Shopping (post-ship v0.10 `{target with ...}` adoption)
+
+> Using only the Igni language spec above, write a small e-commerce app in Igni. It should have two screens: a product list showing each product's name and price, and a cart screen. Tapping a product adds it to the cart. If the product is already in the cart, its quantity increases by one instead of adding a duplicate row. The cart screen shows items with their name, price, quantity, and a "Remove" button per item. Show a total price at the bottom. Use shared state for the cart.
+>
+> Respond with only the Igni code — no explanation, no commentary, no discussion of the spec.
+
+**What to grade:**
+
+- **v0.10 adoption (headline metric).** Did the model use `{target with ...}` for the quantity-increment case (the canonical one-field update on an existing object)? Score ✓ if the model writes `{existing with quantity: existing.quantity + 1}`; ✗ if it falls back to the verbose `{id: existing.id, name: existing.name, ...}` field enumeration. Target: 3-4/4 adoption.
+- **Transpile pass.** Auto-graded by the runner. Three frontier models should produce code that transpiles on first attempt.
+- **Shared-state usage.** `shared:` block for the cart, `shared.cart = ...` for the mutation, `shared.` prefix at read sites.
+- **Identity vs predicate lookup.** `find(cart, item => item.id is product.id)` for the "already in cart?" check — identity match doesn't work across `navigate` transitions since the product is a new object each time.
+- **Design drift.** Any invented syntax? Any regression compared to the v0.6.1 Shopping round (dashboard spec example that already tested this prompt shape)?
+
+**Success bar:** at least 3/4 frontier models use `{target with ...}` unprompted for the quantity-increment. The verbose form is still legal but the cheatsheet's prominent example points at the `with` shape first — if the cheatsheet teaches the rule, adoption should be high.
+
+**Context tier:** cheatsheet (`spec/v0.10.0-cheatsheet.md`). Tightest teaching surface; if condensed spec is sufficient, that's the strongest validation of the v0.10 design.
