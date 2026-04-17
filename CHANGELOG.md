@@ -11,6 +11,12 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.9.1 — 2026-04-17
+*Documentation-only. Trigger-variable pattern now recommends `on tap:` on a button and explicitly flags the `on change:` pseudo-fix.*
+
+- **Spec wording tightening** in *Async Data*. v0.9.0 recommended setting the trigger "from a button or `on change:` handler". The v0.9.0 Product Search cold test (`tests/v0.9.0/Product_Search.md`) showed 2/3 frontier models read `on change:` as equivalent to a button and wrote `on change: search = query` to copy the bound variable into the trigger — which fires every keystroke and preserves the exact per-keystroke fetch the v0.9.0 rule was designed to prevent. v0.9.1 drops `on change:` from the recommendation and adds a sentence explaining why it is not an escape hatch. No syntax or semantic changes; same transpiler.
+- Detection widening (catching `on change: trigger = bound_var` where `trigger` feeds a `fetch` URL) is deferred to v0.10 with its own design note. v0.9.1 is a docs-only patch to stop the spec from teaching the evasion pattern while the detection question is still being scoped.
+
 ## v0.9.0 — 2026-04-16
 *Reactive-fetch footgun becomes a parse-time error.*
 
