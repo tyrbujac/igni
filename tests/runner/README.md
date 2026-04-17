@@ -181,6 +181,8 @@ Phase 1 experience: at 10k, Opus spent most of the headroom on the *design-decis
 - The `.md` result file contains **only the model's final text** — thinking blocks are filtered out (private scratchpad).
 - `usage.thinking_tokens` in the JSON is best-effort — SDK 0.60 doesn't expose a separate breakdown, so the field is 0 even when thinking ran. The elevated `output_tokens` and `duration_ms` are the signal that thinking fired.
 
+**API shape — Opus 4.7 vs 4.6:** 4.6-class models use `thinking: { type: 'enabled', budget_tokens: N }`; 4.7-class models use `thinking: { type: 'adaptive' }` + `output_config: { effort: 'low' | 'medium' | 'high' }`. The runner branches internally on the model name — user-visible `--thinking <n>` behaviour is unchanged. For 4.7, the budget maps to an effort bucket: `≤5000 → low`, `≤12000 → medium`, `>12000 → high`. The effort thresholds track the existing budget suggestions above (5k regression, 10k flagship, 16k+ stop-reason guard). Surfaced a line to stderr so the chosen effort is visible at runtime.
+
 **Non-Anthropic providers:** silently ignore the flag. OpenAI reasoning models (`o1`, `o3`) and Gemini thinking are a planned follow-up, not wired up yet.
 
 **Context:** Opus 4.7's default context window is 200k tokens (a 1M-context variant also exists — see Anthropic docs for that model ID). No flag needed for 200k — the full spec (9,700 words ≈ 12,600 tokens) fits comfortably.

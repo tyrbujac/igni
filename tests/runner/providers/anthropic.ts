@@ -1,6 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { Provider, CallParams, ProviderResult } from './types.js';
 
+function is47PlusModel(model: string): boolean {
+  return /claude-(opus|sonnet|haiku)-4-[7-9]/.test(model)
+      || /claude-(opus|sonnet|haiku)-[5-9]/.test(model);
+}
+
 export class AnthropicProvider implements Provider {
   readonly name = 'anthropic' as const;
   private client: Anthropic;
@@ -25,12 +30,20 @@ export class AnthropicProvider implements Provider {
 
     const thinkingOn = !!(params.thinkingBudget && params.thinkingBudget > 0);
     if (thinkingOn) {
-      const minMax = params.thinkingBudget! + 4096;
+      const budget = params.thinkingBudget!;
+      const minMax = budget + 4096;
       if (request.max_tokens < minMax) {
         console.log(`      (max_tokens bumped ${request.max_tokens} → ${minMax} for thinking budget)`);
         request.max_tokens = minMax;
       }
-      (request as any).thinking = { type: 'enabled', budget_tokens: params.thinkingBudget };
+      if (is47PlusModel(params.model)) {
+        const effort = budget <= 5000 ? 'low' : budget <= 12000 ? 'medium' : 'high';
+        (request as any).thinking = { type: 'adaptive' };
+        (request as any).output_config = { effort };
+        console.log(`      (adaptive thinking: effort=${effort} from budget=${budget} for ${params.model})`);
+      } else {
+        (request as any).thinking = { type: 'enabled', budget_tokens: budget };
+      }
       request.temperature = 1;
     }
 
