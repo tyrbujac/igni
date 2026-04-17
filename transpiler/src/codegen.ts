@@ -1918,6 +1918,11 @@ export class CodeGenerator {
         return `[${expr.elements.map(e => this.exprToDart(e)).join(', ')}]`;
       case 'ObjectLit':
         return `{${expr.entries.map(e => `'${e.key}': ${this.exprToDart(e.value)}`).join(', ')}}`;
+      case 'ObjectUpdate': {
+        const baseDart = this.exprToDart(expr.base);
+        const overrides = expr.updates.map(u => `'${u.key}': ${this.exprToDart(u.value)}`).join(', ');
+        return `{...${baseDart}, ${overrides}}`;
+      }
       case 'FieldAccess':
         if (expr.object.type === 'Ident' && expr.object.name === 'shared') {
           return `shared.${expr.field}`;
@@ -2005,6 +2010,7 @@ export class CodeGenerator {
       case 'IsExpr':
       case 'ListLit':
       case 'ObjectLit':
+      case 'ObjectUpdate':
         return "'" + '${' + this.exprToDart(expr) + "}'";
       case 'FieldAccess':
       case 'IndexAccess':

@@ -11,8 +11,7 @@ screen ProductList:
   add_to_cart(product):
     existing = find(shared.cart, item => item.id is product.id)
     if existing is not null:
-      updated = {id: existing.id, name: existing.name, price: existing.price, quantity: existing.quantity + 1}
-      shared.cart = replace(shared.cart, existing, updated)
+      shared.cart = replace(shared.cart, existing, {existing with quantity: existing.quantity + 1})
     else:
       new_item = {id: product.id, name: product.name, price: product.price, quantity: 1}
       shared.cart = shared.cart + [new_item]

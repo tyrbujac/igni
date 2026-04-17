@@ -34,6 +34,7 @@ export enum TokenType {
   Emit,
   And,
   Or,
+  With,
 
   // Operators
   Arrow,
@@ -102,4 +103,5 @@ export const KEYWORDS: Record<string, TokenType> = {
   emit: TokenType.Emit,
   and: TokenType.And,
   or: TokenType.Or,
+  with: TokenType.With,
 };

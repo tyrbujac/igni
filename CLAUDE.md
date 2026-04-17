@@ -2,7 +2,7 @@
 
 A programming language for building UIs — designed to be read. Created by Tyr (sole author and sole decision-maker). The hypothesis is that LLM accuracy and human readability correlate tightly, so removing the ambiguity that trips LLMs up also makes the language nicer for humans.
 
-**Status: transpiler stage.** The TypeScript-to-Dart transpiler exists and covers most of the v0.9.1 spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter.
+**Status: transpiler stage.** The TypeScript-to-Dart transpiler exists and covers most of the v0.10.0 spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter.
 
 *Project history: the language was originally named Rocket and was renamed to Igni at v0.3.2. Spec files in `spec/` are immutable historical snapshots — never edited after they ship. Each new version is a new file.*
 
@@ -30,9 +30,9 @@ igni/
 ├── ROADMAP.md               # near-term plans + ideas
 ├── assets/                  # logo (igni.svg, igni-dark-mode.svg, PNGs)
 ├── spec/                    # all spec versions
-│   ├── v0.9.1.md             # current canonical spec
-│   ├── v0.9.1-cheatsheet.md  # current canonical cheatsheet (learning order)
-│   ├── v0.8.0-micro.md       # syntax-only micro reference (~650 words)
+│   ├── v0.10.0.md             # current canonical spec
+│   ├── v0.10.0-cheatsheet.md  # current canonical cheatsheet (learning order)
+│   ├── v0.10.0-micro.md       # current canonical micro reference (~650 words)
 │   ├── v0.2.md → v0.7.1.md  # historical snapshots (never edited after shipping)
 │   └── v0.6.1 → v0.6.5-cheatsheet.md  # historical cheatsheets
 ├── tests/                   # cold-LLM test infrastructure
@@ -56,12 +56,12 @@ Each spec version gets its own subfolder under `tests/` containing both the prom
 
 ## Spec files
 
-- `spec/v0.9.1.md` — **current canonical spec.** Full spec in learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference). v0.7.0 shipped styling tokens as assignable values (`bg = card`, `status_color = green`). v0.7.1 added `upper(s)` / `lower(s)` string case builtins. v0.8.0 added component event channels: `emit <event>` inside components and `on <event>:` at the call site. v0.9.0 promotes the reactive-fetch footgun from prose guidance to a transpile-time error — `fetch("..." + bound_input_var)` is rejected with a fix-it pointing at the trigger-variable pattern. v0.9.1 is a docs-only tightening of the trigger-variable recommendation: the fix now reads "`on tap:` on a button" only, with an explicit note that `on change:` on the bound input is not an escape hatch.
-- `spec/v0.9.1-cheatsheet.md` — **current canonical cheatsheet.** Same content condensed. Optimised for both human learning progression and LLM code generation.
-- `spec/v0.8.0-micro.md` — **syntax-only micro reference.** ~650 words, no prose, no tradeoffs. Third context tier for cold tests that want to vary context size as an independent variable. Not a new spec version. Still aligned with v0.9.1 since v0.9.0 added a semantic rule and v0.9.1 is docs-only — neither added syntax.
-- `spec/v0.2.md` → `spec/v0.9.0.md` — historical snapshots (never edited after shipping). The language was originally called Rocket (v0.2–v0.3.1) and renamed to Igni at v0.3.2. See `CHANGELOG.md` for what each version added.
+- `spec/v0.10.0.md` — **current canonical spec.** Full spec in learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference). v0.7.0 shipped styling tokens as assignable values (`bg = card`, `status_color = green`). v0.7.1 added `upper(s)` / `lower(s)` string case builtins. v0.8.0 added component event channels: `emit <event>` inside components and `on <event>:` at the call site. v0.9.0 promotes the reactive-fetch footgun from prose guidance to a transpile-time error. v0.9.1 tightens the trigger-variable recommendation to `on tap:`-only. v0.10.0 adds object-update syntax: `{target with field: newval}` builds a new object with all of target's fields plus the overrides; `with` is a reserved keyword; base is a variable or dot-access chain only (function calls and indexing rejected); shallow only; braces required.
+- `spec/v0.10.0-cheatsheet.md` — **current canonical cheatsheet.** Same content condensed. Optimised for both human learning progression and LLM code generation.
+- `spec/v0.10.0-micro.md` — **current canonical micro reference.** ~650 words, no prose, no tradeoffs. Third context tier for cold tests that want to vary context size as an independent variable. First new micro version since v0.8.0 — v0.9.0 and v0.9.1 added no syntax so micro stayed at v0.8.0; v0.10.0 adds the `{target with ...}` syntax so micro was forked.
+- `spec/v0.2.md` → `spec/v0.9.1.md` — historical snapshots (never edited after shipping). The language was originally called Rocket (v0.2–v0.3.1) and renamed to Igni at v0.3.2. See `CHANGELOG.md` for what each version added.
 
-When proposing spec changes, **work from `spec/v0.9.1.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
+When proposing spec changes, **work from `spec/v0.10.0.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
 When drafting a new spec version, keep the **full spec and the cheatsheet aligned** on positioning, status wording, current-version framing, and canonical examples. The cheatsheet is the condensed mirror of the same language, not a separate design surface with different messaging.
 
 ## Transpiler
@@ -78,7 +78,7 @@ The transpiler lives in `transpiler/` — a TypeScript project that compiles `.i
 
 **Testing:** Run `npm test` in `transpiler/` to execute all 30 diff tests. Zero diff = pass. Browser testing via `igni run` from any directory with `.igni` files (e.g. `transpiler/test_apps/`).
 
-**Not yet supported (v0.9.1 spec features):** `theme:` block, `paginate:` on `each`.
+**Not yet supported (v0.10.0 spec features):** `theme:` block, `paginate:` on `each`.
 
 **VS Code / Cursor extension:** TextMate grammar in `editors/vscode/`, symlinked into Cursor. Highlights keywords, UI primitives, events, properties, builtins, inline function calls, component parameters, type hints, colours, navigation, and operators.
 
@@ -131,7 +131,7 @@ Full methodology is in `tests/README.md`.
 - **Design by trying, not by theorising.** When working on a future v0.X, try to write the hard example in the current spec, hit the walls, and let the walls dictate the additions. This is how every version since v0.3 was designed.
 - **Be honest about defects.** If a spec example is structurally wrong, say so directly. The cold test exists precisely to catch what self-review misses.
 - **Claude's "honest no" is more valuable than a clever workaround.** If a model correctly identifies a gap and refuses to invent around it, that's the most useful diagnostic signal.
-- **v0.9.1 is the current canonical spec.** Work from it. Shipped features: colour/background assignability (v0.7.0), `upper`/`lower` string case builtins (v0.7.1), component event channels via `emit`/`on <event>:` (v0.8.0), reactive-fetch footgun as transpile error (v0.9.0), trigger-variable wording tightening — `on tap:` on a button only, `on change:` explicitly not an escape hatch (v0.9.1). String concatenation stays `+`-only. Object update ergonomics, `count()` predicate form, and widening the async-footgun detection to catch `on change: trigger = bound_var` are the leading v0.10 candidates; each needs its own design note before syntax lands.
+- **v0.10.0 is the current canonical spec.** Work from it. Shipped features: colour/background assignability (v0.7.0), `upper`/`lower` string case builtins (v0.7.1), component event channels via `emit`/`on <event>:` (v0.8.0), reactive-fetch footgun as transpile error (v0.9.0), trigger-variable wording tightening — `on tap:` on a button only, `on change:` explicitly not an escape hatch (v0.9.1), object-update syntax `{target with field: newval}` with `with` as a reserved keyword, base restricted to variable/dot-access chain, shallow-only, braces-required (v0.10.0). String concatenation stays `+`-only. Remaining candidates for a future v0.11+: `count()` predicate form, mutating-component-arg as next v0.9-template transpile-error candidate, widening the async-footgun detection to catch `on change: trigger = bound_var` (now nice-to-have after v0.9.1 validated docs-only fix). Each needs its own design note before syntax lands.
 
 ## Common pitfalls to avoid
 
@@ -161,4 +161,4 @@ Items deferred that will be designed once enough test data accumulates:
 - **Named slots** for wrapper components (multiple `body` regions per wrapper) — deferred because single slot covers 90% of cases.
 - **Submit modifier on inputs** — currently the trigger-variable pattern handles this.
 
-The current and authoritative list lives at the bottom of `spec/v0.9.1.md`.
+The current and authoritative list lives at the bottom of `spec/v0.10.0.md`.

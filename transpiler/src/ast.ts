@@ -54,6 +54,12 @@ export interface ObjectLit extends NodeBase {
   entries: { key: string; value: Expr }[];
 }
 
+export interface ObjectUpdate extends NodeBase {
+  type: 'ObjectUpdate';
+  base: Ident | FieldAccess;
+  updates: { key: string; value: Expr }[];
+}
+
 export interface FieldAccess extends NodeBase {
   type: 'FieldAccess';
   object: Expr;
@@ -86,7 +92,7 @@ export interface InExpr extends NodeBase {
   negated: boolean;
 }
 
-export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr | LambdaExpr | EqualityExpr | InExpr | ListLit | ObjectLit | FieldAccess | IndexAccess | FunctionCall;
+export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr | LambdaExpr | EqualityExpr | InExpr | ListLit | ObjectLit | ObjectUpdate | FieldAccess | IndexAccess | FunctionCall;
 
 // -- Properties and events --
 

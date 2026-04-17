@@ -1,0 +1,5 @@
+screen S:
+  config = {with: "now", mode: "fast"}
+
+  layout vertical:
+    label config.mode

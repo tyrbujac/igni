@@ -42,7 +42,7 @@ screen ContactDetail(contact):
 
   toggle_fav():
     c = find(shared.contacts, c => c.name is contact.name)
-    shared.contacts = replace(shared.contacts, c, {name: c.name, phone: c.phone, favourite: not c.favourite})
+    shared.contacts = replace(shared.contacts, c, {c with favourite: not c.favourite})
 
 component ContactRow(contact):
   layout horizontal, padding: medium, background: card, rounded: medium, spread: true:

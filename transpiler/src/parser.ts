@@ -8,7 +8,7 @@ import {
   LambdaExpr, EqualityExpr, InExpr, ReturnStmt, IfStmt, EachStmt, EmitStmt,
   IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
-  ListLit, ObjectLit, FieldAccess, IndexAccess,
+  ListLit, ObjectLit, ObjectUpdate, FieldAccess, IndexAccess,
 } from './ast.js';
 
 export class Parser {
@@ -996,11 +996,24 @@ export class Parser {
     return { type: 'ListLit', elements, loc: this.loc(start) };
   }
 
-  private parseObjectLit(): ObjectLit {
+  private parseObjectLit(): ObjectLit | ObjectUpdate {
     const start = this.current();
     this.consume(TokenType.LBrace, 'Expected "{"');
+
+    const updateShape = this.detectObjectUpdate();
+    if (updateShape === 'valid') {
+      return this.parseObjectUpdateBody(start);
+    }
+    if (updateShape === 'invalid-call') {
+      return this.error('`{ base with ... }` requires the base to be a variable or dot-access chain. Function calls are not allowed at the base — bind the result to a local variable first.');
+    }
+    if (updateShape === 'invalid-index') {
+      return this.error('`{ base with ... }` requires the base to be a variable or dot-access chain. Index access is not allowed at the base — bind the element to a local variable first.');
+    }
+
     const entries: { key: string; value: Expr }[] = [];
     if (!this.check(TokenType.RBrace)) {
+      if (this.check(TokenType.With)) return this.error('`with` is a reserved keyword and cannot be used as a field name.');
       const key = this.consume(TokenType.Identifier, 'Expected key').value;
       this.consume(TokenType.Colon, 'Expected ":"');
       const value = this.parseExpr();
@@ -1008,6 +1021,7 @@ export class Parser {
       while (this.check(TokenType.Comma)) {
         this.advance();
         if (this.check(TokenType.RBrace)) break;
+        if (this.check(TokenType.With)) return this.error('`with` is a reserved keyword and cannot be used as a field name.');
         const k = this.consume(TokenType.Identifier, 'Expected key').value;
         this.consume(TokenType.Colon, 'Expected ":"');
         const v = this.parseExpr();
@@ -1016,6 +1030,84 @@ export class Parser {
     }
     this.consume(TokenType.RBrace, 'Expected "}"');
     return { type: 'ObjectLit', entries, loc: this.loc(start) };
+  }
+
+  // Scans forward from the current position (just after `{`) for the
+  // pattern `BASE with ...`. Returns 'valid' for Ident/FieldAccess bases,
+  // 'invalid-call' if the base includes a function call, 'invalid-index'
+  // if it includes index access, or 'no' if no `with` is present at the
+  // base-end position.
+  private detectObjectUpdate(): 'valid' | 'invalid-call' | 'invalid-index' | 'no' {
+    if (!this.check(TokenType.Identifier)) return 'no';
+    let i = 1;
+    let sawCall = false;
+    let sawIndex = false;
+    while (true) {
+      const tok = this.peek(i);
+      if (!tok) return 'no';
+      if (tok.type === TokenType.Dot) {
+        i++;
+        if (this.peek(i)?.type !== TokenType.Identifier) return 'no';
+        i++;
+        continue;
+      }
+      if (tok.type === TokenType.LParen) {
+        let depth = 1; i++;
+        while (depth > 0) {
+          const t = this.peek(i);
+          if (!t) return 'no';
+          if (t.type === TokenType.LParen) depth++;
+          else if (t.type === TokenType.RParen) depth--;
+          i++;
+        }
+        sawCall = true;
+        continue;
+      }
+      if (tok.type === TokenType.LBracket) {
+        let depth = 1; i++;
+        while (depth > 0) {
+          const t = this.peek(i);
+          if (!t) return 'no';
+          if (t.type === TokenType.LBracket) depth++;
+          else if (t.type === TokenType.RBracket) depth--;
+          i++;
+        }
+        sawIndex = true;
+        continue;
+      }
+      if (tok.type === TokenType.With) {
+        if (sawCall) return 'invalid-call';
+        if (sawIndex) return 'invalid-index';
+        return 'valid';
+      }
+      return 'no';
+    }
+  }
+
+  private parseObjectUpdateBody(start: Token): ObjectUpdate {
+    const identTok = this.consume(TokenType.Identifier, 'Expected base identifier');
+    let base: Ident | FieldAccess = { type: 'Ident', name: identTok.value, loc: this.loc(identTok) };
+    while (this.check(TokenType.Dot)) {
+      const dotTok = this.advance();
+      const field = this.consume(TokenType.Identifier, 'Expected field name').value;
+      base = { type: 'FieldAccess', object: base, field, loc: this.loc(dotTok) };
+    }
+    this.consume(TokenType.With, 'Expected "with"');
+    const updates: { key: string; value: Expr }[] = [];
+    const key = this.consume(TokenType.Identifier, 'Expected override key').value;
+    this.consume(TokenType.Colon, 'Expected ":"');
+    const value = this.parseExpr();
+    updates.push({ key, value });
+    while (this.check(TokenType.Comma)) {
+      this.advance();
+      if (this.check(TokenType.RBrace)) break;
+      const k = this.consume(TokenType.Identifier, 'Expected override key').value;
+      this.consume(TokenType.Colon, 'Expected ":"');
+      const v = this.parseExpr();
+      updates.push({ key: k, value: v });
+    }
+    this.consume(TokenType.RBrace, 'Expected "}"');
+    return { type: 'ObjectUpdate', base, updates, loc: this.loc(start) };
   }
 
   // -- Helpers --

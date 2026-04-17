@@ -152,7 +152,7 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
   void toggle_fav() {
     dynamic c = shared.contacts.cast<dynamic>().firstWhere((c) => c['name'] == widget.contact['name'], orElse: () => null);
     shared.update(() {
-      shared.contacts = shared.contacts.map((e) => e == c ? {'name': c['name'], 'phone': c['phone'], 'favourite': !c['favourite']} : e).toList();
+      shared.contacts = shared.contacts.map((e) => e == c ? {...c, 'favourite': !c['favourite']} : e).toList();
     });
   }
 

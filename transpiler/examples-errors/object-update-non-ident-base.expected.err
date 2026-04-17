@@ -1,0 +1,5 @@
+
+  Error: `{ base with ... }` requires the base to be a variable or dot-access chain. Function calls are not allowed at the base — bind the result to a local variable first.
+
+    object-update-non-ident-base.igni:2 |   x = {get_item() with done: true}
+                                        |                ^

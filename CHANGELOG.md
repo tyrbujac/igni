@@ -11,6 +11,18 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.10.0 — 2026-04-17
+*Object update syntax — `{target with field: newval}` replaces the field-enumeration idiom.*
+
+- **`{BASE with KEY: VALUE, ...}`** builds a new object with all of BASE's fields plus the overrides. The canonical "update one field on an object in a list" idiom is now `items = replace(items, target, {target with done: not target.done})` instead of enumerating every field by hand. Motivation: the pattern appeared in every mutation example in the repo (`transpiler/examples/contacts.igni`, `shopping.igni`, the spec's toggle/save examples) and v0.7.0 ship reviews flagged it as boilerplate. Design note: `docs/private/42_v10_object_update.md`.
+- **BASE is a variable or dot-access chain.** `{target with ...}`, `{item.profile with ...}`, `{shared.cart with ...}` are legal; `{get_item() with ...}` (function call) and `{items[0] with ...}` (indexing) are rejected — bind the result to a local first. Narrow restriction by design: keeps the base obviously tied to a named object the reader can look up.
+- **Shallow only.** `{target with profile.name: "X"}` is a parse error; nest explicitly: `{target with profile: {target.profile with name: "X"}}`. No path-access magic.
+- **Braces required, no bare-infix.** `{target with done: true}` is legal; `target with done: true` (no braces) is not. Rationale: `{}` is Igni's single object-construction delimiter — keeping `with` inside braces preserves one-way-to-do-everything.
+- **`with` is a reserved keyword.** Cannot be used as an identifier or field name. Repo-wide scan before ship showed zero existing occurrences.
+- **Pre-ship cold-test validation.** `tests/v0.10/Object_Update_Syntax.md` ran a four-model syntax-proposal round: four distinct shapes, no majority convergence (Opus → spread, GPT → `{with}`, Gemini → bare infix `with`, Gemma → juxtaposition). `with`-keyword family had 2/3 frontier plurality. Design note's fallback rule fired — ship the principle-driven recommendation.
+- **First new micro reference since v0.8.0.** `spec/v0.10.0-micro.md` forks from v0.8.0 (v0.9.0 and v0.9.1 added no syntax, so the micro stayed at v0.8.0). v0.10 is the first syntactic addition since v0.8.0; micro bumped to match.
+- Transpiler: new `ObjectUpdate` AST node, `with` keyword added to lexer, codegen emits Dart `{...base, 'k': v, ...}` map spread. `transpiler/examples/contacts.igni` and `shopping.igni` migrated to the new shape; new `object-update.igni` positive example and two negative examples pinned (non-Ident base, `with` as field name).
+
 ## v0.9.1 — 2026-04-17
 *Documentation-only. Trigger-variable pattern now recommends `on tap:` on a button and explicitly flags the `on change:` pseudo-fix.*
 

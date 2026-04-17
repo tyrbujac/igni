@@ -1,0 +1,5 @@
+screen S:
+  x = {get_item() with done: true}
+
+  layout vertical:
+    label "x"

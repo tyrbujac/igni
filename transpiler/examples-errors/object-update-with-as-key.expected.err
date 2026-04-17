@@ -1,0 +1,5 @@
+
+  Error: `with` is a reserved keyword and cannot be used as a field name.
+
+    object-update-with-as-key.igni:2 |   config = {with: "now", mode: "fast"}
+                                     |                 ^

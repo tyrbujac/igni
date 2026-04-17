@@ -1,0 +1,28 @@
+screen ObjectUpdateDemo:
+  items = [{text: "Buy milk", done: false}, {text: "Walk dog", done: true}]
+  user = {name: "Tyr", profile: {age: 24, city: "Liverpool"}}
+
+  flip(target):
+    items = replace(items, target, {target with done: not target.done})
+
+  rename(target, new_text):
+    items = replace(items, target, {target with text: new_text})
+
+  mark_done(target):
+    items = replace(items, target, {target with text: "Done", done: true})
+
+  annotate(target):
+    items = replace(items, target, {target with notes: "added"})
+
+  move_city():
+    user = {user with profile: {user.profile with city: "Dublin"}}
+
+  layout vertical, padding: large, gap: medium:
+    label "Object Update Demo", style: heading
+    label user.name
+    label user.profile.city
+
+    each item in items:
+      layout horizontal, spread: true:
+        label item.text
+        button "Flip", on tap: flip(item)
