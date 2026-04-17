@@ -1,0 +1,22 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3-flash-preview",
+  "model_id": "gemini-3-flash-preview",
+  "prompt_name": "Object-update syntax proposal",
+  "prompt_slug": "object-update-syntax-proposal",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.10/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.9.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "1341674ba5d94bf2ac86282f56ed103b030d64d6f806c685ddf4effe1e5f3785",
+  "spec_words": 1863,
+  "timestamp": "2026-04-17T21:56:15.925Z",
+  "duration_ms": 4076,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 3896,
+    "output_tokens": 512,
+    "cache_read_tokens": 0
+  },
+  "transpile": null
+}
