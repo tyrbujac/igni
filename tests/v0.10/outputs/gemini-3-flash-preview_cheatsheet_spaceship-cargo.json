@@ -1,0 +1,29 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3-flash-preview",
+  "model_id": "gemini-3-flash-preview",
+  "prompt_name": "Spaceship Cargo",
+  "prompt_slug": "spaceship-cargo",
+  "prompt_index": 4,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.10/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.10.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "838ca913238df0e8aad6aef67dcc918c75b3b8d7089e3e9b79acc1f15fb19d76",
+  "spec_words": 1971,
+  "timestamp": "2026-04-18T09:17:38.422Z",
+  "duration_ms": 3807,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 3906,
+    "output_tokens": 613,
+    "cache_read_tokens": 2032
+  },
+  "cost_usd": 0,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "igni_lines": 57
+  }
+}

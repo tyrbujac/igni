@@ -75,3 +75,31 @@ Given the canonical "update one field on an object in a list" idiom and its verb
 **Success bar:** at least 3/4 frontier models use `{target with ...}` unprompted for the quantity-increment. The verbose form is still legal but the cheatsheet's prominent example points at the `with` shape first — if the cheatsheet teaches the rule, adoption should be high.
 
 **Context tier:** cheatsheet (`spec/v0.10.0-cheatsheet.md`). Tightest teaching surface; if condensed spec is sufficient, that's the strongest validation of the v0.10 design.
+
+---
+
+## 3. Apothecary (domain-swap control — potion inventory)
+
+> Using only the Igni language spec above, write a small apothecary app in Igni. It should have two screens: a potion shelf showing each potion's name and price, and a satchel screen. Tapping a potion adds it to the satchel. If the potion is already in the satchel, its quantity increases by one instead of adding a duplicate row. The satchel screen shows potions with their name, price, quantity, and a "Discard" button per potion. Show a total price at the bottom. Use shared state for the satchel.
+>
+> Respond with only the Igni code — no explanation, no commentary, no discussion of the spec.
+
+**What this validates:** structural twin of #2 Shopping. Rules out the "models only adopted `{target with ...}` because shopping carts are over-represented in training data" hypothesis. If adoption holds when the domain is an apothecary/potion shop rather than an e-commerce cart, the signal is about the cheatsheet's teaching, not the domain's training-data density.
+
+**Grading:** identical to #2. Headline metric is `{existing with quantity: existing.quantity + 1}` adoption for the duplicate-add case. Target: 3/3 frontier to match #2.
+
+**Context tier:** cheatsheet (`spec/v0.10.0-cheatsheet.md`).
+
+---
+
+## 4. Spaceship Cargo (domain-swap control — further from shopping)
+
+> Using only the Igni language spec above, write a small spaceship cargo-loading app in Igni. It should have two screens: a cargo catalog showing each cargo item's name and mass, and a hold screen. Tapping a cargo item adds it to the hold. If the cargo is already in the hold, its quantity increases by one instead of adding a duplicate row. The hold screen shows items with their name, mass, quantity, and a "Jettison" button per item. Show a total mass at the bottom. Use shared state for the hold.
+>
+> Respond with only the Igni code — no explanation, no commentary, no discussion of the spec.
+
+**What this validates:** second domain swap, further from shopping than #3. Mass instead of price, hold instead of cart, jettison instead of remove. Structure preserved. Together with #2 and #3, three runs = evidence (reviewer's framing), not one hopeful result.
+
+**Grading:** identical to #2. Headline is `{existing with quantity: existing.quantity + 1}` adoption. Target: 3/3 frontier.
+
+**Context tier:** cheatsheet (`spec/v0.10.0-cheatsheet.md`).
