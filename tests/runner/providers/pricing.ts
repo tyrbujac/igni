@@ -13,26 +13,40 @@ export type Pricing = {
 // against the provider's current pricing page before treating cost_usd as
 // authoritative in published results.
 export const PRICING: Record<string, Pricing> = {
-  // Anthropic — Opus tier historically $15/$75, cache write 1.25x input, read 0.10x input
+  // Anthropic — Opus 4.7 (1M context). Input/output sourced 2026-04-18 from
+  // anthropic.com pricing page. Cache rates derived from the historical
+  // 1.25x/0.10x-of-input ratios; re-verify against the current pricing page
+  // before any cache-heavy cost figure enters the dissertation.
   'claude-opus-4-7': {
-    input: 15,
-    output: 75,
-    cache_write: 18.75,
-    cache_read: 1.5,
-  }, // VERIFY
+    input: 5,
+    output: 25,
+    cache_write: 6.25,
+    cache_read: 0.5,
+  },
 
-  // OpenAI — key must match exact model_id returned by the API (includes checkpoint date)
+  // Opus 4.6 — same rate card as 4.7 per Anthropic pricing page.
+  'claude-opus-4-6': {
+    input: 5,
+    output: 25,
+    cache_write: 6.25,
+    cache_read: 0.5,
+  },
+
+  // OpenAI — sourced 2026-04-18 from the openai.com pricing page (GPT-5.4 entry).
+  // Key must match exact model_id returned by the API (includes checkpoint date).
   'gpt-5.4-2026-03-05': {
-    input: 0,
-    output: 0,
-  }, // VERIFY — fill in current GPT-5.4 pricing
+    input: 2.5,
+    output: 15,
+    cache_read: 0.25,
+  },
 
-  // Google
+  // Google — sourced 2026-04-18 from https://ai.google.dev/gemini-api/docs/pricing
+  // Text/image/video rate (audio input is $1.00 but we don't send audio).
   'gemini-3-flash-preview': {
-    input: 0,
-    output: 0,
-    cache_read: 0,
-  }, // VERIFY — fill in current Gemini 3 Flash pricing
+    input: 0.5,
+    output: 3,
+    cache_read: 0.05,
+  },
 
   // Ollama — local inference, no per-token cost. Key is the exact model tag (colon preserved).
   'gemma4:e4b': { input: 0, output: 0 },

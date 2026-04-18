@@ -26,5 +26,6 @@
     "passed": false,
     "error": "no fenced code block found in output",
     "igni_lines": 0
-  }
+  },
+  "cost_usd": 0.017255
 }

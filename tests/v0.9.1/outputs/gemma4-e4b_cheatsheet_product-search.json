@@ -23,5 +23,6 @@
     "passed": false,
     "error": "Error: Unexpected character: '@'\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-QxGnod/app.igni:8 |   @state search_query = \"\"\n                                                                                  |   ^",
     "igni_lines": 76
-  }
+  },
+  "cost_usd": 0
 }

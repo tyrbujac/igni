@@ -4,6 +4,8 @@ This folder contains the cold-LLM test infrastructure for Igni. Each test puts t
 
 The point of these tests is **not** to demonstrate the spec works on cherry-picked easy cases. The point is to find the gaps the spec author can't see because they're too close to it.
 
+> **Note on versions below.** This README is frozen at the v0.7.0 era for methodology narrative. Results for v0.7.1 / v0.8.1 / v0.9 / v0.9.1 / v0.10 live in their own `tests/vX.Y(.Z)/` folders and in numbered `docs/private/` notes (most recent: `45_v10_domain_swap_results.md`). The grading rubric, cold-test discipline, and runner instructions below are unchanged and still current.
+
 ## How to run a test
 
 For each combination of (app × model):
@@ -20,7 +22,7 @@ Now that the transpiler exists, LLM output can be objectively validated:
 
 6. **Save the LLM's Igni code** to a `.igni` file.
 7. **Run it through the transpiler:** `npx tsx src/cli.ts <file>.igni`
-   - If it transpiles → paste the Dart output into `test_app/lib/main.dart` and run `flutter run -d chrome`.
+   - If it transpiles → paste the Dart output into `transpiler/test_apps/<app>/lib/main.dart` and run `flutter run -d chrome`.
    - If it fails → the error message tells you exactly what Igni feature the transpiler doesn't support yet or what the LLM got wrong.
 8. **Record both results** in the test file: the spec-level grading (inventions, misuse, valid) AND the transpiler result (transpiles, runs, errors).
 

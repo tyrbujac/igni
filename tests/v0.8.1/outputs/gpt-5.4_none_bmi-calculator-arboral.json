@@ -24,5 +24,6 @@
     "passed": false,
     "error": "Error: Unexpected character: '!'\n\n    73 |         if (error != \"\") {\n       |                   ^",
     "igni_lines": 106
-  }
+  },
+  "cost_usd": 0.00758
 }

@@ -23,5 +23,6 @@
     "passed": false,
     "error": "Error: Unexpected character: '?'\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-vvqzAX/app.igni:15 |         bmi_result: Double? = null\n                                                                                   |                           ^",
     "igni_lines": 146
-  }
+  },
+  "cost_usd": 0
 }

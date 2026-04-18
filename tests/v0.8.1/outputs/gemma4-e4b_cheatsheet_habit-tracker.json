@@ -23,5 +23,6 @@
     "passed": false,
     "error": "Error: Unexpected character: '!'\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-X3IhVw/app.igni:65 |         habit.completed = !habit.completed\n                                                                                   |                           ^",
     "igni_lines": 98
-  }
+  },
+  "cost_usd": 0
 }

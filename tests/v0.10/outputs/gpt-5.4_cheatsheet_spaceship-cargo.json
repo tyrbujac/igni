@@ -18,7 +18,7 @@
     "output_tokens": 631,
     "cache_read_tokens": 2816
   },
-  "cost_usd": 0,
+  "cost_usd": 0.019339,
   "transpile": {
     "attempted": false,
     "extracted_code": false,

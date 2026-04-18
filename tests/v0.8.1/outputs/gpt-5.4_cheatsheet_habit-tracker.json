@@ -24,5 +24,6 @@
     "passed": false,
     "error": "Error: checkbox bind: must be a simple variable name, not a field access like obj.field\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-MSfkJe/app.igni:11 | screen Habits, title: \"HABITS\", background: subtle:\n                                                                                   | ^",
     "igni_lines": 44
-  }
+  },
+  "cost_usd": 0.01722
 }
