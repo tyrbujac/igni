@@ -6,9 +6,13 @@
 # Editor / IDE
 .vscode/
 .idea/
+.cursor/
 *.swp
 *.swo
 *~
+
+# AI tooling (local agent state)
+.claude/
 
 # Windows
 Thumbs.db
