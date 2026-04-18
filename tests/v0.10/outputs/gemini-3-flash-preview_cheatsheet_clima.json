@@ -1,0 +1,29 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3-flash-preview",
+  "model_id": "gemini-3-flash-preview",
+  "prompt_name": "Clima",
+  "prompt_slug": "clima",
+  "prompt_index": 5,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.10/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.10.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "838ca913238df0e8aad6aef67dcc918c75b3b8d7089e3e9b79acc1f15fb19d76",
+  "spec_words": 1971,
+  "timestamp": "2026-04-18T21:10:41.775Z",
+  "duration_ms": 4261,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 4539,
+    "output_tokens": 799,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.0046665,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "<--- Last few GCs --->\n\n[23936:0xc6e800000]    47781 ms: Mark-Compact 4056.4 (4143.6) -> 4055.5 (4143.6) MB, pooled: 0 MB, 6041.75 / 0.00 ms  (average mu = 0.322, current mu = 0.058) allocation failure; scavenge might not succeed\n[23936:0xc6e800000]   118398 ms: Mark-Compact 4071.2 (4143.6) -> 4070.3 (4174.9) MB, pooled: 0 MB, 70447.42 / 0.00 ms  (average mu = 0.030, current mu = 0.002) allocation failure; scavenge might not succeed\n\n\n<--- JS stacktrace --->\n\nFATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory\n----- Native stack trace -----\n\n 1: 0x10448d9b4 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/Users/tyrbujac/.nvm/versions/node/v22.16.0/bin/node]\n 2: 0x10465c05c v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/Users/tyrbujac/.nvm/versions/node/v22.16.0/bin/node]\n 3: 0x10486b784 v8::internal::Heap::stack() [/Users/tyrbujac/.nvm/versions/node/v22.16.0/bin/node]\n 4: 0x104869b24 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [/Users/tyrbujac/.nvm/versions/node/v22.16.0/bin/node]\n 5: 0x10485e10c v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/Users/tyrbujac/.nvm/versions/node/v22.16.0/bin/node]\n 6: 0x10485e944 v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/Users/tyrbujac/.nvm/versions/node/v22.16.0/bin/node]\n 7: 0x104841908 v8::internal::Factory::AllocateRawWithAllocationSite(v8::internal::Handle<v8::internal::Map>, v8::internal::AllocationType, v8::internal::Handle<v8::internal::AllocationSite>) [/Users/tyrbujac/.nvm/versions/node/v22.16.0/bin/node]\n 8: 0x104845570 v8::internal::Factory::NewJSObjectFromMap(v8::internal::Handle<v8::internal::Map>, v8::i",
+    "igni_lines": 87
+  }
+}

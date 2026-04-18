@@ -1,0 +1,29 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.4",
+  "model_id": "gpt-5.4-2026-03-05",
+  "prompt_name": "Clima",
+  "prompt_slug": "clima",
+  "prompt_index": 5,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.10/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.10.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "838ca913238df0e8aad6aef67dcc918c75b3b8d7089e3e9b79acc1f15fb19d76",
+  "spec_words": 1971,
+  "timestamp": "2026-04-18T21:08:46.360Z",
+  "duration_ms": 10305,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 4229,
+    "output_tokens": 851,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.0233375,
+  "transpile": {
+    "attempted": false,
+    "extracted_code": false,
+    "passed": false,
+    "error": "no fenced code block found in output",
+    "igni_lines": 0
+  }
+}
