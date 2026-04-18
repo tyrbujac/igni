@@ -265,10 +265,12 @@ async function main() {
   console.log(`  out: ${outDir}`);
   console.log(`  grade: ${args.noGrade ? 'off' : 'on (transpile check)'}`);
   if (args.thinkingBudget) {
-    if (providerName !== 'anthropic') {
-      console.log(`  thinking: ${args.thinkingBudget} tokens (ignored — ${providerName} doesn't support it here)`);
-    } else {
+    if (providerName === 'anthropic') {
       console.log(`  thinking: ${args.thinkingBudget} tokens (extended, temperature=1)`);
+    } else if (providerName === 'google') {
+      console.log(`  thinking: ${args.thinkingBudget} tokens (thinkingBudget on generationConfig)`);
+    } else {
+      console.log(`  thinking: ${args.thinkingBudget} tokens (ignored — ${providerName} doesn't support it here)`);
     }
   }
   console.log();
