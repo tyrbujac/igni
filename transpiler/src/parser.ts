@@ -55,12 +55,24 @@ export class Parser {
   // statement), or until we hit a structural boundary (Indent/Dedent/EOF)
   // which the caller's body-loop condition will handle.
   private synchronizeLine(): void {
+    const startPos = this.position;
     while (!this.check(TokenType.EOF)) {
       if (this.check(TokenType.Newline)) {
         this.advance();
         return;
       }
-      if (this.check(TokenType.Dedent) || this.check(TokenType.Indent)) return;
+      if (this.check(TokenType.Dedent) || this.check(TokenType.Indent)) {
+        // Only yield on a structural token after we've made forward progress.
+        // Without this guard, a caller whose try/catch sits around a call that
+        // cannot parse at the current token (e.g. parseScreenBody called with
+        // an Indent on top after the previous statement threw) would loop:
+        // parse throws → synchronize no-ops → loop retries → errors grow
+        // unbounded → heap OOM. See tests/v0.10/outputs/claude-opus-4-7_cheatsheet_clima.md
+        // post-mortem in docs/private/50_transpile_metric_audit.md.
+        if (this.position > startPos) return;
+        this.advance();
+        continue;
+      }
       this.advance();
     }
   }
@@ -684,15 +696,21 @@ export class Parser {
     let else_: Statement[] | null = null;
     if (this.check(TokenType.Else)) {
       this.advance();
-      this.consume(TokenType.Colon, 'Expected ":"');
-      this.consume(TokenType.Newline, 'Expected newline');
-      this.consume(TokenType.Indent, 'Expected indent');
-      else_ = [];
-      while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
-        else_.push(this.parseStatement());
-        if (this.check(TokenType.Newline)) this.advance();
+      if (this.check(TokenType.If)) {
+        // `else if` — desugar to `else { if ... }`. Matches parseIf's UI-context
+        // handling (line 534) so the spec reads the same in both contexts.
+        else_ = [this.parseIfStmt()];
+      } else {
+        this.consume(TokenType.Colon, 'Expected ":"');
+        this.consume(TokenType.Newline, 'Expected newline');
+        this.consume(TokenType.Indent, 'Expected indent');
+        else_ = [];
+        while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+          else_.push(this.parseStatement());
+          if (this.check(TokenType.Newline)) this.advance();
+        }
+        this.consume(TokenType.Dedent, 'Expected dedent');
       }
-      this.consume(TokenType.Dedent, 'Expected dedent');
     }
 
     return { type: 'IfStmt', condition, then, else_, loc: this.loc(start) };

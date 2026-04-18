@@ -1,0 +1,19 @@
+screen Grader:
+  score = 75
+
+  layout vertical, align: center, gap: medium:
+    label "Grade: " + grade_for(score), style: heading
+    button "Raise", on tap: score = score + 10
+    button "Lower", on tap: score = score - 10
+
+  grade_for(n):
+    result = "F"
+    if n >= 90:
+      result = "A"
+    else if n >= 80:
+      result = "B"
+    else if n >= 70:
+      result = "C"
+    else if n >= 60:
+      result = "D"
+    return result
