@@ -2,7 +2,7 @@
 
 A programming language for building UIs — designed to be read. Created by Tyr (sole author and sole decision-maker). The hypothesis is that LLM accuracy and human readability correlate tightly, so removing the ambiguity that trips LLMs up also makes the language nicer for humans.
 
-**Status: transpiler stage.** The TypeScript-to-Dart transpiler exists and covers most of the v0.10.0 spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter.
+**Status: transpiler stage.** The TypeScript-to-Dart transpiler exists and covers most of the <!-- SYNC:version -->v0.10.0<!-- /SYNC:version --> spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter.
 
 *Project history: the language was originally named Rocket and was renamed to Igni at v0.3.2. Spec files in `spec/` are immutable historical snapshots — never edited after they ship. Each new version is a new file.*
 
@@ -30,10 +30,10 @@ igni/
 ├── ROADMAP.md               # near-term plans + ideas
 ├── assets/                  # logo (igni.svg, igni-dark-mode.svg, PNGs)
 ├── spec/                    # all spec versions
-│   ├── v0.10.0.md             # current canonical spec
-│   ├── v0.10.0-cheatsheet.md  # current canonical cheatsheet (learning order)
-│   ├── v0.10.0-micro.md       # current canonical micro reference (~650 words)
-│   ├── v0.2.md → v0.7.1.md  # historical snapshots (never edited after shipping)
+│   ├── <!-- SYNC:version -->v0.10.0<!-- /SYNC:version -->.md             # current canonical spec
+│   ├── <!-- SYNC:version -->v0.10.0<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet (learning order)
+│   ├── <!-- SYNC:version -->v0.10.0<!-- /SYNC:version -->-micro.md       # current canonical micro reference (~650 words)
+│   ├── <!-- SYNC:historical-range-files -->v0.2.md → v0.9.1.md<!-- /SYNC:historical-range-files -->  # historical snapshots (never edited after shipping)
 │   └── v0.6.1 → v0.6.5-cheatsheet.md  # historical cheatsheets
 ├── tests/                   # cold-LLM test infrastructure
 │   ├── README.md            # test methodology
@@ -43,7 +43,7 @@ igni/
 ├── transpiler/              # TypeScript-to-Dart transpiler
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point
-│   ├── examples/            # 27 .igni sources + .expected.dart reference outputs
+│   ├── examples/            # <!-- SYNC:example-count -->34<!-- /SYNC:example-count --> .igni sources + .expected.dart reference outputs
 │   ├── run-tests.sh         # automated diff test runner
 │   ├── package.json
 │   └── tsconfig.json
@@ -56,12 +56,12 @@ Each spec version gets its own subfolder under `tests/` containing both the prom
 
 ## Spec files
 
-- `spec/v0.10.0.md` — **current canonical spec.** Full spec in learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference). v0.7.0 shipped styling tokens as assignable values (`bg = card`, `status_color = green`). v0.7.1 added `upper(s)` / `lower(s)` string case builtins. v0.8.0 added component event channels: `emit <event>` inside components and `on <event>:` at the call site. v0.9.0 promotes the reactive-fetch footgun from prose guidance to a transpile-time error. v0.9.1 tightens the trigger-variable recommendation to `on tap:`-only. v0.10.0 adds object-update syntax: `{target with field: newval}` builds a new object with all of target's fields plus the overrides; `with` is a reserved keyword; base is a variable or dot-access chain only (function calls and indexing rejected); shallow only; braces required.
-- `spec/v0.10.0-cheatsheet.md` — **current canonical cheatsheet.** Same content condensed. Optimised for both human learning progression and LLM code generation.
-- `spec/v0.10.0-micro.md` — **current canonical micro reference.** ~650 words, no prose, no tradeoffs. Third context tier for cold tests that want to vary context size as an independent variable. First new micro version since v0.8.0 — v0.9.0 and v0.9.1 added no syntax so micro stayed at v0.8.0; v0.10.0 adds the `{target with ...}` syntax so micro was forked.
-- `spec/v0.2.md` → `spec/v0.9.1.md` — historical snapshots (never edited after shipping). The language was originally called Rocket (v0.2–v0.3.1) and renamed to Igni at v0.3.2. See `CHANGELOG.md` for what each version added.
+- `spec/<!-- SYNC:version -->v0.10.0<!-- /SYNC:version -->.md` — **current canonical spec.** Full spec in learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference). v0.7.0 shipped styling tokens as assignable values (`bg = card`, `status_color = green`). v0.7.1 added `upper(s)` / `lower(s)` string case builtins. v0.8.0 added component event channels: `emit <event>` inside components and `on <event>:` at the call site. v0.9.0 promotes the reactive-fetch footgun from prose guidance to a transpile-time error. v0.9.1 tightens the trigger-variable recommendation to `on tap:`-only. v0.10.0 adds object-update syntax: `{target with field: newval}` builds a new object with all of target's fields plus the overrides; `with` is a reserved keyword; base is a variable or dot-access chain only (function calls and indexing rejected); shallow only; braces required.
+- `<!-- SYNC:cheatsheet-path -->spec/v0.10.0-cheatsheet.md<!-- /SYNC:cheatsheet-path -->` — **current canonical cheatsheet.** Same content condensed. Optimised for both human learning progression and LLM code generation.
+- `<!-- SYNC:micro-path -->spec/v0.10.0-micro.md<!-- /SYNC:micro-path -->` — **current canonical micro reference.** ~650 words, no prose, no tradeoffs. Third context tier for cold tests that want to vary context size as an independent variable. First new micro version since v0.8.0 — v0.9.0 and v0.9.1 added no syntax so micro stayed at v0.8.0; v0.10.0 adds the `{target with ...}` syntax so micro was forked.
+- <!-- SYNC:historical-range-paths -->spec/v0.2.md → spec/v0.9.1.md<!-- /SYNC:historical-range-paths --> — historical snapshots (never edited after shipping). The language was originally called Rocket (v0.2–v0.3.1) and renamed to Igni at v0.3.2. See `CHANGELOG.md` for what each version added.
 
-When proposing spec changes, **work from `spec/v0.10.0.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
+When proposing spec changes, **work from `spec/<!-- SYNC:version -->v0.10.0<!-- /SYNC:version -->.md` and fork to a new version file** rather than editing in place. Snapshots are how Tyr tracks design evolution and how cold-LLM tests stay reproducible against a frozen baseline.
 When drafting a new spec version, keep the **full spec and the cheatsheet aligned** on positioning, status wording, current-version framing, and canonical examples. The cheatsheet is the condensed mirror of the same language, not a separate design surface with different messaging.
 
 ## Transpiler
@@ -74,11 +74,13 @@ The transpiler lives in `transpiler/` — a TypeScript project that compiles `.i
 
 **Currently supported:** `screen` (StatefulWidget), screen properties (`title:` for AppBar, `background:` for Scaffold colour), `component` (StatelessWidget), wrapper components with `body` slot, variables (int/double/String/bool/List), optional type hints (`name: Type = value`, `items: [Type] = []`), assignable styling values (`brand`, `subtle`, `danger`, `green`, `red`, `blue`, `white`, `black`, `yellow`, `orange`, `purple`, `teal`, plus background-only `card`), `layout` (vertical/horizontal, align, gap, padding, background, rounded, spread, `fill: true` for Expanded), implicit vertical layout for screen bodies, `label` (with `align: center/end` for text alignment), `button` + `on tap`, `input bind:` + `placeholder:`, `toggle bind:`, `image` (size, round, `on tap:`, local assets via `images/` folder + network URLs), `icon` (size, color, `on tap:`), `slider` (bind, min, max), `checkbox` (bind, label), `dropdown` (bind, options), `badge` (color), `spinner`, `if`/`else`/`else if`, `not`, `is`/`is not` (general equality), `is empty`/`is not empty`, `is null`/`is not null`, `is in`/`is not in`, `is loading`/`is error`, comparison operators (`>`/`<`/`>=`/`<=`), `and`/`or` boolean operators, `each` loops, `navigate to`/`navigate back` (multi-screen with params), `shared:` state (ChangeNotifier), `fetch` + `spinner`, `without`/`replace`/`find`/`count`/`length`/`filter`/`sorted`/`reversed` builtins, `contains()` / `upper()` / `lower()` string builtins, `emit <event> [<arg>]` for component event channels with `on <event>:` wiring at the call site, `random(min, max)`, lambda expressions (`item => expr`), `return` in functions, screen-internal functions with params, list literals `[]`, object literals `{key: val}`, field access `obj.field`, list indexing `items[index]` (zero-based, null on out-of-bounds), arithmetic (`+`/`-`/`*`/`/`), float literals, string concatenation with `+`, `play("file.wav")` audio builtin with `audio/` folder convention, `print()` for console debugging, `on touch:` event (fires on finger contact, vs `on tap:` which fires on release).
 
-**Thirty example apps** in `transpiler/examples/`, each with a `.igni` source and `.expected.dart` reference. All pass diff tests and run in the browser. Covers: counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full (with delete), components, shared (cross-screen state), fetch (async API call), fetch-mutation (POST/PUT/DELETE), fetch-reactive (reactive re-fetch), dice (random), dicee (Angela Yu course project — screen properties, local images, AppBar), dashboard, fn-return, lambda (filter/sorted/reversed), primitives, shopping (full e-commerce), wrapper (body slot), logic (and/or), type-hints (typed variable declarations), contacts (list indexing, comparisons), on-change (on change: event on all bind primitives), bg-image (background images on screens and layouts), tutorial (smoke test), string-case (`upper`/`lower`), derived-counts (screen-body derived state promotion regression test), stepper (`emit` + `on <event>:` component events).
+**<!-- SYNC:example-count -->34<!-- /SYNC:example-count --> example apps** in `transpiler/examples/`, each with a `.igni` source and `.expected.dart` reference. All pass diff tests and run in the browser. Covers: counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full (with delete), components, shared (cross-screen state), fetch (async API call), fetch-mutation (POST/PUT/DELETE), fetch-reactive (reactive re-fetch), dice (random), dicee (Angela Yu course project — screen properties, local images, AppBar), dashboard, fn-return, lambda (filter/sorted/reversed), primitives, shopping (full e-commerce), wrapper (body slot), logic (and/or), type-hints (typed variable declarations), contacts (list indexing, comparisons), on-change (on change: event on all bind primitives), bg-image (background images on screens and layouts), tutorial (smoke test), string-case (`upper`/`lower`), derived-counts (screen-body derived state promotion regression test), stepper (`emit` + `on <event>:` component events).
 
-**Testing:** Run `npm test` in `transpiler/` to execute all 30 diff tests. Zero diff = pass. Browser testing via `igni run` from any directory with `.igni` files (e.g. `transpiler/test_apps/`).
+**Testing:** Run `npm test` in `transpiler/` to execute all <!-- SYNC:total-tests -->46<!-- /SYNC:total-tests --> diff tests (positive + negative error cases). Zero diff = pass. Browser testing via `igni run` from any directory with `.igni` files (e.g. `transpiler/test_apps/`).
 
-**Not yet supported (v0.10.0 spec features):** `theme:` block, `paginate:` on `each`.
+**Not yet supported (<!-- SYNC:version -->v0.10.0<!-- /SYNC:version --> spec features):** `theme:` block, `paginate:` on `each`.
+
+**Transpile-time rules enforced** (rejections, not warnings): reactive-fetch footgun — `fetch("..." + bound_var)` is rejected, use the trigger-variable pattern; `emit <event>` placement — only valid as the action of `on tap:` / `on touch:` / `on change:`; bare access to `shared:` variables — `hold = hold + [...]` is rejected, always use `shared.hold` (spec v0.5+ "visible coupling marker" rule). See `transpiler/examples-errors/` for the pinned negative tests.
 
 **VS Code / Cursor extension:** TextMate grammar in `editors/vscode/`, symlinked into Cursor. Highlights keywords, UI primitives, events, properties, builtins, inline function calls, component parameters, type hints, colours, navigation, and operators.
 
@@ -117,6 +119,34 @@ The two stages validate different things: stage 1 validates the spec, stage 2 va
 - **The shared state case** — multi-screen e-commerce app with shared cart, body-slot wrappers, and list builtins.
 
 Full methodology is in `tests/README.md`.
+
+## Keeping `README.md` and `CLAUDE.md` in sync with the repo
+
+A handful of facts drift every time a new spec ships or a new example app lands — current spec version, `transpiler/examples/` count, total diff-test count, historical version range. These live inside `<!-- SYNC:name -->...<!-- /SYNC:name -->` HTML-comment regions in `README.md` and `CLAUDE.md`. They are regenerated by `scripts/sync-docs.ts` from the actual repo state.
+
+**When to run** `npx tsx scripts/sync-docs.ts`:
+
+- After shipping a new spec version (new `spec/vX.Y.Z.md` file).
+- After adding or removing an example in `transpiler/examples/` or a negative test in `transpiler/examples-errors/`.
+- Before any commit that edits `README.md` or `CLAUDE.md` content near the marked regions.
+- Any time you want to confirm nothing drifted: `npx tsx scripts/sync-docs.ts --check` exits 1 if drift, 0 if clean — no edits.
+
+**What is synced:**
+
+- `<!-- SYNC:version -->` — current canonical spec version string (e.g. `v0.10.0`).
+- `<!-- SYNC:cheatsheet-path -->` / `<!-- SYNC:micro-path -->` — full paths to current cheatsheet / micro reference.
+- `<!-- SYNC:example-count -->` — count of `.igni` files in `transpiler/examples/`.
+- `<!-- SYNC:total-tests -->` — positive + negative test files (diff test total).
+- `<!-- SYNC:historical-range -->` / `<!-- SYNC:historical-range-files -->` / `<!-- SYNC:historical-range-paths -->` — version-range strings for "v0.2 → v0.9.1", "v0.2.md → v0.9.1.md", "spec/v0.2.md → spec/v0.9.1.md" respectively.
+
+**What is NOT synced — still hand-edited:**
+
+- The "Latest language change" narrative paragraph in `README.md`.
+- The "Currently supported" long feature list in `CLAUDE.md` (body; the surrounding count is synced).
+- `CHANGELOG.md` entries (append-only history).
+- `ROADMAP.md` (explicitly a planning surface; drift is expected there).
+
+**Rule:** do not edit the text *inside* any `<!-- SYNC:... -->` region by hand — run the script instead. Editing the narrative prose around the markers is fine and expected.
 
 ## Working on the spec with Tyr
 

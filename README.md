@@ -74,13 +74,13 @@ my-app/
 
 ## Status
 
-**Language spec:** [`spec/v0.8.0.md`](spec/v0.8.0.md) is the current canonical spec. Companion cheatsheet at [`spec/v0.8.0-cheatsheet.md`](spec/v0.8.0-cheatsheet.md); syntax-only micro reference at [`spec/v0.8.0-micro.md`](spec/v0.8.0-micro.md). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.10.0<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.10.0<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.10.0-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.10.0-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.10.0-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.10.0-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
-**Latest language change:** `v0.8.0` adds component event channels: `emit <event>` inside a component fires a custom event (only valid as the action of an `on tap:` / `on touch:` / `on change:` handler), and the parent attaches handlers via `on <event>:` named arguments at the call site — the same vocabulary as `on tap:` on primitives. Motivation: the v0.7.0 BMI cold test produced a 5/8 compounded signal (2/4 models invented `on_tap_handler` / `on decrease:`, 3/4 ship reviewers flagged the same gap). Reusable input controls like the BMI +/- stepper now express what they do without string-key dispatch workarounds. Preceding changes: `v0.7.1` added `upper(s)` / `lower(s)` string case builtins (8/8 Alert Dashboard signal); `v0.7.0` made styling tokens assignable values.
+**Latest language change:** `v0.10.0` adds object-update syntax. `{target with field: newval}` builds a new object from all of `target`'s fields plus the overrides — the canonical shape for the "update one field on an object in a list" idiom that previously required enumerating every unchanged field. `with` is a reserved keyword; the base must be a variable or dot-access chain (function calls and indexing rejected); shallow only; braces required. Validated post-ship by a 9/9 frontier adoption across three domain swaps (Shopping, Apothecary, Spaceship Cargo) — the cheatsheet's single example is enough to teach the shape. Preceding changes: `v0.9.1` tightened the trigger-variable recommendation (docs-only, 3/3 frontier flipped to canonical `on tap:`); `v0.9.0` promoted the reactive-fetch footgun from prose guidance to a transpile-time error; `v0.8.0` shipped component event channels (`emit` + `on <event>:`).
 
-**Latest methodology result:** the v0.6.11 BMI cold test shows that each v0.6.9-v0.6.11 patch produced measurable output change, including a documentation-only patch (`fill: true` bottom-anchoring) that moved model behaviour from `0/4` to roughly `3.5/4`. That's strong evidence for the spec-budget principle: many gaps can be closed by better documentation rather than new syntax.
+**Latest methodology result:** the v0.10 domain-swap round (Shopping + Apothecary + Spaceship Cargo, 3 × 4 models × cheatsheet tier) produced 9/9 frontier adoption of `{target with ...}` unprompted. Three runs at varying domain distance from e-commerce rules out the "shopping-cart corpus density" confound — the cheatsheet teaches the syntax, the domain doesn't supply it. First post-ship result strong enough to call directly-supported rather than suggestive.
 
-**Transpiler:** Working. 30 example apps compile and run in the browser. Covers screens, components, wrapper components, layouts, conditionals, loops, functions, lambdas, navigation, shared state, async data fetching, two-way binding, list operations, boolean and comparison operators, list indexing, screen properties, local images/audio, and more.
+**Transpiler:** Working. <!-- SYNC:example-count -->34<!-- /SYNC:example-count --> example apps compile and run in the browser. Covers screens, components, wrapper components, layouts, conditionals, loops, functions, lambdas, navigation, shared state, async data fetching, two-way binding, list operations, boolean and comparison operators, list indexing, screen properties, local images/audio, object-update syntax (`{target with field: newval}`), and more.
 
 **CLI:** `igni new` creates a starter app. `igni run` transpiles, watches, and serves it.
 
@@ -89,13 +89,14 @@ my-app/
 ```
 igni/
 ├── spec/                    # language spec (versioned snapshots)
-│   ├── v0.8.0.md             # current canonical spec
-│   ├── v0.8.0-cheatsheet.md  # current canonical cheatsheet
-│   └── v0.2 → v0.7.1.md      # historical (never edited after shipping)
+│   ├── <!-- SYNC:version -->v0.10.0<!-- /SYNC:version -->.md             # current canonical spec
+│   ├── <!-- SYNC:version -->v0.10.0<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
+│   ├── <!-- SYNC:version -->v0.10.0<!-- /SYNC:version -->-micro.md       # current canonical micro reference
+│   └── <!-- SYNC:historical-range-files -->v0.2.md → v0.9.1.md<!-- /SYNC:historical-range-files -->      # historical (never edited after shipping)
 ├── transpiler/              # TypeScript-to-Dart transpiler
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point
-│   └── examples/            # 27 .igni apps + .expected.dart references
+│   └── examples/            # <!-- SYNC:example-count -->34<!-- /SYNC:example-count --> .igni apps + .expected.dart references
 ├── tests/                   # cold-LLM test results + methodology
 │   └── v0.3.2 → v0.6.11/    # prompts + results per spec version
 ├── docs/                    # tutorial + project docs
