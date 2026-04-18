@@ -1,0 +1,6 @@
+shared:
+  hold = []
+
+screen Catalog:
+  layout vertical:
+    button "Add", on tap: hold = hold + [{name: "Widget"}]

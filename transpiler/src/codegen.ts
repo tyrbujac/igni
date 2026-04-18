@@ -4,6 +4,7 @@ import {
   ComponentDef, ComponentItem, ComponentInvocation,
   Property, EventHandler, FunctionDef, Statement, Expr, Ident, IsExpr, NodeBase,
   LambdaExpr, EqualityExpr, IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
+  SourceLocation,
 } from './ast.js';
 import {
   findProp, resolveIdentName, resolveDesignToken, resolveStyle,
@@ -74,6 +75,7 @@ export class CodeGenerator {
     this.hasShared = program.shared.length > 0;
     this.validateEmitPlacement(program);
     this.validateAsyncReactivity(program);
+    this.validateSharedPrefix(program);
     const firstName = program.screens[0].name;
 
     // Detect if any screen uses fetch
@@ -1405,6 +1407,168 @@ export class CodeGenerator {
         ?? this.findReactiveDepOnInput(expr.right, targets);
     }
     return null;
+  }
+
+  // Shared state must always be accessed via the `shared.` prefix (spec v0.5+).
+  // Bare access (reads or writes) to a name declared in the `shared:` block is
+  // a transpile error — matches the "no magic, no hidden globals" principle.
+  // Silent acceptance was shipping broken Dart: `dynamic hold = hold + [...]`
+  // self-referencing locals inside functions, unbound identifiers inside screen
+  // build methods. Caught after Opus Spaceship Cargo round (v0.10 domain-swap).
+  private validateSharedPrefix(program: Program): void {
+    if (program.shared.length === 0) return;
+    const sharedNames = new Set(program.shared.map(v => v.name));
+
+    const flag = (name: string, loc: SourceLocation | undefined): never => {
+      throw new TranspileError(
+        `\`${name}\` is declared in the \`shared:\` block. Access it as \`shared.${name}\`, not bare \`${name}\`. ` +
+        `Spec rule: shared state must use the visible \`shared.\` prefix — it is the coupling marker that makes cross-screen mutations visible.`,
+        loc?.line ?? 1, loc?.column ?? 1
+      );
+    };
+
+    const walkExpr = (e: Expr): void => {
+      switch (e.type) {
+        case 'NumberLit':
+        case 'StringLit':
+          return;
+        case 'Ident':
+          if (sharedNames.has(e.name)) flag(e.name, e.loc);
+          return;
+        case 'BinaryExpr':
+        case 'EqualityExpr':
+          walkExpr(e.left); walkExpr(e.right); return;
+        case 'UnaryExpr':
+          walkExpr(e.operand); return;
+        case 'IsExpr':
+          walkExpr(e.target); return;
+        case 'InExpr':
+          walkExpr(e.target); walkExpr(e.list); return;
+        case 'LambdaExpr':
+          walkExpr(e.body); return;
+        case 'ListLit':
+          e.elements.forEach(walkExpr); return;
+        case 'ObjectLit':
+          e.entries.forEach(entry => walkExpr(entry.value)); return;
+        case 'ObjectUpdate':
+          walkExpr(e.base); e.updates.forEach(u => walkExpr(u.value)); return;
+        case 'FieldAccess':
+          // `shared.X` is the canonical form — don't recurse into `shared` as an Ident.
+          if (e.object.type === 'Ident' && e.object.name === 'shared') return;
+          walkExpr(e.object); return;
+        case 'IndexAccess':
+          walkExpr(e.object); walkExpr(e.index); return;
+        case 'FunctionCall':
+          e.args.forEach(walkExpr);
+          if (e.namedArgs) e.namedArgs.forEach(a => walkExpr(a.value));
+          return;
+      }
+    };
+
+    const walkStmt = (s: Statement): void => {
+      switch (s.type) {
+        case 'Assignment': {
+          // Bare assignment target: `hold = ...`. Parser keeps the `shared.`
+          // prefix verbatim for qualified assignments, so an unqualified match
+          // is always a bare write to a shared name.
+          if (sharedNames.has(s.target)) flag(s.target, s.loc);
+          walkExpr(s.value);
+          return;
+        }
+        case 'FunctionCall':
+          s.args.forEach(walkExpr);
+          if (s.namedArgs) s.namedArgs.forEach(a => walkExpr(a.value));
+          return;
+        case 'NavigateTo':
+          s.args.forEach(walkExpr); return;
+        case 'NavigateBack':
+          return;
+        case 'Return':
+          if (s.value) walkExpr(s.value); return;
+        case 'IfStmt':
+          walkExpr(s.condition);
+          s.then.forEach(walkStmt);
+          if (s.else_) s.else_.forEach(walkStmt);
+          return;
+        case 'EachStmt':
+          walkExpr(s.list);
+          s.body.forEach(walkStmt);
+          return;
+        case 'EmitStmt':
+          if (s.arg) walkExpr(s.arg);
+          return;
+      }
+    };
+
+    const walkProps = (props: Property[]): void => {
+      for (const p of props) walkExpr(p.value);
+    };
+    const walkEvents = (events: EventHandler[] | undefined): void => {
+      if (!events) return;
+      for (const ev of events) walkStmt(ev.action);
+    };
+
+    const walkUI = (nodes: UINode[]): void => {
+      for (const n of nodes) {
+        if ('properties' in n && n.properties) walkProps(n.properties);
+        if ('events' in n) walkEvents(n.events);
+        switch (n.type) {
+          case 'Layout':
+            walkUI(n.children); break;
+          case 'Label':
+            walkExpr(n.value); break;
+          case 'Badge':
+            walkExpr(n.text); break;
+          case 'Button':
+            walkExpr(n.text); break;
+          case 'Icon':
+            walkExpr(n.name); break;
+          case 'Image':
+            walkExpr(n.url); break;
+          case 'If': {
+            walkExpr(n.condition);
+            const branch = (items: (UINode | VariableDecl)[]) => {
+              for (const item of items) {
+                if (item.type === 'VariableDecl') walkExpr(item.value);
+                else walkUI([item]);
+              }
+            };
+            branch(n.then);
+            for (const ei of n.elseIfs) { walkExpr(ei.condition); branch(ei.body); }
+            if (n.else_) branch(n.else_);
+            break;
+          }
+          case 'Each':
+            walkExpr(n.list);
+            walkUI(n.children); break;
+          case 'ComponentInvocation':
+            n.args.forEach(walkExpr);
+            walkUI(n.children); break;
+          // Input/Toggle/Slider/Checkbox/Dropdown: `bind:` is a name string, not an Expr.
+          // Spinner/Divider/Comment/Body: no sub-exprs.
+        }
+      }
+    };
+
+    for (const screen of program.screens) {
+      walkProps(screen.properties);
+      for (const item of screen.body) {
+        if (item.type === 'VariableDecl') walkExpr(item.value);
+        else if (item.type === 'FunctionDef') item.body.forEach(walkStmt);
+      }
+      const uiNodes = screen.body.filter(
+        (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef'
+      );
+      walkUI(uiNodes);
+    }
+
+    for (const comp of program.components) {
+      for (const item of comp.body) {
+        if (item.type === 'VariableDecl') walkExpr(item.value);
+      }
+      const uiNodes = comp.body.filter((i): i is UINode => i.type !== 'VariableDecl');
+      walkUI(uiNodes);
+    }
   }
 
   // Walk a UI body collecting (event, argName?) pairs from every `emit` action

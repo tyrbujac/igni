@@ -1,0 +1,5 @@
+
+  Error: `hold` is declared in the `shared:` block. Access it as `shared.hold`, not bare `hold`. Spec rule: shared state must use the visible `shared.` prefix — it is the coupling marker that makes cross-screen mutations visible.
+
+    bare-shared.igni:6 |     button "Add", on tap: hold = hold + [{name: "Widget"}]
+                       |                               ^
