@@ -48,13 +48,14 @@ export const PRICING: Record<string, Pricing> = {
     cache_read: 0.05,
   },
 
-  // Google — Gemini 3.1 Pro Preview. Input/output rates from the same pricing
-  // page. Cache rate not separately disclosed for 3.1 Pro preview at time of
-  // entry — computeCost falls back to the input rate, which slightly overstates
-  // cache cost. Verify against the pricing page before any cache-heavy claim.
+  // Google — Gemini 3.1 Pro Preview. Sourced 2026-04-18 from
+  // https://ai.google.dev/gemini-api/docs/pricing (standard tier, text rate).
+  // Cache rate is 10% of input, matching Google's consistent ratio across
+  // the Gemini family.
   'gemini-3.1-pro-preview': {
     input: 2,
     output: 12,
+    cache_read: 0.2,
   },
 
   // Google — Gemini 3.1 Flash-Lite Preview. Cheapest entry in the panel by ~20x
@@ -63,6 +64,7 @@ export const PRICING: Record<string, Pricing> = {
   'gemini-3.1-flash-lite-preview': {
     input: 0.25,
     output: 1.5,
+    cache_read: 0.025,
   },
 
   // Ollama — local inference, no per-token cost. Key is the exact model tag (colon preserved).
