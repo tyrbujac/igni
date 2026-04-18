@@ -18,5 +18,6 @@
     "output_tokens": 512,
     "cache_read_tokens": 0
   },
-  "transpile": null
+  "transpile": null,
+  "cost_usd": 0
 }

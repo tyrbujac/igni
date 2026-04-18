@@ -17,5 +17,6 @@
     "input_tokens": 3914,
     "output_tokens": 909
   },
-  "transpile": null
+  "transpile": null,
+  "cost_usd": 0
 }

@@ -18,6 +18,7 @@ import { AnthropicProvider } from './providers/anthropic.js';
 import { OpenAIProvider } from './providers/openai.js';
 import { GoogleProvider } from './providers/google.js';
 import { OllamaProvider } from './providers/ollama.js';
+import { computeCost } from './providers/pricing.js';
 
 type Args = {
   spec: string | null;
@@ -171,6 +172,11 @@ async function runOne(
   const mdPath = join(outDir, `${modelSlug}_${specTier}_${prompt.slug}.md`);
   const jsonPath = join(outDir, `${modelSlug}_${specTier}_${prompt.slug}.json`);
 
+  const cost_usd = computeCost(result.model_id, result.usage);
+  if (cost_usd === null) {
+    console.warn(`      ! no pricing entry for model_id "${result.model_id}" — cost_usd will be null`);
+  }
+
   const metadata = {
     provider: result.provider,
     requested_model: result.requested_model,
@@ -187,6 +193,7 @@ async function runOne(
     duration_ms: result.duration_ms,
     stop_reason: result.stop_reason,
     usage: result.usage,
+    cost_usd,
     transpile,
   };
 

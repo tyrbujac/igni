@@ -20,5 +20,6 @@
     "cache_read_tokens": 0,
     "thinking_tokens": 0
   },
-  "transpile": null
+  "transpile": null,
+  "cost_usd": 0.19742625
 }

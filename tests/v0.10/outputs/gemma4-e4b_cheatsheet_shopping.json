@@ -23,5 +23,6 @@
     "passed": false,
     "error": "Error: Expected \"screen\", got \"PRODUCT_CATALOG\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-nYZ7ih/app.igni:26 | PRODUCT_CATALOG = [\n                                                                                   |                ^",
     "igni_lines": 110
-  }
+  },
+  "cost_usd": 0
 }
