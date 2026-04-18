@@ -18,7 +18,7 @@ import { AnthropicProvider } from './providers/anthropic.js';
 import { OpenAIProvider } from './providers/openai.js';
 import { GoogleProvider } from './providers/google.js';
 import { OllamaProvider } from './providers/ollama.js';
-import { computeCost } from './providers/pricing.js';
+import { computeCost, MODEL_PINS } from './providers/pricing.js';
 
 type Args = {
   spec: string | null;
@@ -162,6 +162,21 @@ async function runOne(
     maxTokens,
     thinkingBudget,
   });
+
+  // Pin check — if the requested alias has a declared expected model_id in
+  // MODEL_PINS, fail loudly on mismatch. Protects against silent endpoint
+  // swaps on preview-status models (Google) and silent checkpoint swaps on
+  // OpenAI. Aliases without pins are unchecked (opt-in).
+  const expectedId = MODEL_PINS[result.requested_model];
+  if (expectedId && result.model_id !== expectedId) {
+    die(
+      `model pin mismatch: requested alias "${result.requested_model}" resolved ` +
+      `to model_id "${result.model_id}" but pin expects "${expectedId}". ` +
+      `Endpoint may have silently swapped. Review tests/runner/providers/pricing.ts ` +
+      `MODEL_PINS and update the pin if this is an intentional upgrade, or halt ` +
+      `further runs against this alias until the provider's behaviour is confirmed.`
+    );
+  }
 
   let transpile: TranspileResult | null = null;
   if (doGrade) {

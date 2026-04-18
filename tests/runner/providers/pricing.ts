@@ -48,8 +48,45 @@ export const PRICING: Record<string, Pricing> = {
     cache_read: 0.05,
   },
 
+  // Google — Gemini 3.1 Pro Preview. Input/output rates from the same pricing
+  // page. Cache rate not separately disclosed for 3.1 Pro preview at time of
+  // entry — computeCost falls back to the input rate, which slightly overstates
+  // cache cost. Verify against the pricing page before any cache-heavy claim.
+  'gemini-3.1-pro-preview': {
+    input: 2,
+    output: 12,
+  },
+
+  // Google — Gemini 3.1 Flash-Lite Preview. Cheapest entry in the panel by ~20x
+  // vs Opus on output; load-bearing for the dissertation's cost-ratio exhibit
+  // once v0.11 post-fix reruns use this as the "cheap frontier-adjacent" model.
+  'gemini-3.1-flash-lite-preview': {
+    input: 0.25,
+    output: 1.5,
+  },
+
   // Ollama — local inference, no per-token cost. Key is the exact model tag (colon preserved).
   'gemma4:e4b': { input: 0, output: 0 },
+};
+
+// Pinned model-id expectations per requested alias. When a provider returns a
+// versioned/dated `model_id` (OpenAI does; Anthropic and Google typically echo
+// the requested alias), pinning catches silent endpoint swaps — especially
+// important for the Google preview-status models where Google may change the
+// endpoint behind a preview alias without bumping the name.
+//
+// Entries are opt-in: aliases without a pin are not checked. The runner fails
+// loudly (exit non-zero) if a pinned alias returns a different model_id.
+export const MODEL_PINS: Record<string, string> = {
+  // OpenAI — echoing the requested model; checkpoint date appears on model_id.
+  'gpt-5.4': 'gpt-5.4-2026-03-05',
+
+  // Google — Google's SDK currently echoes the requested model back as model_id,
+  // so these pin to self. If that behaviour changes (e.g. Google starts
+  // returning a dated checkpoint), the assertion catches it.
+  'gemini-3-flash-preview': 'gemini-3-flash-preview',
+  'gemini-3.1-pro-preview': 'gemini-3.1-pro-preview',
+  'gemini-3.1-flash-lite-preview': 'gemini-3.1-flash-lite-preview',
 };
 
 export function computeCost(modelId: string, usage: ProviderUsage): number | null {
