@@ -2,6 +2,8 @@
 
 A programming language for building UIs — designed to be read.
 
+The hypothesis: LLM accuracy and human readability track each other. Remove the ambiguity that trips LLMs up and the language becomes nicer for humans too. Igni is that experiment.
+
 Igni transpiles to Dart/Flutter. You write short, readable source files. The toolchain handles the rest.
 
 ```igni
@@ -80,7 +82,14 @@ my-app/
 
 **Latest methodology result:** the v0.10 domain-swap round (Shopping + Apothecary + Spaceship Cargo, 3 × 4 models × cheatsheet tier) produced 9/9 frontier adoption of `{target with ...}` unprompted. Three runs at varying domain distance from e-commerce rules out the "shopping-cart corpus density" confound — the cheatsheet teaches the syntax, the domain doesn't supply it. First post-ship result strong enough to call directly-supported rather than suggestive.
 
-**Transpiler:** Working. <!-- SYNC:example-count -->34<!-- /SYNC:example-count --> example apps compile and run in the browser. Covers screens, components, wrapper components, layouts, conditionals, loops, functions, lambdas, navigation, shared state, async data fetching, two-way binding, list operations, boolean and comparison operators, list indexing, screen properties, local images/audio, object-update syntax (`{target with field: newval}`), and more.
+**Transpiler:** Working. <!-- SYNC:example-count -->34<!-- /SYNC:example-count --> example apps compile and run in the browser. Covers:
+
+- **Composition** — screens, components, wrapper components with `body` slot, layouts
+- **Control flow** — `if`/`else`, `each` loops, functions, lambdas
+- **State & data** — variables, two-way binding, shared state, async `fetch` with loading/error
+- **Data shapes** — list operations (`filter`, `sorted`, `without`, `replace`, ...), list indexing, object-update syntax (`{target with field: newval}`)
+- **UI surface** — screen properties (title, background), local images, audio
+- **Operators** — arithmetic, comparison, boolean (`and`/`or`/`not`)
 
 **CLI:** `igni new` creates a starter app. `igni run` transpiles, watches, and serves it.
 

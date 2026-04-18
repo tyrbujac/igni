@@ -1,6 +1,12 @@
 # Roadmap
 
-Where Igni is going. Near term is actively planned; ideas are unstructured thoughts for someday. Priority signals come from cold-LLM tests and human testing — not speculation.
+Where Igni is going. Tasks are tiered by horizon: **Immediate** (small unblocking items, <1 day each), **Next milestone** (one primary chunk of active work), **Future** (ideas + longer-horizon streams). Priority signals come from cold-LLM tests and human testing — not speculation.
+
+## Current focus
+
+- **Immediate** — v0.10 close-out tails (`pricing.ts` rates for OpenAI + Google; domain-coupling design note in `docs/private/`). Two small doc typos (`tests/README.md:23` `test_app/` → `transpiler/test_apps/`; v0.7–v0.10 gap note in `tests/README.md`). All sub-day.
+- **Next milestone** — **Clima.** Angela Yu weather app, cold-test first then transpiler catch-up. Expected to drive the v0.11 transpiler backlog (geolocation + real-URL async fetch). Full entry under Testing → Angela Yu Flutter course projects → Clima.
+- **Future** — v0.11+ spec candidates listed under Stream 3 (`count()` predicate, mutating-component-arg detection, widened async-footgun). Broader Ideas section at the bottom.
 
 ---
 

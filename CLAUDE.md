@@ -133,11 +133,11 @@ A handful of facts drift every time a new spec ships or a new example app lands 
 
 **What is synced:**
 
-- `<!-- SYNC:version -->` — current canonical spec version string (e.g. `v0.10.0`).
-- `<!-- SYNC:cheatsheet-path -->` / `<!-- SYNC:micro-path -->` — full paths to current cheatsheet / micro reference.
-- `<!-- SYNC:example-count -->` — count of `.igni` files in `transpiler/examples/`.
-- `<!-- SYNC:total-tests -->` — positive + negative test files (diff test total).
-- `<!-- SYNC:historical-range -->` / `<!-- SYNC:historical-range-files -->` / `<!-- SYNC:historical-range-paths -->` — version-range strings for "v0.2 → v0.9.1", "v0.2.md → v0.9.1.md", "spec/v0.2.md → spec/v0.9.1.md" respectively.
+- `SYNC:version` — current canonical spec version string (e.g. `v0.10.0`).
+- `SYNC:cheatsheet-path` / `SYNC:micro-path` — full paths to current cheatsheet / micro reference.
+- `SYNC:example-count` — count of `.igni` files in `transpiler/examples/`.
+- `SYNC:total-tests` — positive + negative test files (diff test total).
+- `SYNC:historical-range` / `SYNC:historical-range-files` / `SYNC:historical-range-paths` — version-range strings for "v0.2 → v0.9.1", "v0.2.md → v0.9.1.md", "spec/v0.2.md → spec/v0.9.1.md" respectively.
 
 **What is NOT synced — still hand-edited:**
 
@@ -147,6 +147,16 @@ A handful of facts drift every time a new spec ships or a new example app lands 
 - `ROADMAP.md` (explicitly a planning surface; drift is expected there).
 
 **Rule:** do not edit the text *inside* any `<!-- SYNC:... -->` region by hand — run the script instead. Editing the narrative prose around the markers is fine and expected.
+
+## ROADMAP tiering
+
+`ROADMAP.md` tiers tasks by horizon so the current focus is always visible at the top:
+
+- **Immediate** — small unblocking items, <1 day each. Typo fixes, rate fill-ins, design-note logging, docs drift. Clear these before advancing the next milestone.
+- **Next milestone** — one primary chunk of active work. Currently **Clima** (see `ROADMAP.md` → Current focus for the live value). When it ships, the next milestone is promoted from Future — promotion is an explicit decision, not drift.
+- **Future** — ideas + longer-horizon streams. Unfiltered; may not all be good; signal strength noted where cold tests or reviews have data.
+
+When adding a new task, place it in the tier matching its actual horizon — not the one you wish it were in. If unsure, default to Future and let cold-test or human-testing signal promote it.
 
 ## Working on the spec with Tyr
 
@@ -170,7 +180,7 @@ A handful of facts drift every time a new spec ships or a new example app lands 
 - **Don't write Dart, Flutter, React, or TypeScript** in proposals. Only Igni and prose. If you need to demonstrate something, write it in Igni.
 - **Don't use brackets, braces, parentheses on component invocation, ternary operators, or string interpolation.** These are explicitly out.
 - **Don't bind a `fetch` URL directly to a text input** — that's the v0.5-documented common pitfall. Use the trigger-variable pattern (see Async Data in the spec).
-- **Test transpiler changes by running `npm test` in `transpiler/`.** This runs all 27 example diffs automatically. Zero diff = pass. Then browser-test via `test_app/`.
+- **Test transpiler changes by running `npm test` in `transpiler/`.** This runs all <!-- SYNC:total-tests -->46<!-- /SYNC:total-tests --> diff tests automatically. Zero diff = pass. Then browser-test via `transpiler/test_apps/`.
 
 ## What this project is *not*
 
