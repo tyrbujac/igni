@@ -1,0 +1,10 @@
+screen Where:
+  here = locate()
+
+  layout vertical, gap: medium, padding: large, align: center:
+    if here is loading:
+      spinner
+    else if here is error:
+      label "Couldn't get location"
+    else:
+      label round(here.latitude, 4) + ", " + round(here.longitude, 4)

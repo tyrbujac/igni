@@ -52,7 +52,7 @@ export class CodeGenerator {
   private allScreens: Screen[] = [];
 
   private allComponents: ComponentDef[] = [];
-  private fetchVars: { name: string; url: string; urlExpr: Expr; method?: string; body?: string; reactive: boolean }[] = [];
+  private fetchVars: { name: string; url: string; urlExpr: Expr; method?: string; body?: string; reactive: boolean; kind?: 'fetch' | 'locate' }[] = [];
 
   private hasShared = false;
   private hasFetch = false;
@@ -86,6 +86,9 @@ export class CodeGenerator {
     // Detect random usage by checking if any generated code will use Random()
     const hasRandom = this.detectBuiltin(program, 'random');
     const hasAudio = this.detectBuiltin(program, 'play');
+    const hasLocate = program.screens.some(s =>
+      s.body.some(item => item.type === 'VariableDecl' && item.value.type === 'FunctionCall' && item.value.name === 'locate')
+    );
 
     let code = `import 'package:flutter/material.dart';\n`;
     if (this.hasFetch) {
@@ -97,6 +100,9 @@ export class CodeGenerator {
     }
     if (hasAudio) {
       code += `import 'package:audioplayers/audioplayers.dart';\n`;
+    }
+    if (hasLocate) {
+      code += `import 'package:geolocator/geolocator.dart';\n`;
     }
     code += '\n';
 
@@ -210,6 +216,45 @@ export class CodeGenerator {
     }
 
     return { dart: stripped.join('\n'), lineMap };
+  }
+
+  // v0.11.0 builtin: `here = locate()` reuses the fetch loading/error machinery
+  // but calls Geolocator.getCurrentPosition() instead of http.get(). All failure
+  // modes — denied permission, services disabled, hardware error — collapse to
+  // `is error` per the spec (no separate `is denied` state). Result is stored
+  // as a Map<String, double> with `latitude`/`longitude` keys so the existing
+  // FieldAccess codegen works without special-casing.
+  private genLocateMethod(fv: { name: string }): string {
+    const methodName = `_locate${fv.name[0].toUpperCase() + fv.name.slice(1)}`;
+    let code = `  Future<void> ${methodName}() async {\n`;
+    code += `    try {\n`;
+    code += `      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();\n`;
+    code += `      if (!serviceEnabled) {\n`;
+    code += `        setState(() { _${fv.name}Error = true; _${fv.name}Loading = false; });\n`;
+    code += `        return;\n`;
+    code += `      }\n`;
+    code += `      LocationPermission permission = await Geolocator.checkPermission();\n`;
+    code += `      if (permission == LocationPermission.denied) {\n`;
+    code += `        permission = await Geolocator.requestPermission();\n`;
+    code += `        if (permission == LocationPermission.denied) {\n`;
+    code += `          setState(() { _${fv.name}Error = true; _${fv.name}Loading = false; });\n`;
+    code += `          return;\n`;
+    code += `        }\n`;
+    code += `      }\n`;
+    code += `      if (permission == LocationPermission.deniedForever) {\n`;
+    code += `        setState(() { _${fv.name}Error = true; _${fv.name}Loading = false; });\n`;
+    code += `        return;\n`;
+    code += `      }\n`;
+    code += `      Position pos = await Geolocator.getCurrentPosition();\n`;
+    code += `      setState(() {\n`;
+    code += `        ${fv.name} = {'latitude': pos.latitude, 'longitude': pos.longitude};\n`;
+    code += `        _${fv.name}Loading = false;\n`;
+    code += `      });\n`;
+    code += `    } catch (e) {\n`;
+    code += `      setState(() { _${fv.name}Error = true; _${fv.name}Loading = false; });\n`;
+    code += `    }\n`;
+    code += `  }`;
+    return code;
   }
 
   private genFetchMethod(fv: { name: string; url: string; method?: string; body?: string }): string {
@@ -396,6 +441,20 @@ export class CodeGenerator {
             method: methodArg ? this.exprToDart(methodArg.value) : undefined,
             body: bodyArg ? this.exprToDart(bodyArg.value) : undefined,
             reactive,
+            kind: 'fetch',
+          });
+          this.ctx.stateVars.push(item.name);
+        } else if (item.value.type === 'FunctionCall' && item.value.name === 'locate') {
+          // `locate()` is a no-arg async builtin that reuses the fetch
+          // loading/error machinery. v0.11.0 spec: the loaded value is a
+          // {latitude, longitude} map so the existing FieldAccess codegen
+          // (`here.latitude` → `here['latitude']`) Just Works.
+          this.fetchVars.push({
+            name: item.name,
+            url: '',
+            urlExpr: item.value,
+            reactive: false,
+            kind: 'locate',
           });
           this.ctx.stateVars.push(item.name);
         } else if (buildLocalVars.has(item.name) || inBuildLocals) {
@@ -506,7 +565,8 @@ export class CodeGenerator {
         initLines.push(`    _${v}Controller = TextEditingController(text: ${v});`);
       }
       for (const f of this.fetchVars) {
-        initLines.push(`    _fetch${f.name[0].toUpperCase() + f.name.slice(1)}();`);
+        const prefix = f.kind === 'locate' ? '_locate' : '_fetch';
+        initLines.push(`    ${prefix}${f.name[0].toUpperCase() + f.name.slice(1)}();`);
       }
       preBuild += `\n\n  @override\n  void initState() {\n    super.initState();\n${initLines.join('\n')}\n  }`;
     }
@@ -521,7 +581,7 @@ export class CodeGenerator {
 
     // Fetch methods
     for (const f of this.fetchVars) {
-      preBuild += '\n\n' + this.genFetchMethod(f);
+      preBuild += '\n\n' + (f.kind === 'locate' ? this.genLocateMethod(f) : this.genFetchMethod(f));
     }
 
     for (const func of funcDefs) {
@@ -1357,25 +1417,74 @@ export class CodeGenerator {
   private validateAsyncReactivity(program: Program): void {
     for (const screen of program.screens) {
       const boundInputs = this.collectInputBindTargets(screen);
-      if (boundInputs.size === 0) continue;
+      const locateVars = this.collectLocateVars(screen);
+      if (boundInputs.size === 0 && locateVars.size === 0) continue;
       for (const item of screen.body) {
         if (item.type !== 'VariableDecl') continue;
         if (item.value.type !== 'FunctionCall' || item.value.name !== 'fetch') continue;
         const urlArg = item.value.args[0];
         if (!urlArg) continue;
-        const offender = this.findReactiveDepOnInput(urlArg, boundInputs);
-        if (offender) {
+        const inputOffender = this.findReactiveDepOnInput(urlArg, boundInputs);
+        if (inputOffender) {
           throw new TranspileError(
-            `\`fetch\` URL reactively depends on \`${offender.name}\`, which is bound to an input. ` +
+            `\`fetch\` URL reactively depends on \`${inputOffender.name}\`, which is bound to an input. ` +
             `This re-fires the fetch on every keystroke. Use a trigger variable: bind the input to ` +
-            `\`${offender.name}\`, then set a separate variable from a button or \`on change:\` handler, ` +
+            `\`${inputOffender.name}\`, then set a separate variable from a button or \`on change:\` handler, ` +
             `and fetch from that variable instead.`,
-            offender.loc?.line ?? 1,
-            offender.loc?.column ?? 1
+            inputOffender.loc?.line ?? 1,
+            inputOffender.loc?.column ?? 1
+          );
+        }
+        // v0.11.0: extension of v0.9.0 footgun rule. Concatenating
+        // `here.latitude` / `.longitude` from a `locate()` result into a
+        // fetch URL re-issues the fetch every time the screen re-evaluates
+        // `locate()` (e.g. after navigating back) — same "no magic"
+        // violation as the bound-input case. Use the trigger-variable
+        // pattern: capture coordinates into a separate variable from an
+        // `on tap:` handler.
+        const locateOffender = this.findReactiveDepOnLocate(urlArg, locateVars);
+        if (locateOffender) {
+          throw new TranspileError(
+            `\`fetch\` URL reactively depends on \`${locateOffender.varName}.${locateOffender.field}\`, ` +
+            `where \`${locateOffender.varName} = locate()\`. The location can change between renders, ` +
+            `which would silently re-fire the fetch with no visible cause in the source. Use a trigger ` +
+            `variable: capture \`${locateOffender.varName}.latitude\` and \`.longitude\` into a separate ` +
+            `variable from an \`on tap:\` handler, and fetch from that variable instead.`,
+            locateOffender.loc?.line ?? 1,
+            locateOffender.loc?.column ?? 1
           );
         }
       }
     }
+  }
+
+  private collectLocateVars(screen: Screen): Set<string> {
+    const targets = new Set<string>();
+    for (const item of screen.body) {
+      if (item.type === 'VariableDecl' &&
+          item.value.type === 'FunctionCall' &&
+          item.value.name === 'locate') {
+        targets.add(item.name);
+      }
+    }
+    return targets;
+  }
+
+  private findReactiveDepOnLocate(
+    expr: Expr,
+    targets: Set<string>
+  ): { varName: string; field: string; loc?: SourceLocation } | null {
+    if (expr.type === 'FieldAccess' &&
+        expr.object.type === 'Ident' &&
+        targets.has(expr.object.name) &&
+        (expr.field === 'latitude' || expr.field === 'longitude')) {
+      return { varName: expr.object.name, field: expr.field, loc: expr.loc };
+    }
+    if (expr.type === 'BinaryExpr' && expr.op === '+') {
+      return this.findReactiveDepOnLocate(expr.left, targets)
+          ?? this.findReactiveDepOnLocate(expr.right, targets);
+    }
+    return null;
   }
 
   private collectInputBindTargets(screen: Screen): Set<string> {
@@ -2159,6 +2268,17 @@ export class CodeGenerator {
     }
     if (call.name === 'random' && args.length === 2) {
       return `(Random().nextInt(${args[1]} - ${args[0]} + 1) + ${args[0]})`;
+    }
+    if (call.name === 'locate') {
+      // `locate()` is screen-body only — handled in the VariableDecl path
+      // above. Reaching this point means it was used as a sub-expression
+      // (e.g. `if locate() is loading:` or `coords = locate().latitude`),
+      // which the spec doesn't permit.
+      throw new TranspileError(
+        '`locate()` is only valid as a top-level screen-body assignment ' +
+        '(e.g. `here = locate()`). It cannot be used as a sub-expression.',
+        1, 1
+      );
     }
     return `${call.name}(${args.join(', ')})`;
   }

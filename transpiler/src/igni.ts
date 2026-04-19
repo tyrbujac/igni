@@ -271,12 +271,23 @@ function ensureDependencies(dart: string): void {
   const pubspecPath = join(igniDir, 'pubspec.yaml');
   if (!existsSync(pubspecPath)) return;
   let pubspec = readFileSync(pubspecPath, 'utf-8');
+  let dirty = false;
 
   if (dart.includes("package:http/") && !pubspec.includes('http:')) {
     pubspec = pubspec.replace(
       /(\s*cupertino_icons:[^\n]*)/,
       '$1\n  http: ^1.2.0'
     );
+    dirty = true;
+  }
+  if (dart.includes("package:geolocator/") && !pubspec.includes('geolocator:')) {
+    pubspec = pubspec.replace(
+      /(\s*cupertino_icons:[^\n]*)/,
+      '$1\n  geolocator: ^13.0.1'
+    );
+    dirty = true;
+  }
+  if (dirty) {
     writeFileSync(pubspecPath, pubspec);
   }
 }

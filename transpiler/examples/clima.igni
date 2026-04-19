@@ -1,0 +1,20 @@
+screen Weather:
+  here = locate()
+  coords = ""
+  forecast = fetch("https://api.example.com/forecast?c=" + coords)
+
+  layout vertical, gap: medium, padding: large, align: center:
+    if here is loading:
+      spinner
+    else if here is error:
+      label "Location unavailable"
+    else:
+      button "Get forecast", on tap: coords = round(here.latitude, 4) + "," + round(here.longitude, 4)
+      if coords is "":
+        label "Tap to load forecast"
+      else if forecast is loading:
+        spinner
+      else if forecast is error:
+        label "Forecast unavailable"
+      else:
+        label forecast.summary

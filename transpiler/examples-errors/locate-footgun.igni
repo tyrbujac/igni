@@ -1,0 +1,9 @@
+screen Weather:
+  here = locate()
+  forecast = fetch("/api/forecast?lat=" + here.latitude)
+
+  layout vertical, padding: large:
+    if forecast is loading:
+      spinner
+    else:
+      label "ok"

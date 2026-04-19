@@ -1,0 +1,5 @@
+
+  Error: `fetch` URL reactively depends on `here.latitude`, where `here = locate()`. The location can change between renders, which would silently re-fire the fetch with no visible cause in the source. Use a trigger variable: capture `here.latitude` and `.longitude` into a separate variable from an `on tap:` handler, and fetch from that variable instead.
+
+    locate-footgun.igni:3 |   forecast = fetch("/api/forecast?lat=" + here.latitude)
+                          |                                               ^
