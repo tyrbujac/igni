@@ -1,0 +1,29 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.4",
+  "model_id": "gpt-5.4-2026-03-05",
+  "prompt_name": "Clima",
+  "prompt_slug": "clima",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.11.1/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.11.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "e000c1640c0df190985587fffeb3f34200e617e69856b4927bcf91d430818785",
+  "spec_words": 2615,
+  "timestamp": "2026-04-19T09:04:04.100Z",
+  "duration_ms": 10944,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 5252,
+    "output_tokens": 861,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.026045,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: Unexpected token \"temp_int\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-gEVcPu/app.igni:46 |       temp_int = random(0, 0) + temp_value\n                                                                                   |               ^\n\n  Error: Expected \"screen\", got \"else\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-gEVcPu/app.igni:47 |     else:\n                                                                                   |         ^",
+    "igni_lines": 111
+  }
+}

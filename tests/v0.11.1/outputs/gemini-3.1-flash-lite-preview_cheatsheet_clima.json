@@ -1,0 +1,29 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-flash-lite-preview",
+  "model_id": "gemini-3.1-flash-lite-preview",
+  "prompt_name": "Clima",
+  "prompt_slug": "clima",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.11.1/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.11.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "e000c1640c0df190985587fffeb3f34200e617e69856b4927bcf91d430818785",
+  "spec_words": 2615,
+  "timestamp": "2026-04-19T09:05:22.044Z",
+  "duration_ms": 2290,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 5606,
+    "output_tokens": 588,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.0022835,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: Unexpected token \"last_query\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-e4krbI/app.igni:11 |       last_query = \"lat=\" + here.latitude + \"&lon=\" + here.longitude\n                                                                                   |                 ^\n\n  Error: Expected \"screen\", got \"\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-e4krbI/app.igni:13 |   forecast = fetch(\"https://api.openweathermap.org/data/2.5/weather?\" + last_query + \"&appid=\" + api_key + \"&units=metric\")\n                                                                                   |   ^\n\n  Error: Expected variable name, got \"\\n\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-e4krbI/app.igni:51 |     button \"Get Weather\", on tap:\n                                                                                   |                                  ^\n\n  Error: Unexpected token \"\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-e4krbI/app.igni:52 |       shared.last_query = \"q=\" + city\n                                                                                   |       ^\n\n  Error: Unexpected token \"navigate\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-e4krbI/app.igni:53 |       navigate back\n                                                                                   |               ^\n\n  Error: Expected \"screen\", got \"\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-e4krbI/app.igni:53 |       navigate back\n                                                                                   |                    ^",
+    "igni_lines": 53
+  }
+}
