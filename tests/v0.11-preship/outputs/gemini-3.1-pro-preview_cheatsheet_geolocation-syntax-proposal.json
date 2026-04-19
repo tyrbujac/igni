@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Geolocation syntax proposal",
+  "prompt_slug": "geolocation-syntax-proposal",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.11-preship/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.10.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "838ca913238df0e8aad6aef67dcc918c75b3b8d7089e3e9b79acc1f15fb19d76",
+  "spec_words": 1971,
+  "timestamp": "2026-04-19T07:14:03.900Z",
+  "duration_ms": 21129,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 3906,
+    "output_tokens": 334,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.01182,
+  "transpile": null
+}

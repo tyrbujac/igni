@@ -1,0 +1,29 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.4",
+  "model_id": "gpt-5.4-2026-03-05",
+  "prompt_name": "Clima",
+  "prompt_slug": "clima",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.11-postship/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.11.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "34a5f8f3c6486d9ef1a2d5dfddba7a2be2fcc61164506840e200f6245c4b42fd",
+  "spec_words": 2221,
+  "timestamp": "2026-04-19T08:44:36.929Z",
+  "duration_ms": 11605,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 4627,
+    "output_tokens": 865,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.0245425,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: Unexpected token \"shared\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-fLVZjV/app.igni:16 |     shared.weather_url = weather_url\n                                                                                   |           ^\n\n  Error: Unexpected token \"shared\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-fLVZjV/app.igni:17 |     shared.weather_data = fetch(weather_url)\n                                                                                   |           ^\n\n  Error: Unexpected token \"navigate\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-fLVZjV/app.igni:18 |     navigate to Weather\n                                                                                   |             ^\n\n  Error: Expected \"screen\", got \"\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-fLVZjV/app.igni:20 | screen Weather:\n                                                                                   | ^\n\n  Error: Unexpected token \"temp_value\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-fLVZjV/app.igni:36 |       temp_value = data.main.temp\n                                                                                   |                 ^\n\n  Error: Expected \"screen\", got \"\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-fLVZjV/app.igni:75 | screen RefreshLocation:\n                                                                                   | ^\n\n  Error: Unexpected token \"shared\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-fLVZjV/app.igni:86 |     shared.weather_url = \"https://api.openweathermap.org/data/2.5/weather?lat=\" + round(here.latitude, 4) + \"&lon=\" + round(here.longitude, 4) + \"&appid=\" + api_key + \"&units=metric\"\n                                                                                   |      ",
+    "igni_lines": 99
+  }
+}
