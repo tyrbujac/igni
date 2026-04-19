@@ -76,7 +76,7 @@ my-app/
 
 ## Status
 
-**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.11.1<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.11.1<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.11.1-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.11.1-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.11.1-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.11.1-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.11.2<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.11.2<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.11.2-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.11.2-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.11.2-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.11.2-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
 **Latest language change:** `v0.10.0` adds object-update syntax. `{target with field: newval}` builds a new object from all of `target`'s fields plus the overrides — the canonical shape for the "update one field on an object in a list" idiom that previously required enumerating every unchanged field. `with` is a reserved keyword; the base must be a variable or dot-access chain (function calls and indexing rejected); shallow only; braces required. Validated post-ship by a 9/9 frontier adoption across three domain swaps (Shopping, Apothecary, Spaceship Cargo) — the cheatsheet's single example is enough to teach the shape. Preceding changes: `v0.9.1` tightened the trigger-variable recommendation (docs-only, 3/3 frontier flipped to canonical `on tap:`); `v0.9.0` promoted the reactive-fetch footgun from prose guidance to a transpile-time error; `v0.8.0` shipped component event channels (`emit` + `on <event>:`).
 
@@ -98,10 +98,10 @@ my-app/
 ```
 igni/
 ├── spec/                    # language spec (versioned snapshots)
-│   ├── <!-- SYNC:version -->v0.11.1<!-- /SYNC:version -->.md             # current canonical spec
-│   ├── <!-- SYNC:version -->v0.11.1<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
-│   ├── <!-- SYNC:version -->v0.11.1<!-- /SYNC:version -->-micro.md       # current canonical micro reference
-│   └── <!-- SYNC:historical-range-files -->v0.2.md → v0.11.0.md<!-- /SYNC:historical-range-files -->      # historical (never edited after shipping)
+│   ├── <!-- SYNC:version -->v0.11.2<!-- /SYNC:version -->.md             # current canonical spec
+│   ├── <!-- SYNC:version -->v0.11.2<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
+│   ├── <!-- SYNC:version -->v0.11.2<!-- /SYNC:version -->-micro.md       # current canonical micro reference
+│   └── <!-- SYNC:historical-range-files -->v0.2.md → v0.11.1.md<!-- /SYNC:historical-range-files -->      # historical (never edited after shipping)
 ├── transpiler/              # TypeScript-to-Dart transpiler
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point
