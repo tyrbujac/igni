@@ -1,0 +1,31 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Profile",
+  "prompt_slug": "profile",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/auto-fetch-audit/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.11.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "e000c1640c0df190985587fffeb3f34200e617e69856b4927bcf91d430818785",
+  "spec_words": 2615,
+  "timestamp": "2026-04-19T09:33:32.861Z",
+  "duration_ms": 16777,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 432,
+    "output_tokens": 940,
+    "cache_creation_tokens": 6610,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.0669725,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: Unexpected token \"capture_id\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-25XubR/app.igni:13 |       capture_id()\n                                                                                   |                 ^\n\n  Error: Expected \"screen\", got \"button\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-25XubR/app.igni:35 |     button \"Refresh\", color: brand, on tap: refresh()\n                                                                                   |           ^",
+    "igni_lines": 42
+  }
+}

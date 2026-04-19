@@ -1,0 +1,29 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Profile",
+  "prompt_slug": "profile",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/auto-fetch-audit/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.11.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "e000c1640c0df190985587fffeb3f34200e617e69856b4927bcf91d430818785",
+  "spec_words": 2615,
+  "timestamp": "2026-04-19T09:35:22.881Z",
+  "duration_ms": 67661,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 5158,
+    "output_tokens": 257,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.0134,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "igni_lines": 32
+  }
+}

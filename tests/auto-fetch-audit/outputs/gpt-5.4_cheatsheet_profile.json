@@ -1,0 +1,29 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.4",
+  "model_id": "gpt-5.4-2026-03-05",
+  "prompt_name": "Profile",
+  "prompt_slug": "profile",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/auto-fetch-audit/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.11.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "e000c1640c0df190985587fffeb3f34200e617e69856b4927bcf91d430818785",
+  "spec_words": 2615,
+  "timestamp": "2026-04-19T09:34:13.952Z",
+  "duration_ms": 4775,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 4854,
+    "output_tokens": 287,
+    "cache_read_tokens": 3840
+  },
+  "cost_usd": 0.0174,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "igni_lines": 37
+  }
+}
