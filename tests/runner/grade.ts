@@ -16,7 +16,30 @@ export function extractIgniCode(output: string): string | null {
   if (igniTagged && igniTagged[1].trim()) return igniTagged[1];
   const anyFenced = output.match(/```[a-zA-Z0-9_-]*\s*\n([\s\S]*?)\n```/);
   if (anyFenced && anyFenced[1].trim()) return anyFenced[1];
+  // Unfenced fallback: when a prompt asks for code-only output, many models
+  // respond with bare Igni without ``` markers. If the whole response looks
+  // structurally like Igni (contains at least one load-bearing top-level
+  // keyword), treat it as the code. Otherwise return null.
+  //
+  // Without this, any prompt that says "respond with only the Igni code"
+  // counts unfenced compliant responses as grader failures — inflating the
+  // false-negative transpile-pass rate. Observed: v0.11 Clima post-ship run
+  // had 3/4 models write valid unfenced Igni code and get marked failed.
+  const trimmed = output.trim();
+  if (!trimmed) return null;
+  if (hasIgniStructuralMarkers(trimmed)) return trimmed;
   return null;
+}
+
+function hasIgniStructuralMarkers(text: string): boolean {
+  // Top-level construct that only appears in Igni programs. Anchored to line
+  // start to avoid matching the same words inside prose or other languages.
+  const markers = [
+    /^screen\s+[A-Z]\w*/m,
+    /^component\s+[A-Z]\w*/m,
+    /^shared:\s*$/m,
+  ];
+  return markers.some(re => re.test(text));
 }
 
 export function transpileCheck(output: string, cliPath: string): TranspileResult {
