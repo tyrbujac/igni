@@ -27,7 +27,7 @@ fi
 # Representative slice: simplest stateful, list+input, shared state + components
 # + events. Enough to exercise the major codegen paths without running analyze
 # on all 33 examples.
-EXAMPLES=(counter todo shopping fetch stepper contacts)
+EXAMPLES=(counter todo shopping fetch stepper contacts pagination)
 
 for name in "${EXAMPLES[@]}"; do
   src="$SCRIPT_DIR/examples/$name.igni"

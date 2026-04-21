@@ -223,6 +223,7 @@ export interface EachNode extends NodeBase {
   variable: string;
   list: Expr;
   children: UINode[];
+  paginate?: number;
 }
 
 export interface SpinnerNode extends NodeBase {

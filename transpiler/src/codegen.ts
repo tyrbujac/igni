@@ -679,7 +679,7 @@ export class CodeGenerator {
     if (hasImageBg) {
       const imgSrc = this.exprToDart(screenBgProp!.value);
       scaffoldParts.push(`      body: Container(\n        width: double.infinity,\n        height: double.infinity,\n        decoration: const BoxDecoration(\n          image: DecorationImage(\n            image: AssetImage('assets/' + ${imgSrc}),\n            fit: BoxFit.cover,\n          ),\n        ),\n        child: SafeArea(\n          child: ${bodyWidget.trimStart()},\n        ),\n      )`);
-    } else if (titleProp || scaffoldBg) {
+    } else if (titleProp || scaffoldBg || this.containsPaginateEach(uiNodes)) {
       scaffoldParts.push(`      body: ${bodyWidget.trimStart()}`);
     } else {
       scaffoldParts.push(`      body: SingleChildScrollView(\n        child: ${bodyWidget.trimStart()},\n      )`);
@@ -1322,6 +1322,44 @@ export class CodeGenerator {
     const ind = this.indent(depth);
     const listExpr = this.exprToDart(node.list);
 
+    if (node.paginate !== undefined) {
+      // `paginate:` renders a scrollable, lazily-built list via ListView.builder
+      // wrapped in Expanded so it can claim remaining space inside its parent
+      // Column/Flex. v1 scope: page size is accepted as a hint; auto-load-more
+      // on scroll is not yet implemented (would require async integration).
+      const ind1 = this.indent(depth + 1);
+      const ind2 = this.indent(depth + 2);
+      const ind3 = this.indent(depth + 3);
+
+      let childCode: string;
+      if (node.children.length === 1) {
+        childCode = this.genUINode(node.children[0], depth + 3).trimStart();
+      } else {
+        const childLines = node.children
+          .map(c => this.genUINode(c, depth + 5) + ',')
+          .join('\n');
+        childCode =
+          `Column(\n` +
+          `${ind3}  mainAxisSize: MainAxisSize.min,\n` +
+          `${ind3}  children: [\n` +
+          `${childLines}\n` +
+          `${ind3}  ],\n` +
+          `${ind3})`;
+      }
+
+      return [
+        `${ind}Expanded(`,
+        `${ind1}child: ListView.builder(`,
+        `${ind2}itemCount: ${listExpr}.length,`,
+        `${ind2}itemBuilder: (context, index) {`,
+        `${ind3}final ${node.variable} = ${listExpr}[index];`,
+        `${ind3}return ${childCode};`,
+        `${ind2}},`,
+        `${ind1}),`,
+        `${ind})`,
+      ].join('\n');
+    }
+
     let code = `${ind}for (final ${node.variable} in ${listExpr}) ...[`;
     for (const child of node.children) {
       code += '\n' + this.genUINode(child, depth + 1) + ',';
@@ -1927,6 +1965,7 @@ export class CodeGenerator {
   // one of these sits alone at screen body level, wrap it in an implicit
   // Column so the spread lands in `children: [...]` instead of bare.
   private emitsSpread(node: UINode): boolean {
+    if (node.type === 'Each' && node.paginate !== undefined) return false;
     return node.type === 'If' || node.type === 'Each';
   }
 
@@ -1935,6 +1974,32 @@ export class CodeGenerator {
   // cases like `layout vertical, padding: large:`.
   private rootOwnsLayout(uiNodes: UINode[]): boolean {
     return uiNodes.length === 1 && uiNodes[0].type === 'Layout';
+  }
+
+  // `each ... paginate:` emits `Expanded(child: ListView.builder(...))`, which
+  // needs a bounded-height parent. The default `SingleChildScrollView` wrap
+  // gives its child unbounded height, so Expanded would crash at layout time.
+  // When a screen body contains any paginate each, skip the scroll wrap — the
+  // ListView handles its own scrolling.
+  private containsPaginateEach(nodes: UINode[]): boolean {
+    for (const n of nodes) {
+      if (n.type === 'Each' && n.paginate !== undefined) return true;
+      if (n.type === 'Layout' && this.containsPaginateEach(n.children)) return true;
+      if (n.type === 'Each' && this.containsPaginateEach(n.children)) return true;
+      if (n.type === 'If') {
+        const thenUI = n.then.filter(c => c.type !== 'VariableDecl') as UINode[];
+        if (this.containsPaginateEach(thenUI)) return true;
+        for (const b of n.elseIfs) {
+          const branchUI = b.body.filter(c => c.type !== 'VariableDecl') as UINode[];
+          if (this.containsPaginateEach(branchUI)) return true;
+        }
+        if (n.else_) {
+          const elseUI = n.else_.filter(c => c.type !== 'VariableDecl') as UINode[];
+          if (this.containsPaginateEach(elseUI)) return true;
+        }
+      }
+    }
+    return false;
   }
 
   // If `gen` output is an `Expanded(child: X)` at its outermost level, return

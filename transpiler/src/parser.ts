@@ -442,6 +442,23 @@ export class Parser {
     const variable = this.consume(TokenType.Identifier, 'Expected iteration variable').value;
     this.consume(TokenType.In, 'Expected "in"');
     const list = this.parseExpr();
+
+    let paginate: number | undefined;
+    if (this.check(TokenType.Comma)) {
+      this.advance();
+      const ident = this.consume(TokenType.Identifier, 'Expected "paginate"');
+      if (ident.value !== 'paginate') {
+        return this.error(`Unknown modifier "${ident.value}" on \`each\`. Only \`paginate:\` is supported.`);
+      }
+      this.consume(TokenType.Colon, 'Expected ":" after "paginate"');
+      const numTok = this.consume(TokenType.Number, 'Expected page size after "paginate:"');
+      const n = parseInt(numTok.value, 10);
+      if (!Number.isFinite(n) || n <= 0) {
+        return this.error('`paginate:` requires a positive integer');
+      }
+      paginate = n;
+    }
+
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
     this.consume(TokenType.Indent, 'Expected indent');
@@ -450,7 +467,7 @@ export class Parser {
       children.push(this.parseUINode());
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
-    return { type: 'Each', variable, list, children, loc: this.loc(start) };
+    return { type: 'Each', variable, list, children, paginate, loc: this.loc(start) };
   }
 
   private parseComponentDef(): ComponentDef {

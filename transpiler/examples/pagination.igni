@@ -1,0 +1,11 @@
+screen Feed:
+  posts = [
+    {title: "Hello world"},
+    {title: "Second post"},
+    {title: "Third post"}
+  ]
+
+  layout vertical, gap: small, padding: large:
+    label "Feed", style: heading
+    each post in posts, paginate: 20:
+      label post.title
