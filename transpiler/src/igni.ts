@@ -501,8 +501,13 @@ async function run(): Promise<void> {
     if (result) {
       transpileResult = result;
       writeOutput(result.dart);
-      // Send 'r' to Flutter to trigger hot reload
-      flutter.stdin.write('r');
+      // Send 'R' to Flutter to trigger hot restart (not 'r' hot reload).
+      // Hot reload keeps the existing State instance and its field values,
+      // so changing `name = "Michael"` to `name = "Tyr"` (or adding a new
+      // field) leaves the running app with stale state. Hot restart is
+      // slightly slower but always shows the edited source faithfully —
+      // which is the pedagogical promise of the tutorial.
+      flutter.stdin.write('R');
       console.log(`  Recompiled (${basename(filePath)})`);
     }
   });
