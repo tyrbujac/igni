@@ -38,17 +38,14 @@ class _StringCaseScreenState extends State<StringCaseScreen> {
               style: TextStyle(color: Colors.green),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                onPressed: () {
-                  setState(() {
-                    level = level.toString().toUpperCase();
-                  });
-                },
-                child: const Text('Shout'),
-              ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+              onPressed: () {
+                setState(() {
+                  level = level.toString().toUpperCase();
+                });
+              },
+              child: const Text('Shout'),
             ),
           ],
         ),

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555))), home: GreetingScreen()));
+  runApp(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555))), home: FormScreen()));
 }
 
-class GreetingScreen extends StatefulWidget {
-  const GreetingScreen({super.key});
+class FormScreen extends StatefulWidget {
+  const FormScreen({super.key});
 
   @override
-  State<GreetingScreen> createState() => _GreetingScreenState();
+  State<FormScreen> createState() => _FormScreenState();
 }
 
-class _GreetingScreenState extends State<GreetingScreen> {
+class _FormScreenState extends State<FormScreen> {
   String name = '';
   late final TextEditingController _nameController;
 
@@ -44,19 +44,23 @@ class _GreetingScreenState extends State<GreetingScreen> {
               },
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
-                hintText: 'Name',
+                hintText: 'Your name',
               ),
             ),
             const SizedBox(height: 16),
-            if (name.isNotEmpty) ...[
-              Text(
-                'Hello, '.toString() + name.toString(),
-              ),
-            ] else ...[
-              Text(
-                'Type your name above',
-              ),
-            ],
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+              onPressed: () {
+                setState(() {
+                  name = '';
+                });
+              },
+              child: const Text('Submit'),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Hello, '.toString() + name.toString(),
+            ),
           ],
         ),
       ),

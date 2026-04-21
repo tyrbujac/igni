@@ -47,30 +47,24 @@ class _GraderScreenState extends State<GraderScreen> {
               style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                onPressed: () {
-                  setState(() {
-                    score = score + 10;
-                  });
-                },
-                child: const Text('Raise'),
-              ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+              onPressed: () {
+                setState(() {
+                  score = score + 10;
+                });
+              },
+              child: const Text('Raise'),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                onPressed: () {
-                  setState(() {
-                    score = score - 10;
-                  });
-                },
-                child: const Text('Lower'),
-              ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+              onPressed: () {
+                setState(() {
+                  score = score - 10;
+                });
+              },
+              child: const Text('Lower'),
             ),
           ],
         ),

@@ -46,17 +46,14 @@ class _HomeScreenState extends State<HomeScreen> {
               '$count',
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                onPressed: () {
-                  setState(() {
-                    count = count + 1;
-                  });
-                },
-                child: const Text('Add'),
-              ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+              onPressed: () {
+                setState(() {
+                  count = count + 1;
+                });
+              },
+              child: const Text('Add'),
             ),
             const SizedBox(height: 16),
             for (final item in shared.items) ...[

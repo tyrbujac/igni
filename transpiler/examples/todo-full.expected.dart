@@ -64,18 +64,18 @@ class _TodoScreenState extends State<TodoScreen> {
                   draft = value;
                 });
               },
-              decoration: const InputDecoration(hintText: 'New task'),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: 'New task',
+              ),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                onPressed: () {
-                  add();
-                },
-                child: const Text('Add'),
-              ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+              onPressed: () {
+                add();
+              },
+              child: const Text('Add'),
             ),
             const SizedBox(height: 16),
             if (items.isEmpty) ...[

@@ -27,17 +27,14 @@ class _CounterScreenState extends State<CounterScreen> {
               style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                onPressed: () {
-                  setState(() {
-                    count = count + 1;
-                  });
-                },
-                child: const Text('Add'),
-              ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+              onPressed: () {
+                setState(() {
+                  count = count + 1;
+                });
+              },
+              child: const Text('Add'),
             ),
           ],
         ),

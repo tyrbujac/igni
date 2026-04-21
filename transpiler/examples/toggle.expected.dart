@@ -24,17 +24,14 @@ class _ToggleScreenState extends State<ToggleScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                  onPressed: () {
-                    setState(() {
-                      show = !show;
-                    });
-                  },
-                  child: const Text('Toggle'),
-                ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                onPressed: () {
+                  setState(() {
+                    show = !show;
+                  });
+                },
+                child: const Text('Toggle'),
               ),
               const SizedBox(height: 16),
               if (show) ...[

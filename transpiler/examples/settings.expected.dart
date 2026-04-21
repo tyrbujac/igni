@@ -53,7 +53,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   username = value;
                 });
               },
-              decoration: const InputDecoration(hintText: 'Username'),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: 'Username',
+              ),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -63,7 +66,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   email = value;
                 });
               },
-              decoration: const InputDecoration(hintText: 'Email'),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: 'Email',
+              ),
             ),
             const SizedBox(height: 16),
             Switch(

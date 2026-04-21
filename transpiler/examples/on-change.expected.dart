@@ -133,7 +133,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 });
                 validate_city();
               },
-              decoration: const InputDecoration(hintText: 'City'),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: 'City',
+              ),
             ),
           ],
         ),

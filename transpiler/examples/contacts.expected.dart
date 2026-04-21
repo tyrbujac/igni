@@ -103,7 +103,10 @@ class _ContactListScreenState extends State<ContactListScreen> {
                   query = value;
                 });
               },
-              decoration: const InputDecoration(hintText: 'Search...'),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: 'Search...',
+              ),
             ),
             const SizedBox(height: 16),
             Switch(
@@ -181,26 +184,20 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
               ),
             ],
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                onPressed: () {
-                  toggle_fav();
-                },
-                child: const Text('Toggle Favourite'),
-              ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+              onPressed: () {
+                toggle_fav();
+              },
+              child: const Text('Toggle Favourite'),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text('Back'),
-              ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Back'),
             ),
           ],
         ),

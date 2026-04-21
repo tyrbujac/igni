@@ -76,6 +76,35 @@ export class CodeGenerator {
     this.validateEmitPlacement(program);
     this.validateAsyncReactivity(program);
     this.validateSharedPrefix(program);
+
+    // No screens → emit a friendly placeholder app so `igni run` stays alive
+    // while the user types their first screen. Parser produces an empty
+    // Program for 0-byte / whitespace-only input; without this guard the
+    // first `program.screens[0].name` access throws.
+    if (program.screens.length === 0) {
+      return {
+        dart: [
+          "import 'package:flutter/material.dart';",
+          '',
+          'void main() {',
+          '  runApp(MaterialApp(',
+          '    debugShowCheckedModeBanner: false,',
+          '    home: Scaffold(',
+          '      body: Center(',
+          '        child: Text(',
+          "          'Add a screen to app.igni to get started',",
+          '          style: TextStyle(fontSize: 16, color: Colors.black54),',
+          '        ),',
+          '      ),',
+          '    ),',
+          '  ));',
+          '}',
+          '',
+        ].join('\n'),
+        lineMap: [],
+      };
+    }
+
     const firstName = program.screens[0].name;
 
     // Detect if any screen uses fetch
@@ -972,29 +1001,16 @@ export class CodeGenerator {
     const textStr = isConstText ? this.exprToConstStr(node.text) : this.exprToDisplayStr(node.text);
     const textChild = `${isConstText ? 'const ' : ''}Text(${textStr})`;
 
-    // Circle buttons never stretch to full width — their whole point is being
-    // a compact tap target. Row context already skipped the SizedBox wrap;
-    // circle extends that to the column case.
-    const compact = inRow || isCircle;
-    let code: string;
-    if (compact) {
-      code = `${ind}ElevatedButton(\n`;
-      code += `${ind}  style: ElevatedButton.styleFrom(${styleParts.join(', ')}),\n`;
-      if (tapEvent) {
-        code += this.genOnPressed(tapEvent, depth + 1);
-      }
-      code += `${ind}  child: ${textChild},\n`;
-      code += `${ind})`;
-    } else {
-      code = `${ind}SizedBox(\n${ind}  width: double.infinity,\n${ind}  child: ElevatedButton(\n`;
-      code += `${ind}    style: ElevatedButton.styleFrom(${styleParts.join(', ')}),\n`;
-      if (tapEvent) {
-        code += this.genOnPressed(tapEvent, depth + 2);
-      }
-      code += `${ind}    child: ${textChild},\n`;
-      code += `${ind}  ),\n`;
-      code += `${ind})`;
+    // Buttons size to their content by default. Full-width stretch becomes
+    // opt-in via a future `fill: true` property; matching the natural button
+    // aesthetic (content-sized tap target) is the right default.
+    let code = `${ind}ElevatedButton(\n`;
+    code += `${ind}  style: ElevatedButton.styleFrom(${styleParts.join(', ')}),\n`;
+    if (tapEvent) {
+      code += this.genOnPressed(tapEvent, depth + 1);
     }
+    code += `${ind}  child: ${textChild},\n`;
+    code += `${ind})`;
     return code;
   }
 
@@ -1015,7 +1031,14 @@ export class CodeGenerator {
     code += `${ind}  },\n`;
     if (placeholder) {
       const hint = this.exprToConstStr(placeholder.value);
-      code += `${ind}  decoration: const InputDecoration(hintText: ${hint}),\n`;
+      code += `${ind}  decoration: InputDecoration(\n`;
+      code += `${ind}    border: const OutlineInputBorder(),\n`;
+      code += `${ind}    hintText: ${hint},\n`;
+      code += `${ind}  ),\n`;
+    } else {
+      code += `${ind}  decoration: const InputDecoration(\n`;
+      code += `${ind}    border: OutlineInputBorder(),\n`;
+      code += `${ind}  ),\n`;
     }
     code += `${ind})`;
     if (inRow) {

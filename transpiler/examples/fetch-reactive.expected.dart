@@ -82,7 +82,10 @@ class _SearchScreenState extends State<SearchScreen> {
                       query = value;
                     });
                   },
-                  decoration: const InputDecoration(hintText: 'Search...'),
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    hintText: 'Search...',
+                  ),
                 ),
                 ),
                 const SizedBox(width: 8),

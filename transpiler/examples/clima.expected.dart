@@ -106,17 +106,14 @@ class _WeatherScreenState extends State<WeatherScreen> {
                   'Location unavailable',
                 ),
               ] else ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                    onPressed: () {
-                      setState(() {
-                        coords = here['latitude'].toStringAsFixed(4).toString() + ','.toString().toString() + here['longitude'].toStringAsFixed(4).toString();
-                      });
-                    },
-                    child: const Text('Get forecast'),
-                  ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                  onPressed: () {
+                    setState(() {
+                      coords = here['latitude'].toStringAsFixed(4).toString() + ','.toString().toString() + here['longitude'].toStringAsFixed(4).toString();
+                    });
+                  },
+                  child: const Text('Get forecast'),
                 ),
                 if (coords == '') ...[
                   Text(

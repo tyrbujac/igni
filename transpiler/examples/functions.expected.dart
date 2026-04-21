@@ -60,7 +60,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   username = value;
                 });
               },
-              decoration: const InputDecoration(hintText: 'Username'),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: 'Username',
+              ),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -70,7 +73,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   email = value;
                 });
               },
-              decoration: const InputDecoration(hintText: 'Email'),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: 'Email',
+              ),
             ),
             const SizedBox(height: 16),
             Switch(
@@ -91,15 +97,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                onPressed: () {
-                  save();
-                },
-                child: const Text('Save'),
-              ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+              onPressed: () {
+                save();
+              },
+              child: const Text('Save'),
             ),
             const SizedBox(height: 16),
             if (saved) ...[

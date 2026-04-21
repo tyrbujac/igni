@@ -1,0 +1,7 @@
+screen Form:
+  name = ""
+
+  layout vertical, gap: medium, padding: large:
+    input bind: name, placeholder: "Your name"
+    button "Submit", on tap: name = ""
+    label "Hello, " + name
