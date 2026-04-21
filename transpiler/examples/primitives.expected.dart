@@ -28,8 +28,9 @@ class _DemoScreenState extends State<DemoScreen> {
       status_color = 'white';
     }
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -132,6 +133,7 @@ class _DemoScreenState extends State<DemoScreen> {
           ],
         ),
       ),
+        ),
       ),
     );
   }

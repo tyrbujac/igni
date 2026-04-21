@@ -30,8 +30,9 @@ class _FormScreenState extends State<FormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -67,6 +68,7 @@ class _FormScreenState extends State<FormScreen> {
           ],
         ),
       ),
+        ),
       ),
     );
   }

@@ -17,7 +17,8 @@ class _FeedScreenState extends State<FeedScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SafeArea(
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -39,6 +40,7 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

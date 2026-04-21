@@ -20,8 +20,9 @@ class _DerivedCountsScreenState extends State<DerivedCountsScreen> {
     var warning = items.where((i) => (i['level'] == 'warning') == true).toList().length;
     var info = items.where((i) => (i['level'] == 'info') == true).toList().length;
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -46,6 +47,7 @@ class _DerivedCountsScreenState extends State<DerivedCountsScreen> {
           ],
         ),
       ),
+        ),
       ),
     );
   }

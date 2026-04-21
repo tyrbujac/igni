@@ -17,8 +17,9 @@ class _GreeterScreenState extends State<GreeterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,6 +36,7 @@ class _GreeterScreenState extends State<GreeterScreen> {
         ],
       ),
       ),
+        ),
       ),
     );
   }

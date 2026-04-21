@@ -36,8 +36,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -98,6 +99,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
       ),
+        ),
       ),
     );
   }

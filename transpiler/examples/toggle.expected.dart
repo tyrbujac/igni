@@ -17,8 +17,9 @@ class _ToggleScreenState extends State<ToggleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Center(
           child: Column(
@@ -49,6 +50,7 @@ class _ToggleScreenState extends State<ToggleScreen> {
           ),
         ),
       ),
+        ),
       ),
     );
   }

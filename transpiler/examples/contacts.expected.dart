@@ -86,8 +86,9 @@ class _ContactListScreenState extends State<ContactListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -139,6 +140,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
           ],
         ),
       ),
+        ),
       ),
     );
   }
@@ -165,8 +167,9 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -205,6 +208,7 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
           ],
         ),
       ),
+        ),
       ),
     );
   }

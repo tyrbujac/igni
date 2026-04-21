@@ -28,8 +28,9 @@ class _DiceRollerScreenState extends State<DiceRollerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Center(
           child: Column(
@@ -67,6 +68,7 @@ class _DiceRollerScreenState extends State<DiceRollerScreen> {
           ),
         ),
       ),
+        ),
       ),
     );
   }

@@ -37,8 +37,9 @@ class _GraderScreenState extends State<GraderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Center(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -69,6 +70,7 @@ class _GraderScreenState extends State<GraderScreen> {
           ],
         ),
       ),
+        ),
       ),
     );
   }

@@ -92,8 +92,9 @@ class _WeatherScreenState extends State<WeatherScreen> {
       _fetchForecast();
     }
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Center(
           child: Column(
@@ -135,6 +136,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
           ),
         ),
       ),
+        ),
       ),
     );
   }

@@ -677,13 +677,20 @@ export class CodeGenerator {
     if (scaffoldBg) {
       scaffoldParts.push(`      backgroundColor: ${scaffoldBg}`);
     }
+    // Wrap body in SafeArea when there's no AppBar (title:) and no image
+    // background — both of those already handle the top safe-area inset.
+    // Without this, screens with a root label or non-layout content clip
+    // behind the iOS Dynamic Island / status bar on devices with notches.
+    // (Mobile smoke test 2026-04-21; docs/private/68 Finding A.)
+    const needsSafeArea = !titleProp && !hasImageBg;
     if (hasImageBg) {
       const imgSrc = this.exprToDart(screenBgProp!.value);
       scaffoldParts.push(`      body: Container(\n        width: double.infinity,\n        height: double.infinity,\n        decoration: const BoxDecoration(\n          image: DecorationImage(\n            image: AssetImage('assets/' + ${imgSrc}),\n            fit: BoxFit.cover,\n          ),\n        ),\n        child: SafeArea(\n          child: ${bodyWidget.trimStart()},\n        ),\n      )`);
     } else if (titleProp || scaffoldBg || this.containsPaginateEach(uiNodes)) {
-      scaffoldParts.push(`      body: ${bodyWidget.trimStart()}`);
+      const inner = bodyWidget.trimStart();
+      scaffoldParts.push(`      body: ${needsSafeArea ? `SafeArea(\n        child: ${inner},\n      )` : inner}`);
     } else {
-      scaffoldParts.push(`      body: SingleChildScrollView(\n        child: ${bodyWidget.trimStart()},\n      )`);
+      scaffoldParts.push(`      body: SafeArea(\n        child: SingleChildScrollView(\n          child: ${bodyWidget.trimStart()},\n        ),\n      )`);
     }
     // Dark theme (when any screen declares a dark background) is applied at
     // the MaterialApp level in generate() — per-screen Theme wrapping would

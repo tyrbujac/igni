@@ -42,8 +42,9 @@ class _DemoScreenState extends State<DemoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -59,6 +60,7 @@ class _DemoScreenState extends State<DemoScreen> {
           ],
         ),
       ),
+        ),
       ),
     );
   }
