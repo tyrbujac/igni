@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-flash-lite-preview",
+  "model_id": "gemini-3.1-flash-lite-preview",
+  "prompt_name": "Alert Dashboard",
+  "prompt_slug": "alert-dashboard",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.11.4-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.11.4-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "dd8a9877820bfd0d89ec9214cb31eca5a1fa8bede802dea15f98dff6463429f3",
+  "spec_words": 2931,
+  "timestamp": "2026-04-21T15:31:50.354Z",
+  "duration_ms": 2693,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 5687,
+    "output_tokens": 622,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.00235475,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: Expected newline, got \"return\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-etymwr/app.igni:29 |     if level is \"critical\": return danger\n                                                                                   |                                   ^\n\n  Error: Expected newline, got \"return\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-etymwr/app.igni:30 |     if level is \"warning\": return orange\n                                                                                   |                                  ^\n\n  Error: Unexpected token \"return\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-etymwr/app.igni:31 |     return green\n                                                                                   |           ^\n\n  Error: Expected \"screen\", got \"\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-etymwr/app.igni:33 | component AlertRow(message, level_text, color):\n                                                                                   | ^",
+    "error_category": "model_error",
+    "igni_lines": 36
+  }
+}

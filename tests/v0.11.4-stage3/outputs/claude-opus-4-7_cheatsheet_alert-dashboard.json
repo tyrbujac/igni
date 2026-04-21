@@ -1,0 +1,32 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Alert Dashboard",
+  "prompt_slug": "alert-dashboard",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.11.4-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.11.4-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "dd8a9877820bfd0d89ec9214cb31eca5a1fa8bede802dea15f98dff6463429f3",
+  "spec_words": 2931,
+  "timestamp": "2026-04-21T15:32:01.719Z",
+  "duration_ms": 17462,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 446,
+    "output_tokens": 1054,
+    "cache_creation_tokens": 7384,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.07473,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "error_category": null,
+    "igni_lines": 47
+  }
+}
