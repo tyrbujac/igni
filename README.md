@@ -2,7 +2,11 @@
 
 A programming language for building UIs — designed to be read.
 
-The hypothesis: LLM accuracy and human readability track each other. Remove the ambiguity that trips LLMs up and the language becomes nicer for humans too. Igni is that experiment.
+**Status: research prototype.** Final-year CS dissertation project investigating whether LLM output accuracy and human readability track each other. Spec is at v0.11.2; transpiler covers most of it; the tutorial has been through multiple cold-run iterations. Not yet production-ready. See [§ Status](#status) for the methodology + evidence.
+
+**The hypothesis:** LLM accuracy and human readability track each other. Remove the ambiguity that trips LLMs up — no brackets on component invocation, one way to update state, a single spec document — and the language becomes nicer for humans too. Igni is that experiment.
+
+**Concrete evidence so far:** the v0.10 domain-swap round (Shopping + Apothecary + Spaceship Cargo, 3×4 models × cheatsheet tier) produced 9/9 frontier adoption of the `{target with ...}` object-update syntax unprompted. v0.9.1 flipped 3/3 frontier models off an `on change:` anti-pattern onto the canonical `on tap:` trigger with a one-sentence docs change and zero transpiler work. Methodology details in [tests/README.md](tests/README.md).
 
 Igni transpiles to Dart/Flutter. You write short, readable source files. The toolchain handles the rest.
 
@@ -16,6 +20,26 @@ screen Counter:
 ```
 
 Indentation for blocks. Colons open them. One way to do everything. No imports, no `useState`, no boilerplate. Reactivity is automatic.
+
+## Installation
+
+Igni isn't on npm. To install from source:
+
+```bash
+git clone https://github.com/tyrbujac/igni.git
+cd igni/transpiler
+npm install
+```
+
+Then symlink the CLI onto your PATH:
+
+```bash
+mkdir -p ~/.local/bin
+ln -s "$(pwd)/bin/igni" ~/.local/bin/igni
+# ensure ~/.local/bin is on your $PATH — add to ~/.zshrc or ~/.bashrc if not
+```
+
+Verify: `igni --help` prints the usage message.
 
 ## Quick start
 
@@ -42,6 +66,16 @@ When Flutter or generated Dart reports an error from `main.dart`, Igni maps it b
 
 Under the hood, a hidden `.igni/` Flutter project is created automatically. You never touch it — just edit `.igni` files and save.
 
+## Why not Flutter / React / SwiftUI?
+
+Igni is downstream of the same declarative-UI lineage as SwiftUI and Jetpack Compose, built specifically for LLM-assisted workflows. Compared to mainstream options:
+
+- **Flutter** — Igni compiles to Flutter. You get Flutter's rendering; you skip Flutter's imperative `setState`, widget constructors, and `BuildContext` plumbing. Tradeoff: Igni's spec is deliberately smaller than Flutter's API, so features Flutter has (animations, pub.dev packages) you'd need to drop into Flutter directly for.
+- **React / React Native** — Igni's reactivity is automatic reassignment (no `useState`, no setters). Similar in spirit to React but via lexical re-evaluation instead of hook-based re-renders. Igni has no JSX, no components-as-functions, and no package ecosystem — it's much narrower.
+- **SwiftUI / Jetpack Compose** — Closest cousins. Similar declarative-UI mental model. Main difference: Igni was designed for cold-LLM adoption from day one, so its spec is narrower and explicitly resists features that confuse models — no ternary expressions, no string interpolation, no multi-parameter lambdas.
+
+If you already love Flutter / React / SwiftUI, Igni likely isn't competitive for your existing workflow. If you're writing UI code with LLM assistance and feeling the syntactic noise, Igni optimizes for that specifically.
+
 ## Mobile testing (advanced)
 
 `igni run` targets Chrome with hot reload. To preview an Igni app on an iOS simulator or Android emulator, drop into the generated `.igni/` Flutter project and use Flutter directly.
@@ -66,7 +100,7 @@ Igni files are much shorter than their Flutter equivalents — a screen is typic
 - **Over 200 lines:** consider splitting by screen or feature
 - **No folders needed** until 15+ files — auto-discovery means every screen and component is available everywhere with no imports
 
-```
+```text
 my-app/
   app.igni           # entry point
   settings.igni      # another screen (optional)
@@ -95,7 +129,7 @@ my-app/
 
 ## Repo structure
 
-```
+```text
 igni/
 ├── spec/                    # language spec (versioned snapshots)
 │   ├── <!-- SYNC:version -->v0.11.2<!-- /SYNC:version -->.md             # current canonical spec
