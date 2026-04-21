@@ -78,20 +78,14 @@ If you already love Flutter / React / SwiftUI, Igni likely isn't competitive for
 
 ## Mobile
 
-`igni run` defaults to Chrome. Mobile targets are one command each — Igni expands the `.igni/` Flutter project to that platform, picks a running device, or auto-boots the first available simulator / emulator when nothing is running.
+`igni run` defaults to Chrome. Mobile is one command each:
 
 ```bash
 igni run ios          # iOS simulator
 igni run android      # Android emulator
-igni run ios --device "iPhone 17"      # target a specific device by name or UDID
-igni run android --device "Pixel 8a"
 ```
 
-With one running device per platform, `igni run ios` / `igni run android` picks it silently. With multiple, Igni lists them and asks for `--device`. With none, Igni boots the first available simulator / emulator and waits — same one-command UX as the web default.
-
-Cold Xcode builds take ~40s on Apple Silicon; Gradle cold builds take ~2 min. Subsequent runs are sub-20s. Hot reload (`r` key) works on mobile too.
-
-A note on third-party APIs: mobile Dart HTTP clients present a TLS fingerprint Cloudflare's bot scoring often challenges, so `fetch()` against Cloudflare-protected public APIs can return 403 on iOS / Android while the same request succeeds from a browser or curl. The workaround most Flutter / React Native apps use is proxying through a server you control. Not an Igni-specific limitation.
+Igni auto-picks a running device, or auto-boots the first available simulator / emulator. Use `--device "<name>"` to pick a specific one. See [`docs/mobile.md`](docs/mobile.md) for device-selection rules, build timings, and known gotchas (Cloudflare third-party APIs, SafeArea).
 
 ## Project structure
 
@@ -143,8 +137,9 @@ igni/
 │   └── examples/            # <!-- SYNC:example-count -->40<!-- /SYNC:example-count --> .igni apps + .expected.dart references
 ├── tests/                   # cold-LLM test results + methodology
 │   └── v0.3.2 → v0.6.11/    # prompts + results per spec version
-├── docs/                    # tutorial + project docs
-│   └── tutorial-v2.5.md     # beginner tutorial (no programming experience needed)
+├── docs/                    # tutorial + mobile guide + archive
+│   ├── tutorial.md          # beginner tutorial (no programming experience needed)
+│   └── mobile.md            # iOS / Android run instructions
 ├── assets/                  # logo (igni.svg + igni-dark-mode.svg, PNGs)
 ├── CHANGELOG.md             # spec evolution history
 ├── ROADMAP.md               # near-term plans + ideas

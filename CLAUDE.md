@@ -48,8 +48,10 @@ igni/
 │   ├── package.json
 │   └── tsconfig.json
 └── docs/                    # tutorial + project docs
-    ├── tutorial-v2.5.md      # current beginner tutorial (no programming experience needed)
-    ├── tutorial.md / tutorial-v2.md / tutorial-v2.1.md / tutorial-v2.2.md / tutorial-v2.3.md / tutorial-v2.4.md  # historical
+    ├── tutorial.md           # current beginner tutorial (no programming experience needed)
+    ├── mobile.md             # running Igni on iOS simulator / Android emulator
+    ├── preregistration-phase4.md  # dissertation Phase 4 pre-registration
+    ├── archive/              # prior tutorial drafts (v1, v2.0–v2.4)
     └── private/              # gitignored project docs (proposals, analyses, ratings)
 ```
 
