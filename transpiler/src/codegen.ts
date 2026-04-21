@@ -148,7 +148,11 @@ export class CodeGenerator {
     // above the wrap).
     const anyDarkScreen = program.screens.some(s => this.screenHasDarkBackground(s));
     const brightness = anyDarkScreen ? ', brightness: Brightness.dark' : '';
-    const igniTheme = `theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)${brightness}))`;
+    // Dark-screen apps keep Material's dark surface; light-screen apps get an
+    // explicit neutral off-white so the pink-seeded surface doesn't tint the
+    // viewport. Brand colour stays as ColorScheme.primary for ElevatedButton.
+    const scaffoldBg = anyDarkScreen ? '' : ', scaffoldBackgroundColor: const Color(0xFFFAFAFA)';
+    const igniTheme = `theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)${brightness})${scaffoldBg}, textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 16)))`;
     if (this.hasShared) {
       code += this.genSharedState(program.shared) + '\n';
       code += `void main() {\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, ${igniTheme}, home: ${firstName}Screen()),\n  ));\n}\n`;
@@ -537,6 +541,14 @@ export class CodeGenerator {
       const children = uiNodes.map(n => n.type === 'Comment' ? this.genUINode(n, 4) : this.genUINode(n, 4) + ',').join('\n');
       bodyWidget = `      Column(\n        crossAxisAlignment: CrossAxisAlignment.start,\n        children: [\n${children}\n        ],\n      )`;
     }
+
+    // Default 16px padding for zero-config screens — labels and widgets at
+    // screen body level would otherwise hug the viewport edge. Skip when the
+    // root is an explicit layout (user is in control of padding already).
+    if (uiNodes.length > 0 && !this.rootOwnsLayout(uiNodes)) {
+      bodyWidget = `      Padding(\n        padding: const EdgeInsets.all(16),\n        child: ${bodyWidget.trimStart()},\n      )`;
+    }
+
     const hasControllers = this.ctx.boundInputVars.length > 0;
 
     // Widget class
@@ -1042,7 +1054,14 @@ export class CodeGenerator {
     }
     code += `${ind})`;
     if (inRow) {
+      // Row-context inputs take remaining space via Expanded — max-width cap
+      // would fight the Row's intended flex behaviour.
       code = `${ind}Expanded(\n${ind}  child: ${code.trimStart()},\n${ind})`;
+    } else {
+      // Standalone inputs cap at 480px so a full browser viewport doesn't
+      // leave readers staring at a kilometre-wide text box. Mobile viewports
+      // stay below this and fill naturally.
+      code = `${ind}ConstrainedBox(\n${ind}  constraints: const BoxConstraints(maxWidth: 480),\n${ind}  child: ${code.trimStart()},\n${ind})`;
     }
     return code;
   }
@@ -1909,6 +1928,13 @@ export class CodeGenerator {
   // Column so the spread lands in `children: [...]` instead of bare.
   private emitsSpread(node: UINode): boolean {
     return node.type === 'If' || node.type === 'Each';
+  }
+
+  // When a screen's root is an explicit `layout` the user is in control of
+  // spacing — suppress the default 16px padding to avoid double-padding
+  // cases like `layout vertical, padding: large:`.
+  private rootOwnsLayout(uiNodes: UINode[]): boolean {
+    return uiNodes.length === 1 && uiNodes[0].type === 'Layout';
   }
 
   // If `gen` output is an `Expanded(child: X)` at its outermost level, return

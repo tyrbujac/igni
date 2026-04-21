@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555))), home: HeroScreen()));
+  runApp(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 16))), home: HeroScreen()));
 }
 
 class HeroScreen extends StatefulWidget {
@@ -26,7 +26,9 @@ class _HeroScreenState extends State<HeroScreen> {
           ),
         ),
         child: SafeArea(
-          child: Column(
+          child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
         Expanded(
@@ -56,6 +58,7 @@ class _HeroScreenState extends State<HeroScreen> {
         ),
         ),
         ],
+      ),
       ),
         ),
       ),

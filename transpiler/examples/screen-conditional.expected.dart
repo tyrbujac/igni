@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555))), home: GreeterScreen()));
+  runApp(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 16))), home: GreeterScreen()));
 }
 
 class GreeterScreen extends StatefulWidget {
@@ -18,6 +18,8 @@ class _GreeterScreenState extends State<GreeterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
+        child: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -31,6 +33,7 @@ class _GreeterScreenState extends State<GreeterScreen> {
           ),
         ],
         ],
+      ),
       ),
       ),
     );

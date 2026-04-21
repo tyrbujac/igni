@@ -14,7 +14,7 @@ final shared = SharedState();
 void main() {
   runApp(ListenableBuilder(
     listenable: shared,
-    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555))), home: ContactListScreen()),
+    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 16))), home: ContactListScreen()),
   ));
 }
 
@@ -96,7 +96,9 @@ class _ContactListScreenState extends State<ContactListScreen> {
               style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
-            TextField(
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: TextField(
               controller: _queryController,
               onChanged: (value) {
                 setState(() {
@@ -107,6 +109,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
                 border: const OutlineInputBorder(),
                 hintText: 'Search...',
               ),
+            ),
             ),
             const SizedBox(height: 16),
             Switch(
