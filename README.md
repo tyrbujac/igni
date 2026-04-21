@@ -6,7 +6,7 @@ A programming language for building UIs — designed to be read.
 
 **The hypothesis:** LLM accuracy and human readability track each other. Remove the ambiguity that trips LLMs up — no brackets on component invocation, one way to update state, a single spec document — and the language becomes nicer for humans too. Igni is that experiment.
 
-**Concrete evidence so far:** the v0.10 domain-swap round (Shopping + Apothecary + Spaceship Cargo, 3×4 models × cheatsheet tier) produced 9/9 frontier adoption of the `{target with ...}` object-update syntax unprompted. v0.9.1 flipped 3/3 frontier models off an `on change:` anti-pattern onto the canonical `on tap:` trigger with a one-sentence docs change and zero transpiler work. Methodology details in [tests/README.md](tests/README.md).
+**Concrete evidence so far:** the v0.11.4 Stage 3 cold test (4 frontier models × 2 prompts) produced **0/7 inventions** of the wrong `count(list, lambda)` shape after a one-paragraph docs patch — unanimous adoption of the canonical `length(filter(list, predicate))` composition, down from 3/7 silently-wrong inventions in the pre-patch Stage 0. The v0.10 domain-swap round (Shopping + Apothecary + Spaceship Cargo, 3×4 models × cheatsheet tier) produced 9/9 frontier adoption of the `{target with ...}` object-update syntax unprompted. v0.9.1 flipped 3/3 frontier models off an `on change:` anti-pattern onto the canonical `on tap:` trigger with a one-sentence docs change and zero transpiler work. Methodology in [tests/README.md](tests/README.md).
 
 Igni transpiles to Dart/Flutter. You write short, readable source files. The toolchain handles the rest.
 
@@ -109,43 +109,58 @@ my-app/
 
 **Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.11.5-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.11.5-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.11.5-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.11.5-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
-**Latest language change:** `v0.11.0` adds `locate()` — a geolocation primitive that reuses the same `is loading:` / `is error:` machinery as `fetch()`. 3/3 frontier models independently invented divergent shapes on the pre-ship cold test; Shape A won 4/4 pre-ship ship review and validated 4/4 post-ship Clima rerun. `v0.11.1` (docs-only) restructured the cheatsheet for learning order. `v0.11.2` (docs-only) clarified that the reactive-fetch footgun applies narrowly to bound-variable fetch URLs, not to all async composition. Preceding syntax ships: `v0.10.0` object-update syntax `{target with field: newval}` (9/9 frontier adoption across three domain-swap rounds — strongest direct-support result in project history); `v0.9.1` tightened the trigger-variable recommendation (docs-only, 3/3 frontier flipped to canonical `on tap:`); `v0.9.0` promoted the reactive-fetch footgun from prose guidance to a transpile-time error; `v0.8.0` shipped component event channels (`emit` + `on <event>:`).
+**Latest spec changes:** `v0.11.5` (2026-04-21) is a docs-only hygiene pass — cheatsheet pruned 2,931 → 2,536 words; context-specific callouts migrated from the cheatsheet's learning path to the full spec's reference sections. First execution of the prune-before-add cadence. `v0.11.4` (2026-04-21) sharpened the *Counting by field* callout per a 4-model ship review; Stage 3 validated the rewrite at 0/7 inventions (see *Concrete evidence* above). `v0.11.3` (2026-04-21) canonicalised `length(filter(list, predicate))` as the idiom for field-based counting. `v0.11.0` added the `locate()` geolocation primitive reusing `fetch()`'s `is loading:` / `is error:` machinery (4/4 pre-ship shape convergence, 3/3 post-ship adoption on Clima). Preceding syntax ships: `v0.10.0` object-update syntax `{target with field: newval}` (9/9 frontier adoption across three domain-swap rounds); `v0.9.1` trigger-variable wording tighten (docs-only, 3/3 flip); `v0.9.0` reactive-fetch footgun as a transpile-time error; `v0.8.0` component event channels (`emit` + `on <event>:`). See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
 **Latest methodology result:** the v0.10 domain-swap round (Shopping + Apothecary + Spaceship Cargo, 3 × 4 models × cheatsheet tier) produced 9/9 frontier adoption of `{target with ...}` unprompted. Three runs at varying domain distance from e-commerce rules out the "shopping-cart corpus density" confound — the cheatsheet teaches the syntax, the domain doesn't supply it. First post-ship result strong enough to call directly-supported rather than suggestive.
 
-**Transpiler:** Working. <!-- SYNC:example-count -->40<!-- /SYNC:example-count --> example apps compile and run in the browser. Covers:
+**Transpiler:** Working. <!-- SYNC:example-count -->40<!-- /SYNC:example-count --> example apps compile and run in the browser; iOS simulator and Android emulator supported via `igni run ios` / `igni run android` (device auto-pick, auto-boot, `--device` override). Covers:
 
 - **Composition** — screens, components, wrapper components with `body` slot, layouts
-- **Control flow** — `if`/`else`, `each` loops, functions, lambdas
-- **State & data** — variables, two-way binding, shared state, async `fetch` with loading/error
+- **Control flow** — `if`/`else`, `each` loops (with `paginate:` for lazy rendering), functions, lambdas
+- **State & data** — variables, two-way binding, shared state, async `fetch` + `locate()` with loading/error
 - **Data shapes** — list operations (`filter`, `sorted`, `without`, `replace`, ...), list indexing, object-update syntax (`{target with field: newval}`)
-- **UI surface** — screen properties (title, background), local images, audio
+- **UI surface** — screen properties (title, background), local images, audio, SafeArea auto-wrap when no AppBar (prevents iOS notch clipping)
 - **Operators** — arithmetic, comparison, boolean (`and`/`or`/`not`)
 
-**CLI:** `igni new` creates a starter app. `igni run` transpiles, watches, and serves it.
+**Compile-time rejections** — five anti-patterns rejected with fix-it errors: reactive-fetch footgun, `emit <event>` misplacement, bare `shared:` access, `count(list, lambda)` (use `length(filter(...))`), `locate()` reactive-fetch extension. Pinned negative fixtures in [`transpiler/examples-errors/`](transpiler/examples-errors/).
+
+**CLI:** `igni new` scaffolds a starter. `igni run` transpiles, watches, serves. `igni run ios` / `igni run android` for mobile — see [`docs/mobile.md`](docs/mobile.md). Full reference in [`transpiler/README.md`](transpiler/README.md).
 
 ## Repo structure
 
 ```text
 igni/
-├── spec/                    # language spec (versioned snapshots)
+├── README.md                # this file
+├── ARCHITECTURE.md          # how the pieces fit (human audience)
+├── CLAUDE.md                # AI-assistant design principles + workflow
+├── CHANGELOG.md             # spec evolution history
+├── ROADMAP.md               # near-term plans + ideas
+├── LICENSE                  # GPL v3 (transpiler) + CC BY-SA 4.0 (spec/docs)
+├── spec/
+│   ├── README.md
 │   ├── <!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->.md             # current canonical spec
 │   ├── <!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
 │   ├── <!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->-micro.md       # current canonical micro reference
-│   └── <!-- SYNC:historical-range-files -->v0.2.md → v0.11.4.md<!-- /SYNC:historical-range-files -->      # historical (never edited after shipping)
-├── transpiler/              # TypeScript-to-Dart transpiler
+│   └── archive/             # historical <!-- SYNC:historical-range-files -->v0.2.md → v0.11.4.md<!-- /SYNC:historical-range-files --> (never edited after shipping)
+├── transpiler/
+│   ├── README.md
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point
-│   └── examples/            # <!-- SYNC:example-count -->40<!-- /SYNC:example-count --> .igni apps + .expected.dart references
+│   ├── examples/            # <!-- SYNC:example-count -->40<!-- /SYNC:example-count --> .igni apps + .expected.dart references
+│   └── examples-errors/     # pinned transpile-rejection fixtures
 ├── tests/                   # cold-LLM test results + methodology
-│   └── v0.3.2 → v0.6.11/    # prompts + results per spec version
-├── docs/                    # tutorial + mobile guide + archive
-│   ├── tutorial.md          # beginner tutorial (no programming experience needed)
-│   └── mobile.md            # iOS / Android run instructions
-├── assets/                  # logo (igni.svg + igni-dark-mode.svg, PNGs)
-├── CHANGELOG.md             # spec evolution history
-├── ROADMAP.md               # near-term plans + ideas
-└── LICENSE                  # GPL v3 (transpiler) + CC BY-SA 4.0 (spec/docs)
+│   ├── README.md
+│   └── v<spec_version>/     # prompts + results per round
+├── docs/
+│   ├── README.md
+│   ├── tutorial.md          # beginner walkthrough
+│   ├── mobile.md            # iOS / Android run instructions
+│   └── archive/             # prior tutorial drafts
+├── editors/
+│   └── vscode/              # VS Code / Cursor TextMate grammar
+├── scripts/
+│   └── sync-docs.ts         # regenerates SYNC:* markers from repo state
+└── assets/                  # logo (igni.svg + igni-dark-mode.svg, PNGs)
 ```
 
 ## License
