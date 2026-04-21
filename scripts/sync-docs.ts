@@ -112,7 +112,7 @@ function main(): void {
       : '(none yet)',
   };
 
-  const targets = ['README.md', 'CLAUDE.md'];
+  const targets = ['README.md', 'ARCHITECTURE.md', 'CLAUDE.md'];
   let anyDrift = false;
 
   console.log(`spec: current=${facts.current}, historical=${facts.oldest} → ${facts.secondNewest ?? '—'}`);
