@@ -495,7 +495,7 @@ export class CodeGenerator {
     let bodyWidget: string;
     if (uiNodes.length === 0) {
       bodyWidget = 'const SizedBox()';
-    } else if (uiNodes.length === 1) {
+    } else if (uiNodes.length === 1 && !this.emitsSpread(uiNodes[0])) {
       bodyWidget = this.genUINode(uiNodes[0], 3);
       // `fill: true` on the screen's root layout wraps it in Expanded, but
       // Expanded must live inside a Flex widget — as a Scaffold body it throws
@@ -503,7 +503,8 @@ export class CodeGenerator {
       // fills available space.
       bodyWidget = this.unwrapScreenRootExpanded(bodyWidget);
     } else {
-      // Implicit vertical layout — multiple children without explicit layout wrapper
+      // Implicit vertical layout — multiple children, or a single If/Each
+      // whose collection-spread output requires list context.
       const children = uiNodes.map(n => n.type === 'Comment' ? this.genUINode(n, 4) : this.genUINode(n, 4) + ',').join('\n');
       bodyWidget = `      Column(\n        crossAxisAlignment: CrossAxisAlignment.start,\n        children: [\n${children}\n        ],\n      )`;
     }
@@ -1877,6 +1878,14 @@ export class CodeGenerator {
     this.functionParams = [];
     this.declaredLocals = new Set();
     return this.withMarker(func, `function:${func.name}`, code);
+  }
+
+  // `If` and `Each` codegen produces Dart collection-spread (`if (c) ...[]` /
+  // `for (x in xs) ...[]`), which is only valid inside a list literal. When
+  // one of these sits alone at screen body level, wrap it in an implicit
+  // Column so the spread lands in `children: [...]` instead of bare.
+  private emitsSpread(node: UINode): boolean {
+    return node.type === 'If' || node.type === 'Each';
   }
 
   // If `gen` output is an `Expanded(child: X)` at its outermost level, return

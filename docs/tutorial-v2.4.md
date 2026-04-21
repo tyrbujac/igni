@@ -212,11 +212,10 @@ Sometimes you want the app to do one thing in one situation and something else i
 screen Hello:
   name = "Alex"
 
-  layout vertical:
-    if name is "Alex":
-      label "Welcome back, Alex!"
-    else:
-      label "Nice to meet you"
+  if name is "Alex":
+    label "Welcome back, Alex!"
+  else:
+    label "Nice to meet you"
 ```
 
 Because the `name` box holds "Alex", you see **Welcome back, Alex!** Now change `name = "Alex"` to `name = "Taylor"` and save. The message switches to **Nice to meet you**.
@@ -227,7 +226,6 @@ Because the `name` box holds "Alex", you see **Welcome back, Alex!** Now change 
 - `else:` — means "otherwise." If the answer was no, do this instead.
 - The lines below `if` and `else` are **indented** (pushed to the right). That's how Igni knows they belong to the `if` or the `else`.
 - `is` means "is the same as." Careful: a single `=` *puts something in a box*. `is` *asks if two things are the same*. They look similar, they do completely different jobs.
-- `layout vertical:` — a container that groups things together. We'll explain it properly in Step 10. For now, just include it when you have an `if/else` — Igni needs it to know where to put the different options.
 
 ---
 
@@ -246,11 +244,10 @@ Let's use `>=` to decide if someone is an adult:
 screen Hello:
   age = 42
 
-  layout vertical:
-    if age >= 18:
-      label "You are an adult"
-    else:
-      label "You are a child"
+  if age >= 18:
+    label "You are an adult"
+  else:
+    label "You are a child"
 ```
 
 You see **You are an adult**. Now change `age = 42` to `age = 10`. Save. It switches to **You are a child**.
@@ -361,13 +358,12 @@ Let's put Steps 7 and 11 together. A text box that greets you — but politely a
 screen Greeter:
   name = ""
 
-  layout vertical:
-    input bind: name, placeholder: "What is your name?"
+  input bind: name, placeholder: "What is your name?"
 
-    if name is empty:
-      label "Type your name above"
-    else:
-      label "Hello, " + name
+  if name is empty:
+    label "Type your name above"
+  else:
+    label "Hello, " + name
 ```
 
 When you open the page, you see "Type your name above." Start typing — the hint disappears and is replaced by "Hello, [your name]."
@@ -453,15 +449,14 @@ screen Weather:
   raining = false
   snowing = false
 
-  layout vertical:
-    if raining and snowing:
-      label "Sleet! Bundle up."
-    else if raining:
-      label "Bring an umbrella"
-    else if snowing:
-      label "Snow day"
-    else:
-      label "Enjoy the sun"
+  if raining and snowing:
+    label "Sleet! Bundle up."
+  else if raining:
+    label "Bring an umbrella"
+  else if snowing:
+    label "Snow day"
+  else:
+    label "Enjoy the sun"
 ```
 
 Save — you see **Enjoy the sun**. Now walk through the weather:

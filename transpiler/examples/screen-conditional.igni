@@ -1,0 +1,7 @@
+screen Greeter:
+  name = "Alex"
+
+  if name is "Alex":
+    label "Welcome back, Alex!"
+  else:
+    label "Nice to meet you"
