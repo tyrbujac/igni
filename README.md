@@ -76,21 +76,22 @@ Igni is downstream of the same declarative-UI lineage as SwiftUI and Jetpack Com
 
 If you already love Flutter / React / SwiftUI, Igni likely isn't competitive for your existing workflow. If you're writing UI code with LLM assistance and feeling the syntactic noise, Igni optimizes for that specifically.
 
-## Mobile testing (advanced)
+## Mobile
 
-`igni run` targets Chrome with hot reload. To preview an Igni app on an iOS simulator or Android emulator, drop into the generated `.igni/` Flutter project and use Flutter directly.
+`igni run` defaults to Chrome. Mobile targets are one command each — Igni expands the `.igni/` Flutter project to that platform, picks a running device, or auto-boots the first available simulator / emulator when nothing is running.
 
 ```bash
-igni run              # once, to bootstrap .igni/ (Ctrl-C after the browser opens)
-cd .igni
-flutter create . --platforms=ios,android   # expand platforms
-flutter devices                             # list simulators / emulators
-flutter run -d <device-id>                  # run on a specific device
+igni run ios          # iOS simulator
+igni run android      # Android emulator
+igni run ios --device "iPhone 17"      # target a specific device by name or UDID
+igni run android --device "Pixel 8a"
 ```
 
-Recommended entry point: the iOS simulator (`open -a Simulator`, then `flutter run -d <simulator-id>`) — no USB cable, no Android SDK, fast boot.
+With one running device per platform, `igni run ios` / `igni run android` picks it silently. With multiple, Igni lists them and asks for `--device`. With none, Igni boots the first available simulator / emulator and waits — same one-command UX as the web default.
 
-Hot reload via `igni run` is Chrome-only for now. Mobile testing is a manual re-run loop: edit `.igni`, re-run `igni run` (to regenerate `main.dart`), then re-run `flutter run` inside `.igni/`.
+Cold Xcode builds take ~40s on Apple Silicon; Gradle cold builds take ~2 min. Subsequent runs are sub-20s. Hot reload (`r` key) works on mobile too.
+
+Known gaps (see `docs/private/68` in the repo if you have it): screens without a `title:` property can collide with the iPhone Dynamic Island, and network `fetch()` currently fails on both iOS and Android — under investigation.
 
 ## Project structure
 

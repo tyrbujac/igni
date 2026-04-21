@@ -10,8 +10,27 @@ import { Parser } from './parser.js';
 import { CodeGenerator, GeneratedLineMapEntry } from './codegen.js';
 import { TranspileError, formatMappedError } from './errors.js';
 
-const command = process.argv[2];
-const commandArg = process.argv[3];
+// Parse CLI args: strip `--device <value>` from anywhere, then interpret
+// positional args. For `run`, the first positional after `run` can be a target
+// keyword (`ios` / `android`); otherwise it (or the next one) is the .igni file.
+type Target = 'web' | 'ios' | 'android';
+const { command, target, commandArg, deviceFlag } = (() => {
+  const raw = process.argv.slice(2);
+  const clean: string[] = [];
+  let device: string | undefined;
+  for (let i = 0; i < raw.length; i++) {
+    if (raw[i] === '--device') { device = raw[i + 1]; i++; continue; }
+    clean.push(raw[i]);
+  }
+  const cmd = clean[0];
+  let tgt: Target = 'web';
+  let arg: string | undefined = clean[1];
+  if (cmd === 'run' && (arg === 'ios' || arg === 'android')) {
+    tgt = arg as Target;
+    arg = clean[2];
+  }
+  return { command: cmd, target: tgt, commandArg: arg, deviceFlag: device };
+})();
 
 const cwd = process.cwd();
 const igniDir = join(cwd, '.igni');
@@ -31,8 +50,12 @@ interface TranspileResult {
 
 function printUsage(): void {
   console.log('Usage: igni <command>');
-  console.log('  igni run              Run app.igni (default entry point)');
-  console.log('  igni run hello.igni   Run a specific file');
+  console.log('  igni run              Run app.igni in Chrome (default)');
+  console.log('  igni run hello.igni   Run a specific file in Chrome');
+  console.log('  igni run ios          Run app.igni on iOS simulator');
+  console.log('  igni run android      Run app.igni on Android emulator');
+  console.log('  igni run ios --device "iPhone 17"       Target a specific iOS device');
+  console.log('  igni run android --device "Pixel 8a"    Target a specific Android device');
   console.log('  igni new my-app       Create a new Igni app');
 }
 
@@ -141,9 +164,7 @@ function writeOutput(dart: string): void {
 
 // --- Flutter project setup ---
 
-function ensureFlutterProject(): void {
-  if (existsSync(join(igniDir, 'pubspec.yaml'))) return;
-
+function ensureFlutterProject(targetPlatform: Target): void {
   try {
     execSync('flutter --version', { stdio: 'ignore' });
   } catch {
@@ -152,15 +173,42 @@ function ensureFlutterProject(): void {
   }
 
   const projectName = basename(cwd).toLowerCase().replace(/[^a-z0-9_]/g, '_') || 'igni_app';
-  execSync(`flutter create .igni --org com.igni --platforms web --project-name ${projectName}`, {
-    cwd,
-    stdio: 'ignore',
-  });
+  const firstRun = !existsSync(join(igniDir, 'pubspec.yaml'));
+  // Flutter creates platform-named subdirs (web/, ios/, android/) when a platform
+  // is included. Their presence is a reliable "is this platform already set up?" check.
+  const platformPresent = existsSync(join(igniDir, targetPlatform));
 
-  const testDir = join(igniDir, 'test');
-  if (existsSync(testDir)) rmSync(testDir, { recursive: true });
+  if (firstRun) {
+    execSync(`flutter create .igni --org com.igni --platforms ${targetPlatform} --project-name ${projectName}`, {
+      cwd,
+      stdio: 'ignore',
+    });
+    const testDir = join(igniDir, 'test');
+    if (existsSync(testDir)) rmSync(testDir, { recursive: true });
 
-  // Set tab title to project name
+    const gitignore = join(cwd, '.gitignore');
+    if (existsSync(gitignore)) {
+      const content = readFileSync(gitignore, 'utf-8');
+      if (!content.includes('.igni/')) {
+        writeFileSync(gitignore, content.trimEnd() + '\n.igni/\n');
+      }
+    }
+  } else if (!platformPresent) {
+    // Subsequent run with a new target — add the platform without wiping existing ones.
+    // `flutter create .` is idempotent for platform addition.
+    execSync(`flutter create . --platforms ${targetPlatform}`, {
+      cwd: igniDir,
+      stdio: 'ignore',
+    });
+  }
+
+  // Web-only: apply Igni branding (tab title + favicon) when web/ dir appears for the first time.
+  if (targetPlatform === 'web' && (firstRun || !platformPresent)) {
+    applyWebBranding();
+  }
+}
+
+function applyWebBranding(): void {
   const indexPath = join(igniDir, 'web', 'index.html');
   if (existsSync(indexPath)) {
     let html = readFileSync(indexPath, 'utf-8');
@@ -169,11 +217,9 @@ function ensureFlutterProject(): void {
     writeFileSync(indexPath, html);
   }
 
-  // Replace Flutter favicon with Igni icon
   const igniIcon = join(__dirname, '..', '..', 'assets', 'igni.svg');
   const faviconPath = join(igniDir, 'web', 'favicon.png');
   if (existsSync(igniIcon) && existsSync(faviconPath)) {
-    // Use SVG favicon instead of PNG
     const indexForFavicon = join(igniDir, 'web', 'index.html');
     if (existsSync(indexForFavicon)) {
       let html = readFileSync(indexForFavicon, 'utf-8');
@@ -185,14 +231,125 @@ function ensureFlutterProject(): void {
       copyFileSync(igniIcon, join(igniDir, 'web', 'favicon.svg'));
     }
   }
+}
 
-  const gitignore = join(cwd, '.gitignore');
-  if (existsSync(gitignore)) {
-    const content = readFileSync(gitignore, 'utf-8');
-    if (!content.includes('.igni/')) {
-      writeFileSync(gitignore, content.trimEnd() + '\n.igni/\n');
-    }
+// --- Device selection for mobile targets ---
+
+interface FlutterDevice {
+  name: string;
+  id: string;
+  targetPlatform: string;
+  emulator: boolean;
+}
+
+interface FlutterEmulator {
+  id: string;
+  name: string;
+  platform: string; // 'ios' | 'android' | ...
+}
+
+function matchesTarget(targetPlatform: string, target: 'ios' | 'android'): boolean {
+  if (target === 'ios') return targetPlatform === 'ios';
+  // Android devices show targetPlatform like "android-arm64"
+  return targetPlatform.startsWith('android');
+}
+
+function listRunningDevices(target: 'ios' | 'android'): FlutterDevice[] {
+  try {
+    const output = execSync('flutter devices --machine', {
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    const all = JSON.parse(output) as FlutterDevice[];
+    return all.filter(d => matchesTarget(d.targetPlatform, target));
+  } catch {
+    return [];
   }
+}
+
+function listAvailableEmulators(target: 'ios' | 'android'): FlutterEmulator[] {
+  try {
+    const output = execSync('flutter emulators', {
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    const emulators: FlutterEmulator[] = [];
+    for (const line of output.split('\n')) {
+      const parts = line.split('•').map(p => p.trim());
+      if (parts.length !== 4) continue;
+      if (parts[0] === 'Id' || !parts[0] || parts[0].startsWith('-')) continue;
+      emulators.push({ id: parts[0], name: parts[1], platform: parts[3] });
+    }
+    return emulators.filter(e => e.platform === target);
+  } catch {
+    return [];
+  }
+}
+
+async function pickDevice(target: 'ios' | 'android', explicitDevice: string | undefined): Promise<string> {
+  const running = listRunningDevices(target);
+
+  if (explicitDevice) {
+    const needle = explicitDevice.toLowerCase();
+    const match = running.find(d =>
+      d.name.toLowerCase() === needle ||
+      d.id.toLowerCase() === needle ||
+      d.name.toLowerCase().includes(needle)
+    );
+    if (match) return match.id;
+    console.error(`No running ${target} device matching "${explicitDevice}".`);
+    if (running.length > 0) {
+      console.error('Running devices:');
+      for (const d of running) console.error(`  ${d.name} (${d.id})`);
+    }
+    const emus = listAvailableEmulators(target);
+    if (emus.length > 0) {
+      console.error(`Or boot an emulator first:`);
+      for (const e of emus) console.error(`  flutter emulators --launch ${e.id}`);
+    }
+    process.exit(1);
+  }
+
+  if (running.length === 1) return running[0].id;
+
+  if (running.length > 1) {
+    console.error(`Multiple ${target} devices are running. Pick one:`);
+    console.error(`  igni run ${target} --device "<name>"`);
+    console.error('');
+    for (const d of running) console.error(`  ${d.name} (${d.id})`);
+    process.exit(1);
+  }
+
+  // No running device — auto-boot the first available emulator.
+  const emulators = listAvailableEmulators(target);
+  if (emulators.length === 0) {
+    const where = target === 'ios' ? 'Xcode' : 'Android Studio';
+    console.error(`No ${target} device or emulator found. Create one via ${where}.`);
+    process.exit(1);
+  }
+
+  const firstEmulator = emulators[0];
+  console.log(`Booting ${firstEmulator.name}...`);
+  try {
+    execSync(`flutter emulators --launch ${firstEmulator.id}`, { stdio: 'ignore' });
+  } catch {
+    console.error(`Failed to boot ${firstEmulator.name}.`);
+    process.exit(1);
+  }
+
+  // Poll until the emulator registers as a running device. iOS sims take longer
+  // than Android on Apple Silicon — a 2-minute ceiling covers both.
+  const timeoutMs = 120_000;
+  const pollMs = 2000;
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    await new Promise(resolve => setTimeout(resolve, pollMs));
+    const devices = listRunningDevices(target);
+    if (devices.length > 0) return devices[0].id;
+  }
+
+  console.error(`Timed out waiting for ${firstEmulator.name} to boot.`);
+  process.exit(1);
 }
 
 // --- Image assets ---
@@ -377,7 +534,7 @@ function createNewProject(name: string | undefined): void {
 
 // --- Main ---
 
-async function run(): Promise<void> {
+async function run(targetPlatform: Target, explicitDevice: string | undefined): Promise<void> {
   const initialResult = transpile();
   if (!initialResult) {
     console.error('Fix the error above, then run igni run again.');
@@ -386,12 +543,18 @@ async function run(): Promise<void> {
   let transpileResult = initialResult;
   const firstRun = !existsSync(join(igniDir, 'pubspec.yaml'));
 
-  ensureFlutterProject();
+  ensureFlutterProject(targetPlatform);
   syncImages();
   syncAudio();
   ensureDependencies(transpileResult.dart);
   mkdirSync(join(igniDir, 'lib'), { recursive: true });
   writeOutput(transpileResult.dart);
+
+  // Pick the device BEFORE showing the build spinner — device-pick may auto-boot
+  // an emulator (visible "Booting <name>..." output), which is a distinct phase.
+  const deviceId = targetPlatform === 'web'
+    ? 'chrome'
+    : await pickDevice(targetPlatform, explicitDevice);
 
   const projectName = basename(cwd);
   const buildHint = firstRun ? " (About 15s the first time)" : " (This may take a few seconds)";
@@ -410,7 +573,7 @@ async function run(): Promise<void> {
   }, 100);
 
   // Start flutter run
-  const flutter = spawn('flutter', ['run', '-d', 'chrome'], {
+  const flutter = spawn('flutter', ['run', '-d', deviceId], {
     cwd: igniDir,
     stdio: ['pipe', 'pipe', 'pipe'],
   });
@@ -534,7 +697,11 @@ async function run(): Promise<void> {
 }
 
 if (command === 'run') {
-  run();
+  if (deviceFlag && target === 'web') {
+    console.error('--device is only valid with `igni run ios` or `igni run android`.');
+    process.exit(1);
+  }
+  run(target, deviceFlag);
 } else if (command === 'new') {
   createNewProject(commandArg);
 } else {
