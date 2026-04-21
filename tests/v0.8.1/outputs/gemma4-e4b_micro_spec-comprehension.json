@@ -22,7 +22,8 @@
     "extracted_code": false,
     "passed": false,
     "error": "no fenced code block found in output",
-    "igni_lines": 0
+    "igni_lines": 0,
+    "error_category": "runner_error"
   },
   "cost_usd": 0
 }

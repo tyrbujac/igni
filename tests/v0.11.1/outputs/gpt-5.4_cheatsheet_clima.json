@@ -24,6 +24,7 @@
     "extracted_code": true,
     "passed": false,
     "error": "Error: Unexpected token \"temp_int\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-gEVcPu/app.igni:46 |       temp_int = random(0, 0) + temp_value\n                                                                                   |               ^\n\n  Error: Expected \"screen\", got \"else\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-gEVcPu/app.igni:47 |     else:\n                                                                                   |         ^",
-    "igni_lines": 111
+    "igni_lines": 111,
+    "error_category": "model_error"
   }
 }

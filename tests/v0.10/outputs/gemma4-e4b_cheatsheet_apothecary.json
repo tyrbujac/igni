@@ -23,6 +23,7 @@
     "extracted_code": true,
     "passed": false,
     "error": "Error: Unexpected character: ';'\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-yfz0f8/app.igni:6 | ];\n                                                                                  |  ^",
-    "igni_lines": 148
+    "igni_lines": 148,
+    "error_category": "model_error"
   }
 }

@@ -25,6 +25,7 @@
     "extracted_code": true,
     "passed": true,
     "error": null,
-    "igni_lines": 70
+    "igni_lines": 70,
+    "error_category": null
   }
 }

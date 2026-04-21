@@ -23,7 +23,8 @@
     "extracted_code": true,
     "passed": true,
     "error": null,
-    "igni_lines": 39
+    "igni_lines": 39,
+    "error_category": null
   },
   "cost_usd": 0.015505
 }

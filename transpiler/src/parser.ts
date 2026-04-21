@@ -27,6 +27,7 @@ export class Parser {
     const components: ComponentDef[] = [];
     const shared: VariableDecl[] = [];
     while (!this.check(TokenType.EOF)) {
+      const posBefore = this.pos;
       try {
         if (this.check(TokenType.Component)) {
           components.push(this.parseComponentDef());
@@ -43,6 +44,7 @@ export class Parser {
           throw e;
         }
       }
+      this.assertProgress(posBefore);
     }
     if (this.errors.length > 0) {
       throw new AggregateTranspileError(this.errors);
@@ -50,12 +52,27 @@ export class Parser {
     return { type: 'Program', screens, components, shared, loc: this.loc(start) };
   }
 
+  // Belt-and-braces: every catch loop that calls synchronizeTopLevel or
+  // synchronizeLine must advance the cursor on each iteration. If it didn't,
+  // the loop is spinning on the same token — which historically drove the
+  // Clima OOM (see docs/private/53). Converts the infinite-loop failure mode
+  // into a loud, debuggable error.
+  private assertProgress(posBefore: number): void {
+    if (this.pos === posBefore) {
+      const tok = this.current();
+      throw new Error(
+        `Parser error-recovery made no progress at token ${tok.type} ` +
+        `(line ${tok.line}:${tok.column}). This is a transpiler bug.`
+      );
+    }
+  }
+
   // Advance past the current logical line: consume tokens until the next
   // Newline (which we also consume, landing at the start of the next
   // statement), or until we hit a structural boundary (Indent/Dedent/EOF)
   // which the caller's body-loop condition will handle.
   private synchronizeLine(): void {
-    const startPos = this.position;
+    const startPos = this.pos;
     while (!this.check(TokenType.EOF)) {
       if (this.check(TokenType.Newline)) {
         this.advance();
@@ -69,7 +86,7 @@ export class Parser {
         // parse throws → synchronize no-ops → loop retries → errors grow
         // unbounded → heap OOM. See tests/v0.10/outputs/claude-opus-4-7_cheatsheet_clima.md
         // post-mortem in docs/private/50_transpile_metric_audit.md.
-        if (this.position > startPos) return;
+        if (this.pos > startPos) return;
         this.advance();
         continue;
       }
@@ -98,6 +115,7 @@ export class Parser {
     this.consume(TokenType.Indent, 'Expected indent');
     const vars: VariableDecl[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      const posBefore = this.pos;
       try {
         vars.push(this.parseVariableDecl());
       } catch (e) {
@@ -108,6 +126,7 @@ export class Parser {
           throw e;
         }
       }
+      this.assertProgress(posBefore);
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
     return vars;
@@ -149,6 +168,7 @@ export class Parser {
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       this.drainComments(items);
       if (this.check(TokenType.Dedent) || this.check(TokenType.EOF)) break;
+      const posBefore = this.pos;
       try {
         if (this.isVariableDecl()) {
           items.push(this.parseVariableDecl());
@@ -170,6 +190,7 @@ export class Parser {
           throw e;
         }
       }
+      this.assertProgress(posBefore);
     }
     return items;
   }
@@ -451,6 +472,7 @@ export class Parser {
     this.consume(TokenType.Indent, 'Expected indent');
     const body: ComponentItem[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      const posBefore = this.pos;
       try {
         if (this.isVariableDecl()) {
           body.push(this.parseVariableDecl());
@@ -467,6 +489,7 @@ export class Parser {
           throw e;
         }
       }
+      this.assertProgress(posBefore);
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
     return { type: 'ComponentDef', name, params, body, loc: this.loc(start) };

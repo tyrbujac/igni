@@ -23,7 +23,8 @@
     "extracted_code": true,
     "passed": false,
     "error": "Error: Unexpected character: '!'\n\n    73 |         if (error != \"\") {\n       |                   ^",
-    "igni_lines": 106
+    "igni_lines": 106,
+    "error_category": "model_error"
   },
   "cost_usd": 0.00758
 }
