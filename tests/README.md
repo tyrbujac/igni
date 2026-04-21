@@ -11,7 +11,7 @@ The point of these tests is **not** to demonstrate the spec works on cherry-pick
 For each combination of (app × model):
 
 1. **Open a fresh conversation** in the target LLM (Claude.ai, Gemini, ChatGPT). Actually fresh — new thread, no system prompt, no prior messages, no custom instructions enabled. Contamination from earlier context kills the test.
-2. **Paste the full current spec verbatim.** Currently `spec/v0.7.0.md` (or the current cheatsheet when running a cheatsheet-only round). No editing. No commentary. No "here's a language I designed."
+2. **Paste the full current spec verbatim.** Currently `spec/v0.11.5.md` (or the current cheatsheet when running a cheatsheet-only round). No editing. No commentary. No "here's a language I designed."
 3. **In the same message**, paste the prompt verbatim from the matching `tests/v<spec_version>/prompts.md` (e.g. `tests/v0.5/prompts.md`). **If the model asks follow-up questions, don't answer them** — that refusal-to-commit is itself a finding.
 4. **Capture the entire response** (code plus any narration) into the matching test result file: `tests/v<spec_version>/<App>.md` (e.g. `tests/v0.5/Shopping.md`) under the appropriate model's section.
 5. **Note metadata:** date, model version, whether the output came in one shot or got split across messages.
@@ -155,7 +155,7 @@ Typical invocation:
 ```bash
 cd tests/runner
 npx tsx run.ts \
-  --spec ../../spec/v0.8.0-cheatsheet.md \
+  --spec ../../spec/archive/v0.8.0-cheatsheet.md \
   --prompts ../v0.8.1/prompts.md \
   --out ../v0.8.1/outputs \
   --model claude-opus-4-6 \

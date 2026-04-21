@@ -45,7 +45,12 @@ type Facts = {
 };
 
 function computeFacts(): Facts {
-  const specFiles = readdirSync(join(REPO, 'spec'));
+  // Historical spec versions live under spec/archive/ (moved there for navigability);
+  // the current canonical version stays at spec/ top level. Scan both.
+  const topLevel = readdirSync(join(REPO, 'spec'));
+  let archive: string[] = [];
+  try { archive = readdirSync(join(REPO, 'spec/archive')); } catch { /* optional */ }
+  const specFiles = [...topLevel, ...archive];
   const canonical = specFiles
     .filter(f => f.endsWith('.md') && !f.includes('-cheatsheet') && !f.includes('-micro'))
     .map(f => f.replace(/\.md$/, ''))
@@ -103,7 +108,7 @@ function main(): void {
       ? `${facts.oldest}.md → ${facts.secondNewest}.md`
       : '(none yet)',
     'historical-range-paths': facts.secondNewest
-      ? `spec/${facts.oldest}.md → spec/${facts.secondNewest}.md`
+      ? `spec/archive/${facts.oldest}.md → spec/archive/${facts.secondNewest}.md`
       : '(none yet)',
   };
 

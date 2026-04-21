@@ -7,7 +7,7 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 ## Unreleased
 *Non-spec additions.*
 
-- **Micro reference** — `spec/v0.8.0-micro.md`, ~650 words, syntax-only third context tier below the full spec (~9,700 words) and cheatsheet (~1,780 words). Not a spec version; same language as v0.8.0. Lets cold tests vary context size as an independent variable.
+- **Micro reference** — `spec/archive/v0.8.0-micro.md`, ~650 words, syntax-only third context tier below the full spec (~9,700 words) and cheatsheet (~1,780 words). Not a spec version; same language as v0.8.0. Lets cold tests vary context size as an independent variable.
 
 ---
 
@@ -44,7 +44,7 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 - **Braces required, no bare-infix.** `{target with done: true}` is legal; `target with done: true` (no braces) is not. Rationale: `{}` is Igni's single object-construction delimiter — keeping `with` inside braces preserves one-way-to-do-everything.
 - **`with` is a reserved keyword.** Cannot be used as an identifier or field name. Repo-wide scan before ship showed zero existing occurrences.
 - **Pre-ship cold-test validation.** `tests/v0.10/Object_Update_Syntax.md` ran a four-model syntax-proposal round: four distinct shapes, no majority convergence (Opus → spread, GPT → `{with}`, Gemini → bare infix `with`, Gemma → juxtaposition). `with`-keyword family had 2/3 frontier plurality. Design note's fallback rule fired — ship the principle-driven recommendation.
-- **First new micro reference since v0.8.0.** `spec/v0.10.0-micro.md` forks from v0.8.0 (v0.9.0 and v0.9.1 added no syntax, so the micro stayed at v0.8.0). v0.10 is the first syntactic addition since v0.8.0; micro bumped to match.
+- **First new micro reference since v0.8.0.** `spec/archive/v0.10.0-micro.md` forks from v0.8.0 (v0.9.0 and v0.9.1 added no syntax, so the micro stayed at v0.8.0). v0.10 is the first syntactic addition since v0.8.0; micro bumped to match.
 - Transpiler: new `ObjectUpdate` AST node, `with` keyword added to lexer, codegen emits Dart `{...base, 'k': v, ...}` map spread. `transpiler/examples/contacts.igni` and `shopping.igni` migrated to the new shape; new `object-update.igni` positive example and two negative examples pinned (non-Ident base, `with` as field name).
 
 ## v0.9.1 — 2026-04-17
