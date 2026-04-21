@@ -5,6 +5,9 @@
 **Input:** `spec/v0.8.0-micro.md` (653 words, syntax-only tier) + 5-bullet comprehension prompt
 **Runner:** `tests/runner/run.ts`. No transpile step — prompt is prose, not code.
 
+> **Footnote (post-`docs/private/50` audit, 2026-04-21):** the auto-grader's `transpile.passed` field in the per-run JSON sidecars records `false` for all four runs on this prompt. That figure is **not a model-quality signal** and should not be cited. The prompt asks for prose answers describing Igni semantics; no fenced code is expected, so the runner's transpile-grader is inapplicable here. Any dissertation reference to v0.8.1 Spec_Comprehension "0/4 transpile-pass" should be replaced with "n/a — prompt doesn't produce fenced code." See `docs/private/50` §"v0.8.1 — four sidecars silently failed on one prompt" for the full audit trail.
+
+
 ## Purpose — does the minimum-context tier teach the language?
 
 The micro-cheatsheet (`spec/v0.8.0-micro.md`, 653 words, 37% of the cheatsheet, 7% of the full spec) is a syntax-only reference. Almost no prose, no tradeoffs, no worked examples beyond the minimum. The comprehension prompt asks five questions: what kind of language, what apps, what it optimises for, how it differs from framework-heavy UI, what the main constraints are.
