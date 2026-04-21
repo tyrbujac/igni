@@ -5,12 +5,12 @@ Where Igni is going. Tasks are tiered by horizon: **Immediate** (small unblockin
 ## Current focus
 
 - **Immediate**
-  - **Mum tutorial rerun on 2026-04-23** against `docs/tutorial.md`. External human-testing signal; gates Tier 2 cheatsheet improvements queued in `docs/private/64`.
+  - **Mum tutorial rerun on 2026-04-23 or 2026-04-24** against `docs/tutorial.md`. External human-testing signal; gates Tier 2 cheatsheet improvements queued in `docs/private/64`.
   - **Dissertation footnotes** per `docs/private/50` transpile-metric audit: v0.8.1 *Spec_Comprehension* framing + v0.10 domain-swap transpile-pass subfigure. **Both shipped 2026-04-21** (commit `513df9f` for the tests-side footnote; v0.10 footnote is in `docs/private/45`, gitignored).
   - **Methodology audit** — first every-3-rounds review overdue per `docs/private/53`. Scan the last three cold-test rounds for grading-framework drift.
   - **Transpiler-coverage gaps for v1.0 criterion 2:** `theme:` block, conditional assignment in layouts, bare statements in UI blocks (under-specified — needs design note). All sub-day each.
 
-- **Next milestone — Boojy subset migration.** v1.0 criterion 4 (one non-trivial app shipped) is the bar no hygiene work can close; `docs/private/63` §5 flags it as the real gate. Pair with the 2026-04-23 mum cold-run for external-signal density.
+- **Next milestone — Boojy subset migration.** v1.0 criterion 4 (one non-trivial app shipped) is the bar no hygiene work can close; `docs/private/63` §5 flags it as the real gate. Pair with the 2026-04-23/24 mum cold-run for external-signal density.
 
 - **Future** — lifecycle-hook docs patch (`docs/private/49` Tier 2); mutating-component-arg detection; widened async-footgun (Stream 3 below); checkbox field-access binding (`docs/private/69`, fresh 4/6 Stage 3 signal); Tooling & documentation streams (snippets, LSP, refactoring, full docs set). Ideas section at the bottom.
 
