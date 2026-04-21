@@ -11,6 +11,14 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.11.4 — 2026-04-21
+*Documentation-only. Sharpens the v0.11.3 `Counting by field` callout per a 4-model ship review.*
+
+- **Cheatsheet line 260** narrowed to `# whole-value match only — no predicates` — 4/4 panel convergence that the prior "identity — see Counting by field" deferral is what a table-skimming model misses. Single clause, no pointer, no jargon.
+- **Callout rearranged** to lead with the restriction (`count` doesn't accept a predicate), then the worked `length(filter(...))` example, then the framing sentence. 3/4 panel signal; matches "denial at first contact" for readers who skim.
+- **Wording nit** fixed: "has no predicate form" became "doesn't accept a predicate" — Opus 4.7 caught that the prior phrasing could briefly read as "no way to count by predicate", which is false since `length(filter(...))` *is* the predicate form (just composed). Full spec's matching subsection also rearranged for alignment.
+- **Rejected from the panel:** ChatGPT's proposed `# ❌ not supported\ncount(alerts, a => ...)` anti-example. Opus's pattern-completion argument and the project's "teach what is, not what isn't" ethos both favour no wrong-shape example. Ship-review writeup: `docs/private/66_v113_ship_review.md`.
+
 ## v0.11.3 — 2026-04-21
 *Documentation-only. `length(filter(list, predicate))` is now the canonical idiom for field-based counting.*
 
