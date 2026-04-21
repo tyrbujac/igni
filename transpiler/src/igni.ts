@@ -309,18 +309,32 @@ function mapGeneratedLine(
     transpileResult.sourceFiles,
     entry.sourceLine,
     entry.sourceColumn,
-    `Mapped from generated Dart line ${dartLine}:${dartColumn} (${entry.context})`,
+    undefined,
   );
   return formatMappedError(message, location);
 }
 
+// Framework stack frames (Dart-SDK, Flutter internals) flood the terminal
+// on every runtime error. Users don't read them. Filter out by path shape.
+function isFrameworkFrame(line: string): boolean {
+  return (
+    /\bdart-sdk\/lib\//.test(line) ||
+    /\bdart:sdk_internal\//.test(line) ||
+    /\bpackage:flutter\//.test(line) ||
+    /\bpackage:flutter_web_plugins\//.test(line)
+  );
+}
+
 function printMappedFlutterError(line: string, transpileResult: TranspileResult): boolean {
-  const match = line.match(/(?:lib\/)?main\.dart:(\d+):(\d+):\s*(.*)/);
+  // Compile errors:  main.dart:50:12: Message  (or  lib/main.dart:50:12: Message)
+  // Runtime frames:  package:learn_igni/main.dart 50:12   someFunction
+  //   — note: runtime uses a space separator before line:col and no trailing colon/message.
+  const match = line.match(/(?:lib\/|package:[^/]+\/)?main\.dart[:\s](\d+):(\d+):?\s*(.*)/);
   if (!match) return false;
 
   const dartLine = Number(match[1]);
   const dartColumn = Number(match[2]);
-  const message = match[3].trim() || 'Generated Dart error';
+  const message = match[3].trim() || 'runtime error';
   const mapped = mapGeneratedLine(transpileResult, dartLine, dartColumn, message);
   if (!mapped) return false;
 
@@ -445,9 +459,9 @@ async function run(): Promise<void> {
         line.includes('Application finished')
       ) {
         if (appReady) {
-          if (!printMappedFlutterError(line, transpileResult)) {
-            console.log(line);
-          }
+          if (printMappedFlutterError(line, transpileResult)) continue;
+          if (isFrameworkFrame(line)) continue;
+          console.log(line);
         }
       }
     }
@@ -465,6 +479,7 @@ async function run(): Promise<void> {
         continue;
       }
       if (printMappedFlutterError(line, transpileResult)) continue;
+      if (isFrameworkFrame(line)) continue;
       if (line.includes('Error') || line.includes('error') || line.includes('Exception')) {
         process.stderr.write(line + '\n');
       }
