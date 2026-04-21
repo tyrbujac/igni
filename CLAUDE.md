@@ -48,7 +48,8 @@ igni/
 │   ├── package.json
 │   └── tsconfig.json
 └── docs/                    # tutorial + project docs
-    ├── tutorial.md           # beginner tutorial (no programming experience needed)
+    ├── tutorial-v2.4.md      # current beginner tutorial (no programming experience needed)
+    ├── tutorial.md / tutorial-v2.md / tutorial-v2.1.md / tutorial-v2.2.md / tutorial-v2.3.md  # historical
     └── private/              # gitignored project docs (proposals, analyses, ratings)
 ```
 

@@ -109,7 +109,7 @@ igni/
 ├── tests/                   # cold-LLM test results + methodology
 │   └── v0.3.2 → v0.6.11/    # prompts + results per spec version
 ├── docs/                    # tutorial + project docs
-│   └── tutorial.md          # beginner tutorial (no programming experience needed)
+│   └── tutorial-v2.4.md     # beginner tutorial (no programming experience needed)
 ├── assets/                  # logo (igni.svg + igni-dark-mode.svg, PNGs)
 ├── CHANGELOG.md             # spec evolution history
 ├── ROADMAP.md               # near-term plans + ideas
