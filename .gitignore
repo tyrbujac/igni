@@ -33,3 +33,6 @@ transpiler/dist/
 
 # Private docs
 docs/private/
+
+# Throwaway mobile-test harness (reusable; not committed)
+transpiler/mobile_test/
