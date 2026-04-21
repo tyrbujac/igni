@@ -1,0 +1,5 @@
+screen Tasks:
+  items = [{done: true}, {done: false}, {done: true}]
+
+  layout vertical:
+    label count(items, t => t.done)

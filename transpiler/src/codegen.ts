@@ -76,6 +76,7 @@ export class CodeGenerator {
     this.validateEmitPlacement(program);
     this.validateAsyncReactivity(program);
     this.validateSharedPrefix(program);
+    this.validateCountLambda(program);
 
     // No screens → emit a friendly placeholder app so `igni run` stays alive
     // while the user types their first screen. Parser produces an empty
@@ -1739,6 +1740,159 @@ export class CodeGenerator {
         }
       }
     };
+
+    for (const screen of program.screens) {
+      walkProps(screen.properties);
+      for (const item of screen.body) {
+        if (item.type === 'VariableDecl') walkExpr(item.value);
+        else if (item.type === 'FunctionDef') item.body.forEach(walkStmt);
+      }
+      const uiNodes = screen.body.filter(
+        (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef'
+      );
+      walkUI(uiNodes);
+    }
+
+    for (const comp of program.components) {
+      for (const item of comp.body) {
+        if (item.type === 'VariableDecl') walkExpr(item.value);
+      }
+      const uiNodes = comp.body.filter((i): i is UINode => i.type !== 'VariableDecl');
+      walkUI(uiNodes);
+    }
+  }
+
+  // `count(list, value)` counts identity matches against a value; it does not
+  // accept a predicate lambda. The spec's canonical field-based counting idiom
+  // (v0.11.3+) is `length(filter(list, predicate))`. A lambda passed as the
+  // second arg would codegen to syntactically invalid Dart (`e == (t) => t.x`),
+  // so we reject it here with a fix-it pointing at the canonical form.
+  private validateCountLambda(program: Program): void {
+    const flag = (loc: SourceLocation | undefined): never => {
+      throw new TranspileError(
+        '`count()` takes a list and a value, not a predicate lambda. For field-based counting use `length(filter(list, predicate))` — e.g. `length(filter(tasks, t => t.done))` — which is the canonical idiom as of spec v0.11.3.',
+        loc?.line ?? 1, loc?.column ?? 1
+      );
+    };
+
+    const walkExpr = (e: Expr): void => {
+      switch (e.type) {
+        case 'NumberLit':
+        case 'StringLit':
+        case 'Ident':
+          return;
+        case 'BinaryExpr':
+        case 'EqualityExpr':
+          walkExpr(e.left); walkExpr(e.right); return;
+        case 'UnaryExpr':
+          walkExpr(e.operand); return;
+        case 'IsExpr':
+          walkExpr(e.target); return;
+        case 'InExpr':
+          walkExpr(e.target); walkExpr(e.list); return;
+        case 'LambdaExpr':
+          walkExpr(e.body); return;
+        case 'ListLit':
+          e.elements.forEach(walkExpr); return;
+        case 'ObjectLit':
+          e.entries.forEach(entry => walkExpr(entry.value)); return;
+        case 'ObjectUpdate':
+          walkExpr(e.base); e.updates.forEach(u => walkExpr(u.value)); return;
+        case 'FieldAccess':
+          walkExpr(e.object); return;
+        case 'IndexAccess':
+          walkExpr(e.object); walkExpr(e.index); return;
+        case 'FunctionCall':
+          if (e.name === 'count' && e.args.length === 2 && e.args[1].type === 'LambdaExpr') {
+            flag(e.loc);
+          }
+          e.args.forEach(walkExpr);
+          if (e.namedArgs) e.namedArgs.forEach(a => walkExpr(a.value));
+          return;
+      }
+    };
+
+    const walkStmt = (s: Statement): void => {
+      switch (s.type) {
+        case 'Assignment':
+          walkExpr(s.value); return;
+        case 'FunctionCall':
+          if (s.name === 'count' && s.args.length === 2 && s.args[1].type === 'LambdaExpr') {
+            flag(s.loc);
+          }
+          s.args.forEach(walkExpr);
+          if (s.namedArgs) s.namedArgs.forEach(a => walkExpr(a.value));
+          return;
+        case 'NavigateTo':
+          s.args.forEach(walkExpr); return;
+        case 'NavigateBack':
+          return;
+        case 'Return':
+          if (s.value) walkExpr(s.value); return;
+        case 'IfStmt':
+          walkExpr(s.condition);
+          s.then.forEach(walkStmt);
+          if (s.else_) s.else_.forEach(walkStmt);
+          return;
+        case 'EachStmt':
+          walkExpr(s.list);
+          s.body.forEach(walkStmt);
+          return;
+        case 'EmitStmt':
+          if (s.arg) walkExpr(s.arg);
+          return;
+      }
+    };
+
+    const walkProps = (props: Property[]): void => {
+      for (const p of props) walkExpr(p.value);
+    };
+    const walkEvents = (events: EventHandler[] | undefined): void => {
+      if (!events) return;
+      for (const ev of events) walkStmt(ev.action);
+    };
+
+    const walkUI = (nodes: UINode[]): void => {
+      for (const n of nodes) {
+        if ('properties' in n && n.properties) walkProps(n.properties);
+        if ('events' in n) walkEvents(n.events);
+        switch (n.type) {
+          case 'Layout':
+            walkUI(n.children); break;
+          case 'Label':
+            walkExpr(n.value); break;
+          case 'Badge':
+            walkExpr(n.text); break;
+          case 'Button':
+            walkExpr(n.text); break;
+          case 'Icon':
+            walkExpr(n.name); break;
+          case 'Image':
+            walkExpr(n.url); break;
+          case 'If': {
+            walkExpr(n.condition);
+            const branch = (items: (UINode | VariableDecl)[]) => {
+              for (const item of items) {
+                if (item.type === 'VariableDecl') walkExpr(item.value);
+                else walkUI([item]);
+              }
+            };
+            branch(n.then);
+            for (const ei of n.elseIfs) { walkExpr(ei.condition); branch(ei.body); }
+            if (n.else_) branch(n.else_);
+            break;
+          }
+          case 'Each':
+            walkExpr(n.list);
+            walkUI(n.children); break;
+          case 'ComponentInvocation':
+            n.args.forEach(walkExpr);
+            walkUI(n.children); break;
+        }
+      }
+    };
+
+    for (const v of program.shared) walkExpr(v.value);
 
     for (const screen of program.screens) {
       walkProps(screen.properties);

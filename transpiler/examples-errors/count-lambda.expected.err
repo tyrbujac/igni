@@ -1,0 +1,5 @@
+
+  Error: `count()` takes a list and a value, not a predicate lambda. For field-based counting use `length(filter(list, predicate))` — e.g. `length(filter(tasks, t => t.done))` — which is the canonical idiom as of spec v0.11.3.
+
+    count-lambda.igni:5 |     label count(items, t => t.done)
+                        |                ^

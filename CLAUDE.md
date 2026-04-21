@@ -77,11 +77,11 @@ The transpiler lives in `transpiler/` — a TypeScript project that compiles `.i
 
 **<!-- SYNC:example-count -->40<!-- /SYNC:example-count --> example apps** in `transpiler/examples/`, each with a `.igni` source and `.expected.dart` reference. All pass diff tests and run in the browser. Covers: counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full (with delete), components, shared (cross-screen state), fetch (async API call), fetch-mutation (POST/PUT/DELETE), fetch-reactive (reactive re-fetch), dice (random), dicee (Angela Yu course project — screen properties, local images, AppBar), dashboard, fn-return, lambda (filter/sorted/reversed), primitives, shopping (full e-commerce), wrapper (body slot), logic (and/or), type-hints (typed variable declarations), contacts (list indexing, comparisons), on-change (on change: event on all bind primitives), bg-image (background images on screens and layouts), tutorial (smoke test), string-case (`upper`/`lower`), derived-counts (screen-body derived state promotion regression test), stepper (`emit` + `on <event>:` component events), pagination (`paginate:` modifier on `each` for lazy `ListView.builder`).
 
-**Testing:** Run `npm test` in `transpiler/` to execute all <!-- SYNC:total-tests -->53<!-- /SYNC:total-tests --> diff tests (positive + negative error cases). Zero diff = pass. Browser testing via `igni run` from any directory with `.igni` files (e.g. `transpiler/test_apps/`).
+**Testing:** Run `npm test` in `transpiler/` to execute all <!-- SYNC:total-tests -->54<!-- /SYNC:total-tests --> diff tests (positive + negative error cases). Zero diff = pass. Browser testing via `igni run` from any directory with `.igni` files (e.g. `transpiler/test_apps/`).
 
 **Not yet supported (<!-- SYNC:version -->v0.11.4<!-- /SYNC:version --> spec features):** `theme:` block. (`paginate:` on `each` shipped 2026-04-22 as syntax + lazy `ListView.builder` codegen; auto-load-more on scroll deferred pending async integration.)
 
-**Transpile-time rules enforced** (rejections, not warnings): reactive-fetch footgun — `fetch("..." + bound_var)` is rejected, use the trigger-variable pattern; `emit <event>` placement — only valid as the action of `on tap:` / `on touch:` / `on change:`; bare access to `shared:` variables — `hold = hold + [...]` is rejected, always use `shared.hold` (spec v0.5+ "visible coupling marker" rule). See `transpiler/examples-errors/` for the pinned negative tests.
+**Transpile-time rules enforced** (rejections, not warnings): reactive-fetch footgun — `fetch("..." + bound_var)` is rejected, use the trigger-variable pattern; `emit <event>` placement — only valid as the action of `on tap:` / `on touch:` / `on change:`; bare access to `shared:` variables — `hold = hold + [...]` is rejected, always use `shared.hold` (spec v0.5+ "visible coupling marker" rule); `count(list, lambda)` — rejected with a fix-it pointing at `length(filter(list, predicate))` (v0.11.3+ canonical idiom; only the value form `count(list, value)` is supported). See `transpiler/examples-errors/` for the pinned negative tests.
 
 **VS Code / Cursor extension:** TextMate grammar in `editors/vscode/`, symlinked into Cursor. Highlights keywords, UI primitives, events, properties, builtins, inline function calls, component parameters, type hints, colours, navigation, and operators.
 
@@ -181,7 +181,7 @@ When adding a new task, place it in the tier matching its actual horizon — not
 - **Don't write Dart, Flutter, React, or TypeScript** in proposals. Only Igni and prose. If you need to demonstrate something, write it in Igni.
 - **Don't use brackets, braces, parentheses on component invocation, ternary operators, or string interpolation.** These are explicitly out.
 - **Don't bind a `fetch` URL directly to a text input** — that's the v0.5-documented common pitfall. Use the trigger-variable pattern (see Async Data in the spec).
-- **Test transpiler changes by running `npm test` in `transpiler/`.** This runs all <!-- SYNC:total-tests -->53<!-- /SYNC:total-tests --> diff tests automatically. Zero diff = pass. Then browser-test via `transpiler/test_apps/`.
+- **Test transpiler changes by running `npm test` in `transpiler/`.** This runs all <!-- SYNC:total-tests -->54<!-- /SYNC:total-tests --> diff tests automatically. Zero diff = pass. Then browser-test via `transpiler/test_apps/`.
 
 ## What this project is *not*
 
