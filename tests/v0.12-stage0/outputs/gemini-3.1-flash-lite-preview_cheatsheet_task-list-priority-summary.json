@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-flash-lite-preview",
+  "model_id": "gemini-3.1-flash-lite-preview",
+  "prompt_name": "Task List Priority Summary",
+  "prompt_slug": "task-list-priority-summary",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.12-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.11.2-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "1be3ace081345a66c4293a5bb41bdfb84482cd98a9ceac77726aef26671a9518",
+  "spec_words": 2856,
+  "timestamp": "2026-04-21T14:37:40.311Z",
+  "duration_ms": 2581,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 5411,
+    "output_tokens": 528,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.00214475,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: checkbox bind: must be a simple variable name, not a field access like obj.field\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-MQyL0r/app.igni:24 |         label task.name\n                                                                                   |              ^\n\n  Error: Expected \"screen\", got \"\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-MQyL0r/app.igni:28 |   # internally when the state is toggled.\n                                                                                   | ^",
+    "error_category": "model_error",
+    "igni_lines": 28
+  }
+}

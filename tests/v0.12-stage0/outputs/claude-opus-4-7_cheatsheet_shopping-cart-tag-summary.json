@@ -1,0 +1,32 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Shopping Cart Tag Summary",
+  "prompt_slug": "shopping-cart-tag-summary",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.12-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.11.2-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "1be3ace081345a66c4293a5bb41bdfb84482cd98a9ceac77726aef26671a9518",
+  "spec_words": 2856,
+  "timestamp": "2026-04-21T14:37:45.039Z",
+  "duration_ms": 14289,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 262,
+    "output_tokens": 780,
+    "cache_creation_tokens": 7194,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.0657725,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "error_category": null,
+    "igni_lines": 23
+  }
+}

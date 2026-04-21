@@ -1,0 +1,32 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Task List Priority Summary",
+  "prompt_slug": "task-list-priority-summary",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.12-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.11.2-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "1be3ace081345a66c4293a5bb41bdfb84482cd98a9ceac77726aef26671a9518",
+  "spec_words": 2856,
+  "timestamp": "2026-04-21T14:38:01.276Z",
+  "duration_ms": 15471,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 257,
+    "output_tokens": 894,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 7194,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.027232,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: checkbox bind: must be a simple variable name, not a field access like obj.field\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-LdxYEe/app.igni:21 |         label item.name\n                                                                                   |              ^\n\n  Error: Expected \"screen\", got \"\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-LdxYEe/app.igni:23 |   toggle(target):\n                                                                                   |   ^",
+    "error_category": "model_error",
+    "igni_lines": 24
+  }
+}

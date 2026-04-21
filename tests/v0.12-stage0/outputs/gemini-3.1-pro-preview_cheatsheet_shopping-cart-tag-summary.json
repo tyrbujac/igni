@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Shopping Cart Tag Summary",
+  "prompt_slug": "shopping-cart-tag-summary",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.12-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.11.2-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "1be3ace081345a66c4293a5bb41bdfb84482cd98a9ceac77726aef26671a9518",
+  "spec_words": 2856,
+  "timestamp": "2026-04-21T14:39:26.833Z",
+  "duration_ms": 36280,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 5418,
+    "output_tokens": 522,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.0171,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "error_category": null,
+    "igni_lines": 24
+  }
+}
