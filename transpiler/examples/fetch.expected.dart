@@ -26,7 +26,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Future<void> _fetchUser() async {
     try {
-      final response = await http.get(Uri.parse('https://jsonplaceholder.typicode.com/users/1'));
+      final response = await http.get(Uri.parse('https://api.github.com/users/octocat'));
       if (response.statusCode == 200) {
         setState(() {
           user = jsonDecode(response.body);
@@ -66,7 +66,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 style: Theme.of(context).textTheme.headlineLarge!,
               ),
               Text(
-                user['email'].toString(),
+                user['login'].toString(),
               ),
             ],
           ],

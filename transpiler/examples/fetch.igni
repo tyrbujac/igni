@@ -1,5 +1,5 @@
 screen UserProfile:
-  user = fetch("https://jsonplaceholder.typicode.com/users/1")
+  user = fetch("https://api.github.com/users/octocat")
 
   layout vertical, gap: medium, padding: large:
     if user is loading:
@@ -8,4 +8,4 @@ screen UserProfile:
       label "Failed to load user"
     else:
       label user.name, style: heading
-      label user.email
+      label user.login
