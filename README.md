@@ -110,7 +110,7 @@ my-app/
 
 ## Status
 
-**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.11.2<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.11.2<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.11.2-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.11.2-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.11.2-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.11.2-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.11.3<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.11.3<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.11.3-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.11.3-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.11.3-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.11.3-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
 **Latest language change:** `v0.11.0` adds `locate()` — a geolocation primitive that reuses the same `is loading:` / `is error:` machinery as `fetch()`. 3/3 frontier models independently invented divergent shapes on the pre-ship cold test; Shape A won 4/4 pre-ship ship review and validated 4/4 post-ship Clima rerun. `v0.11.1` (docs-only) restructured the cheatsheet for learning order. `v0.11.2` (docs-only) clarified that the reactive-fetch footgun applies narrowly to bound-variable fetch URLs, not to all async composition. Preceding syntax ships: `v0.10.0` object-update syntax `{target with field: newval}` (9/9 frontier adoption across three domain-swap rounds — strongest direct-support result in project history); `v0.9.1` tightened the trigger-variable recommendation (docs-only, 3/3 frontier flipped to canonical `on tap:`); `v0.9.0` promoted the reactive-fetch footgun from prose guidance to a transpile-time error; `v0.8.0` shipped component event channels (`emit` + `on <event>:`).
 
@@ -132,10 +132,10 @@ my-app/
 ```text
 igni/
 ├── spec/                    # language spec (versioned snapshots)
-│   ├── <!-- SYNC:version -->v0.11.2<!-- /SYNC:version -->.md             # current canonical spec
-│   ├── <!-- SYNC:version -->v0.11.2<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
-│   ├── <!-- SYNC:version -->v0.11.2<!-- /SYNC:version -->-micro.md       # current canonical micro reference
-│   └── <!-- SYNC:historical-range-files -->v0.2.md → v0.11.1.md<!-- /SYNC:historical-range-files -->      # historical (never edited after shipping)
+│   ├── <!-- SYNC:version -->v0.11.3<!-- /SYNC:version -->.md             # current canonical spec
+│   ├── <!-- SYNC:version -->v0.11.3<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
+│   ├── <!-- SYNC:version -->v0.11.3<!-- /SYNC:version -->-micro.md       # current canonical micro reference
+│   └── <!-- SYNC:historical-range-files -->v0.2.md → v0.11.2.md<!-- /SYNC:historical-range-files -->      # historical (never edited after shipping)
 ├── transpiler/              # TypeScript-to-Dart transpiler
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point

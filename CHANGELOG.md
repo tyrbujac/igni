@@ -11,6 +11,14 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.11.3 — 2026-04-21
+*Documentation-only. `length(filter(list, predicate))` is now the canonical idiom for field-based counting.*
+
+- **Cheatsheet and full spec** — *Lists* / *Finding items and counting* sections now teach `length(filter(list, predicate))` as the canonical idiom for counting by a field value, with a worked `length(filter(alerts, a => a.level is "critical"))` example. Clarifies that `count(list, target)` matches by reference identity only.
+- **Motivation** — v0.12 Stage 0 scope audit (`docs/private/65_v012_count_predicate.md` + `tests/v0.12-stage0/Audit_Summary.md`) caught 7/7 successful calls across 4 frontier models × 2 structurally distinct prompts. 3/7 invented broken `count(list, lambda)` shapes that transpile cleanly but produce silently-wrong runtime output (always-false identity comparisons).
+- **Pre-registered Stage 3 validation** — 4 models × 2 prompts (Alert Dashboard + one fresh similar-structure prompt) against the v0.11.3 cheatsheet. Pass bar = 0 silently-wrong inventions of `count(list, lambda)` across the 8 calls. Any workaround shape counts as success. 1+ invention escalates to Shape A (polymorphic `count`) design work.
+- **Transpiler rejection** for `count(list, lambda)` tracked separately, ships after Stage 3 resolves — keeps the docs-only effect falsifiable. Follows the v0.9.1 precedent.
+
 ## v0.10.0 — 2026-04-17
 *Object update syntax — `{target with field: newval}` replaces the field-enumeration idiom.*
 
