@@ -118,7 +118,7 @@ Igni today has the spec (formal reference) and a cheatsheet (condensed reference
 
 ## Process notes
 
-- **Cheatsheet size discipline.** Each docs-only ship since v0.11.0 has added 60–100 words of callouts; v0.11.3 is the third in a row. Current size ~2900 words — already past the originally-proposed 2600-word prune threshold. **v0.11.4 and subsequent docs-only iterations must prune before adding** to keep the "small teaching surface" claim credible and cold-test context cost bounded. The prune target is patches that are context-specific (e.g. a single cold-test finding) rather than foundational; those belong in the full spec's reference sections, not the cheatsheet's learning path.
+- **Cheatsheet size discipline.** After three docs-only ships in a row added 60–100 words each (v0.11.2 → v0.11.3 → v0.11.4), v0.11.5 executed the first prune-before-add pass: cheatsheet 2,931 → 2,536 words (target 2,500), micro 750 → 714 words (soft 600 target, accepted gap this pass). Four context-specific callouts migrated to the full spec's reference sections: reactive-fetch footgun (input + `locate()` cases), `Counting by field` prose, and the visual-defaults list. Canonical idioms (`length(filter(...))`, trigger-variable one-liner, `fetch`/`locate` syntax) stay inline in the cheatsheet. **Ongoing rule:** subsequent docs-only iterations must prune before adding. Prune targets are patches that are context-specific (a single cold-test finding, a single-model workaround) rather than foundational; those belong in the full spec's reference sections, not the cheatsheet's learning path.
 
 ## Ideas
 

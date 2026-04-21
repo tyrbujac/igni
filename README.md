@@ -2,7 +2,7 @@
 
 A programming language for building UIs — designed to be read.
 
-**Status: research prototype.** Final-year CS dissertation project investigating whether LLM output accuracy and human readability track each other. Spec is at v0.11.2; transpiler covers most of it; the tutorial has been through multiple cold-run iterations. Not yet production-ready. See [§ Status](#status) for the methodology + evidence.
+**Status: research prototype.** Final-year CS dissertation project investigating whether LLM output accuracy and human readability track each other. Spec is at v0.11.5; transpiler covers most of it; the tutorial has been through multiple cold-run iterations. Not yet production-ready. See [§ Status](#status) for the methodology + evidence.
 
 **The hypothesis:** LLM accuracy and human readability track each other. Remove the ambiguity that trips LLMs up — no brackets on component invocation, one way to update state, a single spec document — and the language becomes nicer for humans too. Igni is that experiment.
 
@@ -91,7 +91,7 @@ With one running device per platform, `igni run ios` / `igni run android` picks 
 
 Cold Xcode builds take ~40s on Apple Silicon; Gradle cold builds take ~2 min. Subsequent runs are sub-20s. Hot reload (`r` key) works on mobile too.
 
-Known gaps (see `docs/private/68` in the repo if you have it): screens without a `title:` property can collide with the iPhone Dynamic Island, and network `fetch()` currently fails on both iOS and Android — under investigation.
+A note on third-party APIs: mobile Dart HTTP clients present a TLS fingerprint Cloudflare's bot scoring often challenges, so `fetch()` against Cloudflare-protected public APIs can return 403 on iOS / Android while the same request succeeds from a browser or curl. The workaround most Flutter / React Native apps use is proxying through a server you control. Not an Igni-specific limitation.
 
 ## Project structure
 
@@ -111,7 +111,7 @@ my-app/
 
 ## Status
 
-**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.11.4<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.11.4<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.11.4-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.11.4-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.11.4-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.11.4-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.11.5-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.11.5-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.11.5-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.11.5-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
 **Latest language change:** `v0.11.0` adds `locate()` — a geolocation primitive that reuses the same `is loading:` / `is error:` machinery as `fetch()`. 3/3 frontier models independently invented divergent shapes on the pre-ship cold test; Shape A won 4/4 pre-ship ship review and validated 4/4 post-ship Clima rerun. `v0.11.1` (docs-only) restructured the cheatsheet for learning order. `v0.11.2` (docs-only) clarified that the reactive-fetch footgun applies narrowly to bound-variable fetch URLs, not to all async composition. Preceding syntax ships: `v0.10.0` object-update syntax `{target with field: newval}` (9/9 frontier adoption across three domain-swap rounds — strongest direct-support result in project history); `v0.9.1` tightened the trigger-variable recommendation (docs-only, 3/3 frontier flipped to canonical `on tap:`); `v0.9.0` promoted the reactive-fetch footgun from prose guidance to a transpile-time error; `v0.8.0` shipped component event channels (`emit` + `on <event>:`).
 
@@ -133,10 +133,10 @@ my-app/
 ```text
 igni/
 ├── spec/                    # language spec (versioned snapshots)
-│   ├── <!-- SYNC:version -->v0.11.4<!-- /SYNC:version -->.md             # current canonical spec
-│   ├── <!-- SYNC:version -->v0.11.4<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
-│   ├── <!-- SYNC:version -->v0.11.4<!-- /SYNC:version -->-micro.md       # current canonical micro reference
-│   └── <!-- SYNC:historical-range-files -->v0.2.md → v0.11.3.md<!-- /SYNC:historical-range-files -->      # historical (never edited after shipping)
+│   ├── <!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->.md             # current canonical spec
+│   ├── <!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
+│   ├── <!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->-micro.md       # current canonical micro reference
+│   └── <!-- SYNC:historical-range-files -->v0.2.md → v0.11.4.md<!-- /SYNC:historical-range-files -->      # historical (never edited after shipping)
 ├── transpiler/              # TypeScript-to-Dart transpiler
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point

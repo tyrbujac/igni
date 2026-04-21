@@ -11,6 +11,14 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.11.5 — 2026-04-21
+*Documentation-only hygiene pass. Cheatsheet prune + context-specific-callout migration into the full spec's reference sections.*
+
+- **Cheatsheet** pruned from 2,931 → 2,536 words (target: 2,500). Four context-specific callouts migrated to the full spec's reference sections: reactive-fetch footgun (input case, v0.9.0); reactive-fetch footgun (`locate()` extension, v0.11.0); `Counting by field` prose callout (v0.11.3/v0.11.4 — the canonical `length(filter(list, predicate))` example stays inline); visual-defaults subsection (v0.6.x implementation detail). Cheatsheet keeps the foundational teaching path complete; context-specific material migrates to the full spec where it belongs.
+- **Micro** pruned from 750 → 714 words (target: ~690). Two cuts: async `locate()` footgun line (compressed to drop the transpile-error reference) and the visual-defaults rule (removed — implementation detail, not a language rule). Rules-only constraint preserved; no primitive coverage dropped.
+- **Full spec** gains a new *Visual defaults* subsection under *Colours and Styling* carrying the previously-cheatsheet-only defaults list (padding, input border, button width, scaffold background, SafeArea when no AppBar). Other migrated content (reactive-fetch footgun, Counting by field, trigger-variable pattern) was already present in the full spec — no duplication added.
+- **Motivation** — three consecutive docs-only ships (v0.11.2 → v0.11.3 → v0.11.4) each added 60–100 words of callouts without pruning. Current cheatsheet is past any reasonable "small teaching surface" claim the dissertation leans on and inflates cold-test context cost across every future run. ROADMAP.md:121 process note established the prune-before-add cadence; v0.11.5 is the first execution. **No language changes, no transpiler changes.** 54/54 diff tests still pass (cheatsheet-level change, doesn't touch codegen).
+
 ## v0.11.4 — 2026-04-21
 *Documentation-only. Sharpens the v0.11.3 `Counting by field` callout per a 4-model ship review.*
 
