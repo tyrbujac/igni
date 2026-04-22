@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Profile card",
+  "prompt_slug": "profile-card",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.12-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.11.6-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "fb1fc1c5ae1edacd44b38ae97c8f5173ec44a24952a5164dbde8b4677ba39043",
+  "spec_words": 2591,
+  "timestamp": "2026-04-22T18:23:28.620Z",
+  "duration_ms": 30314,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 5060,
+    "output_tokens": 523,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.016396,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "error_category": null,
+    "igni_lines": 16
+  }
+}

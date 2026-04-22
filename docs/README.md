@@ -12,7 +12,7 @@ Human-facing documentation. Complements the formal spec under [`../spec/`](../sp
 
 ## How the docs relate to the spec
 
-- **Spec** (`../spec/v0.11.6.md` and its two condensed tiers) is the formal language definition — read that to understand every rule.
+- **Spec** (`../spec/v0.12.md` and its two condensed tiers) is the formal language definition — read that to understand every rule.
 - **Tutorial** teaches by example — read that to start writing Igni.
 - **Mobile** is operational — read that when you need to run on a simulator or emulator.
 

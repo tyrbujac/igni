@@ -1,0 +1,30 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.4",
+  "model_id": "gpt-5.4-2026-03-05",
+  "prompt_name": "Restaurant menu header",
+  "prompt_slug": "restaurant-menu-header",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.12-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.11.6-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "fb1fc1c5ae1edacd44b38ae97c8f5173ec44a24952a5164dbde8b4677ba39043",
+  "spec_words": 2591,
+  "timestamp": "2026-04-22T18:23:14.897Z",
+  "duration_ms": 8881,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 4816,
+    "output_tokens": 593,
+    "cache_read_tokens": 3840
+  },
+  "cost_usd": 0.021895,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "error_category": null,
+    "igni_lines": 41
+  }
+}
