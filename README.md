@@ -2,11 +2,11 @@
 
 A programming language for building UIs — designed to be read.
 
-**Status: research prototype.** Final-year CS dissertation project investigating whether LLM output accuracy and human readability track each other. Spec is at v0.11.5; transpiler covers most of it; the tutorial has been through multiple cold-run iterations. Not yet production-ready. See [§ Status](#status) for the methodology + evidence.
+**Status: research prototype.** Final-year CS dissertation project investigating whether LLM output accuracy and human readability track each other. Spec is at v0.11.6; transpiler covers most of it; the tutorial has been through multiple cold-run iterations. Not yet production-ready. See [§ Status](#status) for the methodology + evidence.
 
 **The hypothesis:** LLM accuracy and human readability track each other. Remove the ambiguity that trips LLMs up — no brackets on component invocation, one way to update state, a single spec document — and the language becomes nicer for humans too. Igni is that experiment.
 
-**Concrete evidence so far:** the v0.11.4 Stage 3 cold test (4 frontier models × 2 prompts) produced **0/7 inventions** of the wrong `count(list, lambda)` shape after a one-paragraph docs patch — unanimous adoption of the canonical `length(filter(list, predicate))` composition, down from 3/7 silently-wrong inventions in the pre-patch Stage 0. The v0.10 domain-swap round (Shopping + Apothecary + Spaceship Cargo, 3×4 models × cheatsheet tier) produced 9/9 frontier adoption of the `{target with ...}` object-update syntax unprompted. v0.9.1 flipped 3/3 frontier models off an `on change:` anti-pattern onto the canonical `on tap:` trigger with a one-sentence docs change and zero transpiler work. Methodology in [tests/README.md](tests/README.md).
+**Concrete evidence so far:** Igni's syntax gets cold-tested on frontier LLMs (Claude, GPT, Gemini) — each round measures whether models write correct code from the docs alone, no examples. The most recent test produced **0/7 wrong inventions** after a one-paragraph docs fix, down from 3/7 silent bugs before. That loop is how the object-update syntax, trigger wording, and geolocation primitive got locked in — the language evolves toward phrasings frontier models reach for first. Methodology and full per-round numbers in [tests/README.md](tests/README.md).
 
 Igni transpiles to Dart/Flutter. You write short, readable source files. The toolchain handles the rest.
 
@@ -58,6 +58,16 @@ igni run
 
 `igni new` creates a starter `app.igni` and a `.gitignore` for the generated `.igni/` Flutter project. Save `app.igni`, browser updates automatically. That's it.
 
+## Using Igni with an LLM
+
+Igni is designed to be injected straight into your LLM's context window.
+
+1. **The context:** paste the entire contents of [`spec/v0.11.6-cheatsheet.md`](spec/v0.11.6-cheatsheet.md) into your system prompt or initial message.
+2. **The persona:** add this instruction: *"You are an expert Igni developer. Write concise, idiomatic Igni code using strictly the provided rules. Do not invent syntax."*
+3. **The prompt:** ask for the specific UI you need. Example: *"Build a `screen Settings:` with a dark mode toggle bound to a boolean variable, and a red logout button."*
+
+Because Igni lacks boilerplate, the model outputs the raw 5–6 lines you need, ready to save directly into your `.igni` file.
+
 ## How it works
 
 `igni run` transpiles your `.igni` files to Dart, spins up a Flutter web server, and watches for changes. Edit, save, see the result in your browser — the loop is instant.
@@ -107,9 +117,9 @@ my-app/
 
 ## Status
 
-**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.11.5-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.11.5-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.11.5-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.11.5-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.11.6<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.11.6<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.11.6-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.11.6-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.11.6-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.11.6-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
-**Latest spec changes:** `v0.11.5` (2026-04-21) is a docs-only hygiene pass — cheatsheet pruned 2,931 → 2,536 words; context-specific callouts migrated from the cheatsheet's learning path to the full spec's reference sections. First execution of the prune-before-add cadence. `v0.11.4` (2026-04-21) sharpened the *Counting by field* callout per a 4-model ship review; Stage 3 validated the rewrite at 0/7 inventions (see *Concrete evidence* above). `v0.11.3` (2026-04-21) canonicalised `length(filter(list, predicate))` as the idiom for field-based counting. `v0.11.0` added the `locate()` geolocation primitive reusing `fetch()`'s `is loading:` / `is error:` machinery (4/4 pre-ship shape convergence, 3/3 post-ship adoption on Clima). Preceding syntax ships: `v0.10.0` object-update syntax `{target with field: newval}` (9/9 frontier adoption across three domain-swap rounds); `v0.9.1` trigger-variable wording tighten (docs-only, 3/3 flip); `v0.9.0` reactive-fetch footgun as a transpile-time error; `v0.8.0` component event channels (`emit` + `on <event>:`). See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+**Latest spec changes:** `v0.11.6` (2026-04-22) adds a three-sentence reactivity lifecycle clarifier to the cheatsheet's *Reacting to users* section, addressing the 3/4 LLM-panel convergence gap on the abstract-only "re-evaluates from the top" rule (see `docs/private/73`). `v0.11.5` (2026-04-21) was a docs-only hygiene pass — cheatsheet pruned 2,931 → 2,536 words; context-specific callouts migrated from the cheatsheet's learning path to the full spec's reference sections. First execution of the prune-before-add cadence. `v0.11.4` (2026-04-21) sharpened the *Counting by field* callout per a 4-model ship review; Stage 3 validated the rewrite at 0/7 inventions (see *Concrete evidence* above). `v0.11.3` (2026-04-21) canonicalised `length(filter(list, predicate))` as the idiom for field-based counting. `v0.11.0` added the `locate()` geolocation primitive reusing `fetch()`'s `is loading:` / `is error:` machinery (4/4 pre-ship shape convergence, 3/3 post-ship adoption on Clima). Preceding syntax ships: `v0.10.0` object-update syntax `{target with field: newval}` (9/9 frontier adoption across three domain-swap rounds); `v0.9.1` trigger-variable wording tighten (docs-only, 3/3 flip); `v0.9.0` reactive-fetch footgun as a transpile-time error; `v0.8.0` component event channels (`emit` + `on <event>:`). See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
 **Latest methodology result:** the v0.10 domain-swap round (Shopping + Apothecary + Spaceship Cargo, 3 × 4 models × cheatsheet tier) produced 9/9 frontier adoption of `{target with ...}` unprompted. Three runs at varying domain distance from e-commerce rules out the "shopping-cart corpus density" confound — the cheatsheet teaches the syntax, the domain doesn't supply it. First post-ship result strong enough to call directly-supported rather than suggestive.
 
@@ -138,10 +148,10 @@ igni/
 ├── LICENSE                  # GPL v3 (transpiler) + CC BY-SA 4.0 (spec/docs)
 ├── spec/
 │   ├── README.md
-│   ├── <!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->.md             # current canonical spec
-│   ├── <!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
-│   ├── <!-- SYNC:version -->v0.11.5<!-- /SYNC:version -->-micro.md       # current canonical micro reference
-│   └── archive/             # historical <!-- SYNC:historical-range-files -->v0.2.md → v0.11.4.md<!-- /SYNC:historical-range-files --> (never edited after shipping)
+│   ├── <!-- SYNC:version -->v0.11.6<!-- /SYNC:version -->.md             # current canonical spec
+│   ├── <!-- SYNC:version -->v0.11.6<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
+│   ├── <!-- SYNC:version -->v0.11.6<!-- /SYNC:version -->-micro.md       # current canonical micro reference
+│   └── archive/             # historical <!-- SYNC:historical-range-files -->v0.2.md → v0.11.5.md<!-- /SYNC:historical-range-files --> (never edited after shipping)
 ├── transpiler/
 │   ├── README.md
 │   ├── src/                 # lexer, parser, codegen, CLI
