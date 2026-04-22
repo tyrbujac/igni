@@ -5,6 +5,7 @@ import { spawn, execSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 import { watch } from 'chokidar';
+import sharp from 'sharp';
 import { Lexer } from './lexer.js';
 import { Parser } from './parser.js';
 import { CodeGenerator, GeneratedLineMapEntry } from './codegen.js';
@@ -237,6 +238,10 @@ function ensureFlutterProject(targetPlatform: Target): void {
       cwd: igniDir,
       stdio: 'ignore',
     });
+    // A newly-added platform has Flutter-default icons. Invalidate the icon
+    // stamp so the next syncAppIcon pass populates the new platform's files.
+    const iconStamp = join(igniDir, '.icon-stamp');
+    if (existsSync(iconStamp)) rmSync(iconStamp);
   }
 
 }
@@ -259,15 +264,16 @@ function prettifyName(folder: string): string {
     .join(' ');
 }
 
-// Write the app's display name into every platform manifest that exists.
-// Idempotent: skips the write if the current value already matches. Safe
-// to call on every `igni run` / `igni build` — unchanged files aren't
-// rewritten, which avoids triggering Xcode/Gradle rebuilds.
-function applyAppIdentity(displayName: string): void {
+// Write the app's display name + icon into every platform manifest and
+// asset directory that exists. Idempotent on both sides: manifest writes
+// skip when the current value already matches; icon sync skips when the
+// source file's mtime hasn't changed since the last run.
+async function applyAppIdentity(displayName: string): Promise<void> {
   writeMacOSDisplayName(displayName);
   writeIOSDisplayName(displayName);
   writeAndroidDisplayName(displayName);
   applyWebBranding(displayName);
+  await syncAppIcon();
 }
 
 // macOS splits the display name across two fields:
@@ -358,22 +364,176 @@ function applyWebBranding(displayName: string): void {
     html = html.replace(/<title>[^<]*<\/title>/, `<title>${titleText}</title>`);
   }
 
-  // Swap Flutter's default favicon PNG for the Igni SVG. Regex only matches
-  // the original Flutter template line, so re-running leaves it alone.
-  const igniIcon = join(__dirname, '..', '..', 'assets', 'igni.svg');
-  const faviconPath = join(igniDir, 'web', 'favicon.png');
-  if (existsSync(igniIcon) && existsSync(faviconPath)) {
-    html = html.replace(
-      /<link rel="icon" type="image\/png" href="favicon\.png"\s*\/?>/,
-      '<link rel="icon" type="image/svg+xml" href="favicon.svg">'
-    );
-    const svgDest = join(igniDir, 'web', 'favicon.svg');
-    if (!existsSync(svgDest)) {
-      copyFileSync(igniIcon, svgDest);
-    }
-  }
+  // Normalise the favicon link to point at favicon.png (the PNG is what
+  // syncAppIcon writes). A prior version of this code swapped the link to
+  // an SVG favicon; this un-swap keeps upgrading projects consistent.
+  html = html.replace(
+    /<link rel="icon" type="image\/svg\+xml" href="favicon\.svg"\s*\/?>/,
+    '<link rel="icon" type="image/png" href="favicon.png">'
+  );
 
   writeFileSync(indexPath, html);
+}
+
+// --- App icon sync ---
+
+// Per-platform icon output sets. Each entry is [filename relative to the
+// platform's icon directory, pixel size]. Sourced from the Flutter templates
+// at `flutter create` time (iOS set is the default Assets.xcassets contents;
+// Android density buckets follow the mipmap-* launcher convention; macOS set
+// matches the AppIcon.appiconset produced by Flutter's macOS scaffold).
+const MACOS_ICON_SIZES: Array<[string, number]> = [
+  ['app_icon_16.png', 16],
+  ['app_icon_32.png', 32],
+  ['app_icon_64.png', 64],
+  ['app_icon_128.png', 128],
+  ['app_icon_256.png', 256],
+  ['app_icon_512.png', 512],
+  ['app_icon_1024.png', 1024],
+];
+
+const IOS_ICON_SIZES: Array<[string, number]> = [
+  ['Icon-App-20x20@1x.png', 20],
+  ['Icon-App-20x20@2x.png', 40],
+  ['Icon-App-20x20@3x.png', 60],
+  ['Icon-App-29x29@1x.png', 29],
+  ['Icon-App-29x29@2x.png', 58],
+  ['Icon-App-29x29@3x.png', 87],
+  ['Icon-App-40x40@1x.png', 40],
+  ['Icon-App-40x40@2x.png', 80],
+  ['Icon-App-40x40@3x.png', 120],
+  ['Icon-App-60x60@2x.png', 120],
+  ['Icon-App-60x60@3x.png', 180],
+  ['Icon-App-76x76@1x.png', 76],
+  ['Icon-App-76x76@2x.png', 152],
+  ['Icon-App-83.5x83.5@2x.png', 167],
+  ['Icon-App-1024x1024@1x.png', 1024],
+];
+
+const ANDROID_ICON_SIZES: Array<[string, number]> = [
+  ['mipmap-mdpi/ic_launcher.png', 48],
+  ['mipmap-hdpi/ic_launcher.png', 72],
+  ['mipmap-xhdpi/ic_launcher.png', 96],
+  ['mipmap-xxhdpi/ic_launcher.png', 144],
+  ['mipmap-xxxhdpi/ic_launcher.png', 192],
+];
+
+const WEB_ICON_SIZES: Array<[string, number]> = [
+  ['icons/Icon-192.png', 192],
+  ['icons/Icon-512.png', 512],
+  ['icons/Icon-maskable-192.png', 192],
+  ['icons/Icon-maskable-512.png', 512],
+  ['favicon.png', 32],
+];
+
+type IconSourceKind = 'user' | 'default' | 'svg-fallback';
+interface IconSource {
+  path: string;
+  mtime: number;
+  kind: IconSourceKind;
+}
+
+// Priority: user's app-icon.png at project root, then the shipped
+// app-icon-default.png (if Tyr has designed one), else a runtime render
+// of the Igni SVG onto a pink square canvas.
+function resolveIconSource(): IconSource | null {
+  const userIcon = join(cwd, 'app-icon.png');
+  if (existsSync(userIcon)) {
+    return { path: userIcon, mtime: statSync(userIcon).mtimeMs, kind: 'user' };
+  }
+  const igniDefault = join(__dirname, '..', '..', 'assets', 'app-icon-default.png');
+  if (existsSync(igniDefault)) {
+    return { path: igniDefault, mtime: statSync(igniDefault).mtimeMs, kind: 'default' };
+  }
+  const igniSvg = join(__dirname, '..', '..', 'assets', 'igni.svg');
+  if (existsSync(igniSvg)) {
+    return { path: igniSvg, mtime: statSync(igniSvg).mtimeMs, kind: 'svg-fallback' };
+  }
+  return null;
+}
+
+// Build the 1024×1024 base icon used as the source for every platform-specific
+// resize. For PNG sources, this is the source file bytes directly. For the SVG
+// fallback, render the triangle at 768px centred on a pink (#EB1555) canvas so
+// non-square vectors still produce a valid app icon.
+async function buildBaseIcon(source: IconSource): Promise<Buffer> {
+  if (source.kind === 'svg-fallback') {
+    const triangle = await sharp(source.path)
+      .resize(768, 768, { fit: 'contain', background: { r: 235, g: 21, b: 85, alpha: 0 } })
+      .png()
+      .toBuffer();
+    return sharp({
+      create: {
+        width: 1024,
+        height: 1024,
+        channels: 4,
+        background: { r: 235, g: 21, b: 85, alpha: 1 },
+      },
+    })
+      .composite([{ input: triangle, left: 128, top: 128 }])
+      .png()
+      .toBuffer();
+  }
+  return readFileSync(source.path);
+}
+
+async function writeIconsFor(
+  base: Buffer,
+  targetDir: string,
+  sizes: Array<[string, number]>,
+): Promise<void> {
+  if (!existsSync(targetDir)) return;
+  for (const [filename, size] of sizes) {
+    const out = join(targetDir, filename);
+    mkdirSync(dirname(out), { recursive: true });
+    const resized = await sharp(base).resize(size, size, { fit: 'cover' }).png().toBuffer();
+    writeFileSync(out, resized);
+  }
+}
+
+async function syncAppIcon(): Promise<void> {
+  const source = resolveIconSource();
+  if (!source) return;
+
+  // Cache check: skip the whole pipeline if the source hasn't changed since
+  // the last sync. Avoids ~2s of sharp work on every save-triggered hot
+  // restart — the file watcher hits this on every `igni run` iteration.
+  const stamp = join(igniDir, '.icon-stamp');
+  const currentStamp = JSON.stringify({ path: source.path, mtime: source.mtime, kind: source.kind });
+  if (existsSync(stamp) && readFileSync(stamp, 'utf-8') === currentStamp) {
+    return;
+  }
+
+  let base: Buffer;
+  try {
+    base = await buildBaseIcon(source);
+  } catch (err: any) {
+    console.error(`Could not load app icon source (${source.path}): ${err.message}. Keeping Flutter defaults.`);
+    return;
+  }
+
+  await writeIconsFor(
+    base,
+    join(igniDir, 'macos', 'Runner', 'Assets.xcassets', 'AppIcon.appiconset'),
+    MACOS_ICON_SIZES,
+  );
+  await writeIconsFor(
+    base,
+    join(igniDir, 'ios', 'Runner', 'Assets.xcassets', 'AppIcon.appiconset'),
+    IOS_ICON_SIZES,
+  );
+  await writeIconsFor(
+    base,
+    join(igniDir, 'android', 'app', 'src', 'main', 'res'),
+    ANDROID_ICON_SIZES,
+  );
+  await writeIconsFor(
+    base,
+    join(igniDir, 'web'),
+    WEB_ICON_SIZES,
+  );
+
+  writeFileSync(stamp, currentStamp);
 }
 
 // --- Device selection for mobile targets ---
@@ -702,7 +862,7 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined, e
 
   ensureFlutterProject(targetPlatform);
   const displayName = explicitName ?? prettifyName(basename(cwd));
-  applyAppIdentity(displayName);
+  await applyAppIdentity(displayName);
   syncImages();
   syncAudio();
   ensureDependencies(transpileResult.dart);
@@ -953,7 +1113,7 @@ async function build(buildTgt: BuildTarget, explicitName: string | undefined): P
   const platform = BUILD_TARGET_PLATFORM[buildTgt];
   ensureFlutterProject(platform);
   const displayName = explicitName ?? prettifyName(basename(cwd));
-  applyAppIdentity(displayName);
+  await applyAppIdentity(displayName);
   syncImages();
   syncAudio();
   ensureDependencies(initialResult.dart);
