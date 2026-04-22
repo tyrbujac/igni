@@ -1,5 +1,7 @@
 # Igni
 
+[![test](https://github.com/tyrbujac/igni/actions/workflows/test.yml/badge.svg)](https://github.com/tyrbujac/igni/actions/workflows/test.yml)
+
 A programming language for building UIs — designed to be read.
 
 **Status: research prototype.** Final-year CS dissertation project investigating whether LLM output accuracy and human readability track each other. Spec is at v0.11.6; transpiler covers most of it; the tutorial has been through multiple cold-run iterations. Not yet production-ready. See [§ Status](#status) for the methodology + evidence.
@@ -135,6 +137,8 @@ my-app/
 **Compile-time rejections** — five anti-patterns rejected with fix-it errors: reactive-fetch footgun, `emit <event>` misplacement, bare `shared:` access, `count(list, lambda)` (use `length(filter(...))`), `locate()` reactive-fetch extension. Pinned negative fixtures in [`transpiler/examples-errors/`](transpiler/examples-errors/).
 
 **CLI:** `igni new` scaffolds a starter. `igni run` transpiles, watches, serves. `igni run ios` / `igni run android` for mobile — see [`docs/mobile.md`](docs/mobile.md). Full reference in [`transpiler/README.md`](transpiler/README.md).
+
+**Project scope:** Single-author by design during early access. The project's adversarial review comes from cold-LLM panels (4 frontier models per round, see [`tests/README.md`](tests/README.md)) and human usability testing, not multi-contributor PRs — a deliberate choice for a research prototype. External contribution will open post-v1.0 when the spec is stable enough to absorb PRs without churn.
 
 ## Repo structure
 

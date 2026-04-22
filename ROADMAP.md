@@ -1,6 +1,6 @@
 # Roadmap
 
-Where Igni is going. Tasks are tiered by horizon: **Immediate** (small unblocking items, <1 day each), **Next milestone** (one primary chunk of active work), **Future** (ideas + longer-horizon streams). Priority signals come from cold-LLM tests and human testing — not speculation.
+Where Igni is going. Tasks are tiered by horizon: **Immediate** (small unblocking items, <1 day each), **Next milestone** (one primary chunk of active work), **Future** (ideas + longer-horizon streams). Priority signals come from cold-LLM tests and human testing — not speculation. The project is single-author by design during early access; external contribution opens post-v1.0.
 
 ## Current focus
 
