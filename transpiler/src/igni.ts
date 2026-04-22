@@ -178,6 +178,27 @@ function writeOutput(dart: string): void {
   writeFileSync(outPath, dart);
 }
 
+// Inject `title: '<displayName>'` into the generated top-level `MaterialApp(...)`.
+// Flutter's web runtime rewrites `document.title` to the `MaterialApp.title` value
+// once the app boots; without this, Chrome falls back to showing the URL in the tab
+// (e.g. `localhost:51169`). The same field is also surfaced in the Android task
+// switcher and macOS Cmd-Tab, so one write aligns every platform's task-switcher
+// label with the manifest names applied in `applyAppIdentity`.
+//
+// The replacement targets the first `MaterialApp(` in the generated source. Codegen
+// emits exactly one top-level MaterialApp per program (main()'s runApp), and Igni
+// source can't author a nested MaterialApp, so the first match is always the root.
+// Happens in `igni.ts` rather than codegen so the 54 diff-test fixtures in
+// `examples/*.expected.dart` stay unchanged — `run-tests.sh` invokes `cli.ts` which
+// doesn't apply this post-processing.
+function injectAppTitle(dart: string, displayName: string): string {
+  const escaped = displayName
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\$/g, '\\$');
+  return dart.replace(/MaterialApp\(/, `MaterialApp(title: '${escaped}', `);
+}
+
 // --- Flutter project setup ---
 
 function ensureFlutterProject(targetPlatform: Target): void {
@@ -686,7 +707,7 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined, e
   syncAudio();
   ensureDependencies(transpileResult.dart);
   mkdirSync(join(igniDir, 'lib'), { recursive: true });
-  writeOutput(transpileResult.dart);
+  writeOutput(injectAppTitle(transpileResult.dart, displayName));
 
   // Pick the device BEFORE showing the build spinner — device-pick may auto-boot
   // an emulator (visible "Booting <name>..." output), which is a distinct phase.
@@ -833,7 +854,7 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined, e
     const result = transpile();
     if (result) {
       transpileResult = result;
-      writeOutput(result.dart);
+      writeOutput(injectAppTitle(result.dart, displayName));
       // Send 'R' to Flutter to trigger hot restart (not 'r' hot reload).
       // Hot reload keeps the existing State instance and its field values,
       // so changing `name = "Michael"` to `name = "Tyr"` (or adding a new
@@ -937,7 +958,7 @@ async function build(buildTgt: BuildTarget, explicitName: string | undefined): P
   syncAudio();
   ensureDependencies(initialResult.dart);
   mkdirSync(join(igniDir, 'lib'), { recursive: true });
-  writeOutput(initialResult.dart);
+  writeOutput(injectAppTitle(initialResult.dart, displayName));
 
   const projectName = displayName;
 
