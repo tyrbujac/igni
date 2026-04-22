@@ -153,7 +153,7 @@ export class CodeGenerator {
     // explicit neutral off-white so the pink-seeded surface doesn't tint the
     // viewport. Brand colour stays as ColorScheme.primary for ElevatedButton.
     const scaffoldBg = anyDarkScreen ? '' : ', scaffoldBackgroundColor: const Color(0xFFFAFAFA)';
-    const igniTheme = `theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)${brightness})${scaffoldBg}, textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 16)))`;
+    const igniTheme = `theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)${brightness})${scaffoldBg}, textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 17, height: 1.5)))`;
     if (this.hasShared) {
       code += this.genSharedState(program.shared) + '\n';
       code += `void main() {\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, ${igniTheme}, home: ${firstName}Screen()),\n  ));\n}\n`;
@@ -1066,10 +1066,11 @@ export class CodeGenerator {
       // would fight the Row's intended flex behaviour.
       code = `${ind}Expanded(\n${ind}  child: ${code.trimStart()},\n${ind})`;
     } else {
-      // Standalone inputs cap at 480px so a full browser viewport doesn't
-      // leave readers staring at a kilometre-wide text box. Mobile viewports
-      // stay below this and fill naturally.
-      code = `${ind}ConstrainedBox(\n${ind}  constraints: const BoxConstraints(maxWidth: 480),\n${ind}  child: ${code.trimStart()},\n${ind})`;
+      // Standalone inputs cap at 320px — comfortable single-field width that
+      // doesn't stretch to kilometre-wide on desktop viewports and still fills
+      // naturally on mobile. Multi-field forms use horizontal layouts where
+      // inputs take Expanded width instead.
+      code = `${ind}ConstrainedBox(\n${ind}  constraints: const BoxConstraints(maxWidth: 320),\n${ind}  child: ${code.trimStart()},\n${ind})`;
     }
     return code;
   }
