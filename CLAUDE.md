@@ -55,7 +55,7 @@ If a proposal violates one of these, it's wrong by definition — push back inst
 - **Don't write Dart, Flutter, React, or TypeScript** in proposals. Only Igni and prose. If you need to demonstrate something, write it in Igni.
 - **Don't use brackets, braces, parentheses on component invocation, ternary operators, or string interpolation.** These are explicitly out.
 - **Don't bind a `fetch` URL directly to a text input** — that's the v0.5-documented common pitfall. Use the trigger-variable pattern (see Async Data in the spec).
-- **Test transpiler changes by running `npm test` in `transpiler/`.** This runs all <!-- SYNC:total-tests -->54<!-- /SYNC:total-tests --> diff tests automatically. Zero diff = pass. Then browser-test via `igni run` against a test `.igni` file.
+- **Test transpiler changes by running `npm test` in `transpiler/`.** This runs all <!-- SYNC:total-tests -->55<!-- /SYNC:total-tests --> diff tests automatically. Zero diff = pass. Then browser-test via `igni run` against a test `.igni` file.
 
 ## ROADMAP tiering
 

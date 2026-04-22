@@ -30,6 +30,7 @@ npx tsx ../src/cli.ts counter.igni
 - **`dashboard`** — nested layouts, `badge`, `divider`, dense-information card layouts.
 - **`bg-image`** — `background: "image.png"` on screens and layouts; `fill: true`.
 - **`input-button-defaults`** — the visual-default rendering (outlined input, intrinsic button, scaffold background).
+- **`mi-card`** — Angela Yu's identity-card app rebuilt in Igni. Static layout only: teal screen background, round avatar, `heading` + `color: white` text, two card-backgrounded info rows with icons. 15 LOC — the static-UI regime in the LOC benchmark.
 
 ### Lists & mutation
 
