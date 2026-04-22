@@ -10,18 +10,21 @@ import { Parser } from './parser.js';
 import { CodeGenerator, GeneratedLineMapEntry } from './codegen.js';
 import { TranspileError, formatMappedError } from './errors.js';
 
-// Parse CLI args: strip `--device <value>` from anywhere, then interpret
-// positional args. For `run`, the first positional after `run` can be a target
-// keyword (`ios` / `android` / `macos`); otherwise it (or the next one) is the .igni file.
-// For `build`, the first positional is the build target (`macos` / `apk` / `web`).
+// Parse CLI args: strip `--device <value>` and `--name <value>` from anywhere,
+// then interpret positional args. For `run`, the first positional after `run`
+// can be a target keyword (`ios` / `android` / `macos`); otherwise it (or the
+// next one) is the .igni file. For `build`, the first positional is the build
+// target (`macos` / `apk` / `web`).
 type Target = 'web' | 'ios' | 'android' | 'macos';
 type BuildTarget = 'macos' | 'apk' | 'web';
-const { command, target, buildTarget, commandArg, deviceFlag } = (() => {
+const { command, target, buildTarget, commandArg, deviceFlag, nameFlag } = (() => {
   const raw = process.argv.slice(2);
   const clean: string[] = [];
   let device: string | undefined;
+  let name: string | undefined;
   for (let i = 0; i < raw.length; i++) {
     if (raw[i] === '--device') { device = raw[i + 1]; i++; continue; }
+    if (raw[i] === '--name') { name = raw[i + 1]; i++; continue; }
     clean.push(raw[i]);
   }
   const cmd = clean[0];
@@ -36,7 +39,7 @@ const { command, target, buildTarget, commandArg, deviceFlag } = (() => {
     buildTgt = arg as BuildTarget;
     arg = clean[2];
   }
-  return { command: cmd, target: tgt, buildTarget: buildTgt, commandArg: arg, deviceFlag: device };
+  return { command: cmd, target: tgt, buildTarget: buildTgt, commandArg: arg, deviceFlag: device, nameFlag: name };
 })();
 
 const cwd = process.cwd();
@@ -67,6 +70,8 @@ function printUsage(): void {
   console.log('  igni build macos      Build a standalone macOS .app in dist/');
   console.log('  igni build apk        Build a standalone Android .apk in dist/');
   console.log('  igni build web        Build a static web bundle in dist/web/');
+  console.log('  igni run --name "Dice Roller"           Override the app display name');
+  console.log('  igni build macos --name "Dice Roller"   Same, for release builds');
   console.log('  igni new my-app       Create a new Igni app');
 }
 
@@ -213,35 +218,141 @@ function ensureFlutterProject(targetPlatform: Target): void {
     });
   }
 
-  // Web-only: apply Igni branding (tab title + favicon) when web/ dir appears for the first time.
-  if (targetPlatform === 'web' && (firstRun || !platformPresent)) {
-    applyWebBranding();
+}
+
+// --- App identity (display name + eventually icon) ---
+
+// Turn a folder basename into a human-readable display name. Splits on
+// `-`, `_`, and camelCase boundaries; title-cases each token; joins with
+// spaces. Examples: `dicee` → `Dicee`, `dice-roller` → `Dice Roller`,
+// `DiceRoller` → `Dice Roller`, `my_cool_app` → `My Cool App`.
+function prettifyName(folder: string): string {
+  const withSpaces = folder
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[-_]+/g, ' ')
+    .trim();
+  if (!withSpaces) return folder;
+  return withSpaces
+    .split(/\s+/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+// Write the app's display name into every platform manifest that exists.
+// Idempotent: skips the write if the current value already matches. Safe
+// to call on every `igni run` / `igni build` — unchanged files aren't
+// rewritten, which avoids triggering Xcode/Gradle rebuilds.
+function applyAppIdentity(displayName: string): void {
+  writeMacOSDisplayName(displayName);
+  writeIOSDisplayName(displayName);
+  writeAndroidDisplayName(displayName);
+  applyWebBranding(displayName);
+}
+
+// macOS splits the display name across two fields:
+//   PRODUCT_NAME (xcconfig) → .app filename + executable name. MUST be
+//     space-free — Flutter's `flutter run -d macos` shells out to `open
+//     path/to/name.app` without quoting, so spaces in the path cause
+//     "Failed to foreground app; open returned 1" and the window doesn't
+//     come to focus on first launch.
+//   CFBundleDisplayName (Info.plist) → pretty name shown in Finder,
+//     dock, and the menu bar. Spaces and punctuation fine here.
+function writeMacOSDisplayName(name: string): void {
+  const xcconfig = join(igniDir, 'macos', 'Runner', 'Configs', 'AppInfo.xcconfig');
+  const plist = join(igniDir, 'macos', 'Runner', 'Info.plist');
+  const productName = name.replace(/\s+/g, '');
+
+  if (existsSync(xcconfig)) {
+    const contents = readFileSync(xcconfig, 'utf-8');
+    const current = contents.match(/^PRODUCT_NAME\s*=\s*(.+)$/m)?.[1]?.trim();
+    if (current !== productName) {
+      const updated = contents.replace(/^PRODUCT_NAME\s*=\s*.*$/m, `PRODUCT_NAME = ${productName}`);
+      writeFileSync(xcconfig, updated);
+    }
+  }
+
+  if (existsSync(plist)) {
+    let contents = readFileSync(plist, 'utf-8');
+    const pretty = escapeXml(name);
+    const displayRegex = /(<key>CFBundleDisplayName<\/key>\s*<string>)([^<]*)(<\/string>)/;
+    const match = contents.match(displayRegex);
+    if (match) {
+      if (match[2] !== pretty) {
+        contents = contents.replace(displayRegex, `$1${pretty}$3`);
+        writeFileSync(plist, contents);
+      }
+    } else {
+      // Insert CFBundleDisplayName right after CFBundleName for canonical ordering.
+      const anchor = /(<key>CFBundleName<\/key>\s*<string>\$\(PRODUCT_NAME\)<\/string>\n)/;
+      if (anchor.test(contents)) {
+        contents = contents.replace(
+          anchor,
+          `$1\t<key>CFBundleDisplayName</key>\n\t<string>${pretty}</string>\n`
+        );
+        writeFileSync(plist, contents);
+      }
+    }
   }
 }
 
-function applyWebBranding(): void {
+function escapeXml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function writeIOSDisplayName(name: string): void {
+  const plist = join(igniDir, 'ios', 'Runner', 'Info.plist');
+  if (!existsSync(plist)) return;
+  const contents = readFileSync(plist, 'utf-8');
+  const pretty = escapeXml(name);
+  const regex = /(<key>CFBundleDisplayName<\/key>\s*<string>)([^<]*)(<\/string>)/;
+  const match = contents.match(regex);
+  if (!match || match[2] === pretty) return;
+  const updated = contents.replace(regex, `$1${pretty}$3`);
+  writeFileSync(plist, updated);
+}
+
+function writeAndroidDisplayName(name: string): void {
+  const manifest = join(igniDir, 'android', 'app', 'src', 'main', 'AndroidManifest.xml');
+  if (!existsSync(manifest)) return;
+  const contents = readFileSync(manifest, 'utf-8');
+  const pretty = escapeXml(name);
+  const regex = /android:label="([^"]*)"/;
+  const match = contents.match(regex);
+  if (!match || match[1] === pretty) return;
+  const updated = contents.replace(regex, `android:label="${pretty}"`);
+  writeFileSync(manifest, updated);
+}
+
+function applyWebBranding(displayName: string): void {
   const indexPath = join(igniDir, 'web', 'index.html');
-  if (existsSync(indexPath)) {
-    let html = readFileSync(indexPath, 'utf-8');
-    const displayName = basename(cwd);
-    html = html.replace(/<title>[^<]*<\/title>/, `<title>${displayName}</title>`);
-    writeFileSync(indexPath, html);
+  if (!existsSync(indexPath)) return;
+  let html = readFileSync(indexPath, 'utf-8');
+  const titleText = escapeXml(displayName);
+  const currentTitle = html.match(/<title>([^<]*)<\/title>/)?.[1];
+  if (currentTitle !== titleText) {
+    html = html.replace(/<title>[^<]*<\/title>/, `<title>${titleText}</title>`);
   }
 
+  // Swap Flutter's default favicon PNG for the Igni SVG. Regex only matches
+  // the original Flutter template line, so re-running leaves it alone.
   const igniIcon = join(__dirname, '..', '..', 'assets', 'igni.svg');
   const faviconPath = join(igniDir, 'web', 'favicon.png');
   if (existsSync(igniIcon) && existsSync(faviconPath)) {
-    const indexForFavicon = join(igniDir, 'web', 'index.html');
-    if (existsSync(indexForFavicon)) {
-      let html = readFileSync(indexForFavicon, 'utf-8');
-      html = html.replace(
-        /<link rel="icon" type="image\/png" href="favicon\.png"\s*\/?>/,
-        '<link rel="icon" type="image/svg+xml" href="favicon.svg">'
-      );
-      writeFileSync(indexForFavicon, html);
-      copyFileSync(igniIcon, join(igniDir, 'web', 'favicon.svg'));
+    html = html.replace(
+      /<link rel="icon" type="image\/png" href="favicon\.png"\s*\/?>/,
+      '<link rel="icon" type="image/svg+xml" href="favicon.svg">'
+    );
+    const svgDest = join(igniDir, 'web', 'favicon.svg');
+    if (!existsSync(svgDest)) {
+      copyFileSync(igniIcon, svgDest);
     }
   }
+
+  writeFileSync(indexPath, html);
 }
 
 // --- Device selection for mobile targets ---
@@ -559,7 +670,7 @@ function createNewProject(name: string | undefined): void {
 
 // --- Main ---
 
-async function run(targetPlatform: Target, explicitDevice: string | undefined): Promise<void> {
+async function run(targetPlatform: Target, explicitDevice: string | undefined, explicitName: string | undefined): Promise<void> {
   const initialResult = transpile();
   if (!initialResult) {
     console.error('Fix the error above, then run igni run again.');
@@ -569,6 +680,8 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined): 
   const firstRun = !existsSync(join(igniDir, 'pubspec.yaml'));
 
   ensureFlutterProject(targetPlatform);
+  const displayName = explicitName ?? prettifyName(basename(cwd));
+  applyAppIdentity(displayName);
   syncImages();
   syncAudio();
   ensureDependencies(transpileResult.dart);
@@ -581,7 +694,7 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined): 
     ? 'chrome'
     : await pickDevice(targetPlatform, explicitDevice);
 
-  const projectName = basename(cwd);
+  const projectName = displayName;
   const firstBuildHint = targetPlatform === 'web'
     ? ' (About 15s the first time)'
     : ' (First build may take a minute or two)';
@@ -809,7 +922,7 @@ function printShareFooter(buildTarget: BuildTarget, artifactPath: string): void 
   console.log('');
 }
 
-async function build(buildTgt: BuildTarget): Promise<void> {
+async function build(buildTgt: BuildTarget, explicitName: string | undefined): Promise<void> {
   const initialResult = transpile();
   if (!initialResult) {
     console.error('Fix the error above, then run igni build again.');
@@ -818,13 +931,15 @@ async function build(buildTgt: BuildTarget): Promise<void> {
 
   const platform = BUILD_TARGET_PLATFORM[buildTgt];
   ensureFlutterProject(platform);
+  const displayName = explicitName ?? prettifyName(basename(cwd));
+  applyAppIdentity(displayName);
   syncImages();
   syncAudio();
   ensureDependencies(initialResult.dart);
   mkdirSync(join(igniDir, 'lib'), { recursive: true });
   writeOutput(initialResult.dart);
 
-  const projectName = basename(cwd);
+  const projectName = displayName;
 
   // Spinner while the release build compiles. `flutter build --release` can
   // take several minutes on a cold cache, especially for macOS (cocoapods +
@@ -878,14 +993,18 @@ if (command === 'run') {
     console.error('--device is only valid with `igni run ios` or `igni run android`.');
     process.exit(1);
   }
-  run(target, deviceFlag);
+  run(target, deviceFlag, nameFlag);
 } else if (command === 'build') {
   if (!buildTarget) {
     console.error('Usage: igni build <macos|apk|web>');
     process.exit(1);
   }
-  build(buildTarget);
+  build(buildTarget, nameFlag);
 } else if (command === 'new') {
+  if (nameFlag) {
+    console.error('--name is not valid with `igni new`. Pass the project name as a positional: igni new my-app');
+    process.exit(1);
+  }
   createNewProject(commandArg);
 } else {
   printUsage();
