@@ -11,6 +11,12 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.11.6 — 2026-04-22
+*Cheatsheet-only clarification pass. Reactivity lifecycle explainer added after LLM-panel review flagged the "re-evaluates from the top" rule as the 3/4 convergence gap across README, cheatsheet, and tutorial (see `docs/private/73`).*
+
+- **Reactivity clarifier added** to `spec/v0.11.6-cheatsheet.md` *Reacting to users* section. Three sentences using the "starts at / resets to" mnemonic, explaining why top-level assignments don't overwrite state on each re-evaluation: initialisation lines run once when the screen first opens; re-evaluation re-runs the rendering part with the variable's current value, not its initial one; the `= 0` line doesn't fire again until you leave the screen and come back.
+- **Motivation** — `docs/private/64` (first LLM-panel review, 2026-04-22) flagged the reactivity rule as taught abstractly, 3/3 panelists. README was updated same day to add evidence. `docs/private/73` (second panel) re-hit the same gap 3/4 — models still asking "why doesn't `count = 0` reset state?" after reading README and cheatsheet. Closes the re-hit. Opus 4.7's three-sentence sketch used verbatim. **No language changes, no full-spec body changes, no transpiler changes.** 54/54 diff tests still pass.
+
 ## v0.11.5 — 2026-04-21
 *Documentation-only hygiene pass. Cheatsheet prune + context-specific-callout migration into the full spec's reference sections.*
 
