@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, readdirSync, statSync, copyFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, readdirSync, statSync, copyFileSync, cpSync } from 'node:fs';
 import { join, basename, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn, execSync } from 'node:child_process';
@@ -12,9 +12,11 @@ import { TranspileError, formatMappedError } from './errors.js';
 
 // Parse CLI args: strip `--device <value>` from anywhere, then interpret
 // positional args. For `run`, the first positional after `run` can be a target
-// keyword (`ios` / `android`); otherwise it (or the next one) is the .igni file.
-type Target = 'web' | 'ios' | 'android';
-const { command, target, commandArg, deviceFlag } = (() => {
+// keyword (`ios` / `android` / `macos`); otherwise it (or the next one) is the .igni file.
+// For `build`, the first positional is the build target (`macos` / `apk` / `web`).
+type Target = 'web' | 'ios' | 'android' | 'macos';
+type BuildTarget = 'macos' | 'apk' | 'web';
+const { command, target, buildTarget, commandArg, deviceFlag } = (() => {
   const raw = process.argv.slice(2);
   const clean: string[] = [];
   let device: string | undefined;
@@ -24,12 +26,17 @@ const { command, target, commandArg, deviceFlag } = (() => {
   }
   const cmd = clean[0];
   let tgt: Target = 'web';
+  let buildTgt: BuildTarget | undefined;
   let arg: string | undefined = clean[1];
-  if (cmd === 'run' && (arg === 'ios' || arg === 'android')) {
+  if (cmd === 'run' && (arg === 'ios' || arg === 'android' || arg === 'macos')) {
     tgt = arg as Target;
     arg = clean[2];
   }
-  return { command: cmd, target: tgt, commandArg: arg, deviceFlag: device };
+  if (cmd === 'build' && (arg === 'macos' || arg === 'apk' || arg === 'web')) {
+    buildTgt = arg as BuildTarget;
+    arg = clean[2];
+  }
+  return { command: cmd, target: tgt, buildTarget: buildTgt, commandArg: arg, deviceFlag: device };
 })();
 
 const cwd = process.cwd();
@@ -54,8 +61,12 @@ function printUsage(): void {
   console.log('  igni run hello.igni   Run a specific file in Chrome');
   console.log('  igni run ios          Run app.igni on iOS simulator');
   console.log('  igni run android      Run app.igni on Android emulator');
+  console.log('  igni run macos        Run app.igni as a macOS desktop app');
   console.log('  igni run ios --device "iPhone 17"       Target a specific iOS device');
   console.log('  igni run android --device "Pixel 8a"    Target a specific Android device');
+  console.log('  igni build macos      Build a standalone macOS .app in dist/');
+  console.log('  igni build apk        Build a standalone Android .apk in dist/');
+  console.log('  igni build web        Build a static web bundle in dist/web/');
   console.log('  igni new my-app       Create a new Igni app');
 }
 
@@ -248,13 +259,14 @@ interface FlutterEmulator {
   platform: string; // 'ios' | 'android' | ...
 }
 
-function matchesTarget(targetPlatform: string, target: 'ios' | 'android'): boolean {
+function matchesTarget(targetPlatform: string, target: 'ios' | 'android' | 'macos'): boolean {
   if (target === 'ios') return targetPlatform === 'ios';
+  if (target === 'macos') return targetPlatform === 'darwin';
   // Android devices show targetPlatform like "android-arm64"
   return targetPlatform.startsWith('android');
 }
 
-function listRunningDevices(target: 'ios' | 'android'): FlutterDevice[] {
+function listRunningDevices(target: 'ios' | 'android' | 'macos'): FlutterDevice[] {
   try {
     const output = execSync('flutter devices --machine', {
       encoding: 'utf-8',
@@ -267,7 +279,9 @@ function listRunningDevices(target: 'ios' | 'android'): FlutterDevice[] {
   }
 }
 
-function listAvailableEmulators(target: 'ios' | 'android'): FlutterEmulator[] {
+function listAvailableEmulators(target: 'ios' | 'android' | 'macos'): FlutterEmulator[] {
+  // Desktop targets have no emulators — it's always the host machine.
+  if (target === 'macos') return [];
   try {
     const output = execSync('flutter emulators', {
       encoding: 'utf-8',
@@ -286,8 +300,19 @@ function listAvailableEmulators(target: 'ios' | 'android'): FlutterEmulator[] {
   }
 }
 
-async function pickDevice(target: 'ios' | 'android', explicitDevice: string | undefined): Promise<string> {
+async function pickDevice(target: 'ios' | 'android' | 'macos', explicitDevice: string | undefined): Promise<string> {
   const running = listRunningDevices(target);
+
+  // Desktop macOS: the host is always "running" as a Flutter device. No emulator
+  // step, no --device ambiguity. Just return the first match; in practice there's
+  // only ever one.
+  if (target === 'macos') {
+    if (running.length === 0) {
+      console.error('No macOS device detected. Run `flutter doctor` to check desktop support.');
+      process.exit(1);
+    }
+    return running[0].id;
+  }
 
   if (explicitDevice) {
     const needle = explicitDevice.toLowerCase();
@@ -557,7 +582,10 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined): 
     : await pickDevice(targetPlatform, explicitDevice);
 
   const projectName = basename(cwd);
-  const buildHint = firstRun ? " (About 15s the first time)" : " (This may take a few seconds)";
+  const firstBuildHint = targetPlatform === 'web'
+    ? ' (About 15s the first time)'
+    : ' (First build may take a minute or two)';
+  const buildHint = firstRun ? firstBuildHint : ' (This may take a few seconds)';
   const buildStart = Date.now();
 
   // Spinner while the app is building
@@ -585,9 +613,10 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined): 
   flutter.stdout.on('data', (data: Buffer) => {
     const lines = data.toString().split('\n');
     for (const line of lines) {
-      // Suppress all Flutter debug noise, but use the first debug service
-      // line as the "app ready" signal — it only appears after the build
-      // finishes and the browser is actually open
+      // Suppress all Flutter debug noise. Multiple platform-specific lines
+      // can mark the app as ready: "Debug service listening" (web),
+      // "Dart VM Service on" (macOS/mobile), "Flutter run key commands"
+      // (universal fallback, fires once the app is interactive).
       if (
         line.includes('Debug service') ||
         line.includes('Dart VM Service') ||
@@ -595,10 +624,23 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined): 
         line.includes('debug mode') ||
         line.includes('linked to the debug service') ||
         line.includes('Launching lib/main.dart') ||
+        line.includes('Syncing files to device') ||
+        line.includes('merged UI and platform thread') ||
+        line.includes('Flutter run key commands') ||
+        line.includes('Hot reload') ||
+        line.includes('Hot restart') ||
+        line.includes('interactive commands') ||
+        line.includes('Detach (terminate') ||
+        line.includes('Clear the screen') ||
+        line.includes('Quit (terminate') ||
         line.includes('localhost') ||
         line.includes('127.0.0.1')
       ) {
-        if (!appReady && line.includes('Debug service listening')) {
+        if (!appReady && (
+          line.includes('Debug service listening') ||
+          line.includes('Dart VM Service on') ||
+          line.includes('Flutter run key commands')
+        )) {
           appReady = true;
           clearInterval(spinner);
           process.stdout.write(`\r\x1b[2K✓ ${projectName} ready\n\n`);
@@ -696,12 +738,153 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined): 
   });
 }
 
+// --- Build (standalone artifacts) ---
+
+// `igni build` produces a distributable artifact with zero runtime dependency
+// on the igni toolchain. Output always lands in ./dist/ so users have one
+// predictable location to share from.
+const BUILD_TARGET_PLATFORM: Record<BuildTarget, Target> = {
+  macos: 'macos',
+  apk: 'android',
+  web: 'web',
+};
+
+function copyBuildArtifact(buildTarget: BuildTarget, projectName: string): string {
+  const distDir = join(cwd, 'dist');
+  mkdirSync(distDir, { recursive: true });
+
+  if (buildTarget === 'macos') {
+    const releaseDir = join(igniDir, 'build', 'macos', 'Build', 'Products', 'Release');
+    const apps = existsSync(releaseDir)
+      ? readdirSync(releaseDir).filter(f => f.endsWith('.app'))
+      : [];
+    if (apps.length === 0) {
+      throw new Error(`No .app found in ${releaseDir}.`);
+    }
+    const src = join(releaseDir, apps[0]);
+    const dst = join(distDir, apps[0]);
+    rmSync(dst, { recursive: true, force: true });
+    cpSync(src, dst, { recursive: true });
+    return dst;
+  }
+
+  if (buildTarget === 'apk') {
+    const src = join(igniDir, 'build', 'app', 'outputs', 'flutter-apk', 'app-release.apk');
+    if (!existsSync(src)) {
+      throw new Error(`No APK found at ${src}.`);
+    }
+    const dst = join(distDir, `${projectName}.apk`);
+    copyFileSync(src, dst);
+    return dst;
+  }
+
+  // web
+  const src = join(igniDir, 'build', 'web');
+  if (!existsSync(src)) {
+    throw new Error(`No web bundle found at ${src}.`);
+  }
+  const dst = join(distDir, 'web');
+  rmSync(dst, { recursive: true, force: true });
+  cpSync(src, dst, { recursive: true });
+  return dst;
+}
+
+function printShareFooter(buildTarget: BuildTarget, artifactPath: string): void {
+  const rel = artifactPath.startsWith(cwd + '/') ? artifactPath.slice(cwd.length + 1) : artifactPath;
+  console.log('');
+  console.log(`✓ Built ${rel}`);
+  console.log('');
+  if (buildTarget === 'macos') {
+    console.log('Double-click to launch. The app is unsigned — on first run, right-click →');
+    console.log('Open and confirm the security dialog. To share, zip the .app:');
+    console.log(`  zip -r ${basename(artifactPath)}.zip ${rel}`);
+  } else if (buildTarget === 'apk') {
+    console.log('Airdrop the .apk to your phone, or email it to yourself, then tap to');
+    console.log('install. You may need to enable "Install unknown apps" for your file');
+    console.log('manager in Android settings.');
+  } else {
+    console.log('Serve the folder with any static host, e.g.:');
+    console.log(`  npx serve ${rel}`);
+  }
+  console.log('');
+}
+
+async function build(buildTgt: BuildTarget): Promise<void> {
+  const initialResult = transpile();
+  if (!initialResult) {
+    console.error('Fix the error above, then run igni build again.');
+    process.exit(1);
+  }
+
+  const platform = BUILD_TARGET_PLATFORM[buildTgt];
+  ensureFlutterProject(platform);
+  syncImages();
+  syncAudio();
+  ensureDependencies(initialResult.dart);
+  mkdirSync(join(igniDir, 'lib'), { recursive: true });
+  writeOutput(initialResult.dart);
+
+  const projectName = basename(cwd);
+
+  // Spinner while the release build compiles. `flutter build --release` can
+  // take several minutes on a cold cache, especially for macOS (cocoapods +
+  // xcodebuild) and Android (gradle). Keep the UI calm.
+  let dots = 0;
+  const spinnerFrames = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏'];
+  const render = () => {
+    process.stdout.write(`\r\x1b[2K${spinnerFrames[dots % spinnerFrames.length]} Building release ${buildTgt} for ${projectName} (may take a few minutes)`);
+  };
+  render();
+  const spinner = setInterval(() => {
+    dots = (dots + 1) % spinnerFrames.length;
+    render();
+  }, 100);
+
+  const flutter = spawn('flutter', ['build', buildTgt, '--release'], {
+    cwd: igniDir,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  // Buffer all Flutter output; we only show it if the build fails, so the
+  // happy path is quiet except for the spinner and the final ✓ line.
+  const logBuffer: string[] = [];
+  flutter.stdout.on('data', (data: Buffer) => logBuffer.push(data.toString()));
+  flutter.stderr.on('data', (data: Buffer) => logBuffer.push(data.toString()));
+
+  const exitCode: number = await new Promise((resolve) => {
+    flutter.on('close', (code) => resolve(code ?? 1));
+  });
+  clearInterval(spinner);
+  process.stdout.write('\r\x1b[2K');
+
+  if (exitCode !== 0) {
+    console.error(`✗ flutter build ${buildTgt} exited with code ${exitCode}`);
+    console.error('');
+    process.stderr.write(logBuffer.join(''));
+    process.exit(exitCode);
+  }
+
+  try {
+    const artifactPath = copyBuildArtifact(buildTgt, projectName);
+    printShareFooter(buildTgt, artifactPath);
+  } catch (err: any) {
+    console.error(`✗ Build completed but artifact could not be copied: ${err.message}`);
+    process.exit(1);
+  }
+}
+
 if (command === 'run') {
-  if (deviceFlag && target === 'web') {
+  if (deviceFlag && (target === 'web' || target === 'macos')) {
     console.error('--device is only valid with `igni run ios` or `igni run android`.');
     process.exit(1);
   }
   run(target, deviceFlag);
+} else if (command === 'build') {
+  if (!buildTarget) {
+    console.error('Usage: igni build <macos|apk|web>');
+    process.exit(1);
+  }
+  build(buildTarget);
 } else if (command === 'new') {
   createNewProject(commandArg);
 } else {
