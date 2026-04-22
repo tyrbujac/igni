@@ -1,8 +1,10 @@
 # Learn Igni
 
+> Tutorial v2.2 · targets Igni v0.11.6
+
 Build your first app, one small step at a time. No programming experience needed.
 
-Every step: save the file (**Cmd+S** on Mac, **Ctrl+S** on Windows) and see the result in the browser. Do this → see that.
+Every part: save the file (**Cmd+S** on Mac, **Ctrl+S** on Windows) and see the result in the browser. Do this → see that.
 
 **If something goes wrong:** if you see red text in the terminal, don't panic — check your spelling and spacing, then save again. Igni cares about two things: the exact letters you type, and how far each line is indented.
 
@@ -10,7 +12,7 @@ Every step: save the file (**Cmd+S** on Mac, **Ctrl+S** on Windows) and see the 
 
 ## Before you start
 
-> **Already set up?** If `igni run` is running and you have an empty `app.igni` open in your editor, you can skip to [Step 1](#step-1-show-text-on-screen).
+> **Already set up?** If `igni run` is running and you have an empty `app.igni` open in your editor, you can skip to [Section 1](#section-1--hello-world).
 
 You'll use three things on your computer:
 
@@ -43,15 +45,21 @@ After a few seconds, a browser window opens showing a counter. Tap **Add** — t
 
 **Leave the terminal window open** the whole time you're doing the tutorial. Every time you save your code, the browser updates automatically. If you close the terminal, the app stops.
 
+**When you're done** (or want to take a break): click into the terminal window and press **Ctrl+C** to stop the server cleanly. You can always start it again later with `igni run`.
+
 ### Open the file you'll be editing
 
 In Cursor: **File → Open Folder**, pick the `learn-igni` folder. On the left you'll see a file called `app.igni` — click it. That's where you'll write your code.
 
-You'll see the starter counter code already in there. **Select everything and delete it** so the file is empty. Now you're ready for Step 1.
+You'll see the starter counter code already in there. **Select everything and delete it** so the file is empty. Now you're ready for Section 1.
 
 ---
 
-## Step 1: Show text on screen
+## Section 1 — Hello World
+
+Your very first app. Three short parts — by the end of them you'll have text on the screen and know how to style it.
+
+### Part 1 — Show text on screen
 
 Type this into your `.igni` file:
 
@@ -71,57 +79,49 @@ Save it. You see **Hello World** in the browser — small, sitting in the top-le
 
 ---
 
-## Step 2: Change the text
+### Part 2 — Change the text, make it a heading
 
 ```igni
 screen Hello:
-  label "Welcome to my app!"
+  label "Welcome to my app!", style: heading
 ```
 
-Change the words inside the double quotes to anything you want. Save. The browser updates instantly.
+Save. You see **Welcome to my app!** — and this time it's noticeably bigger than before.
 
-**What's happening?**
+**What's new?**
 
-- Whatever you put inside the double quotes is what you see on the screen. Try your name, a favourite saying, a joke — anything.
-- The double quotes `" "` matter: they tell Igni "show these exact letters." You'll see *why* quotes matter in Step 4.
+- Change the words inside the double quotes to anything you want — try your name, a favourite saying, a joke. Save. The browser updates instantly.
+- The double quotes `" "` matter: they tell Igni "show these exact letters." You'll see *why* quotes matter in Section 2.
+- `, style: heading` is the new bit. A comma, then `style: heading` — that's what makes the text big. We'll name the pattern properly in Section 4.
 
 **Try this:** edit the text a few different times, saving after each edit. Watch the browser refresh each time.
 
 ---
 
-## Step 3: Show more text
+### Part 3 — Add a second line
 
 ```igni
 screen Hello:
-  label "Hello"
-  label "Welcome to Igni", style: heading
+  label "Welcome to my app!", style: heading
+  label "Made"
 ```
 
-Save. Both lines appear, one below the other, with the second one noticeably bigger. Things stack from top to bottom — just add more lines.
+Save. Both lines appear, one below the other. The first is big (because of `style: heading`), the second is smaller — the normal size. Things stack from top to bottom — just add more lines.
 
 **What's new?**
 
 - You can have as many `label` lines as you want. Each one shows text on the screen, and they appear in order from top to bottom.
-- That `, style: heading` on the second label makes the text bigger. We'll name the pattern in Step 9.
+- The second label has no `, style: heading` — so it renders at normal size. You can mix styled and unstyled labels however you like.
 
 ---
 
-## Step 4: Put something in a box
+## Section 2 — About you
 
-This step has two small beats. The first is weirdly blank — that's the whole point.
+You'll start storing things — your name, your age — and use them to build a personalised greeting. Three parts.
 
-**Beat 1** — just the box:
+### Part 1 — Put something in a box
 
-```igni
-screen Hello:
-  name = "Sam"
-```
-
-Save. The screen is blank. That's expected.
-
-You just made a **box** called `name` and put "Sam" inside it. But you haven't told Igni to *show* the box anywhere, so nothing appears. Boxes exist silently until you use them.
-
-**Beat 2** — now show it:
+In this part you'll make a **variable** — a piece of data with a name — and put a **string** inside it. A string is just some letters that Igni treats as literal text. You've already been making strings since Section 1 — now you'll give one a name you can reuse.
 
 ```igni
 screen Hello:
@@ -129,14 +129,12 @@ screen Hello:
   label name
 ```
 
-Save. Now you see **Sam**.
+Save. You see **Sam**.
 
-**What's new?**
+**What's happening?**
 
 - `name = "Sam"` — this creates a box called `name` holding "Sam". The equals sign `=` means "put this into this box."
 - `label name` — no quotes around `name`, so Igni looks inside the box and shows what's there. That's why you see **Sam**, not the word "name."
-
-**That thing inside the double quotes has a name: it's a string.** A string is just some letters (or numbers, or spaces, or symbols) that Igni treats as literal text. You've been making strings since Step 1.
 
 **Quotes matter.** These two lines look almost the same but do completely different things:
 
@@ -147,105 +145,120 @@ label name
 
 Quotes mean "literal text" — show these exact letters, so you'd see the word **name**. No quotes means "the thing stored under this name" — look inside the box, so you see **Sam**. You'll use both all the time.
 
----
-
-## Step 5: Join things together
-
-Two beats again — start small, then add more.
-
-**Beat 1** — join a label and a box:
+**Now change what's in the box.** Update your code so `name = "Andy"`:
 
 ```igni
 screen Hello:
-  name = "Sam"
+  name = "Andy"
+  label name
+```
+
+Save. The label switches to **Andy**. One line changed, one word on screen changed. You've just seen how a variable works: change the box's contents, and every place that reads the box updates.
+
+---
+
+### Part 2 — Join things together
+
+Two small moves — start small, then add more.
+
+**First, join a label and a box:**
+
+```igni
+screen Hello:
+  name = "Andy"
   label "Hi, I'm " + name
 ```
 
-Save. You see **Hi, I'm Sam**.
+Save. You see **Hi, I'm Andy**.
 
 `+` joins pieces of text together. `"Hi, I'm " + name` sticks the text "Hi, I'm " and whatever is in the `name` box together.
 
-**Beat 2** — add a number:
+**Now add a number:**
 
 ```igni
 screen Hello:
-  name = "Sam"
+  name = "Andy"
   age = 30
 
   label "Hi, I'm " + name
   label "I am " + age + " years old"
 ```
 
-Save. You see **Hi, I'm Sam** and **I am 30 years old**.
+Save. You see **Hi, I'm Andy** and **I am 30 years old**.
 
 **What's new?**
 
-- You can chain more than two pieces: `"I am " + age + " years old"` joins three.
+- You can chain more than two pieces: `"I am " + age + " years old"` joins three. Don't forget each `+` — if you leave one out, Igni will tell you.
 - `age = 30` — this box holds a number, not text. Notice no quotes around `30` — quoted `"30"` would be the text "30", unquoted `30` is the number thirty. Igni treats them differently.
 
 ---
 
-## Step 6: Make it yours
+### Part 3 — Make it yours
 
-See the `"Sam"` and the `30` in your code? Change them to your own real name and age.
+See the `"Andy"` and the `30` in your code? Change them to your own real name and age.
 
-For example, if your name is Alex and you're 42, your code would look like this:
+For example, if your name is Robin and you're 42, your code would look like this:
 
 ```igni
 screen Hello:
-  name = "Alex"
+  name = "Robin"
   age = 42
 
   label "Hi, I'm " + name
   label "I am " + age + " years old"
 ```
 
-Now do the same — but with **your own** name and age (not "Alex" and not "Sam"). Save. The screen updates with your details.
+Now do the same — but with **your own** name and age (not "Robin" and not "Andy"). Save. The screen updates with your details.
 
 That's the first thing you've changed yourself. Everything else in this tutorial works the same way: edit a value, save, see the change.
 
 ---
 
-## Step 7: Make a decision
+## Section 3 — Making decisions
 
-Sometimes you want the app to do one thing in one situation and something else in another. That's what `if` and `else` are for — and we'll build it up one half at a time.
+Apps often need to show one thing in one situation and something else in another. That's what `if` and `else` are for. Two parts.
 
-**Beat 1** — `if` alone:
+### Part 1 — Make a decision
+
+We'll build it up one half at a time.
+
+**First, `if` alone:**
 
 ```igni
 screen Hello:
-  name = "Alex"
+  name = "Robin"
 
-  if name is "Alex":
-    label "Welcome back, Alex!"
+  if name is "Robin":
+    label "Welcome back, Robin!"
 ```
 
-Save. You see **Welcome back, Alex!** Now change `name = "Alex"` to `name = "Taylor"` and save — **the label disappears entirely.** That's what `if` does on its own: show something when the check is true, show nothing when it's false.
+Save. You see **Welcome back, Robin!** Now change `name = "Robin"` to `name = "Taylor"` and save — **the label disappears entirely.** That's what `if` does on its own: show something when the check is true, show nothing when it's false.
 
-**Beat 2** — add `else`:
+**Now add `else`:**
 
 ```igni
 screen Hello:
-  name = "Alex"
+  name = "Robin"
 
-  if name is "Alex":
-    label "Welcome back, Alex!"
+  if name is "Robin":
+    label "Welcome back, Robin!"
   else:
-    label "Nice to meet you"
+    label "Nice to meet you " + name
 ```
 
-Now when the name isn't "Alex", the `else` branch runs and shows **Nice to meet you** instead of nothing. Flip `name` between "Alex" and "Taylor" to watch the message change.
+Now when the name isn't "Robin", the `else` branch runs and shows a personalised greeting instead of nothing. Flip `name` between "Robin" and "Taylor" to watch the message change — first one shows **Welcome back, Robin!**, second shows **Nice to meet you Taylor**.
 
 **What does each part mean?**
 
-- `if name is "Alex":` — asks: "does the `name` box contain Alex?" The colon at the end means "here's what to do if yes."
+- `if name is "Robin":` — asks: "does the `name` box contain Robin?" The colon at the end means "here's what to do if yes."
 - `else:` — means "otherwise." If the answer was no, do this instead.
 - The lines below `if` and `else` are **indented** (pushed to the right). That's how Igni knows they belong to the `if` or the `else`.
 - `is` means "is the same as." Careful: a single `=` *puts something in a box*. `is` *asks if two things are the same*. They look similar, they do completely different jobs.
+- The `else` branch uses `+` to join the "Nice to meet you " text with whatever name is in the box — same pattern you used in Section 2.
 
 ---
 
-## Step 8: Bigger, smaller, equal
+### Part 2 — Bigger, smaller, equal
 
 `is` asks "is this the same as that?" But sometimes you want to ask a different question — "is this **bigger** than that?" or "is this **smaller** than that?" Igni uses the same symbols you learned in maths class:
 
@@ -272,7 +285,34 @@ You see **You are an adult**. Now change `age = 42` to `age = 10`. Save. It swit
 
 ---
 
-## Step 9: Make a button
+## Section 4 — Counter
+
+A new app: a button that counts. Three parts — one screen, one button, then a second button.
+
+### Part 1 — The counter display
+
+```igni
+screen Counter:
+  count = 0
+
+  label count, style: heading
+```
+
+Save. You see a big **0**. That's all — no button yet. We'll build up.
+
+**New app, new screen name.** Our earlier screens were all called `Hello` because they were greetings. This one is a counter, so we call it `Counter`. Screens are named after what the app does. Name yours anything you like — it's just a label for you and anyone reading the code.
+
+**What does each part mean?**
+
+- `count = 0` — a box called `count` that starts at zero.
+- `label count` — shows whatever number is in the `count` box on the screen.
+- `style: heading` — makes the text big. You saw this in Section 1 Part 2.
+
+**Try this:** change `count = 0` to `count = 42`. Save. The big number switches to **42**. Same variable pattern from Section 2 — edit the value, save, see the change.
+
+---
+
+### Part 2 — Add a button
 
 ```igni
 screen Counter:
@@ -284,17 +324,12 @@ screen Counter:
 
 Tap the button. Watch the number go up!
 
-**New app, new screen name.** Our earlier screens were all called `Hello` because they were greetings. This one is a counter, so we call it `Counter`. Screens are named after what the app does. Name yours anything you like — it's just a label for you and anyone reading the code.
+**What's new?**
 
-**What does each part mean?**
-
-- `count = 0` — a box called `count` that starts at zero.
-- `label count` — shows whatever number is in the `count` box on the screen.
-- `style: heading` — makes the text big.
 - `button "Add one"` — a button with the text "Add one" written on it. The text inside the double quotes is what appears on the button.
 - `on tap: count = count + 1` — when someone taps the button, it takes whatever number is in `count`, adds 1, and puts the result back.
 
-**Modifiers.** You've already seen this pattern — now we're naming it. After a primitive name, you can add **modifiers** separated by commas, each shaped like `name: value`. `style: heading` is one modifier. `on tap: ...` is another. You'll see more modifiers in the next steps.
+**Modifiers.** You've already seen this pattern — now we're naming it. After a primitive name, you can add **modifiers** separated by commas, each shaped like `name: value`. `style: heading` is one modifier. `on tap: ...` is another. You'll see more modifiers as you go.
 
 **Try this:** change `+ 1` to `+ 2`. Save. The counter jumps by two each tap.
 
@@ -302,11 +337,9 @@ Tap the button. Watch the number go up!
 
 ---
 
-## Step 10: More buttons side by side
+### Part 3 — A second button, side by side
 
-One button is fine. But related actions feel better when they sit next to each other. A **row** keeps them close — and we'll add buttons one at a time.
-
-**Beat 1** — add a Reset button next to Add one:
+One button is fine. But related actions feel better when they sit next to each other. A **row** keeps them close.
 
 ```igni
 screen Counter:
@@ -315,34 +348,23 @@ screen Counter:
   label count, style: heading
   layout horizontal, gap: small:
     button "Add one", on tap: count = count + 1
-    button "Reset", on tap: count = 0
+    # this button takes the count down
+    button "Remove one", on tap: count = count - 1
 ```
 
-Two buttons in a row. Tap Reset and the count goes back to zero.
+> **Mind the indentation here!** The two `button` lines sit under `layout horizontal, gap: small:` — that's why they end up in the row. They're indented **twice** (two "steps" of spaces) — once because they're inside the screen, once more because they're inside the `layout`. Get the indentation wrong and they'll sit below the row instead of inside it.
+
+Two buttons in a row. Add goes up, Remove goes down.
 
 **What's new?**
 
 - `layout horizontal:` — puts things side by side in a row instead of stacking them. Everything indented under it goes in the row.
 - `gap: small` — a modifier on `layout` that adds a little space between the buttons so they don't squish together.
+- A line starting with `#` is a **note** for you. Igni ignores it when running your app — it's just there for humans reading the code. Use it whenever you want to remind yourself what a line does.
 
-**Beat 2** — add a Remove one button:
+**Try this:** add a third button labelled "+10" that adds ten to the count in one tap. Make sure it sits in the same row as the others.
 
-```igni
-screen Counter:
-  count = 0
-
-  label count, style: heading
-  layout horizontal, gap: small:
-    button "Add one", on tap: count = count + 1
-    button "Remove one", on tap: count = count - 1
-    button "Reset", on tap: count = 0
-```
-
-Three buttons in a row. Add goes up, Remove goes down, Reset goes to zero. Same row, same shape — we just added another `button` line.
-
-**Try this:** add a fourth button labelled "+10" that adds ten to the count in one tap. Make sure it sits in the same row as the others.
-
-**Remember Step 1?** That Hello World sitting lonely in the top-left corner. Layout is how you fix it. Replace everything in your file with this:
+**Remember Section 1?** That Hello World sitting lonely in the top-left corner. Layout is how you fix it. Replace everything in your file with this:
 
 ```igni
 screen Hello:
@@ -354,19 +376,20 @@ Save. Same text, completely different feeling.
 
 ---
 
-## Step 11: Let someone type
+## Section 5 — Greeter
 
-New app: a greeter that says hello to whoever types their name.
+A third app: a greeter that says hello to whoever types their name. Three parts.
+
+### Part 1 — Let someone type
 
 ```igni
 screen Greeter:
   name = ""
 
   input bind: name, placeholder: "What is your name?"
-  label "Hello, " + name
 ```
 
-Type your name into the text box. Watch the greeting update as you type — same reactivity as Step 9: the `name` box changes, the screen re-runs, the label redraws.
+Type your name into the text box. You'll see your letters appear inside the box as you type — but nothing else happens yet. That's fine. We'll add the greeting in the next part.
 
 **What does each part mean?**
 
@@ -378,27 +401,47 @@ Type your name into the text box. Watch the greeting update as you type — same
 
 ---
 
-## Step 12: Checkpoint — combine what you know
-
-Let's put Steps 7 and 11 together. A text box that greets you — but politely asks for your name when you haven't typed anything yet.
+### Part 2 — Greet them back
 
 ```igni
 screen Greeter:
   name = ""
 
   input bind: name, placeholder: "What is your name?"
+  label "Hello, " + name
+```
 
-  if name is empty:
-    label "Type your name above"
-  else:
-    label "Hello, " + name
+Type your name now. Watch the greeting update **as you type** — letter by letter. Same reactivity as Section 4: the `name` box changes, the screen re-runs, the label redraws.
+
+**What's new?**
+
+- The `label` uses the same `+` pattern you learned in Section 2 to join the word "Hello, " with whatever is in the `name` box.
+- Delete everything in the text box — the greeting becomes just "Hello, " with nothing after. That's because `name` is empty again.
+
+---
+
+### Part 3 — Checkpoint
+
+Let's put Section 3 and this section together. A text box that greets you — but politely asks for your name when you haven't typed anything yet.
+
+```igni
+screen Greeter:
+  name = ""
+
+  layout vertical, gap: large:
+    input bind: name, placeholder: "What is your name?"
+
+    if name is empty:
+      label "Type your name above"
+    else:
+      label "Hello, " + name
 ```
 
 When you open the page, you see "Type your name above." Start typing — the hint disappears and is replaced by "Hello, [your name]."
 
 **What's happening?**
 
-- The input writes into the `name` box as you type.
+- `layout vertical, gap: large:` — wraps the input and the label, with a comfortable gap between them. That's the empty space that separates the text box from the message.
 - `if name is empty` checks: "is the name box still empty?" `is empty` is a shortcut Igni has for "has no content yet" — handy for boxes that start as `""`.
 - The screen re-decides which label to show every time `name` changes.
 
@@ -408,16 +451,16 @@ That's reactivity again — no extra glue, no wiring. If a box changes and a scr
 
 ---
 
-## Step 13: Use a function
+## Section 6 — ScoreBoard
 
 A **function** is a named list of steps. You reach for one when:
 
 - The same sequence of steps would appear in two different buttons, **or**
 - A single button does several things and you want to give that combination a name.
 
-Let's make a scoreboard. We'll build it up one function at a time.
+Three parts — we'll build it up one function at a time.
 
-**Beat 1** — just a Win button:
+### Part 1 — Win button
 
 ```igni
 screen ScoreBoard:
@@ -435,7 +478,9 @@ screen ScoreBoard:
 
 Tap **Win** — the score goes up and "Nice one!" appears. One button, one function, two things happening inside it: increase the score AND set the message. That's the "give the combination a name" reason for reaching for a function.
 
-**Beat 2** — add a Lose button:
+---
+
+### Part 2 — Add Lose button
 
 ```igni
 screen ScoreBoard:
@@ -466,37 +511,87 @@ Second button, second function. Each one does its own combination of steps. Butt
 - Inside the function, each line is one step. `win()` does two things: increases the score AND changes the message.
 - Functions go at the bottom of the screen, after all the labels and buttons.
 
-**Try this:** add a `tie()` function that sets `message = "Draw."` without changing the score. Wire a third button in the same row to run it.
+---
+
+### Part 3 — A Reset button
+
+After a few rounds you want to start over. Rather than editing `score = 0` in your code by hand every time, add a Reset button that does it for you.
+
+```igni
+screen ScoreBoard:
+  score = 0
+  message = ""
+
+  label score, style: heading
+  label message
+  layout horizontal, gap: small:
+    button "Win", on tap: win()
+    button "Lose", on tap: lose()
+  button "Reset", on tap: reset()
+
+  win():
+    score = score + 1
+    message = "Nice one!"
+
+  lose():
+    score = score - 1
+    message = "Try again!"
+
+  reset():
+    score = 0
+    message = ""
+```
+
+Tap Win a few times, Lose once, then tap Reset — everything goes back to zero and the message clears.
+
+**What's new?**
+
+- A third function `reset()` that sets both boxes back to their starting values. Reset is a **different kind** of button — it doesn't score, it clears state. That's why we place it on its own line, below the Win/Lose row, not alongside them.
+- Notice the pattern: three buttons, three functions, each function does its one job. That's why functions are useful — each one has a name that tells you what it does.
+
+**Try this:** add a `tie()` function that sets `message = "Draw."` without changing the score. Wire a fourth button in the Win/Lose row to run it.
 
 ---
 
-## Step 14: True and false
+## Section 7 — Weather
 
-One more thing before we build something real. You've worked with text ("Alex") and numbers (42). There's a third kind of thing: **yes-or-no values**, called `true` and `false`.
+One more concept before we build something real. You've worked with text ("Robin") and numbers (42). There's a third kind of thing: **yes-or-no values**, called `true` and `false`. Boxes that hold one of those two answers are the state of a switch — is it on, or off? The rest of the screen can then react to that switch.
 
-```igni
-rolled = false     # no, not yet
-rolled = true      # yes, it happened
-```
+Four parts — we'll build a little weather app, starting simple.
 
-Boxes holding `true` or `false` are useful with `if`. Unlike numbers, you don't need a comparison — you just ask the box directly:
+### Part 1 — True and false
 
 ```igni
-if rolled:
-  label "You rolled!"
-else:
-  label "Not yet"
+screen Weather:
+  raining = true
+
+  label "raining is " + raining
+
+  if raining:
+    label "Bring an umbrella"
 ```
 
-`if rolled:` reads as "if rolled is true." No `is true` needed; the box itself is the answer.
+Save. You see **raining is true** and **Bring an umbrella**.
 
-Try it now — a weather app, built up in three small steps.
+**What's new?**
 
-**Beat 1** — one boolean, simple if/else:
+- `raining = true` — a box holding the value `true`. No quotes around `true` — it's not text, it's a yes-or-no value. The only two possible values are `true` and `false`.
+- `label "raining is " + raining` — this prints the current state of the box. The `+` joins the text "raining is " with whatever `raining` currently is. Handy for watching what your app thinks while you're developing it.
+- `if raining:` — reads as "if raining is true." Unlike numbers, you don't need a comparison — the box itself is the answer.
+
+**Try this:** change `raining = true` to `raining = false`. Save. The first label switches to **raining is false**. The umbrella message **disappears entirely** — because the `if` check was false, and there's no `else` yet. We'll add one next.
+
+---
+
+### Part 2 — Add else
+
+Keep `raining = false` from the try-this above, and add an `else:` branch:
 
 ```igni
 screen Weather:
   raining = false
+
+  label "raining is " + raining
 
   if raining:
     label "Bring an umbrella"
@@ -504,14 +599,21 @@ screen Weather:
     label "Enjoy the sun"
 ```
 
-Save — you see **Enjoy the sun**. Change `raining = false` to `raining = true` and save → **Bring an umbrella**. One true-or-false box, two messages.
+Save → **raining is false** and **Enjoy the sun**. The `else` branch fires when the `if` check is false. Flip `raining = true` again — you're back to the umbrella message. One switch, two messages, controlled by `else`.
 
-**Beat 2** — add snowing + an `else if`:
+---
+
+### Part 3 — Add another switch with `else if`
+
+What if it's not raining, but it's snowing? You need a second switch.
 
 ```igni
 screen Weather:
   raining = false
-  snowing = false
+  snowing = true
+
+  label "raining is " + raining
+  label "snowing is " + snowing
 
   if raining:
     label "Bring an umbrella"
@@ -521,14 +623,29 @@ screen Weather:
     label "Enjoy the sun"
 ```
 
-Flip `snowing = true` (keep `raining = false`). Save → **Snow day**. `else if` lets you check another thing if the first was false — like asking a follow-up question. You can chain as many as you need.
+Save → **raining is false**, **snowing is true**, and **Snow day**. The `if raining:` check was false, so Igni tried the next one: `else if snowing:` — true — so that label showed up.
 
-**Beat 3** — combine both with `and`:
+**What's new?**
+
+- A new box `snowing = true` sits under `raining = false`.
+- A second visualisation label shows the snowing state.
+- A new branch `else if snowing:` sits between `if raining:` and `else:`. `else if` lets you check another thing if the first was false — like asking a follow-up question. You can chain as many as you need.
+
+**Try this:** flip `snowing = false`. Save → both visualisation labels now say "false", and the final message is **Enjoy the sun** (both checks failed, `else` wins).
+
+---
+
+### Part 4 — Combine with `and`
+
+What about sleet — raining AND snowing at the same time? Use `and`:
 
 ```igni
 screen Weather:
-  raining = false
-  snowing = false
+  raining = true
+  snowing = true
+
+  label "raining is " + raining
+  label "snowing is " + snowing
 
   if raining and snowing:
     label "Sleet! Bundle up."
@@ -540,23 +657,23 @@ screen Weather:
     label "Enjoy the sun"
 ```
 
-Now flip both `raining = true` and `snowing = true`. Save → **Sleet! Bundle up.**
+Save → **Sleet! Bundle up.** Both `raining` and `snowing` are true, so the first check wins.
 
-**What's new in Beat 3?**
+**What's new?**
 
 - **`and` combines two checks.** `raining and snowing` is only true when *both* are true. Use it whenever "both things must be true" matters.
 
-You'll use this shape in the very next step — the dice roller needs a `rolled = false` box to track whether the player has tapped Roll yet, so the screen can say "Tap Roll to start!" before the first roll and "You rolled: 4" afterward.
+You'll use this shape in the very next section — the dice roller needs a `rolled = false` box to track whether the player has tapped Roll yet, so the screen can say "Tap Roll to start!" before the first roll and "You rolled: 4" afterward.
 
 **Try this:** add a third box `sunny = true` and an `else if sunny:` branch that says "Put on sunglasses!" Think about where it fits in the chain.
 
 ---
 
-## Step 15: Build a dice roller
+## Section 8 — Dice Roller
 
-You know enough. Let's build something real — four small beats.
+You know enough. Let's build something real — four small parts.
 
-**Beat 1** — set up the state:
+### Part 1 — Set up the state
 
 ```igni
 screen DiceRoller:
@@ -564,9 +681,11 @@ screen DiceRoller:
   rolled = false
 ```
 
-Save. Blank screen — we haven't added any UI yet. `result` is the box for the dice number (starts at 0). `rolled` is the true-or-false box from Step 14 — tracks whether the player has tapped Roll yet.
+Save. Blank screen — we haven't added any UI yet. `result` is the box for the dice number (starts at 0). `rolled` is the true-or-false box from Section 7 — tracks whether the player has tapped Roll yet.
 
-**Beat 2** — add the heading:
+---
+
+### Part 2 — Add the heading
 
 ```igni
 screen DiceRoller:
@@ -579,7 +698,9 @@ screen DiceRoller:
 
 Now you see the title. `layout vertical, gap: medium, padding: large, align: center:` stacks things top to bottom with three modifiers controlling spacing: `gap` between items, `padding` around the edges, `align: center` to centre everything.
 
-**Beat 3** — show the result (or a "tap to start" prompt):
+---
+
+### Part 3 — Show the result or prompt
 
 ```igni
 screen DiceRoller:
@@ -594,11 +715,16 @@ screen DiceRoller:
       label result, style: heading
     else:
       label "Tap Roll to start!"
+      label "—", style: heading
 ```
 
-Save — you see **Tap Roll to start!** because `rolled = false`. Flip `rolled = true` by hand and save → you see **You rolled:** and **0**. `if rolled:` reads as "if the player has rolled, show the result; otherwise show the prompt."
+Save — you see **Tap Roll to start!** and a large dash **—** below it because `rolled = false`. Flip `rolled = true` by hand and save → you see **You rolled:** and **0**. `if rolled:` reads as "if the player has rolled, show the number; otherwise show the prompt and a dash placeholder."
 
-**Beat 4** — add the Roll button + the `roll()` function:
+**Why the dash?** The `if` branch shows a heading-sized number. We put a heading-sized dash in the `else` branch too, so both branches take the same vertical space. When you actually tap Roll in Part 4, nothing below will jump around.
+
+---
+
+### Part 4 — Add Roll button + function
 
 ```igni
 screen DiceRoller:
@@ -613,6 +739,7 @@ screen DiceRoller:
       label result, style: heading
     else:
       label "Tap Roll to start!"
+      label "—", style: heading
 
     button "Roll", on tap: roll()
 
@@ -621,12 +748,12 @@ screen DiceRoller:
     rolled = true
 ```
 
-Tap **Roll** — a number between 1 and 6 appears. Tap again for a new number!
+Tap **Roll** — a number between 1 and 6 appears where the dash was. Tap again for a new number. The Roll button stays exactly where it was — that's the dash placeholder earning its keep.
 
 - `random(1, 6)` — picks a random number between 1 and 6, like rolling a real dice.
 - `rolled = true` — after the first roll, flip the box so the screen shows the number instead of the prompt.
 
-That's a working dice roller — in 16 lines. You built an app!
+That's a working dice roller — in 17 lines. You built an app!
 
 **Try this:** change `random(1, 6)` to `random(1, 20)` — you've got a D20 for tabletop games. Or try `random(1, 100)` for a "guess my number" game.
 
@@ -639,11 +766,12 @@ That's a working dice roller — in 16 lines. You built an app!
 | `screen Name:` | Creates a page |
 | `label "text"` | Shows text on screen |
 | `label name` | Shows whatever is in the `name` box |
-| `name = "Alex"` | Creates a box with text inside |
+| `label "text", style: heading` | Shows text at heading size |
+| `name = "Robin"` | Creates a box with text inside |
 | `count = 0` | Creates a box with a number inside |
 | `rolled = false` | Creates a box with true or false inside |
 | `"text" + name` | Joins things together |
-| `age >= 18`, `name is "Alex"` | Asks a question |
+| `age >= 18`, `name is "Robin"` | Asks a question |
 | `if / else if / else:` | Branches |
 | `a and b` | Both must be true |
 | `button "text", on tap:` | A button that does something when tapped |
@@ -652,14 +780,15 @@ That's a working dice roller — in 16 lines. You built an app!
 | `layout vertical, gap:, padding:` | Stacks things with spacing |
 | `function_name():` | A named list of steps |
 | `random(1, 6)` | Picks a random number |
+| `# anything` | A note for you; Igni ignores it |
 
 ## What to build next
 
 You know enough Igni now to build real things. Some ideas to try:
 
-- **A tip calculator.** Input for the bill amount, a slider for the tip percentage, a label showing the total. Uses Steps 8, 11, and the `+` / `*` arithmetic from Step 5.
+- **A tip calculator.** Input for the bill amount, a slider for the tip percentage, a label showing the total. Uses Section 3 Part 2 comparisons, Section 5 inputs, and the `+` / `*` arithmetic from Section 2.
 - **A shopping list.** A text input for new items, a button to add them, a label counting how many you've got. Next step: learn about **lists** in the cheatsheet.
-- **A quiz game.** A question, four buttons for answers, a score that goes up when the right one is tapped. Uses Steps 7, 9, and 13.
+- **A quiz game.** A question, four buttons for answers, a score that goes up when the right one is tapped. Uses Sections 3, 4, and 6.
 - **Rock Paper Scissors.** You've got almost everything you need — except function parameters (one new concept). Starter:
 
   ```igni
