@@ -1,7 +1,11 @@
 # LOC ratio benchmark — Igni vs Flutter
 
-**Date:** 2026-04-22
+**Date:** 2026-04-22 (extended same day with mi-card row — see *Update log* below)
 **Scope:** One-shot measurement, not an ongoing metric. Re-run when the spec changes shape (e.g. string interpolation lands) or when a new flagship test app appears.
+
+## Update log — 2026-04-22 late session
+
+Added `mi-card` row (Angela Yu's MiCard identity-card app, built fresh in Igni via `igni new mi-card`). See `docs/private/77_micard_dogfood.md` for the session narrative and spec-gap findings. Summary finding: the "ratio grows with app size" framing from the original three rows was too simple — MiCard is *tiny* (15 Igni LOC) but compresses *aggressively* (5.3×) against hand-Flutter because the app is styling-heavy rather than state-heavy. **App category (static-layout vs state-driven) matters as much as size.**
 
 ## Methodology
 
@@ -18,26 +22,28 @@ All counts are lines, not bytes. Blank lines and import lines are included on bo
 | App      | Igni src | Transpiled Dart | Hand Dart (est.) | Igni:hand  | Igni:transpiled |
 |----------|---------:|----------------:|-----------------:|-----------:|----------------:|
 | dicee    |    13    |       68        |       ~30        |    2.3×    |     5.2×        |
+| mi-card  |    15    |       95        |       ~80        |    5.3×    |     6.3×        |
 | quizzler |    58    |      198        |       ~80        |    1.4×    |     3.4×        |
 | bmi      |    97    |      423        |      ~380        |    3.9×    |     4.4×        |
 
 ## Observations
 
-**The compression factor is not constant.** Igni:hand-Flutter ranges from 1.4× on quizzler to 3.9× on bmi. Three drivers:
+**The compression factor is not constant — and it's not a clean function of app size.** Igni:hand-Flutter ranges from 1.4× on quizzler to 5.3× on mi-card, and those data points are at opposite ends of the size axis (tiny static vs medium stateful). **App category matters at least as much as app size.** Four drivers:
 
-1. **Widget extraction amortizes at scale.** Hand-Flutter bmi extracts 4–5 reusable widgets across 6–7 files; each one carries a `StatelessWidget` + `build()` + constructor-with-named-parameters boilerplate block. Igni's `component` keyword collapses each to one line of declaration plus the body. On large apps with many reused blocks, this compounds.
-2. **Simple UI ≠ big compression.** Quizzler is one screen with a question model; hand-Flutter gets away with ~80 lines and Igni still needs ~58 because the question data (10 objects) dominates the LOC of both versions.
-3. **Mechanical transpile is verbose by design.** The transpiler always wraps a `MaterialApp`, imports unconditionally, and emits a full `StatefulWidget`/`State` pair for every `screen`. A human would pick `StatelessWidget` for anything stateless. That's why the Igni:transpiled ratio (3.4–5.2×) is consistently larger than Igni:hand.
+1. **Static-layout apps compress hardest.** MiCard (15 Igni LOC → ~80 hand Flutter, 5.3×) is all styling: `TextStyle`, `Colors.teal.shade100`, `Divider(color: ...)`, `Card(margin: ...)`, `ListTile(leading: ..., title: ...)`. Angela's reference spells out every `fontSize` / `fontFamily` / `color` on every `Text`. Igni collapses all of that into style tokens (`color: teal`, `style: heading`) and layout modifiers (`background: card, rounded: medium`). Less logic, more styling → bigger compression.
+2. **Widget extraction amortizes at scale.** Hand-Flutter bmi extracts 4–5 reusable widgets across 6–7 files; each one carries a `StatelessWidget` + `build()` + constructor-with-named-parameters boilerplate block. Igni's `component` keyword collapses each to one line of declaration plus the body. On large apps with many reused blocks, this compounds.
+3. **Simple UI ≠ big compression when data dominates.** Quizzler is one screen with a question model; hand-Flutter gets away with ~80 lines and Igni still needs ~58 because the 10-question data list dominates the LOC of both versions. Questions are the same object literals on both sides.
+4. **Mechanical transpile is verbose by design.** The transpiler always wraps a `MaterialApp`, imports unconditionally, and emits a full `StatefulWidget`/`State` pair for every `screen`. A human would pick `StatelessWidget` for anything stateless. That's why the Igni:transpiled ratio (3.4–6.3×) is consistently larger than Igni:hand.
 
-**The "5 lines instead of 50" pitch is roughly half-right.** For tiny apps (counter, dicee) the 10× compression claim against transpiler output holds. Against idiomatic hand-Flutter on realistic apps (bmi), the real number is closer to 3–4×. Still a strong result, but worth citing accurately.
+**The "5 lines instead of 50" pitch is roughly half-right — and depending on the app, closer to fully-right.** For styling-heavy static apps (mi-card), 5.3× vs hand is genuine. For small stateful apps (dicee), 2.3×. For data-heavy screens (quizzler), 1.4×. The average doesn't tell the story — the distribution does.
 
-**Where Igni actually saves:** the fixed boilerplate cost per "screen that does something." A hand-Flutter screen is ~40–60 lines of ceremony (imports, class declaration, state class, build method) before any UI logic. Igni has ~1 line of ceremony (`screen Name:`). So Igni wins most on apps with many small screens — and wins least on apps with one long screen plus heavy data content.
+**Where Igni actually saves:** (a) the fixed boilerplate cost per "screen that does something" (~40–60 hand-Flutter lines of ceremony collapse to Igni's `screen Name:` plus body), and (b) the per-widget styling overhead (`TextStyle(fontSize: 40, color: Colors.white, fontWeight: bold, fontFamily: 'Pacifico')` ⇒ `style: heading` plus whatever else applies). Igni wins most on apps with many small screens, and apps with heavy explicit styling. Igni wins least on apps dominated by data literals.
 
 ## What to cite in the dissertation
 
-- **Against transpiled Dart: 3–5× compression on 3 apps of increasing size** (13 → 97 Igni LOC). This is the mechanical syntax-budget claim and it holds.
-- **Against idiomatic hand-Flutter: 1.4–3.9×.** Widely variable; cite the range, not a single number.
-- **Growth shape:** Igni:hand ratio *increases* with app size (1.4× → 3.9× across these three). That's the interesting finding — the case for Igni gets *stronger* as apps grow, because hand-Flutter's boilerplate-per-component scales worse than Igni's.
+- **Against transpiled Dart: 3.4–6.3× compression on 4 apps** (13 → 97 Igni LOC, static + stateful + data-heavy). This is the mechanical syntax-budget claim and it holds strongly across app classes.
+- **Against idiomatic hand-Flutter: 1.4–5.3×.** Cite the range, not a single number, and explain the variance — styling-heavy static apps at the top end, data-heavy apps at the bottom.
+- **App category is a first-class driver.** Don't frame the compression ratio as a function of size alone. The mi-card row at 15 LOC compresses *harder* than bmi at 97 LOC because static styling is where Igni's style-token abbreviation pays off most. This is a more interesting finding than the original "grows with size" framing — size and category together determine the result.
 
 ## What this doesn't measure (acknowledged gaps)
 
