@@ -5,6 +5,7 @@ import {
   Property, EventHandler, FunctionDef, Statement, Expr, Ident, IsExpr, NodeBase,
   LambdaExpr, EqualityExpr, IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
   SourceLocation,
+  ThemeBlock, ThemeTextTokenName,
 } from './ast.js';
 import {
   findProp, resolveIdentName, resolveDesignToken, resolveStyle,
@@ -12,6 +13,7 @@ import {
   inferType, isStringExpr, substituteLambdaParam, isImageBackground,
   generateIconLookupHelper, isDarkBackgroundExpr, generateStyleValueResolvers,
   isColorTokenName, isStyleValueName, isStyleValueExpr,
+  resolveFontMethod,
 } from './codegen-helpers.js';
 import { TranspileError } from './errors.js';
 
@@ -120,6 +122,8 @@ export class CodeGenerator {
       s.body.some(item => item.type === 'VariableDecl' && item.value.type === 'FunctionCall' && item.value.name === 'locate')
     );
 
+    const needsGoogleFonts = !!program.theme?.text.some(t => t.font);
+
     let code = `import 'package:flutter/material.dart';\n`;
     if (this.hasFetch) {
       code += `import 'package:http/http.dart' as http;\n`;
@@ -133,6 +137,9 @@ export class CodeGenerator {
     }
     if (hasLocate) {
       code += `import 'package:geolocator/geolocator.dart';\n`;
+    }
+    if (needsGoogleFonts) {
+      code += `import 'package:google_fonts/google_fonts.dart';\n`;
     }
     code += '\n';
 
@@ -153,7 +160,8 @@ export class CodeGenerator {
     // explicit neutral off-white so the pink-seeded surface doesn't tint the
     // viewport. Brand colour stays as ColorScheme.primary for ElevatedButton.
     const scaffoldBg = anyDarkScreen ? '' : ', scaffoldBackgroundColor: const Color(0xFFFAFAFA)';
-    const igniTheme = `theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)${brightness})${scaffoldBg}, textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 17, height: 1.5)))`;
+    const textTheme = this.buildTextTheme(program.theme);
+    const igniTheme = `theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)${brightness})${scaffoldBg}, textTheme: ${textTheme})`;
     if (this.hasShared) {
       code += this.genSharedState(program.shared) + '\n';
       code += `void main() {\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, ${igniTheme}, home: ${firstName}Screen()),\n  ));\n}\n`;
@@ -180,6 +188,51 @@ export class CodeGenerator {
       return { dart: code, lineMap: [] };
     }
     return this.stripLineMarkers(code);
+  }
+
+  // Build the MaterialApp's `textTheme`. Patch semantics — omitted tokens keep
+  // the existing hardcoded default (bodyMedium with fontSize 17, height 1.5).
+  //
+  // The no-theme branch must be byte-identical to Igni's pre-v0.12.1 output so
+  // all existing diff fixtures pass unchanged. The has-theme branch generates a
+  // non-const TextTheme (GoogleFonts.*() isn't const) with fontFamily patches
+  // on the slots Igni's STYLE_MAP reads from:
+  //   heading  → headlineLarge + mirror to headlineSmall (so `heading.small` inherits)
+  //   body     → bodyLarge + bodyMedium (bodyMedium is the default unstyled label)
+  //   caption  → bodySmall
+  //
+  // Using `GoogleFonts.x().fontFamily` (a String) rather than `GoogleFonts.x()`
+  // (a TextStyle) lets us compose the family with the existing size/height
+  // defaults inside a single TextStyle literal.
+  private buildTextTheme(theme?: ThemeBlock): string {
+    const baseBodyMedium = 'bodyMedium: TextStyle(fontSize: 17, height: 1.5)';
+    if (!theme || !theme.text.some(t => t.font)) {
+      return `const TextTheme(${baseBodyMedium})`;
+    }
+    const fontOf = (name: ThemeTextTokenName): string | undefined =>
+      theme.text.find(t => t.token === name)?.font;
+    const headingFont = fontOf('heading');
+    const bodyFont = fontOf('body');
+    const captionFont = fontOf('caption');
+    const family = (token: string) => `GoogleFonts.${resolveFontMethod(token)}().fontFamily`;
+
+    const parts: string[] = [];
+    parts.push(
+      bodyFont
+        ? `bodyMedium: TextStyle(fontSize: 17, height: 1.5, fontFamily: ${family(bodyFont)})`
+        : baseBodyMedium,
+    );
+    if (headingFont) {
+      parts.push(`headlineLarge: TextStyle(fontFamily: ${family(headingFont)})`);
+      parts.push(`headlineSmall: TextStyle(fontFamily: ${family(headingFont)})`);
+    }
+    if (bodyFont) {
+      parts.push(`bodyLarge: TextStyle(fontFamily: ${family(bodyFont)})`);
+    }
+    if (captionFont) {
+      parts.push(`bodySmall: TextStyle(fontFamily: ${family(captionFont)})`);
+    }
+    return `TextTheme(${parts.join(', ')})`;
   }
 
   private genSharedState(vars: VariableDecl[]): string {

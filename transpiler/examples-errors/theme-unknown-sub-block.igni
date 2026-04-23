@@ -1,0 +1,6 @@
+theme:
+  spacing:
+    small: 8
+
+screen Demo:
+  label "hi"

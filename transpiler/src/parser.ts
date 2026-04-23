@@ -9,7 +9,13 @@ import {
   IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
   ListLit, ObjectLit, ObjectUpdate, FieldAccess, IndexAccess,
+  ThemeBlock, ThemeTextToken, ThemeTextTokenName,
 } from './ast.js';
+
+const FONT_TOKENS = new Set([
+  'pacifico', 'inter', 'source_sans', 'merriweather', 'lora', 'fira_code',
+]);
+const THEME_TEXT_TOKENS: Set<ThemeTextTokenName> = new Set(['heading', 'body', 'caption']);
 
 export class Parser {
   private tokens: Token[];
@@ -26,6 +32,7 @@ export class Parser {
     const screens: Screen[] = [];
     const components: ComponentDef[] = [];
     const shared: VariableDecl[] = [];
+    let theme: ThemeBlock | undefined;
     while (!this.check(TokenType.EOF)) {
       const posBefore = this.pos;
       try {
@@ -33,6 +40,16 @@ export class Parser {
           components.push(this.parseComponentDef());
         } else if (this.check(TokenType.Shared)) {
           shared.push(...this.parseSharedBlock());
+        } else if (this.check(TokenType.Theme)) {
+          const next = this.parseThemeBlock();
+          if (theme) {
+            this.errors.push(new TranspileError(
+              'Duplicate `theme:` block — only one theme block is allowed per program.',
+              next.loc!.line, next.loc!.column,
+            ));
+          } else {
+            theme = next;
+          }
         } else {
           screens.push(this.parseScreen());
         }
@@ -49,7 +66,7 @@ export class Parser {
     if (this.errors.length > 0) {
       throw new AggregateTranspileError(this.errors);
     }
-    return { type: 'Program', screens, components, shared, loc: this.loc(start) };
+    return { type: 'Program', screens, components, shared, theme, loc: this.loc(start) };
   }
 
   // Belt-and-braces: every catch loop that calls synchronizeTopLevel or
@@ -95,14 +112,15 @@ export class Parser {
   }
 
   // Skip ahead until we find the start of a new top-level declaration
-  // (`screen`, `component`, or `shared`) or EOF. Used to recover after a
+  // (`screen`, `component`, `shared`, or `theme`) or EOF. Used to recover after a
   // header-level parse failure so remaining declarations can still be parsed.
   private synchronizeTopLevel(): void {
     while (!this.check(TokenType.EOF)) {
       if (
         this.check(TokenType.Screen) ||
         this.check(TokenType.Component) ||
-        this.check(TokenType.Shared)
+        this.check(TokenType.Shared) ||
+        this.check(TokenType.Theme)
       ) return;
       this.advance();
     }
@@ -130,6 +148,161 @@ export class Parser {
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
     return vars;
+  }
+
+  private parseThemeBlock(): ThemeBlock {
+    const start = this.current();
+    this.consume(TokenType.Theme, 'Expected "theme"');
+    this.consume(TokenType.Colon, 'Expected ":"');
+    this.consume(TokenType.Newline, 'Expected newline');
+    this.consume(TokenType.Indent, 'Expected indent');
+    let text: ThemeTextToken[] | undefined;
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      const posBefore = this.pos;
+      try {
+        const sub = this.current();
+        const subName = sub.value;
+        if (sub.type !== TokenType.Identifier) {
+          this.error(`Expected theme sub-block name, got "${subName}"`);
+        }
+        if (subName === 'text') {
+          if (text !== undefined) this.error('Duplicate `text:` sub-block in theme');
+          text = this.parseThemeTextSubBlock();
+        } else if (subName === 'spacing' || subName === 'color') {
+          this.error(
+            `theme \`${subName}:\` sub-block is not live in v0.12.1 — only \`text:\` is supported. ` +
+            `See spec v0.12.1 §Styling.`
+          );
+        } else {
+          this.error(`Unknown theme sub-block "${subName}" — only \`text:\` is supported in v0.12.1.`);
+        }
+      } catch (e) {
+        if (e instanceof TranspileError) {
+          this.errors.push(e);
+          this.synchronizeThemeLine();
+        } else {
+          throw e;
+        }
+      }
+      this.assertProgress(posBefore);
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent');
+    return { type: 'ThemeBlock', text: text ?? [], loc: this.loc(start) };
+  }
+
+  // Recovery inside theme/text sub-blocks: advance past the current line, then
+  // — if the line opened a nested block — skip that block's body too. Does not
+  // cross the outer block's Dedent (structural boundary); synchronizeLine would
+  // happily walk past it and corrupt the outer position.
+  private synchronizeThemeLine(): void {
+    while (
+      !this.check(TokenType.EOF) &&
+      !this.check(TokenType.Dedent) &&
+      !this.check(TokenType.Newline)
+    ) {
+      this.advance();
+    }
+    if (this.check(TokenType.Newline)) this.advance();
+    if (this.check(TokenType.Indent)) {
+      this.advance();
+      let depth = 1;
+      while (depth > 0 && !this.check(TokenType.EOF)) {
+        if (this.check(TokenType.Indent)) depth++;
+        else if (this.check(TokenType.Dedent)) depth--;
+        if (depth > 0) this.advance();
+        else { this.advance(); break; }
+      }
+    }
+  }
+
+  private parseThemeTextSubBlock(): ThemeTextToken[] {
+    this.consume(TokenType.Identifier, 'Expected "text"'); // already verified by caller
+    this.consume(TokenType.Colon, 'Expected ":"');
+    this.consume(TokenType.Newline, 'Expected newline');
+    this.consume(TokenType.Indent, 'Expected indent');
+    const tokens: ThemeTextToken[] = [];
+    const seen = new Set<string>();
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      const posBefore = this.pos;
+      try {
+        const nameTok = this.current();
+        if (nameTok.type !== TokenType.Identifier) {
+          this.error(`Expected theme text token name, got "${nameTok.value}"`);
+        }
+        const name = nameTok.value;
+        this.advance();
+        if (this.check(TokenType.Dot)) {
+          this.error(
+            `theme text token \`${name}.small\` is not a theme entry — \`heading.small\` is a size variant ` +
+            `that inherits from \`heading\`. Only \`heading\`, \`body\`, \`caption\` belong in the theme.`
+          );
+        }
+        if (!THEME_TEXT_TOKENS.has(name as ThemeTextTokenName)) {
+          this.error(
+            `Unknown theme text token \`${name}\` — only \`heading\`, \`body\`, \`caption\` are supported.`
+          );
+        }
+        if (seen.has(name)) {
+          this.error(`Duplicate theme text token \`${name}\`.`);
+        }
+        seen.add(name);
+        this.consume(TokenType.Colon, 'Expected ":"');
+        const props: Property[] = [this.parseProperty()];
+        while (this.check(TokenType.Comma)) {
+          this.advance();
+          props.push(this.parseProperty());
+        }
+        this.consume(TokenType.Newline, 'Expected newline');
+
+        let font: string | undefined;
+        for (const p of props) {
+          const pLoc = p.loc ?? this.loc(nameTok);
+          if (p.name === 'font') {
+            const vLoc = p.value.loc ?? pLoc;
+            if (p.value.type !== 'Ident') {
+              throw new TranspileError(
+                `theme text \`${name}\`: font value must be a bare token (e.g. \`pacifico\`), not a string or expression.`,
+                vLoc.line, vLoc.column,
+              );
+            }
+            const fontName = (p.value as Ident).name;
+            if (!FONT_TOKENS.has(fontName)) {
+              throw new TranspileError(
+                `Unknown font \`${fontName}\` — v0.12.1 supports: pacifico, inter, source_sans, merriweather, lora, fira_code.`,
+                vLoc.line, vLoc.column,
+              );
+            }
+            font = fontName;
+          } else if (p.name === 'size' || p.name === 'weight' || p.name === 'color') {
+            throw new TranspileError(
+              `theme text \`${name}\`: \`${p.name}:\` is not live in v0.12.1 — only \`font:\` is supported.`,
+              pLoc.line, pLoc.column,
+            );
+          } else {
+            throw new TranspileError(
+              `theme text \`${name}\`: unknown property \`${p.name}:\`. Only \`font:\` is supported in v0.12.1.`,
+              pLoc.line, pLoc.column,
+            );
+          }
+        }
+        tokens.push({
+          type: 'ThemeTextToken',
+          token: name as ThemeTextTokenName,
+          font,
+          loc: this.loc(nameTok),
+        });
+      } catch (e) {
+        if (e instanceof TranspileError) {
+          this.errors.push(e);
+          this.synchronizeThemeLine();
+        } else {
+          throw e;
+        }
+      }
+      this.assertProgress(posBefore);
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent');
+    return tokens;
   }
 
   // -- Top-level --

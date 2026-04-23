@@ -1,0 +1,5 @@
+
+  Error: theme `spacing:` sub-block is not live in v0.12.1 — only `text:` is supported. See spec v0.12.1 §Styling.
+
+    theme-unknown-sub-block.igni:2 |   spacing:
+                                   |          ^

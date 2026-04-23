@@ -317,9 +317,23 @@ export interface ComponentDef extends NodeBase {
   body: ComponentItem[];
 }
 
+export type ThemeTextTokenName = 'heading' | 'body' | 'caption';
+
+export interface ThemeTextToken extends NodeBase {
+  type: 'ThemeTextToken';
+  token: ThemeTextTokenName;
+  font?: string;
+}
+
+export interface ThemeBlock extends NodeBase {
+  type: 'ThemeBlock';
+  text: ThemeTextToken[];
+}
+
 export interface Program extends NodeBase {
   type: 'Program';
   screens: Screen[];
   components: ComponentDef[];
   shared: VariableDecl[];
+  theme?: ThemeBlock;
 }

@@ -36,6 +36,42 @@ export const ALIGN_MAP: Record<string, string> = {
   end: 'MainAxisAlignment.end',
 };
 
+// Curated v0.12.1 font bundle. Igni-side tokens are snake_case; values are the
+// Google Fonts family names (as consumed by GoogleFonts.<camelCase>() and
+// .fontFamily). Extending the bundle requires a spec change — see
+// docs/private/81_theme_block.md §Non-goals and docs/private/84_v0121_font_token_rename.md.
+export const FONT_MAP: Record<string, string> = {
+  pacifico: 'Pacifico',
+  inter: 'Inter',
+  source_sans: 'Source Sans 3',
+  merriweather: 'Merriweather',
+  lora: 'Lora',
+  fira_code: 'Fira Code',
+};
+
+// Map Igni snake_case tokens to google_fonts package method names (camelCase).
+// GoogleFonts.pacifico().fontFamily returns 'Pacifico'.
+export const FONT_METHOD_MAP: Record<string, string> = {
+  pacifico: 'pacifico',
+  inter: 'inter',
+  source_sans: 'sourceSans3',
+  merriweather: 'merriweather',
+  lora: 'lora',
+  fira_code: 'firaCode',
+};
+
+export function resolveFontToken(token: string): string {
+  const family = FONT_MAP[token];
+  if (!family) throw new Error(`resolveFontToken: unknown token "${token}" — parser should have rejected this.`);
+  return family;
+}
+
+export function resolveFontMethod(token: string): string {
+  const method = FONT_METHOD_MAP[token];
+  if (!method) throw new Error(`resolveFontMethod: unknown token "${token}" — parser should have rejected this.`);
+  return method;
+}
+
 export function findProp(props: Property[], name: string): Property | undefined {
   return props.find(p => p.name === name);
 }

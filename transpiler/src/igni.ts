@@ -761,6 +761,13 @@ function ensureDependencies(dart: string): void {
     );
     dirty = true;
   }
+  if (dart.includes("package:google_fonts/") && !pubspec.includes('google_fonts:')) {
+    pubspec = pubspec.replace(
+      /(\s*cupertino_icons:[^\n]*)/,
+      '$1\n  google_fonts: ^6.2.1'
+    );
+    dirty = true;
+  }
   if (dirty) {
     writeFileSync(pubspecPath, pubspec);
   }

@@ -1,0 +1,10 @@
+theme:
+  text:
+    heading: font: pacifico
+    body: font: source_sans
+    caption: font: source_sans
+
+screen Demo:
+  label "Igni v0.12.1", style: heading
+  label "Body text", style: body
+  label "Caption", style: caption

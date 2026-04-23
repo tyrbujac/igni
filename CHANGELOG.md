@@ -11,6 +11,14 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.12.1 — 2026-04-23
+*Font-token rename patch. Transpiler implementation ships with this version.*
+
+- **Rename `source-sans` → `source_sans`, `fira-code` → `fira_code`** in the curated font bundle. The four already-single-word tokens (`pacifico`, `inter`, `merriweather`, `lora`) are unchanged. Surfaced during v0.12 transpiler catchup: the lexer treats `-` as `TokenType.Minus`, so `font: source-sans` would parse as subtraction rather than a single identifier. No other Igni token vocabulary uses hyphens — renaming matches existing discipline (`COLOR_MAP`, `STYLE_MAP`, `ALIGN_MAP`, `DESIGN_TOKENS` are all single-word or dotted). Design note: `docs/private/84_v0121_font_token_rename.md`.
+- **Transpiler implementation of v0.12's `theme:` block lands with this version** — `Theme` token + keyword, `parseThemeBlock` / `parseThemeTextSubBlock` with strict rejection of non-live paths (`spacing:` / `color:` sub-blocks, `size:` / `weight:` / `color:` fields, unknown fonts, duplicate theme blocks), `FONT_MAP` helper, `buildTextTheme(theme?)` merging font families into `ThemeData.textTheme`, conditional `google_fonts: ^6.2.1` pubspec injection. 55 → 60 diff tests (2 positive + 3 negative theme fixtures); existing 55 remain byte-identical.
+- **Process discipline** — v0.12 was the first spec ship to explicitly defer its transpiler to a follow-up session. This rename patch is the clean precedent for "spec ships partial → transpiler catchup surfaces amendments → spec patched rather than lexer bent." New `CLAUDE.md` pitfall bullet records the pattern.
+- **No other surface changes** — the `theme:` block shape, curated bundle membership, and patch-not-replace semantics are unchanged from v0.12.
+
 ## v0.12 — 2026-04-22
 *First syntax ship since v0.10. New `theme:` block, scoped narrowly to font overrides for this version. Routed through a Stage-0-driven scope pivot — originally-proposed per-label `font:` shape falsified, theme-level shape emerged as the independent-model convergence.*
 

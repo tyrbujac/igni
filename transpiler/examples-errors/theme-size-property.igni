@@ -1,0 +1,6 @@
+theme:
+  text:
+    heading: font: pacifico, size: 24
+
+screen Demo:
+  label "hi", style: heading

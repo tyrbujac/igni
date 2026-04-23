@@ -1,0 +1,6 @@
+theme:
+  text:
+    heading: font: comic_sans
+
+screen Demo:
+  label "hi", style: heading

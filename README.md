@@ -119,13 +119,13 @@ my-app/
 
 ## Status
 
-**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.11.6<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.11.6<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.11.6-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.11.6-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.11.6-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.11.6-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.12.1<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.12.1<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.12.2-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.12.2-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.12.2-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.12.2-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
 **Latest spec changes:** `v0.11.6` (2026-04-22) adds a three-sentence reactivity lifecycle clarifier to the cheatsheet's *Reacting to users* section, addressing the 3/4 LLM-panel convergence gap on the abstract-only "re-evaluates from the top" rule (see `docs/private/73`). `v0.11.5` (2026-04-21) was a docs-only hygiene pass — cheatsheet pruned 2,931 → 2,536 words; context-specific callouts migrated from the cheatsheet's learning path to the full spec's reference sections. First execution of the prune-before-add cadence. `v0.11.4` (2026-04-21) sharpened the *Counting by field* callout per a 4-model ship review; Stage 3 validated the rewrite at 0/7 inventions (see *Concrete evidence* above). `v0.11.3` (2026-04-21) canonicalised `length(filter(list, predicate))` as the idiom for field-based counting. `v0.11.0` added the `locate()` geolocation primitive reusing `fetch()`'s `is loading:` / `is error:` machinery (4/4 pre-ship shape convergence, 3/3 post-ship adoption on Clima). Preceding syntax ships: `v0.10.0` object-update syntax `{target with field: newval}` (9/9 frontier adoption across three domain-swap rounds); `v0.9.1` trigger-variable wording tighten (docs-only, 3/3 flip); `v0.9.0` reactive-fetch footgun as a transpile-time error; `v0.8.0` component event channels (`emit` + `on <event>:`). See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
 **Latest methodology result:** the v0.10 domain-swap round (Shopping + Apothecary + Spaceship Cargo, 3 × 4 models × cheatsheet tier) produced 9/9 frontier adoption of `{target with ...}` unprompted. Three runs at varying domain distance from e-commerce rules out the "shopping-cart corpus density" confound — the cheatsheet teaches the syntax, the domain doesn't supply it. First post-ship result strong enough to call directly-supported rather than suggestive.
 
-**Transpiler:** Working. <!-- SYNC:example-count -->41<!-- /SYNC:example-count --> example apps compile and run in the browser; iOS simulator and Android emulator supported via `igni run ios` / `igni run android` (device auto-pick, auto-boot, `--device` override). Covers:
+**Transpiler:** Working. <!-- SYNC:example-count -->43<!-- /SYNC:example-count --> example apps compile and run in the browser; iOS simulator and Android emulator supported via `igni run ios` / `igni run android` (device auto-pick, auto-boot, `--device` override). Covers:
 
 - **Composition** — screens, components, wrapper components with `body` slot, layouts
 - **Control flow** — `if`/`else`, `each` loops (with `paginate:` for lazy rendering), functions, lambdas
@@ -152,15 +152,15 @@ igni/
 ├── LICENSE                  # GPL v3 (transpiler) + CC BY-SA 4.0 (spec/docs)
 ├── spec/
 │   ├── README.md
-│   ├── <!-- SYNC:version -->v0.11.6<!-- /SYNC:version -->.md             # current canonical spec
-│   ├── <!-- SYNC:version -->v0.11.6<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
-│   ├── <!-- SYNC:version -->v0.11.6<!-- /SYNC:version -->-micro.md       # current canonical micro reference
-│   └── archive/             # historical <!-- SYNC:historical-range-files -->v0.2.md → v0.11.5.md<!-- /SYNC:historical-range-files --> (never edited after shipping)
+│   ├── <!-- SYNC:version -->v0.12.1<!-- /SYNC:version -->.md             # current canonical spec
+│   ├── <!-- SYNC:version -->v0.12.1<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
+│   ├── <!-- SYNC:version -->v0.12.1<!-- /SYNC:version -->-micro.md       # current canonical micro reference
+│   └── archive/             # historical <!-- SYNC:historical-range-files -->v0.2.md → v0.12.1.md<!-- /SYNC:historical-range-files --> (never edited after shipping)
 ├── transpiler/
 │   ├── README.md
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point
-│   ├── examples/            # <!-- SYNC:example-count -->41<!-- /SYNC:example-count --> .igni apps + .expected.dart references
+│   ├── examples/            # <!-- SYNC:example-count -->43<!-- /SYNC:example-count --> .igni apps + .expected.dart references
 │   └── examples-errors/     # pinned transpile-rejection fixtures
 ├── tests/                   # cold-LLM test results + methodology
 │   ├── README.md

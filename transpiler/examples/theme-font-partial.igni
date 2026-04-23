@@ -1,0 +1,8 @@
+theme:
+  text:
+    heading: font: pacifico
+
+screen Demo:
+  label "Heading in Pacifico", style: heading
+  label "Subheading also Pacifico", style: heading.small
+  label "Body keeps default font"

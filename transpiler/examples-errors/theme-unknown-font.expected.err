@@ -1,0 +1,5 @@
+
+  Error: Unknown font `comic_sans` — v0.12.1 supports: pacifico, inter, source_sans, merriweather, lora, fira_code.
+
+    theme-unknown-font.igni:3 |     heading: font: comic_sans
+                              |                              ^
