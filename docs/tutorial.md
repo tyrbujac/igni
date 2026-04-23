@@ -47,6 +47,8 @@ After a few seconds, a browser window opens showing a counter. Tap **Add** — t
 
 **When you're done** (or want to take a break): click into the terminal window and press **Ctrl+C** to stop the server cleanly. You can always start it again later with `igni run`.
 
+**Prefer Safari, Firefox, or Arc?** Run `igni run localhost` instead — it prints a URL you can paste into any browser, and saves still auto-refresh the tab the same as Chrome.
+
 ### Open the file you'll be editing
 
 In Cursor: **File → Open Folder**, pick the `learn-igni` folder. On the left you'll see a file called `app.igni` — click it. That's where you'll write your code.

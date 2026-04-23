@@ -2,6 +2,8 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, readdirSync
 import { join, basename, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn, execSync } from 'node:child_process';
+import { createServer as createHttpServer, ServerResponse, Server as HttpServer } from 'node:http';
+import { AddressInfo } from 'node:net';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 import { watch } from 'chokidar';
@@ -18,7 +20,8 @@ import { TranspileError, formatMappedError } from './errors.js';
 // target (`macos` / `apk` / `web`).
 type Target = 'web' | 'ios' | 'android' | 'macos';
 type BuildTarget = 'macos' | 'apk' | 'web';
-const { command, target, buildTarget, commandArg, deviceFlag, nameFlag } = (() => {
+type WebMode = 'chrome' | 'serve';
+const { command, target, webMode, buildTarget, commandArg, deviceFlag, nameFlag } = (() => {
   const raw = process.argv.slice(2);
   const clean: string[] = [];
   let device: string | undefined;
@@ -30,17 +33,22 @@ const { command, target, buildTarget, commandArg, deviceFlag, nameFlag } = (() =
   }
   const cmd = clean[0];
   let tgt: Target = 'web';
+  let wMode: WebMode = 'chrome';
   let buildTgt: BuildTarget | undefined;
   let arg: string | undefined = clean[1];
   if (cmd === 'run' && (arg === 'ios' || arg === 'android' || arg === 'macos')) {
     tgt = arg as Target;
+    arg = clean[2];
+  } else if (cmd === 'run' && arg === 'localhost') {
+    tgt = 'web';
+    wMode = 'serve';
     arg = clean[2];
   }
   if (cmd === 'build' && (arg === 'macos' || arg === 'apk' || arg === 'web')) {
     buildTgt = arg as BuildTarget;
     arg = clean[2];
   }
-  return { command: cmd, target: tgt, buildTarget: buildTgt, commandArg: arg, deviceFlag: device, nameFlag: name };
+  return { command: cmd, target: tgt, webMode: wMode, buildTarget: buildTgt, commandArg: arg, deviceFlag: device, nameFlag: name };
 })();
 
 const cwd = process.cwd();
@@ -63,6 +71,7 @@ function printUsage(): void {
   console.log('Usage: igni <command>');
   console.log('  igni run              Run app.igni in Chrome (default)');
   console.log('  igni run hello.igni   Run a specific file in Chrome');
+  console.log('  igni run localhost    Serve on localhost, open the URL in any browser');
   console.log('  igni run ios          Run app.igni on iOS simulator');
   console.log('  igni run android      Run app.igni on Android emulator');
   console.log('  igni run macos        Run app.igni as a macOS desktop app');
@@ -373,6 +382,74 @@ function applyWebBranding(displayName: string): void {
   );
 
   writeFileSync(indexPath, html);
+}
+
+// --- Browser auto-refresh for `igni run localhost` ---
+
+// Flutter's web-server device doesn't push reload events to connected browsers
+// (issue #44974). To match Chrome's save-to-reload DX in Safari/Firefox/Arc we
+// run a tiny SSE server alongside `flutter run` and inject a script tag into
+// the scaffolded index.html that listens on it. On each `.igni` save we wait
+// for Flutter's "Restarted application" stdout line, then broadcast — which
+// means the bundle is already rebuilt by the time the browser reloads.
+
+interface ReloadServer {
+  port: number;
+  broadcast(): void;
+  close(): Promise<void>;
+}
+
+async function startReloadServer(): Promise<ReloadServer> {
+  const clients = new Set<ServerResponse>();
+  const server: HttpServer = createHttpServer((req, res) => {
+    if (req.url !== '/reload') { res.writeHead(404).end(); return; }
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.write('retry: 2000\n\n');
+    clients.add(res);
+    req.on('close', () => clients.delete(res));
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const port = (server.address() as AddressInfo).port;
+  return {
+    port,
+    broadcast() {
+      for (const client of clients) {
+        try { client.write('data: reload\n\n'); } catch { /* ignore */ }
+      }
+    },
+    async close() {
+      for (const client of clients) { try { client.end(); } catch { /* ignore */ } }
+      clients.clear();
+      await new Promise<void>((r) => server.close(() => r()));
+    },
+  };
+}
+
+const IGNI_RELOAD_START = '<!-- IGNI_RELOAD -->';
+const IGNI_RELOAD_END = '<!-- /IGNI_RELOAD -->';
+const IGNI_RELOAD_RE = /\s*<!-- IGNI_RELOAD -->[\s\S]*?<!-- \/IGNI_RELOAD -->\s*/g;
+
+function installReloadScript(port: number): void {
+  const indexPath = join(igniDir, 'web', 'index.html');
+  if (!existsSync(indexPath)) return;
+  let html = readFileSync(indexPath, 'utf-8');
+  const block = `${IGNI_RELOAD_START}<script>try{new EventSource('http://127.0.0.1:${port}/reload').addEventListener('message',function(){location.reload();});}catch(e){}</script>${IGNI_RELOAD_END}`;
+  html = html.replace(IGNI_RELOAD_RE, '');
+  html = html.replace('</body>', `  ${block}\n</body>`);
+  writeFileSync(indexPath, html);
+}
+
+function removeReloadScript(): void {
+  const indexPath = join(igniDir, 'web', 'index.html');
+  if (!existsSync(indexPath)) return;
+  const html = readFileSync(indexPath, 'utf-8');
+  if (!IGNI_RELOAD_RE.test(html)) return;
+  writeFileSync(indexPath, html.replace(IGNI_RELOAD_RE, ''));
 }
 
 // --- App icon sync ---
@@ -858,7 +935,7 @@ function createNewProject(name: string | undefined): void {
 
 // --- Main ---
 
-async function run(targetPlatform: Target, explicitDevice: string | undefined, explicitName: string | undefined): Promise<void> {
+async function run(targetPlatform: Target, wMode: WebMode, explicitDevice: string | undefined, explicitName: string | undefined): Promise<void> {
   const initialResult = transpile();
   if (!initialResult) {
     console.error('Fix the error above, then run igni run again.');
@@ -876,10 +953,20 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined, e
   mkdirSync(join(igniDir, 'lib'), { recursive: true });
   writeOutput(injectAppTitle(transpileResult.dart, displayName));
 
+  let reloadServer: ReloadServer | undefined;
+  if (targetPlatform === 'web') {
+    if (wMode === 'serve') {
+      reloadServer = await startReloadServer();
+      installReloadScript(reloadServer.port);
+    } else {
+      removeReloadScript();
+    }
+  }
+
   // Pick the device BEFORE showing the build spinner — device-pick may auto-boot
   // an emulator (visible "Booting <name>..." output), which is a distinct phase.
   const deviceId = targetPlatform === 'web'
-    ? 'chrome'
+    ? (wMode === 'serve' ? 'web-server' : 'chrome')
     : await pickDevice(targetPlatform, explicitDevice);
 
   const projectName = displayName;
@@ -901,19 +988,34 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined, e
     renderBuild();
   }, 100);
 
-  // Start flutter run
-  const flutter = spawn('flutter', ['run', '-d', deviceId], {
+  // Start flutter run. On web, bundle CanvasKit + Flutter's default fonts locally
+  // so the app works offline — Flutter's default fetches them from gstatic.com CDN.
+  const flutterArgs = ['run', '-d', deviceId];
+  if (targetPlatform === 'web') {
+    flutterArgs.push('--no-web-resources-cdn');
+  }
+  const flutter = spawn('flutter', flutterArgs, {
     cwd: igniDir,
     stdio: ['pipe', 'pipe', 'pipe'],
   });
 
   // Filter Flutter output — suppress implementation details
   let appReady = false;
+  let servedUrl: string | undefined;
   const stderrBuffer: string[] = [];
 
   flutter.stdout.on('data', (data: Buffer) => {
     const lines = data.toString().split('\n');
     for (const line of lines) {
+      // In web-server mode Flutter prints e.g. "lib/main.dart is being served at
+      // http://localhost:58527". Capture it for the ready banner.
+      const servedMatch = line.match(/is being served at (http:\/\/(?:localhost|127\.0\.0\.1):\d+)/);
+      if (servedMatch) servedUrl = servedMatch[1];
+
+      if (reloadServer && (line.includes('Restarted application') || line.startsWith('Reloaded'))) {
+        reloadServer.broadcast();
+      }
+
       // Suppress all Flutter debug noise. Multiple platform-specific lines
       // can mark the app as ready: "Debug service listening" (web),
       // "Dart VM Service on" (macOS/mobile), "Flutter run key commands"
@@ -934,6 +1036,7 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined, e
         line.includes('Detach (terminate') ||
         line.includes('Clear the screen') ||
         line.includes('Quit (terminate') ||
+        line.includes('Dart Debug Chrome extension') ||
         line.includes('localhost') ||
         line.includes('127.0.0.1')
       ) {
@@ -944,13 +1047,21 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined, e
         )) {
           appReady = true;
           clearInterval(spinner);
-          process.stdout.write(`\r\x1b[2K✓ ${projectName} ready\n\n`);
+          const banner = servedUrl
+            ? `✓ ${projectName} ready at ${servedUrl}`
+            : `✓ ${projectName} ready`;
+          process.stdout.write(`\r\x1b[2K${banner}\n\n`);
           // Flush any errors that arrived during the build
           for (const buffered of stderrBuffer) {
             process.stderr.write(buffered + '\n');
           }
           stderrBuffer.length = 0;
-          console.log('Edit app.igni and save to see changes.');
+          if (servedUrl) {
+            console.log('Open that URL in any browser. Save app.igni to hot-reload,');
+            console.log('then refresh the browser tab to see changes.');
+          } else {
+            console.log('Edit app.igni and save to see changes.');
+          }
           console.log('Press q to quit.');
         }
         continue;
@@ -1001,6 +1112,7 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined, e
     const key = data.toString();
     if (key === 'q' || key === '\u0003') {
       flutter.kill();
+      reloadServer?.close();
       process.exit(0);
     }
     flutter.stdin.write(data);
@@ -1035,6 +1147,7 @@ async function run(targetPlatform: Target, explicitDevice: string | undefined, e
 
   flutter.on('close', (code) => {
     watcher.close();
+    reloadServer?.close();
     process.exit(code ?? 0);
   });
 }
@@ -1181,7 +1294,7 @@ if (command === 'run') {
     console.error('--device is only valid with `igni run ios` or `igni run android`.');
     process.exit(1);
   }
-  run(target, deviceFlag, nameFlag);
+  run(target, webMode, deviceFlag, nameFlag);
 } else if (command === 'build') {
   if (!buildTarget) {
     console.error('Usage: igni build <macos|apk|web>');
