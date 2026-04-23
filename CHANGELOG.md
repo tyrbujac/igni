@@ -11,6 +11,22 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.12.2 — 2026-04-24
+*Docs-only restructure. Spec now reads top-to-bottom as a tutorial from basics to advanced.*
+
+- **Changelog stack excised from spec top.** 36 lines of "Changes from v0.X" historical summaries removed; one-line v0.12.1→v0.12.2 delta remains; everything else lives here in CHANGELOG.md per the CLAUDE.md rule.
+- **Section order rebuilt** around the reactivity rule as the central mental model. New order: Hello World → Todo walkthrough → Running It → Variables → Reactivity → Screens → Layout → Showing → Interactive → Events → Conditionals → Lists-basics → Functions → Components → Shared state → Navigation → Async → Lists-transformations → Styling → Theme block → reference sections → appendices (Property Applicability, Rules, Planned theme fields).
+- **Lists split into basics + transformations.** Basics (§12): `each`, `+`, `without`, `replace` — the operations the Todo walkthrough uses. Transformations (§18, after Async): `map`/`filter`/`sorted`/`reversed`/`length`/`count`/object-update, with Lambda Expressions folded in as a subsection.
+- **Variables section forward-refs stripped.** `user: User = fetch(...)`, `weather: Weather = null`, `items: [Product] = []` replaced with non-forward-referencing examples; type hints moved to a subsection at the section's end.
+- **Planned theme content moved to Appendix C.** `spacing:` / `color:` theme sub-blocks and `size` / `weight` / `color` inside text bundles stay visible but out of the main learning path; §Theme block keeps only the v0.12.1-live font-override syntax.
+- **Five signposts added** — tokens pointer in §Showing Things; scope pointer in §Variables; handlers-accept-any-statement note in §Events (forward-ref to §Functions); transformations pointer in §Lists-basics; transformations forward-pointer at end of §Async.
+- **Todo walkthrough imported into spec as §2** — same 17-line example the cheatsheet uses, verbatim. Becomes the concrete referent §Reactivity's rule quotes.
+- **Boolean Logic folded into §Conditionals; Data Binding folded into §Interactive Things; Lambda Expressions folded into §Lists-transformations.** Three independent sections become three subsections at their natural use sites.
+- **Components section** gets a one-sentence "repetition pain" opening bridge so the section reads as the answer to a felt problem, not an abstract tool.
+- **Cheatsheet synced minimally** — `Reacting to users` moved up to immediately after the Todo walkthrough (mirroring spec's reactivity promotion). Cheatsheet `Lists` intentionally stays unified — cheatsheet is scan-oriented, spec is read-oriented; opposite decisions on the same tradeoff.
+- **Methodology signal** — three LLM-panel rounds (critique of v0.12.1 spec → meta-panel on the proposed restructure → plan-review panel on the execution plan) produced 3/4–5/5 convergence on every change shipped. Cleanest readability-driven iteration in the project. Full writeup: `docs/private/85_v0122_readability_panel.md`.
+- **No language changes, no syntax changes, no transpiler changes.** 60/60 diff tests continue passing byte-identically.
+
 ## v0.12.1 — 2026-04-23
 *Font-token rename patch. Transpiler implementation ships with this version.*
 

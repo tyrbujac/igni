@@ -1,6 +1,6 @@
 # Learn Igni
 
-> Tutorial v2.2 · targets Igni v0.11.6
+> Tutorial v2.2 · targets Igni v0.12.2
 
 Build your first app, one small step at a time. No programming experience needed.
 

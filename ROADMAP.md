@@ -5,21 +5,19 @@ Where Igni is going. Tasks are tiered by horizon: **Immediate** (small unblockin
 ## Current focus
 
 - **Immediate**
-  - **Mum tutorial rerun on 2026-04-23 or 2026-04-24** against `docs/tutorial.md`. External human-testing signal; gates Tier 2 cheatsheet improvements queued in `docs/private/64`.
-  - **Dissertation footnotes** per `docs/private/50` transpile-metric audit: v0.8.1 *Spec_Comprehension* framing + v0.10 domain-swap transpile-pass subfigure. **Both shipped 2026-04-21** (commit `513df9f` for the tests-side footnote; v0.10 footnote is in `docs/private/45`, gitignored).
-  - **Methodology audit** — first every-3-rounds review overdue per `docs/private/53`. Scan the last three cold-test rounds for grading-framework drift.
-  - **Transpiler-coverage gaps for v1.0 criterion 2:** `theme:` block, conditional assignment in layouts, bare statements in UI blocks (under-specified — needs design note). All sub-day each.
+  - **Mum tutorial rerun on 2026-04-23 or 2026-04-24** against `docs/tutorial.md` (now targeting v0.12.2). External human-testing signal; gates Tier 2 cheatsheet improvements queued in `docs/private/64`.
+  - **Transpiler-coverage gaps for v1.0 criterion 2:** conditional assignment in layouts, bare statements in UI blocks (under-specified — needs design note). Sub-day each. *(`theme:` block: DONE in v0.12.1.)*
 
 - **Next milestone — Boojy subset migration.** v1.0 criterion 4 (one non-trivial app shipped) is the bar no hygiene work can close; `docs/private/63` §5 flags it as the real gate. Pair with the 2026-04-23/24 mum cold-run for external-signal density.
 
-- **Future** — lifecycle-hook docs patch (`docs/private/49` Tier 2); mutating-component-arg detection; widened async-footgun (Stream 3 below); checkbox field-access binding (`docs/private/69`, fresh 4/6 Stage 3 signal); **v0.12 `font:` on labels (`docs/private/78`, Stage 0 required); v0.13 `max-width:` on layouts (`docs/private/79`, direct implementation path — Stage 0 skipped by design);** Tooling & documentation streams (snippets, LSP, refactoring, full docs set). Ideas section at the bottom.
+- **Future** — lifecycle-hook docs patch (`docs/private/49` Tier 2); mutating-component-arg detection; widened async-footgun (Stream 3 below); checkbox field-access binding (`docs/private/69`, fresh 4/6 Stage 3 signal); **per-label `font:` as v0.14+ candidate** (`docs/private/78` Shape B deferred after v0.12 theme-level shape shipped); **`max-width:` on layouts as v0.13 candidate** (`docs/private/79`, direct implementation path — Stage 0 skipped by design); Tooling & documentation streams (snippets, LSP, refactoring, full docs set). Ideas section at the bottom.
 
 ### Recently shipped (2026-04-21 session)
 
 One long session closed out the mobile smoke-test ledger + cheatsheet discipline debt. Details in `docs/private/68_mobile_smoke_test.md` and `CHANGELOG.md` (for v0.11.5).
 
 | Commit | What |
-|---|---|
+| --- | --- |
 | `eb10540` | **count(list, lambda) transpiler rejection** — fix-it error points at `length(filter(...))`. 54/54 diff tests + pinned `count-lambda` negative fixture. |
 | `2d29fbf` | **`igni run ios` / `igni run android`** first-class CLI commands. Auto-picks running device, auto-boots first emulator, supports `--device "<name>"`. |
 | `5303f3e` | **Fetch-on-mobile root-cause resolved** — not an Igni/Flutter bug; Cloudflare challenges the Dart HTTP TLS fingerprint. Swapped example URL to `api.github.com/users/octocat` (non-Cloudflare). See `docs/private/68` Finding D. |
