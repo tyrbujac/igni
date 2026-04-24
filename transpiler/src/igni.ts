@@ -11,7 +11,7 @@ import sharp from 'sharp';
 import { Lexer } from './lexer.js';
 import { Parser } from './parser.js';
 import { CodeGenerator, GeneratedLineMapEntry } from './codegen.js';
-import { TranspileError, formatMappedError } from './errors.js';
+import { TranspileError, AggregateTranspileError, formatMappedError } from './errors.js';
 import { Program } from './ast.js';
 
 // Parse CLI args: strip `--device <value>` and `--name <value>` from anywhere,
@@ -160,12 +160,21 @@ function resolveSourceLocation(sourceFiles: SourceFileInfo[], line: number, colu
   };
 }
 
-function printTranspileError(err: TranspileError, sourceFiles: SourceFileInfo[]): void {
+function formatTranspileError(err: TranspileError, sourceFiles: SourceFileInfo[]): string {
   const location = resolveSourceLocation(sourceFiles, err.line, err.column);
-  process.stderr.write(formatMappedError(err.message, location));
+  return formatMappedError(err.message, location);
 }
 
-function transpile(): TranspileResult | null {
+// `transpile()` returns either a successful result or the pre-formatted
+// error text. The error text is also written to stderr inside this function
+// so every caller gets the terminal output for free — callers that want to
+// display the error elsewhere (e.g. the `igni run` watch loop writing an
+// error screen to the browser) receive the same text via `errorText`.
+type TranspileOutcome =
+  | { ok: true; result: TranspileResult }
+  | { ok: false; errorText: string };
+
+function transpile(): TranspileOutcome {
   const files = findIgniFiles();
   const sourceFiles = buildSourceFiles(files);
   const combined = combinedSource(sourceFiles);
@@ -174,20 +183,83 @@ function transpile(): TranspileResult | null {
     const tokens = new Lexer(combined).tokenize();
     const ast = new Parser(tokens).parse();
     const generated = new CodeGenerator().generateWithSourceMap(ast);
-    return { dart: generated.dart, lineMap: generated.lineMap, sourceFiles, program: ast };
+    return { ok: true, result: { dart: generated.dart, lineMap: generated.lineMap, sourceFiles, program: ast } };
   } catch (err: any) {
-    if (err instanceof TranspileError) {
-      printTranspileError(err, sourceFiles);
+    let errorText = '';
+    if (err instanceof AggregateTranspileError) {
+      for (const e of err.errors) errorText += formatTranspileError(e, sourceFiles);
+    } else if (err instanceof TranspileError) {
+      errorText = formatTranspileError(err, sourceFiles);
     } else {
-      console.error(`\n  Error: ${err.message}\n`);
+      errorText = `\n  Error: ${err.message}\n`;
     }
-    return null;
+    process.stderr.write(errorText);
+    return { ok: false, errorText };
   }
 }
 
 function writeOutput(dart: string): void {
   const outPath = join(igniDir, 'lib', 'main.dart');
   writeFileSync(outPath, dart);
+}
+
+// Escape an arbitrary string for use inside a Dart double-quoted literal.
+// Dart interpolates `$` inside `"..."`, so we escape it alongside quotes,
+// backslashes, and the usual whitespace escapes.
+function escapeDartString(s: string): string {
+  return s
+    .replace(/\\/g, '\\\\')
+    .replace(/\$/g, '\\$')
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t');
+}
+
+// Build a standalone Flutter `main.dart` that renders a transpile-error screen.
+// When `igni run`'s save-watcher sees a transpile failure, it writes this file
+// and triggers a hot restart so the browser switches from the last-good build
+// to a visible error. Without this, beginners see the stale last-good app and
+// have no in-browser signal that their save failed to compile.
+function buildErrorScreenDart(errorText: string, displayName: string): string {
+  const msg = escapeDartString(errorText.trimEnd());
+  const title = escapeDartString(displayName);
+  return `import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    title: "${title}",
+    home: Scaffold(
+      backgroundColor: const Color(0xFFFFF4F0),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Code error',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFC00000)),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "${msg}",
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 13, color: Color(0xFF333333)),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Fix the error in your .igni file and save. The app will update automatically.',
+                style: TextStyle(fontSize: 14, color: Color(0xFF666666)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  ));
+}
+`;
 }
 
 // Inject `title: '<displayName>'` into the generated top-level `MaterialApp(...)`.
@@ -1037,12 +1109,12 @@ function createNewProject(name: string | undefined): void {
 // --- Main ---
 
 async function run(targetPlatform: Target, wMode: WebMode, explicitDevice: string | undefined, explicitName: string | undefined): Promise<void> {
-  const initialResult = transpile();
-  if (!initialResult) {
+  const initialOutcome = transpile();
+  if (!initialOutcome.ok) {
     console.error('Fix the error above, then run igni run again.');
     process.exit(1);
   }
-  let transpileResult = initialResult;
+  let transpileResult = initialOutcome.result;
   const firstRun = !existsSync(join(igniDir, 'pubspec.yaml'));
 
   ensureFlutterProject(targetPlatform);
@@ -1190,6 +1262,12 @@ async function run(targetPlatform: Target, wMode: WebMode, explicitDevice: strin
     const lines = data.toString().split('\n');
     for (const line of lines) {
       if (!line) continue;
+      // Flutter's Dart VM service emits two benign "Failed to set ..."
+      // warnings when DevTools extensions aren't registered (common in
+      // offline / detached sessions). They contain the word "error" in the
+      // JSON-RPC payload, so they'd otherwise slip through the error
+      // pass-through below and spook beginners reading the terminal.
+      if (line.includes('Failed to set') && line.includes('ext.flutter.')) continue;
       if (!appReady) {
         // Buffer stderr during build so it doesn't interrupt the spinner
         if (line.includes('Error') || line.includes('error') || line.includes('Exception')) {
@@ -1232,10 +1310,10 @@ async function run(targetPlatform: Target, wMode: WebMode, explicitDevice: strin
   });
 
   watcher.on('change', (filePath) => {
-    const result = transpile();
-    if (result) {
-      transpileResult = result;
-      writeOutput(injectAppTitle(result.dart, displayName));
+    const outcome = transpile();
+    if (outcome.ok) {
+      transpileResult = outcome.result;
+      writeOutput(injectAppTitle(outcome.result.dart, displayName));
       // Send 'R' to Flutter to trigger hot restart (not 'r' hot reload).
       // Hot reload keeps the existing State instance and its field values,
       // so changing `name = "Michael"` to `name = "Tyr"` (or adding a new
@@ -1244,6 +1322,14 @@ async function run(targetPlatform: Target, wMode: WebMode, explicitDevice: strin
       // which is the pedagogical promise of the tutorial.
       flutter.stdin.write('R');
       console.log(`  Recompiled (${basename(filePath)})`);
+    } else {
+      // Transpile failure: write an error-screen main.dart so the browser
+      // shows the error instead of the stale last-good build, and hot-restart
+      // to swap the app over. Beginners saving a typo otherwise see the old
+      // app still running with no signal their save failed.
+      writeOutput(buildErrorScreenDart(outcome.errorText, displayName));
+      flutter.stdin.write('R');
+      console.log(`  Error in ${basename(filePath)} — see above. Browser shows the error until you fix it.`);
     }
   });
 
@@ -1326,11 +1412,12 @@ function printShareFooter(buildTarget: BuildTarget, artifactPath: string): void 
 }
 
 async function build(buildTgt: BuildTarget, explicitName: string | undefined): Promise<void> {
-  const initialResult = transpile();
-  if (!initialResult) {
+  const initialOutcome = transpile();
+  if (!initialOutcome.ok) {
     console.error('Fix the error above, then run igni build again.');
     process.exit(1);
   }
+  const initialResult = initialOutcome.result;
 
   const platform = BUILD_TARGET_PLATFORM[buildTgt];
   ensureFlutterProject(platform);

@@ -1,0 +1,5 @@
+
+  Error: `button` requires an `on tap:` handler — say what the button should do, e.g. `, on tap: count = count + 1`. A button with no action renders as dead UI; the language refuses to emit one.
+
+    button-no-tap.igni:5 |   button "Add one"
+                         |         ^

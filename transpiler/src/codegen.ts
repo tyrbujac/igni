@@ -79,6 +79,7 @@ export class CodeGenerator {
     this.validateAsyncReactivity(program);
     this.validateSharedPrefix(program);
     this.validateCountLambda(program);
+    this.validateButtonTap(program);
 
     // No screens → emit a friendly placeholder app so `igni run` stays alive
     // while the user types their first screen. Parser produces an empty
@@ -1968,6 +1969,55 @@ export class CodeGenerator {
       for (const item of comp.body) {
         if (item.type === 'VariableDecl') walkExpr(item.value);
       }
+      const uiNodes = comp.body.filter((i): i is UINode => i.type !== 'VariableDecl');
+      walkUI(uiNodes);
+    }
+  }
+
+  // A `button` with no `on tap:` modifier codegens to an ElevatedButton with
+  // no `onPressed` — dead UI the user can't interact with. The tutorial rerun
+  // on 2026-04-24 surfaced this as a real beginner footgun (an empty button
+  // appears pressable but does nothing). Reject at codegen with a fix-it.
+  private validateButtonTap(program: Program): void {
+    const walkUI = (nodes: UINode[]): void => {
+      for (const n of nodes) {
+        switch (n.type) {
+          case 'Button':
+            if (!n.events.some(e => e.event === 'tap')) {
+              throw new TranspileError(
+                '`button` requires an `on tap:` handler — say what the button should do, e.g. `, on tap: count = count + 1`. A button with no action renders as dead UI; the language refuses to emit one.',
+                n.loc?.line ?? 1, n.loc?.column ?? 1,
+              );
+            }
+            break;
+          case 'Layout':
+            walkUI(n.children); break;
+          case 'If': {
+            const branch = (items: (UINode | VariableDecl)[]) => {
+              for (const item of items) {
+                if (item.type !== 'VariableDecl') walkUI([item]);
+              }
+            };
+            branch(n.then);
+            for (const ei of n.elseIfs) branch(ei.body);
+            if (n.else_) branch(n.else_);
+            break;
+          }
+          case 'Each':
+            walkUI(n.children); break;
+          case 'ComponentInvocation':
+            walkUI(n.children); break;
+        }
+      }
+    };
+
+    for (const screen of program.screens) {
+      const uiNodes = screen.body.filter(
+        (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef'
+      );
+      walkUI(uiNodes);
+    }
+    for (const comp of program.components) {
       const uiNodes = comp.body.filter((i): i is UINode => i.type !== 'VariableDecl');
       walkUI(uiNodes);
     }
