@@ -48,13 +48,13 @@ Each `tests/v<spec_version>/` folder contains the prompts used for that round an
 
 Three tiers of the same language at [`spec/`](spec/):
 
-- **[`spec/v0.11.6.md`](spec/v0.11.6.md)** — **current full spec** in learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference).
-- **[`spec/v0.11.6-cheatsheet.md`](spec/v0.11.6-cheatsheet.md)** — condensed (~2,500 words). Same language, optimised for cold-LLM context and human skim. Primary input for cold-test rounds.
-- **[`spec/v0.11.6-micro.md`](spec/v0.11.6-micro.md)** — rules-only (~700 words). Third context tier for tests that vary context size as an independent variable.
+- **[`spec/v0.12.2.md`](spec/v0.12.2.md)** — **current full spec** in learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference).
+- **[`spec/v0.12.2-cheatsheet.md`](spec/v0.12.2-cheatsheet.md)** — condensed (~2,500 words). Same language, optimised for cold-LLM context and human skim. Primary input for cold-test rounds.
+- **[`spec/v0.12.2-micro.md`](spec/v0.12.2-micro.md)** — rules-only (~700 words). Third context tier for tests that vary context size as an independent variable.
 
-Historical versions (v0.2 → v0.11.5) live under [`spec/archive/`](spec/archive/). Each is an immutable snapshot — never edited after ship — because cold-LLM tests stay reproducible against a frozen baseline. See [`CHANGELOG.md`](CHANGELOG.md) for the per-version evolution narrative.
+Historical versions (v0.2 → v0.12.1) live under [`spec/archive/`](spec/archive/). Each is an immutable snapshot — never edited after ship — because cold-LLM tests stay reproducible against a frozen baseline. See [`CHANGELOG.md`](CHANGELOG.md) for the per-version evolution narrative.
 
-**When proposing spec changes,** fork `spec/v0.11.6.md` (+ cheatsheet + micro) to a new version file rather than editing in place. Historical versions (v0.2 → v0.11.5) live under `spec/archive/`. Full snapshot rule in `CLAUDE.md` for AI-assisted edits.
+**When proposing spec changes,** fork `spec/v0.12.2.md` (+ cheatsheet + micro) to a new version file rather than editing in place. Historical versions (v0.2 → v0.12.1) live under `spec/archive/`. Full snapshot rule in `CLAUDE.md` for AI-assisted edits.
 
 ## Transpiler
 
@@ -70,7 +70,7 @@ TypeScript project at [`transpiler/`](transpiler/) that compiles `.igni` source 
 
 **Testing:** `npm test` in `transpiler/` runs <!-- SYNC:total-tests -->60<!-- /SYNC:total-tests --> diff tests (positive + negative rejection cases). Zero diff = pass. Browser smoke-test via `igni run` from any directory containing `.igni` files.
 
-**Not yet supported (v0.11.6 spec features):** `theme:` block. (`paginate:` on `each` shipped 2026-04-22 as syntax + lazy `ListView.builder` codegen; auto-load-more on scroll deferred pending async integration.)
+**Not yet supported (v0.12.2 spec features):** `theme:` block sub-paths beyond font overrides — `spacing:` / `color:` sub-blocks, plus `size:` / `weight:` / `color:` fields inside `text:` bundles (planned; see Appendix C). (`theme: text: <role>: font:` shipped in v0.12.1. `paginate:` on `each` shipped 2026-04-22 as syntax + lazy `ListView.builder` codegen; auto-load-more on scroll deferred pending async integration.)
 
 **Transpile-time rules enforced** (rejections, not warnings): reactive-fetch footgun — `fetch("..." + bound_var)` rejected, use the trigger-variable pattern; `emit <event>` placement — only valid as the action of `on tap:` / `on touch:` / `on change:`; bare access to `shared:` variables — `hold = hold + [...]` rejected, always use `shared.hold` ("visible coupling marker" rule); `count(list, lambda)` — rejected with a fix-it pointing at `length(filter(list, predicate))` (only the value form `count(list, value)` is supported). See `transpiler/examples-errors/` for the pinned negative fixtures.
 
