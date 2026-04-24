@@ -1,6 +1,6 @@
 # Learn Igni
 
-> Tutorial v2.5 · targets Igni v0.12.2
+> Tutorial v2.5.1 · targets Igni v0.12.2
 
 Build your first app, one small step at a time. No programming experience needed.
 
@@ -97,15 +97,6 @@ Save. You see **Sam**.
 - `label name` (no quotes) tells Igni to look **inside** the box and show what's there. That's why you see **Sam**, not the word "name".
 
 A box with a name is called a **variable**.
-
-Without the quotes, Igni looks inside the box. With quotes, it shows the letters literally:
-
-```igni
-label "name"
-label name
-```
-
-`label "name"` shows the word **name**. `label name` shows **Sam**.
 
 ---
 
@@ -256,8 +247,6 @@ Two buttons in a row, with the number below them.
 - `layout horizontal:` puts things side by side instead of stacking them. Everything indented under it goes in the row.
 - `gap: small` adds space between the buttons.
 
-**Try this:** add a third button labelled "+10" that adds ten to the count. Keep it in the same row.
-
 ---
 
 ### Part 3 — Make it look nice with layout vertical
@@ -316,9 +305,9 @@ Type your name. The greeting updates letter by letter as you type.
 
 ---
 
-### Part 3 — Checkpoint
+### Part 3 — Show a hint when the box is empty
 
-Put Section 3 and this section together. A text box that greets you, or asks for your name if you haven't typed one:
+A text box that greets you, or asks for your name if you haven't typed one:
 
 ```igni
 screen Greeter:
@@ -335,7 +324,7 @@ screen Greeter:
 
 When you open the page, you see "Type your name above." Start typing — the hint is replaced with "Hello, [your name]."
 
-`is empty` is a shortcut for "has no content yet" — handy for boxes that start as `""`.
+`is empty` checks whether a box has no content yet.
 
 ---
 
