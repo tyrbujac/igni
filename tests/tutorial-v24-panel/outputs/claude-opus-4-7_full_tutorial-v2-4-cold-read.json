@@ -1,0 +1,25 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Tutorial v2.4 cold read",
+  "prompt_slug": "tutorial-v2-4-cold-read",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/tutorial-v24-panel/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/tutorial-v24-panel/spec-bundle.md",
+  "spec_tier": "full",
+  "spec_sha256": "89df6899477ac1c751c15bff13273d19285326710a015791735211aa16f5e816",
+  "spec_words": 9882,
+  "timestamp": "2026-04-24T19:21:48.797Z",
+  "duration_ms": 66717,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 463,
+    "output_tokens": 3271,
+    "cache_creation_tokens": 23061,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.22822125,
+  "transpile": null
+}
