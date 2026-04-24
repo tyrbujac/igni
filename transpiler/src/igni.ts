@@ -12,6 +12,7 @@ import { Lexer } from './lexer.js';
 import { Parser } from './parser.js';
 import { CodeGenerator, GeneratedLineMapEntry } from './codegen.js';
 import { TranspileError, formatMappedError } from './errors.js';
+import { Program } from './ast.js';
 
 // Parse CLI args: strip `--device <value>` and `--name <value>` from anywhere,
 // then interpret positional args. For `run`, the first positional after `run`
@@ -65,6 +66,7 @@ interface TranspileResult {
   dart: string;
   lineMap: GeneratedLineMapEntry[];
   sourceFiles: SourceFileInfo[];
+  program: Program;
 }
 
 function printUsage(): void {
@@ -172,7 +174,7 @@ function transpile(): TranspileResult | null {
     const tokens = new Lexer(combined).tokenize();
     const ast = new Parser(tokens).parse();
     const generated = new CodeGenerator().generateWithSourceMap(ast);
-    return { dart: generated.dart, lineMap: generated.lineMap, sourceFiles };
+    return { dart: generated.dart, lineMap: generated.lineMap, sourceFiles, program: ast };
   } catch (err: any) {
     if (err instanceof TranspileError) {
       printTranspileError(err, sourceFiles);
@@ -816,6 +818,104 @@ function syncAudio(): void {
   }
 }
 
+// --- Fonts ---
+
+// Offline-first font bundling. Roboto is Flutter Material's default family —
+// if no Roboto is registered in pubspec, CanvasKit (Flutter Web) fetches it
+// from fonts.gstatic.com on every render. Registering a local Roboto asset
+// fully severs that fetch. The six v0.12.1 curated theme fonts (pacifico,
+// inter, source_sans, merriweather, lora, fira_code) are bundled the same
+// way, replacing the v0.12.1 `google_fonts` runtime-fetch approach.
+//
+// Ship-what's-used: only fonts actually referenced by `theme:` land in the
+// generated app. Roboto is always copied (Material's default, needed even
+// when there's no theme block). Apps with no theme cost ~340KB total; each
+// added token costs its variable-TTF size. See docs/private/87.
+//
+// Family-name discipline: the string in FONT_MAP, the `family:` value we
+// write into pubspec, and the TTF's internal `name` table must all match
+// byte-for-byte. Flutter's font resolution is strict; a mismatch renders as
+// silent system-sans fallback with no error. The smoke test in doc 87
+// verification eyeballs each family to catch that.
+function syncFonts(program: Program): void {
+  const assetsSourceDir = join(__dirname, '..', '..', 'assets', 'fonts');
+  if (!existsSync(assetsSourceDir)) return;
+
+  const fontsDestDir = join(igniDir, 'assets', 'fonts');
+  const pubspecPath = join(igniDir, 'pubspec.yaml');
+  if (!existsSync(pubspecPath)) return;
+
+  // Families always bundled + families referenced in the theme block.
+  type FontSpec = { family: string; files: { file: string; weight?: number }[] };
+  const roboto: FontSpec = {
+    family: 'Roboto',
+    files: [
+      { file: 'Roboto-Regular.ttf' },
+      { file: 'Roboto-Medium.ttf', weight: 500 },
+    ],
+  };
+  const tokenToSpec: Record<string, FontSpec> = {
+    pacifico: { family: 'Pacifico', files: [{ file: 'Pacifico-Regular.ttf' }] },
+    inter: { family: 'Inter', files: [{ file: 'Inter-Regular.ttf' }] },
+    source_sans: { family: 'Source Sans 3', files: [{ file: 'SourceSans3-Regular.ttf' }] },
+    merriweather: { family: 'Merriweather', files: [{ file: 'Merriweather-Regular.ttf' }] },
+    lora: { family: 'Lora', files: [{ file: 'Lora-Regular.ttf' }] },
+    fira_code: { family: 'Fira Code', files: [{ file: 'FiraCode-Regular.ttf' }] },
+  };
+
+  const usedTokens = new Set<string>();
+  for (const entry of program.theme?.text ?? []) {
+    if (entry.font && entry.font in tokenToSpec) usedTokens.add(entry.font);
+  }
+  const specs: FontSpec[] = [roboto, ...Array.from(usedTokens).map(t => tokenToSpec[t])];
+
+  // Copy TTFs into .igni/assets/fonts/.
+  mkdirSync(fontsDestDir, { recursive: true });
+  for (const spec of specs) {
+    for (const { file } of spec.files) {
+      const src = join(assetsSourceDir, file);
+      const dst = join(fontsDestDir, file);
+      if (existsSync(src)) copyFileSync(src, dst);
+    }
+  }
+
+  // Register fonts in pubspec.yaml. Replace any prior Igni-managed block so
+  // token edits (e.g. dropping `inter` from theme) don't leave stale entries.
+  let pubspec = readFileSync(pubspecPath, 'utf-8');
+  const fontsBlock = buildFontsBlock(specs);
+  const markerStart = '  # IGNI_FONTS_START';
+  const markerEnd = '  # IGNI_FONTS_END';
+  const managed = `${markerStart}\n  fonts:\n${fontsBlock}\n${markerEnd}`;
+
+  if (pubspec.includes(markerStart)) {
+    pubspec = pubspec.replace(
+      new RegExp(`${markerStart}[\\s\\S]*?${markerEnd}`),
+      managed,
+    );
+  } else {
+    // Insert after `uses-material-design: true`. This sits inside the `flutter:`
+    // section so the `fonts:` key is correctly nested.
+    pubspec = pubspec.replace(
+      /(\s*uses-material-design:\s*true)/,
+      `$1\n\n${managed}`,
+    );
+  }
+  writeFileSync(pubspecPath, pubspec);
+}
+
+function buildFontsBlock(specs: { family: string; files: { file: string; weight?: number }[] }[]): string {
+  const lines: string[] = [];
+  for (const spec of specs) {
+    lines.push(`    - family: ${spec.family}`);
+    lines.push(`      fonts:`);
+    for (const f of spec.files) {
+      lines.push(`        - asset: assets/fonts/${f.file}`);
+      if (f.weight !== undefined) lines.push(`          weight: ${f.weight}`);
+    }
+  }
+  return lines.join('\n');
+}
+
 // --- Dependencies ---
 
 function ensureDependencies(dart: string): void {
@@ -838,11 +938,12 @@ function ensureDependencies(dart: string): void {
     );
     dirty = true;
   }
-  if (dart.includes("package:google_fonts/") && !pubspec.includes('google_fonts:')) {
-    pubspec = pubspec.replace(
-      /(\s*cupertino_icons:[^\n]*)/,
-      '$1\n  google_fonts: ^6.2.1'
-    );
+  // Drop a stale `google_fonts:` entry if it was injected by a prior Igni version.
+  // v0.12.1 used the `google_fonts` package; v0.12.3 bundles the fonts locally via
+  // syncFonts() and no longer depends on it. Leaving the old dep does no harm but
+  // makes `.igni/` carry a package that's never imported — cleaner to strip.
+  if (pubspec.includes('google_fonts:')) {
+    pubspec = pubspec.replace(/\n  google_fonts:[^\n]*/g, '');
     dirty = true;
   }
   if (dirty) {
@@ -949,6 +1050,7 @@ async function run(targetPlatform: Target, wMode: WebMode, explicitDevice: strin
   await applyAppIdentity(displayName);
   syncImages();
   syncAudio();
+  syncFonts(transpileResult.program);
   ensureDependencies(transpileResult.dart);
   mkdirSync(join(igniDir, 'lib'), { recursive: true });
   writeOutput(injectAppTitle(transpileResult.dart, displayName));
@@ -1236,6 +1338,7 @@ async function build(buildTgt: BuildTarget, explicitName: string | undefined): P
   await applyAppIdentity(displayName);
   syncImages();
   syncAudio();
+  syncFonts(initialResult.program);
   ensureDependencies(initialResult.dart);
   mkdirSync(join(igniDir, 'lib'), { recursive: true });
   writeOutput(injectAppTitle(initialResult.dart, displayName));

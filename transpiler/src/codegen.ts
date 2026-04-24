@@ -13,7 +13,7 @@ import {
   inferType, isStringExpr, substituteLambdaParam, isImageBackground,
   generateIconLookupHelper, isDarkBackgroundExpr, generateStyleValueResolvers,
   isColorTokenName, isStyleValueName, isStyleValueExpr,
-  resolveFontMethod,
+  resolveFontToken,
 } from './codegen-helpers.js';
 import { TranspileError } from './errors.js';
 
@@ -122,8 +122,6 @@ export class CodeGenerator {
       s.body.some(item => item.type === 'VariableDecl' && item.value.type === 'FunctionCall' && item.value.name === 'locate')
     );
 
-    const needsGoogleFonts = !!program.theme?.text.some(t => t.font);
-
     let code = `import 'package:flutter/material.dart';\n`;
     if (this.hasFetch) {
       code += `import 'package:http/http.dart' as http;\n`;
@@ -137,9 +135,6 @@ export class CodeGenerator {
     }
     if (hasLocate) {
       code += `import 'package:geolocator/geolocator.dart';\n`;
-    }
-    if (needsGoogleFonts) {
-      code += `import 'package:google_fonts/google_fonts.dart';\n`;
     }
     code += '\n';
 
@@ -194,16 +189,18 @@ export class CodeGenerator {
   // the existing hardcoded default (bodyMedium with fontSize 17, height 1.5).
   //
   // The no-theme branch must be byte-identical to Igni's pre-v0.12.1 output so
-  // all existing diff fixtures pass unchanged. The has-theme branch generates a
-  // non-const TextTheme (GoogleFonts.*() isn't const) with fontFamily patches
-  // on the slots Igni's STYLE_MAP reads from:
+  // all existing diff fixtures pass unchanged. The has-theme branch patches
+  // the slots Igni's STYLE_MAP reads from with a bare fontFamily string:
   //   heading  → headlineLarge + mirror to headlineSmall (so `heading.small` inherits)
   //   body     → bodyLarge + bodyMedium (bodyMedium is the default unstyled label)
   //   caption  → bodySmall
   //
-  // Using `GoogleFonts.x().fontFamily` (a String) rather than `GoogleFonts.x()`
-  // (a TextStyle) lets us compose the family with the existing size/height
-  // defaults inside a single TextStyle literal.
+  // The family string (e.g. 'Pacifico') must match one of the entries that
+  // syncFonts() registers under `flutter.fonts:` in pubspec.yaml. Both trace
+  // back to FONT_MAP in codegen-helpers.ts, which is the single source of
+  // truth for the six curated v0.12.1 tokens. TTFs live in assets/fonts/ at
+  // the repo root and are copied into .igni/assets/fonts/ on every run
+  // (offline-first, no runtime CDN fetch — see docs/private/87).
   private buildTextTheme(theme?: ThemeBlock): string {
     const baseBodyMedium = 'bodyMedium: TextStyle(fontSize: 17, height: 1.5)';
     if (!theme || !theme.text.some(t => t.font)) {
@@ -214,7 +211,7 @@ export class CodeGenerator {
     const headingFont = fontOf('heading');
     const bodyFont = fontOf('body');
     const captionFont = fontOf('caption');
-    const family = (token: string) => `GoogleFonts.${resolveFontMethod(token)}().fontFamily`;
+    const family = (token: string) => `'${resolveFontToken(token)}'`;
 
     const parts: string[] = [];
     parts.push(

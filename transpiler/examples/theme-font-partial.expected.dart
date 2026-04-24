@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 void main() {
-  runApp(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: TextTheme(bodyMedium: TextStyle(fontSize: 17, height: 1.5), headlineLarge: TextStyle(fontFamily: GoogleFonts.pacifico().fontFamily), headlineSmall: TextStyle(fontFamily: GoogleFonts.pacifico().fontFamily))), home: DemoScreen()));
+  runApp(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: TextTheme(bodyMedium: TextStyle(fontSize: 17, height: 1.5), headlineLarge: TextStyle(fontFamily: 'Pacifico'), headlineSmall: TextStyle(fontFamily: 'Pacifico'))), home: DemoScreen()));
 }
 
 class DemoScreen extends StatefulWidget {

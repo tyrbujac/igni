@@ -58,6 +58,8 @@ Run it:
 igni run
 ```
 
+First run needs internet — `flutter create` fetches scaffold packages from pub.dev. After that, `igni run` works fully offline, theme fonts included.
+
 `igni new` creates a starter `app.igni` and a `.gitignore` for the generated `.igni/` Flutter project. Save `app.igni`, browser updates automatically. That's it.
 
 ## Using Igni with an LLM
