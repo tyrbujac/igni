@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Thoughts on Igni",
+  "prompt_slug": "thoughts-on-igni",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.12.2-broad-panel/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.12.2-broad-panel/spec-bundle.md",
+  "spec_tier": "full",
+  "spec_sha256": "0a836c351371bc1e9c11537b8d8b1a1ec61174fa355b9ebf2fef64cb967079a7",
+  "spec_words": 18078,
+  "timestamp": "2026-04-24T19:40:39.695Z",
+  "duration_ms": 44127,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 31978,
+    "output_tokens": 1532,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.08234,
+  "transpile": null
+}

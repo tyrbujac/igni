@@ -1,0 +1,23 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.4",
+  "model_id": "gpt-5.4-2026-03-05",
+  "prompt_name": "Thoughts on Igni",
+  "prompt_slug": "thoughts-on-igni",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.12.2-broad-panel/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.12.2-broad-panel/spec-bundle.md",
+  "spec_tier": "full",
+  "spec_sha256": "0a836c351371bc1e9c11537b8d8b1a1ec61174fa355b9ebf2fef64cb967079a7",
+  "spec_words": 18078,
+  "timestamp": "2026-04-24T19:41:17.770Z",
+  "duration_ms": 87990,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 30091,
+    "output_tokens": 3394,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.1261375,
+  "transpile": null
+}

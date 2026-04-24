@@ -1,0 +1,25 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Thoughts on Igni",
+  "prompt_slug": "thoughts-on-igni",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.12.2-broad-panel/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.12.2-broad-panel/spec-bundle.md",
+  "spec_tier": "full",
+  "spec_sha256": "0a836c351371bc1e9c11537b8d8b1a1ec61174fa355b9ebf2fef64cb967079a7",
+  "spec_words": 18078,
+  "timestamp": "2026-04-24T19:41:19.856Z",
+  "duration_ms": 95740,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 415,
+    "output_tokens": 4813,
+    "cache_creation_tokens": 43537,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.39450625,
+  "transpile": null
+}
