@@ -1,6 +1,6 @@
 # Examples
 
-40 `.igni` apps, each paired with a reference `.expected.dart` for diff-testing. Also usable as a learning gallery — browse to see Igni in action.
+44 `.igni` apps, each paired with a reference `.expected.dart` for diff-testing. Also usable as a learning gallery — browse to see Igni in action.
 
 To run any example in a browser:
 
@@ -89,6 +89,10 @@ npx tsx ../src/cli.ts counter.igni
 ### Pagination & large lists
 
 - **`pagination`** — `paginate: N` modifier on `each` for lazy `ListView.builder`.
+
+### Games
+
+- **`tictactoe`** — two-player noughts and crosses. 3×3 grid via nested layouts, flat-list-of-objects board, `replace()` + `{target with mark: player}` for cell updates, `each` over row indices with arithmetic indexer.
 
 ### Smoke test
 

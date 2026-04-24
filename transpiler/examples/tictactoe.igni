@@ -1,0 +1,69 @@
+screen TicTacToe:
+  cells = [
+    {id: 0, mark: ""}, {id: 1, mark: ""}, {id: 2, mark: ""},
+    {id: 3, mark: ""}, {id: 4, mark: ""}, {id: 5, mark: ""},
+    {id: 6, mark: ""}, {id: 7, mark: ""}, {id: 8, mark: ""}
+  ]
+  player = "X"
+  winner = ""
+
+  layout vertical, padding: large, gap: medium, align: center:
+    label "Noughts & Crosses", style: heading
+
+    if winner is empty:
+      label "Your move, " + player
+    else:
+      if winner is "draw":
+        label "Draw — nobody takes it!", style: heading.small
+      else:
+        label winner + " takes it!", style: heading.small
+
+    layout vertical, gap: small:
+      each row_start in [0, 3, 6]:
+        layout horizontal, gap: small:
+          each offset in [0, 1, 2]:
+            layout vertical, fill: true, padding: large, background: subtle, rounded: medium, align: center, on tap: place(cells[row_start + offset]):
+              label cells[row_start + offset].mark, style: heading
+
+    button "New Game", on tap: reset()
+
+  place(cell):
+    if winner is empty and cell.mark is empty:
+      cells = replace(cells, cell, {cell with mark: player})
+      winner = check()
+      if winner is empty:
+        if player is "X":
+          player = "O"
+        else:
+          player = "X"
+
+  check():
+    lines = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ]
+    result = ""
+    each line in lines:
+      a = cells[line[0]].mark
+      b = cells[line[1]].mark
+      c = cells[line[2]].mark
+      if a is not empty and a is b and b is c:
+        result = a
+    if result is empty:
+      filled = 0
+      each cell in cells:
+        if cell.mark is not empty:
+          filled = filled + 1
+      if filled is 9:
+        result = "draw"
+    return result
+
+  reset():
+    cells = [
+      {id: 0, mark: ""}, {id: 1, mark: ""}, {id: 2, mark: ""},
+      {id: 3, mark: ""}, {id: 4, mark: ""}, {id: 5, mark: ""},
+      {id: 6, mark: ""}, {id: 7, mark: ""}, {id: 8, mark: ""}
+    ]
+    player = "X"
+    winner = ""
