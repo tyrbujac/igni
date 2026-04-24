@@ -6,7 +6,7 @@ Where Igni is going. Tasks are tiered by horizon: **Immediate** (small unblockin
 
 - **Immediate**
   - **Mum tutorial rerun on 2026-04-23 or 2026-04-24** against `docs/tutorial.md` (now targeting v0.12.2). External human-testing signal; gates Tier 2 cheatsheet improvements queued in `docs/private/64`.
-  - **Transpiler-coverage gaps for v1.0 criterion 2:** conditional assignment in layouts, bare statements in UI blocks (under-specified — needs design note). Sub-day each. *(`theme:` block: DONE in v0.12.1.)*
+  - **Transpiler-coverage gaps for v1.0 criterion 2:** conditional assignment in layouts, bare statements in UI blocks (under-specified — needs design note). Sub-day each. *(`theme:` block: DONE in v0.12.1; offline-font bundling closes v0.12.1's `google_fonts` runtime-fetch gap, shipped 2026-04-24.)*
 
 - **Next milestone — Boojy subset migration.** v1.0 criterion 4 (one non-trivial app shipped) is the bar no hygiene work can close; `docs/private/63` §5 flags it as the real gate. Pair with the 2026-04-23/24 mum cold-run for external-signal density.
 
@@ -142,7 +142,6 @@ Igni today has the spec (formal reference) and a cheatsheet (condensed reference
 Unfiltered. No timeline. Some of these might be bad. Signal strength noted where cold tests or reviews have data.
 
 - **Mobile platform-manifest injection when `locate()` is used** — iOS `NSLocationWhenInUseUsageDescription` in `.igni/ios/Runner/Info.plist` and Android `ACCESS_FINE_LOCATION` in `AndroidManifest.xml`. Transpiler already injects `geolocator` into `pubspec.yaml`; the sibling manifest strings are missing, so `locate()` routes straight to `is error` on iOS (graceful but wrong). Gated on mobile becoming first-class (currently v1.0 is web-first per `CLAUDE.md` "What this project is not"). Evidence: `docs/private/68_mobile_smoke_test.md` (Finding C). Sibling runtime-permission-request is a further deferred step.
-- `theme:` block — spec-defined but transpiler not implemented. Low priority (default theme works)
 - `paginate:` on `each` — spec-defined but transpiler not implemented. Low priority (no cold test has exercised it)
 - ~~`upper()` / `lower()` string builtins~~ — **SHIPPED in v0.7.1** (8/8 compounded signal from Alert Dashboard)
 - `trim()` string builtin — Claude flagged in v0.6.2 review; no cold-test evidence yet. Would need its own signal before shipping (same bar as `upper`/`lower` cleared).
