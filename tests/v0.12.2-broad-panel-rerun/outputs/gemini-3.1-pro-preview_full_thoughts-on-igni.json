@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Thoughts on Igni",
+  "prompt_slug": "thoughts-on-igni",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.12.2-broad-panel-rerun/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.12.2-broad-panel-rerun/spec-bundle.md",
+  "spec_tier": "full",
+  "spec_sha256": "d4ecc23908ab853488d2b19d939f9f962529a37cdb7f65a727da4afaf2f26d11",
+  "spec_words": 18227,
+  "timestamp": "2026-04-24T21:21:51.044Z",
+  "duration_ms": 38342,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 32333,
+    "output_tokens": 1542,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.08317,
+  "transpile": {
+    "attempted": false,
+    "extracted_code": false,
+    "passed": false,
+    "error": "no fenced code block found in output",
+    "error_category": "runner_error",
+    "igni_lines": 0
+  }
+}

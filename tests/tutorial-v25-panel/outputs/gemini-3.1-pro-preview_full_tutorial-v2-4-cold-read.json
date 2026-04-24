@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Tutorial v2.4 cold read",
+  "prompt_slug": "tutorial-v2-4-cold-read",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/tutorial-v25-panel/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/tutorial-v25-panel/spec-bundle.md",
+  "spec_tier": "full",
+  "spec_sha256": "4e9b316867bd15355ee56346e02d922872bd60035aae66264fc1635993e408c5",
+  "spec_words": 7418,
+  "timestamp": "2026-04-24T20:40:05.633Z",
+  "duration_ms": 27672,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 13896,
+    "output_tokens": 754,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.03684,
+  "transpile": {
+    "attempted": false,
+    "extracted_code": false,
+    "passed": false,
+    "error": "no fenced code block found in output",
+    "error_category": "runner_error",
+    "igni_lines": 0
+  }
+}

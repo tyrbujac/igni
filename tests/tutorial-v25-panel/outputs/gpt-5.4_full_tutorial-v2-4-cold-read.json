@@ -1,0 +1,30 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.4",
+  "model_id": "gpt-5.4-2026-03-05",
+  "prompt_name": "Tutorial v2.4 cold read",
+  "prompt_slug": "tutorial-v2-4-cold-read",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/tutorial-v25-panel/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/tutorial-v25-panel/spec-bundle.md",
+  "spec_tier": "full",
+  "spec_sha256": "4e9b316867bd15355ee56346e02d922872bd60035aae66264fc1635993e408c5",
+  "spec_words": 7418,
+  "timestamp": "2026-04-24T20:40:11.318Z",
+  "duration_ms": 34320,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 13047,
+    "output_tokens": 2042,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.0632475,
+  "transpile": {
+    "attempted": false,
+    "extracted_code": false,
+    "passed": false,
+    "error": "no fenced code block found in output",
+    "error_category": "runner_error",
+    "igni_lines": 0
+  }
+}
