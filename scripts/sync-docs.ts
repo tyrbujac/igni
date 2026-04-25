@@ -42,7 +42,40 @@ type Facts = {
   oldest: string;           // "v0.2"
   exampleCount: number;     // 34 — positive .igni examples
   totalTests: number;       // 46 — positive examples + negative error tests
+  latestSpecChange: string; // "**Latest spec change: v0.13.1** (2026-04-25) — *tagline* See..."
 };
+
+// Read CHANGELOG.md, find the first `## vX.Y.Z — DATE` heading (skipping
+// `## Unreleased`), extract version + date + the italicised tagline below it.
+// Returns a one-paragraph summary suitable for a SYNC region in README.md.
+// Empty string if CHANGELOG is missing or unparseable — caller decides how to
+// render that case.
+function extractLatestSpecChange(repoPath: string): string {
+  let changelog: string;
+  try { changelog = readFileSync(join(repoPath, 'CHANGELOG.md'), 'utf-8'); }
+  catch { return ''; }
+  const lines = changelog.split('\n');
+  let version = '';
+  let date = '';
+  let tagline = '';
+  for (const line of lines) {
+    const headingMatch = line.match(/^##\s+(v\d+\.\d+(?:\.\d+)?)\s*—\s*(\S+)/);
+    if (headingMatch && !version) {
+      version = headingMatch[1];
+      date = headingMatch[2];
+      continue;
+    }
+    if (version && !tagline) {
+      const taglineMatch = line.match(/^\*(.+)\*$/);
+      if (taglineMatch) {
+        tagline = taglineMatch[1];
+        break;
+      }
+    }
+  }
+  if (!version || !tagline) return '';
+  return `**Latest spec change: ${version}** (${date}) — *${tagline}* See [\`CHANGELOG.md\`](CHANGELOG.md) for full history.`;
+}
 
 function computeFacts(): Facts {
   // Historical spec versions live under spec/archive/ (moved there for navigability);
@@ -76,7 +109,9 @@ function computeFacts(): Facts {
   } catch { /* directory optional */ }
   const totalTests = exampleCount + negativeCount;
 
-  return { current, secondNewest, oldest, exampleCount, totalTests };
+  const latestSpecChange = extractLatestSpecChange(REPO);
+
+  return { current, secondNewest, oldest, exampleCount, totalTests, latestSpecChange };
 }
 
 // Replace every `<!-- SYNC:name -->...<!-- /SYNC:name -->` occurrence. The region
@@ -110,6 +145,7 @@ function main(): void {
     'historical-range-paths': facts.secondNewest
       ? `spec/archive/${facts.oldest}.md → spec/archive/${facts.secondNewest}.md`
       : '(none yet)',
+    'latest-spec-changes': facts.latestSpecChange,
   };
 
   const targets = ['README.md', 'ARCHITECTURE.md', 'CLAUDE.md'];
