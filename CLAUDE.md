@@ -37,6 +37,7 @@ If a proposal violates one of these, it's wrong by definition — push back inst
 
 - **Tyr is the sole decision-maker.** Propose changes, present tradeoffs, wait for confirmation. Never edit the spec on his behalf without explicit approval.
 - **Follow the spec-iteration cycle in [`docs/cycle.md`](docs/cycle.md)** — 9 stages (design → review → ship → Stage 3 → critique → synthesis → patch) with named commands and human checkpoints. v0.13's ship (`docs/private/91`) is the canonical example. Don't reinvent the cycle per session.
+- **After every `igni run`, walk the trap journal** (`docs/cycle.md` §Trap journal). Every surprise — transpiler bug, layout collapse, Igni-source pattern that fought you, misleading error, surprising workaround — gets routed to ROADMAP, cookbook, saved memory, or a design note depending on its shape. Skipping this means the next session relearns the same trap. The Connect Four exercise's empty-layout-collapse + wrap-height-bug were caught only because the journal ran; both are now in the cookbook.
 - **For exploratory questions, give 2-3 sentences and the main tradeoff** — not an essay. Tyr will ask for depth if he wants it.
 - **For structural changes, use the plan-then-execute pattern**: explore, propose a plan, get approval, then write. Plan mode is appropriate for non-trivial spec edits.
 - **Never delete or overwrite a snapshot version.** Preserve them as historical artifacts in `spec/archive/`.

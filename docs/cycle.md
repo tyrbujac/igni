@@ -37,6 +37,24 @@ Stages 2, 4, 6, 7 use the runner (`tests/runner/run.ts`); the `cold-test` wrappe
 
 **Chat-UI experiments (off-path).** Pasting the spec into Claude.ai / ChatGPT for cheap intuition is fine, but is **not** a citable stage. Rule of thumb: chat-UI for cheap intuition; promote to API panel before acting; archive locally in `docs/private/` for substance even when uncitable. See `docs/private/92_chatui_creative_audience.md` for a worked example (the audience-scope finding that motivated the v1.0 criterion-4 reshape).
 
+## Trap journal (stage-5 follow-up)
+
+Stage 5 isn't done when the visual checkpoint passes — it's done when every *surprise* surfaced during the run has been routed somewhere. Bugs, layout collapses, source-language patterns that turned out to fight you, error messages that misled, behaviour that needed a workaround: each of these is a learnability hazard for whoever (human or LLM) writes Igni next. Without a journal step they evaporate.
+
+After every `igni run` session, walk through what surprised you and route each item:
+
+| Trap shape | Goes to |
+|---|---|
+| Transpiler bug — codegen wrong, lexer rejects valid syntax, runtime crash on legal Igni | `ROADMAP.md` Immediate; pin a fixture (positive in `transpiler/examples/`, negative in `transpiler/examples-errors/`) |
+| Igni-source pattern that surprises a careful author | `docs/cookbook.md` recipe + saved memory `feedback_*.md` (assistant-only avoidance) |
+| Spec gap — language can't express the user's natural intent | Design note in `docs/private/`, then `ROADMAP.md` Future tier with signal noted |
+| Cosmetic surprise that's actually design intent | One-line callout in cheatsheet or spec; not a bug |
+| Friction observed in a real-app exercise without clear shape | `docs/private/NN_observations.md` as a waypoint until shape clarifies |
+
+Worked example: today's Connect Four exercise (commit `cd32a1b` and predecessors) surfaced four traps. **Sibling-`each`-block scope-tracking** (codegen) → ROADMAP Immediate. **Unary-minus on number literals** (lexer) → ROADMAP Immediate. **Empty-layout-collapse in fill contexts** (Igni-source pattern) → cookbook recipe + saved memory. **Variable-length-text wrap-height** (Igni-source pattern, second-order trap) → cookbook recipe + saved memory. Without the journal step, the third and fourth would have stayed silent — they're not transpiler bugs, just patterns that bite without warning.
+
+The journal isn't ceremony. It's the lever that makes "design by trying, not by theorising" (CLAUDE.md) actually accumulate signal across sessions. Without it, every session relearns the same traps.
+
 ## Checkpoints
 
 Human review fits at the end of stages **2, 5, 6, 7**. Other stages are author work. Don't skip checkpoints — they're where the cycle's quality compounds.
