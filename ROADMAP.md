@@ -1,184 +1,75 @@
 # Roadmap
 
-Where Igni is going. Tasks are tiered by horizon: **Immediate** (small unblocking items, <1 day each), **Next milestone** (one primary chunk of active work), **Future** (ideas + longer-horizon streams). Priority signals come from cold-LLM tests and human testing — not speculation. The project is single-author by design during early access; external contribution opens post-v1.0.
+Tasks tiered by horizon: **Immediate** (sub-day, unblocking), **Next milestone** (one chunk of active work), **Future** (longer-horizon items with cold-test or panel signal). New items default to Future and get promoted by signal, not enthusiasm. History lives in `CHANGELOG.md`; methodology retrospectives in `docs/private/`.
 
 ## Current focus
 
 - **Immediate**
-  - **Mum tutorial rerun on 2026-04-25** against `docs/tutorial.md` (v2.5.1, targeting Igni v0.13.1). External human-testing signal; gates Tier 2 cheatsheet improvements queued in `docs/private/64`.
-  - **Transpiler-coverage gaps for v1.0 criterion 2:** conditional assignment in layouts, bare statements in UI blocks. **Fresh signal 2026-04-25:** Gemini 3.1 Pro hit the bare-statements case in v0.13.0 Stage 3 (`tab_color = subtle` placed inside a layout block, transpiler accepted then crashed at parse). One real model output per session is enough to motivate the rejection fixture. Sub-day each. *(`theme:` block: DONE in v0.12.1; offline-font bundling closes v0.12.1's `google_fonts` runtime-fetch gap, shipped 2026-04-24; `gap:` × `each` fix shipped 2026-04-25 in commit `5c8345e`.)*
+  - **Mum tutorial rerun on 2026-04-25** against `docs/tutorial.md` (v2.5.1, targeting Igni v0.13.1). External human-test signal; gates Tier 2 cheatsheet improvements (`docs/private/64`).
+  - **Transpiler-coverage gaps for v1.0 criterion 2** — conditional assignment in layouts, bare statements in UI blocks. Fresh signal 2026-04-25: Gemini 3.1 Pro hit the bare-statements case in v0.13.0 Stage 3 (`tab_color = subtle` placed inside a layout block). Sub-day each.
 
-- **Next milestone — Boojy subset migration.** v1.0 criterion 4 (one non-trivial app shipped) is the bar no hygiene work can close; `docs/private/63` §5 flags it as the real gate. Pair with the 2026-04-25 mum cold-run for external-signal density.
+- **Next milestone — three small real apps shipped (v1.0 criterion 4).** Quantity bar replacing the previous Boojy-subset framing. Chat-UI experiments (`docs/private/92`) confirmed Boojy is structurally wrong for Igni (creative-tool primitives Igni explicitly excludes), so criterion 4 is now "three small real apps" rather than "one flagship dogfood." First candidate: mum's tutorial-driven app (today's external cold-run). Two more TBD — personal-use side projects, not creative-tool-class. Audience scope documented in README "What Igni is for" + ARCHITECTURE "What this project is *not*."
 
-- **Future** — lifecycle-hook docs patch (`docs/private/49` Tier 2); mutating-component-arg detection; widened async-footgun (Stream 3 below); checkbox field-access binding (`docs/private/69`, fresh 4/6 Stage 3 signal); **per-label `font:` as v0.14+ candidate** (`docs/private/78` Shape B deferred after v0.12 theme-level shape shipped); **layout sizing primitive (cells with fixed aspect ratio)** — surfaced 2026-04-25 from tic-tac-toe real-app exercise; `max_width:` (shipped v0.13.0) doesn't cover it because narrowing the grid container doesn't fix per-cell aspect ratio. Two candidate shapes: (a) `aspect: 1` on layouts for general aspect-ratio constraint, (b) `square: true` shorthand for the common case. Needs design note before any syntax lands; ranks below `max_width:` until a second human-test build surfaces the same gap. **Retire input 320px hardcoded cap in favour of `max_width:` on inputs** (doc 79 Appendix item 7) — borderline-yes, separate session. **Single-model raises from v0.13.0 spec critique** (`docs/private/91`): align: center example ambiguity, horizontal-layout clarification, `max_width:` numeric-value compile-failure mode, "no-op" wording in rule 3. Each is a candidate v0.13.2 doc-nudge if reproduced in a future panel; not actioned now to keep v0.13.1 attribution clean. Tooling & documentation streams (snippets, LSP, refactoring, full docs set). Ideas section at the bottom.
+- **Future** — see Streams below; Ideas at the bottom.
 
-### Recently shipped (2026-04-25 session)
+### Recently shipped
 
-One long session: v0.13.0 + v0.13.1 max_width ship + Stage 3 validation + transpiler bug fix. Details in `docs/private/91_v0130_postship.md` and `CHANGELOG.md` (v0.13.0 + v0.13.1).
-
-| Commit | What |
-| --- | --- |
-| `8499bdd` | **v0.13 design-review** — pre-implementation 3-frontier-model panel. Caught and removed the originally-proposed `full` token (3/3 convergence on "one way to do everything" violation). $0.31, ~3 min. |
-| `eca6148` | **v0.13.0 spec ship** — `max_width:` on layouts (token-only, three tokens phone/tablet/desktop, no full). Container width subsection in spec + cheatsheet row + micro entry. v0.12.2 → archive. |
-| `3681c2d` | **v0.13.0 transpiler ship** — `MAX_WIDTH_TOKENS` table + ConstrainedBox codegen + `examples/max-width.igni` fixture (5 composition rules) + mi-card dogfood update + CHANGELOG. |
-| `5c8345e` | **`gap:` × `each` transpiler fix** — closes the Immediate-tier item that surfaced from tic-tac-toe earlier today. Indexed-for codegen with SizedBox between iterations; nested each-loops handled correctly. 10 fixture snapshots regenerated; new gap-each.igni fixture pins the behaviour. |
-| `b787d2c` | **v0.13.1 docs patch** — first post-ship spec-critique panel run ($0.19, 3 models) caught 3/3 convergent ambiguities in v0.13.0 prose: rule-4 "proportionally" wording, missing none/auto rejection, missing fill+max_width cheatsheet example. All three patched. New methodology shape worth flagging for the dissertation. |
-| **Stage 3** | **4/4 adoption** of `max_width:` tokens against `v0.13.1-cheatsheet.md`. Pre-registered Stage-0-skip prediction vindicated (design note 79). 0/8 invented `full`/`none`/`auto`; 0/8 used numerics; 7/8 transpiled cleanly. Token distribution `phone` 5× / `tablet` 6× / `desktop` 1×. $0.74. Summary at `tests/v0.13.0-stage3/Stage3_Summary.md`. |
-
-### Recently shipped (2026-04-21 session)
-
-One long session closed out the mobile smoke-test ledger + cheatsheet discipline debt. Details in `docs/private/68_mobile_smoke_test.md` and `CHANGELOG.md` (for v0.11.5).
-
-| Commit | What |
-| --- | --- |
-| `eb10540` | **count(list, lambda) transpiler rejection** — fix-it error points at `length(filter(...))`. 54/54 diff tests + pinned `count-lambda` negative fixture. |
-| `2d29fbf` | **`igni run ios` / `igni run android`** first-class CLI commands. Auto-picks running device, auto-boots first emulator, supports `--device "<name>"`. |
-| `5303f3e` | **Fetch-on-mobile root-cause resolved** — not an Igni/Flutter bug; Cloudflare challenges the Dart HTTP TLS fingerprint. Swapped example URL to `api.github.com/users/octocat` (non-Cloudflare). See `docs/private/68` Finding D. |
-| `124c851` | **SafeArea wrap** for screen bodies without `title:`. Codegen emits `SafeArea(child: ...)` when no AppBar + no image bg. Fixes iOS Dynamic Island clipping. |
-| `39eb019` | **v0.11.5 hygiene prune** — cheatsheet 2,931 → 2,536 words, micro 750 → 714; context-specific callouts migrated to the full spec's reference sections. First execution of the prune-before-add cadence. |
-| `7e1f775` / `f5f8ef6` / `32156d6` / `41000ee` | **Repo navigability polish** — spec/archive/, docs/archive/, ARCHITECTURE.md split from CLAUDE.md, transpiler/README.md + examples/README.md. |
+- **2026-04-25 session:** v0.13.0 + v0.13.1 `max_width` ship + Stage 3 4/4 + `gap:` × `each` transpiler fix. Details in `docs/private/91`, `92`; commits `8499bdd` `eca6148` `3681c2d` `5c8345e` `b787d2c` `a7cca4f`.
+- Earlier sessions: `CHANGELOG.md`.
 
 ---
 
-## Near term
+## Stream 2 — Tooling
 
-### ~~Stream 1 — Transpiler: close the spec gap~~ DONE
+Active priorities. Closes the human-experience gap surfaced by the v0.6.6 rating assessment; no LLM-accuracy regressions.
 
-All major v0.6.6 spec features now have transpiler support. 27 diff tests, 0 failures. Remaining low-priority items (`theme:` block, `paginate:` on `each`) moved to Ideas.
+1. **Better transpiler error messages** — map Dart errors back to Igni line numbers via source maps or codegen line-tracking. Errors currently reference generated Dart the user didn't write.
+2. **`igni new`** — project scaffolding companion to `igni run`.
+3. **Runner provider-resilience** — Gemini Pro Task prompt has 6× cumulative network failures across two Stage 3 rounds. Add retry-with-backoff and/or fallback to `gemini-flash-latest` in `tests/runner/providers/google.ts`.
+4. **Browser-test remaining features** — `on-change`, `fetch-mutation` diff-test cleanly but lack runtime browser passes.
 
-### Stream 2 — Tooling: close the human experience gap
+## Stream 3 — Spec backlog (signal-ranked)
 
-The v0.6.6 rating assessment identified tooling (4/10) and debugging (3/10) as the biggest drags on the human experience. These don't require spec changes and don't risk LLM accuracy regressions.
+Active candidates with cold-test or panel signal. Each needs a design note before syntax lands.
 
-**Done:**
+- **Identity semantics** — 4/4 across two rounds. Biggest open design question. Decide: `key:` field on objects, structural equality, or alternative.
+- **Dictionary/map type** — 4/4 Settings cold test. `cities_for[country]` with `{"UK": [...]}` literal. Comes up in settings, localisation, routing, form options.
+- **Checkbox field-access binding (`checkbox bind: obj.field`)** — 4/6 v0.11.4 Stage 3 signal. Two design shapes: widen transpiler to accept `bind: obj.field` inside `each` and auto-wire through `replace`, or strengthen cheatsheet teaching of the canonical mutation pattern.
+- **Error inspection + handling beyond async** — 3/4 (`is error` doesn't surface message/status) + 2/3 panel `docs/private/64` (doesn't cover user validation errors, null on out-of-bounds, function-level exceptions). One design note covering both.
+- **String interpolation** — 2/3 panel `docs/private/64` flagged `+` concatenation friction. Possibly document-the-choice outcome rather than syntax change. Needs design note covering LLM-parsing-ambiguity, lexer simplicity, reader-surprise.
+- **Widen async-footgun detection** — catch `on change: trigger = bound_var` evasion. Nice-to-have after v0.9.1 docs-only patch worked (3/3 frontier on canonical trigger), but the "no magic" principle still argues for transpiler-level rejection.
+- **Variable-placement rules** — 1/4 Contacts + fresh 2026-04-25 Gemini Pro Stage 3 hit. Spec clarification ("Variable assignments go at screen body level, not inside layout blocks") + transpiler-rejection fixture candidate.
+- **Layout sizing primitive (square cells)** — 2026-04-25 from tic-tac-toe. `aspect: 1` or `square: true` on layouts. `max_width:` doesn't cover it (narrowing the container doesn't fix per-cell aspect ratio). Ranks below other items pending second human-test surface.
+- **v0.13.0 spec critique single-model raises** (`docs/private/91`) — `align: center` example ambiguity, horizontal-layout clarification, `max_width:` numeric-value compile-failure mode, "no-op" wording in rule 3. v0.13.2 doc-nudge candidates if any reproduce in a future panel.
+- **Per-label `font:`** — `docs/private/78` Shape B deferred after v0.12 theme-level shape shipped. v0.14+ candidate.
+- **Mutating-component-arg detection** — next v0.9-template candidate. Needs cold test first.
+- **Derived state clarity** — 1/8 defensively reassigns derived state. One-line spec clarification.
 
-1. ~~**VS Code syntax highlighting**~~ — TextMate grammar in `editors/vscode/`. Keywords, UI primitives, events, properties, inline function calls, component params, type hints. Verified in Cursor.
-2. ~~**`print()` builtin**~~ — works with zero code changes. Generic function call fallback produces valid `print()` in Dart. Browser-tested.
-3. ~~**`igni run` CLI cleanup**~~ — Igni-branded messages, build animation with timing, debug banner removed, tab title + favicon set to Igni.
-4. ~~**Browser-test row layout fix**~~ — `fetch-reactive` (input + button in horizontal layout) confirmed working in browser.
+## Ideas (signal-strong only)
 
-**Current priorities:**
+Cold-test, panel-89, or rating-assessment signal noted. Unsignalled brainstorm items pruned.
 
-1. **Better transpiler error messages** — map Dart errors back to Igni line numbers. Currently errors reference generated Dart code the user didn't write. Source maps or line-number tracking in codegen.
-2. **Browser-test remaining features** — `on-change` and `fetch-mutation` now diff-test cleanly, but browser passes would confirm runtime behaviour rather than just generated Dart shape.
-3. **`igni new`** — project scaffolding. `igni run` works; it now needs the matching setup command.
-4. **Runner provider-resilience — Gemini Pro Task prompt.** 6× cumulative fetch-failure (3× Stage 0, 3× Stage 3) against `gemini-3.1-pro-preview` for one specific prompt shape, zero successes. Pattern: Pro's Alert-prompt succeeds first-try; Task-prompt fails at undici network layer. `tests/runner/providers/google.ts` currently does single-attempt per call. Add retry-with-backoff (e.g. 3 attempts, exponential) and/or a fallback path to `gemini-flash-latest` when Pro preview endpoints flake. Not urgent — Stage 0 and Stage 3 interpretations were robust at 7/8 both times — but the pattern is now reproducible enough to fix while fresh.
-4. ~~**Hot restart instead of hot reload in `igni run`**~~ — **FIXED 2026-04-20** in tutorial dogfood pass (`docs/private/60`). Swapped `transpiler/src/igni.ts:505` from `'r'` (hot reload) to `'R'` (hot restart). Two symptoms previously observed: (a) adding a new variable mid-session threw `TypeError: Cannot read properties of undefined (reading 'Symbol(dartx.toString)')` because hot reload doesn't re-run field initialisers on existing State instances; (b) editing an existing variable's initialiser left the browser showing the stale value. Both fixed by hot restart. 50/50 diff tests still pass. Small perf hit per save (~100ms) is an acceptable trade for pedagogical correctness — the tutorial's core promise is "edit a value, save, see the change."
-4. ~~**Runner fix for Opus 4.7 extended thinking**~~ — **DONE.** `tests/runner/providers/anthropic.ts` now branches on model name: 4.7-class models get `thinking: { type: 'adaptive' }` + `output_config: { effort }` with budget→effort buckets (≤5000 low, ≤12000 medium, >12000 high); 4.6-class keeps `enabled`/`budget_tokens`. Validated end-to-end on v0.9.1 Product Search run with `--thinking 5000` (`runner-validation/`). Flagship thinking runs unblocked.
-
-**Methodology state:** the v0.6.11 BMI re-run closed the v0.6.x patch arc. All three non-breaking additions changed model behaviour, including the documentation-only bottom-anchor pattern. That lowers the pressure to add syntax reactively; docs patches are now a validated tool, not a fallback. The v0.7.0 round added the second validation: cold-test data (what models produce) and qualitative ship-review data (what models critique) converge on the same gaps when both are run against the same version. Future versions use one narrower cold-test round plus one ship-review round, with priority ordering backed by compounded signal across both streams.
-
-### Stream 3 — Spec: v0.8.0 shipped, v0.9 next
-
-Language-level improvements identified by cold tests and the rating assessment. These require spec changes and should be explored one target at a time, then cold-tested before committing.
-
-**Locked for v0.7.0:** ship exactly one language feature — colour/background token assignability. Strings stay `+`-only in this release. Object update ergonomics is assessed as too large for the same version and should be treated as a likely `v0.8` candidate unless a much smaller shape appears.
-
-- **Colour/background token assignability** — **SHIPPED in v0.7.0.** BMI cold test: 3/4 models independently invented `bg = card` / `status_color = green` and used them in `background: bg` / `color: status_color` to style conditionally. The language now matches that natural pattern. `card` remains background-only at the property boundary.
-- ~~**`body` slot inside horizontal layouts + button width**~~ **FIXED 2026-04-14 in v0.6.8.** `body` now renders exactly one widget. Callers wrap multi-child content in explicit `layout vertical:` / `layout horizontal:`. Fixes the BMI crash by construction — buttons wrapped in an explicit horizontal layout become direct Row children with intrinsic widths instead of `SizedBox(width: infinity)` inside an unconstrained Column.
-- ~~**Object update syntax**~~ — **SHIPPED in v0.10.0, VALIDATED 2026-04-17.** `{target with field: newval}` builds a new object from target's fields plus overrides. Base restricted to variable or dot-access chain (no function calls, no indexing). Shallow only; braces required (no bare-infix); `with` reserved. Design note: `docs/private/42_v10_object_update.md`. Pre-ship cold-test: `tests/v0.10/Object_Update_Syntax.md` (4 shapes, no majority convergence; `with`-keyword family 2/3 frontier plurality; design-note fallback fired — ship on principles). **Post-ship validation: `tests/v0.10/Shopping.md` — 3/3 frontier models used `{target with ...}` unprompted for the quantity-increment case, zero fallback to the verbose enumeration form. GPT used it twice (increment + decrement). Ship-on-principles was the right call: the prose teaches the shape even though the models' own proposals wouldn't have picked it.**
-- **`count()` predicate form — Shape B VALIDATED 2026-04-21.** Shipped as v0.11.3, sharpened per ship review as v0.11.4, validated same day via Stage 3 cold test: 7/8 calls delivered (Gemini Pro Task 3× provider fetch-failure, not a model output), **0/7 inventions** of `count(list, lambda)`. Unanimous workaround adoption via `length(filter(...))`. Direct A/B vs Stage 0: Flash-Lite flipped from 2/2 invention to 2/2 clean, GPT from 1/2 to 0/2. Full writeup `tests/v0.11.4-stage3/Stage3_Summary.md`; design note `docs/private/65_v012_count_predicate.md`. **Shape A (polymorphic `count`) drops from the active backlog** — docs-only Shape B is behaviourally sufficient. **Next ship on this thread:** transpiler rejection pass for `count(list, lambda)` — closes the correctness gap so a future model ignoring the cheatsheet can't produce silently-wrong output. Separate from the docs ship to preserve falsifiability. Adjacent discovery: 4/6 Stage 3 Task-prompt calls wrote `checkbox bind: task.done` (field access inside `each`) — transpiler rejects; separate design-note candidate logged.
-- **Transpiler rejection for `count(list, lambda)`** — **NEXT SHIP on the `count()` thread, 2026-04-21.** Stage 3 validated the docs-only Shape B patch (0/7 inventions); the correctness-gap closure complements the docs without replacing them. Add `count(list, lambda)` as a parse-time or analysis-time rejection in `transpiler/src/`, with a fix-it error message pointing at `length(filter(list, predicate))`. Pin a negative example in `transpiler/examples-errors/` matching the pattern. Separate ship (not bundled with any further docs changes) to keep future reruns attributable. Sub-day work.
-- **Checkbox field-access binding (`checkbox bind: obj.field`)** — **fresh 4/6 signal from v0.11.4 Stage 3, 2026-04-21** (`tests/v0.11.4-stage3/Stage3_Summary.md`, Adjacent observations). 4 of 6 Task-prompt calls wrote `checkbox bind: task.done` inside an `each` loop — transpiler currently rejects because `bind:` requires a simple variable name. Cheatsheet teaches the `replace(items, target, {target with done: not target.done})` mutation path; models reach for direct field-access binding as the natural spelling instead. Two design shapes: (a) widen the transpiler to accept `bind: obj.field` inside `each` and auto-wire through `replace`, or (b) strengthen the cheatsheet's teaching so the idiomatic `bind:` + `on change: replace(...)` pattern registers. Needs design note before either lands. Signal strength (4/6) matches the bar that promoted `upper()` / `lower()` to shipping.
-- ~~**Event handlers as component arguments**~~ — **SHIPPED in v0.8.0** as `emit <event>` / `on <event>:`. 5/8 compounded signal closed (2/4 BMI invention + 3/4 ship review). Decision doc: `docs/private/33_v08_event_handlers.md`. Validation pending: BMI rerun against same four models.
-- **Derived state clarity** — `current = stories[index]` appeared in all 8 Destini model outputs. 7/8 trust reactivity to update it; 1/8 defensively reassigns. One-line spec clarification: "Assignments at screen body level re-evaluate on every render."
-- **Variable-placement rules** — 1/4 Contacts models put filter/sort logic inside a layout block. Spec says "Variables, layouts, and functions all live inside the screen body" but the boundary isn't explicit. One sentence: "Variable assignments go at the screen body level, not inside layout blocks."
-- **Identity semantics** — reference identity + immutable data creates friction. **4/4 models flagged it across two test rounds.** Biggest open design question. Need to decide: `key:` field on objects, structural equality, or something else.
-- **Error inspection** — `is error` tells you something failed but not what. 3/4 models flagged it. Need at least `user.error.message` and 404 vs 500 distinction.
-- **Dictionary/map type** — Settings cold test showed 4/4 models using if/else chains for country→cities mapping. `cities_for[country]` with `{"UK": [...], "France": [...]}` syntax would be cleaner. Comes up in settings, localisation, routing, form options. Strong signal.
-- **String interpolation** — 2/3 LLM-panel reviewers (`docs/private/64`) flagged `"/api/users/" + user_id + "/posts"` as friction compared to `"/api/users/{user_id}/posts"`. Current "one way" justification is stated but not defended. Needs design note covering LLM parsing-ambiguity case, lexer simplicity trade-off, and reader-surprise cost. Possibly v0.12 candidate, possibly document-the-choice outcome.
-- **Error handling beyond async** — 2/3 LLM-panel reviewers (`docs/private/64`) flagged that `is error` only covers `fetch`/`locate`. Needs design for: user validation errors, null-access on out-of-bounds list indexes (currently silent null), function-level exceptions, recoverable vs fatal error distinction. Overlaps with "Error inspection" above; both belong in one design note.
-- **Widen async-footgun detection (v0.10 candidate — now *nice-to-have*, not mandatory)** — the v0.9.0 narrow detection catches `fetch("..." + bound_input_var)` but misses the `on change: trigger = bound_var` + `fetch("..." + trigger)` evasion pattern. The v0.9.1 docs-only patch moved 2/3 frontier models off that evasion without transpiler changes (Product Search rerun: 3/3 frontier on canonical `on tap:` trigger, up from 1/3 in v0.9.0). The "no magic" principle still argues for catching the evasion at the transpiler level — nothing stops a future model or human from writing it — but the cold-test-driven urgency dropped. Design note + conservative AST shape (reject `on change:` handlers whose sole action is `trigger = bound_var` when `trigger` is a fetch dependency) still valuable; ship order behind the higher-signal candidates below.
-- ~~**Spec wording — trigger-variable semantics**~~ — **SHIPPED in v0.9.1, VALIDATED 2026-04-17.** v0.9.0 recommended "set a separate variable from a button or `on change:` handler"; 2/3 frontier models chose the `on change:` evasion. v0.9.1 drops `on change:` from the recommendation and adds an explicit "not an escape hatch" sentence. v0.9.1 Product Search rerun (`tests/v0.9.1/Product_Search.md`): 3/3 frontier models on canonical `on tap:` trigger — Opus 4.7 and GPT-5.4 both flipped from `on change:` to `on tap:` with zero prompt changes, Gemini stable. Cleanest one-sentence-spec-change-flips-behaviour round in project history.
-
-**How to approach Stream 3 now:** v0.9.0 shipped the reactive-fetch footgun rule; v0.9.1 shipped the docs-only trigger-variable tightening (3/3 frontier on canonical trigger — `tests/v0.9.1/Product_Search.md`); v0.10.0 shipped object-update syntax `{target with field: newval}` following the pre-ship cold-test fallback rule — post-ship validated 9/9 frontier across three domain swaps (Shopping + Apothecary + Spaceship Cargo; `docs/private/45_v10_domain_swap_results.md`). Next v0.11+ candidates, ranked by readiness: `count()` predicate form (4/4 Alert Dashboard friction — needs design note), mutating-component-arg (next v0.9-template candidate — needs cold test first), widen async-footgun detection (now nice-to-have after v0.9.1 validated docs-only fix). Pending cold-test validations: BMI rerun for `emit` adoption (predict 3-4/4); Alert Dashboard rerun for `upper()` adoption; Habit Tracker rerun on v0.10.0 for regression check. Runner adaptive-thinking fix validated end-to-end. v0.10 close-out tails listed directly below; Clima round complete 2026-04-18 (3/3 frontier geolocation invention); v0.11 geolocation pre-ship round complete 2026-04-19 (4/4 frontier on Shape A — `docs/private/54`); **v0.11.0 + v0.11.1 both shipped 2026-04-19** with clean cold-test attribution on both language change (A4 in `docs/private/56`) and teaching-surface change (B4 in `docs/private/57`); the propose → ship-on-principles → validate template has now been demonstrated to generalise beyond syntax decisions to documentation decisions — worth flagging in the dissertation methodology chapter as the stronger methodological claim.
-
-**v0.10 close-out tails:** post-ship hygiene queued from the domain-swap round (`tests/v0.10/Spaceship_Cargo.md` + `docs/private/45_v10_domain_swap_results.md`). Small total scope (~2–3 hours); v0.10 is not "done done" until these close.
-
-- ~~**Transpiler silently accepts bare-name access to `shared:` variables.**~~ **FIXED 2026-04-18 in commit `6c1596a`.** Spike confirmed bug: silent acceptance was shipping broken Dart (`dynamic hold = hold + [...]` self-referencing locals + unbound identifiers in build methods); the runner's "transpile passed" flag was a false pass because the grader checks `cli.ts` exit code without running `dart analyze`. New `validateSharedPrefix` pass in `transpiler/src/codegen.ts` rejects any bare `Ident` or `Assignment` target whose name is declared in a `shared:` block, with a clear error message pointing at `shared.X`. Pinned negative test at `transpiler/examples-errors/bare-shared.igni`. 46/46 diff tests pass.
-- **`pricing.ts` rates for OpenAI + Google.** Keys corrected this session (`gpt-5.4-2026-03-05`, `gemini-3-flash-preview`); rates still `$0` `VERIFY` placeholders. Ten-minute fill-in from the provider pricing pages, then re-run `tests/runner/backfill-cost.ts` over existing outputs. Blocks any cost-ratio claim in the dissertation until done.
-- **Domain-coupling design note.** Opus dropped the `shared.` prefix only on Spaceship Cargo, not Apothecary (same model, same session, same cheatsheet) — 1/3 signal that cheatsheet teaching may be domain-coupled. Log as a new numbered design note in `docs/private/` (next integer prefix, per the append-only rule) so the observation isn't lost before the targeted follow-up experiment (e.g. add a non-shopping `shared:` example to the cheatsheet, re-run Spaceship Cargo).
-
-### ~~Stream 3a — v0.7.1: string case builtins~~ SHIPPED
-
-v0.7.1 adds `upper(s)` / `lower(s)` string builtins. Evidence: 4/4 Alert Dashboard friction + 4/4 ship review = 8/8 compounded, strongest evidence in project history. Every frontier model hit the missing `upper()` on Alert Dashboard (Gemini 3.1 Pro wrote a mapper function, Opus 4.6 honest-flagged, Gemini 3 Flash ignored, GPT 5.3 invented `upper()` with a broken placeholder). Decision doc: `docs/private/31_v071_string_case.md`. Validation: Alert Dashboard rerun against the same four models, same methodology as the v0.6.11 BMI colour-assignability rerun.
+- **Error-state primitive** — `forecast.error.message` / `.status`. 2/3 panel 89 (Tier 2 #1, concrete shape from Opus). Strongest 2/3 finding in panel 89.
+- **`layout stack:` for z-axis** — FAB over list, badge corners, overlays. 1/3 panel 89 (Gemini, Tier 2 #2). Mirrors Flutter `Stack`.
+- **`on submit:` modifier on `input`** — fires on Enter; closes reactive-fetch ergonomics without trigger-variable boilerplate. 1/3 panel 89 + addresses 2/3 "trigger feels hacky" signal.
+- **Human-readability study** *(dissertation methodology, not language)* — 10-person think-aloud, Igni vs Flutter snippet prediction. 1/3 panel 89 (Opus, Tier 3 #1). Cheapest dissertation-credibility upgrade in the backlog; either outcome strengthens the chapter.
+- **Mobile platform-manifest injection on `locate()`** — iOS `NSLocationWhenInUseUsageDescription`, Android `ACCESS_FINE_LOCATION`. `locate()` currently silently routes to `is error` on mobile. Gated on mobile becoming first-class.
+- **Lifecycle hooks (`on appear`, `on disappear`)** — 3/4 flagged. Analytics, refresh-on-return.
+- **Named slots for wrapper components** (`body header:`, `body footer:`) — 3/4 flagged single-slot limit.
+- **Shared state namespacing / grouping** — 4/4 flagged flat namespace at scale.
+- **`debounce:` modifier on `input bind:`** — 4/4 flagged async footgun.
+- **Derived state / memoisation** — 3/4 v0.7.0 ship-review on reactive-recompute-at-scale. Action: design a targeted cold-test app (large filtered list + bound input) to verify whether O(N)-per-keystroke is real or theoretical before adding syntax.
+- **Async cancellation / stale response handling** — race conditions flagged in v0.6.x review.
+- **Error boundaries / component-level fallback** — no crash isolation flagged in v0.6.x review.
 
 ---
 
-## Tooling & documentation (post-v1.0)
+## Post-v1.0 (parked)
 
-Soonish but not immediate. Two parallel roadmaps that don't compete with the language-design work above.
-
-### IDE & tooling
-
-- **Snippets (immediate, ~half day):** VS Code extension snippets for `screen`, `component`, `layout`, and common patterns. Covers the "I forgot the syntax" case while LSP is being built.
-- **Language Server (post-v1.0, 1–2 weeks):** LSP-compatible server reusing the transpiler's parser/AST. Provides context-aware autocomplete, inline errors, hover documentation, go-to-definition. Works in any LSP-compatible editor (VS Code, Cursor, Neovim, Zed, IntelliJ). Igni's small surface and structured Property Applicability table make this implementation unusually compact (~1,500–3,000 lines).
-- **Refactoring tools (mature project):** Code actions like "extract to component", "rename across files", "convert verbose update to `{with}` syntax". Built incrementally as patterns emerge from real use.
-
-### Documentation
-
-Igni today has the spec (formal reference) and a cheatsheet (condensed reference). The gap is task-oriented documentation that answers "how do I do X."
-
-**Goal:** a complete documentation set that someone can read end-to-end in 90–120 minutes and then write working Igni without external references. Total target ~15,000–25,000 words across four documents.
-
-- **Tutorial (~5,000 words):** Beginner walkthrough of three apps of increasing complexity (counter → todo → small fetch app). Every line explained. Expansion of current `docs/tutorial.md` stub.
-- **Reference (~6,000 words):** Cheatsheet structure with copy-pasteable canonical example per feature. Organised by user intent (Showing things, Getting input, Arranging things, Reacting to users, State, Lists, Navigation, Async, Components, Styling) rather than by syntactic category. Same intent-based grouping should drive LSP autocomplete categorisation.
-- **Cookbook (~4,000 words):** Five sections × 5–10 entries each. Sections: forms, lists, async, multi-screen apps, components. Each entry is "how do I X" with code. This is the document that doesn't exist yet and would be highest-value for new users.
-- **Examples gallery (~2,000 words descriptions):** The 34 transpiler examples presented as a browsable site with description, source code, screenshot, and what each teaches.
-
-**Reference for scale:** Elm's full documentation is ~30,000 words; Roc's is ~12,000. Igni at 15–25k sits in the right band for a small, opinionated language. Massively less than Python/Java (50,000–150,000 words), which is appropriate for Igni's surface area.
-
-**Hosting:** docs sit in `/docs` in the repo as markdown source of truth, generated to a static site at `ignilang.dev` via VitePress or mdBook. Same content, two surfaces.
-
----
-
-## Testing
-
-- ~~**Type hints in transpiler**~~ — **DONE.** 3/3 zero-fix on Contacts after this change.
-- **Angela Yu Flutter course projects** — rebuild her course projects in Igni as a real-world coverage test. Good stress test for the transpiler against progressively harder Flutter patterns, and produces concrete before/after comparisons (Flutter vs Igni) for the dissertation.
-  - ~~**Dicee**~~ — **DONE.** 4/4 zero-fix cold test, 13 lines vs 56 lines Flutter (4.3x reduction). Drove: screen properties (`title:`, `background:`), local image assets, extended colours, `fill: true` layouts, AppBar support.
-  - ~~**Xylophone**~~ — **DONE.** 4/4 transpile (after empty-block fix), 10 lines vs 45 lines Flutter (4.5x reduction). Drove: `play` audio builtin, `audio/` folder convention, `teal` colour, empty layout blocks. Weaker model convergence than Dicee — 2/4 extracted components, 2/4 inlined.
-  - ~~**Quizzler**~~ — **DONE.** 4/4 zero-fix (after list indexing added), ~50 lines vs ~120 lines Flutter (~2.4x reduction). Drove: list indexing (`items[index]`), apostrophe escaping, label `align:` property. Most revealing cold test — 4 distinct approaches before indexing, near-identical after.
-  - ~~**Destini**~~ — **DONE.** Cheatsheet-only: 3/4 data-driven, 1 hardcoded if/else. Full-spec rerun: **4/4 data-driven** (Gemini Pro switched from hardcoded to data-driven). Background image **0/4 → 4/4** after spec addition. Architecture convergence restored by full spec.
-  - ~~**Clima**~~ — **DONE 2026-04-18.** Cold-tested end-to-end as prompt #5 in `tests/v0.10/prompts.md`. Primary prediction validated: 3/3 frontier models invented a geolocation primitive with divergent shapes (per-model grading in `tests/v0.10/Clima.md`; ranked v0.11 backlog in `docs/private/49`). Round drove: (1) the v0.11 geolocation design note (`docs/private/52`); (2) the transpiler OOM fix (commit `ac4e3c2`); (3) the transpile-metric audit and panel change (`docs/private/50`, `51`, `53`). Post-ship validation rerun queued once the v0.11 geolocation primitive lands.
-- **v0.6.6 full-spec cold tests** — stress-tested advanced features with 3 apps:
-  - ~~**Contacts**~~ — **DONE.** 4/4 identical architecture. Tested: `shared:`, `filter`/`sorted`/`reversed` + lambdas, `replace`/`without`, `fetch` + `is loading`/`is error`, navigation + params, wrapper component. 1 typo (Opus), 0 invented syntax. Strongest convergence in any cold test. Trigger-variable understanding: 4/4 correct.
-  - ~~**Settings**~~ — **DONE.** 4/4 perfect — first cold test with zero errors across all models. Tested: `on change:` (4/4 correct, 3 distinct approaches), `heading.small` (4/4 correct), `dropdown`/`toggle`/`slider`/`checkbox`/`image round:`/`button color: danger`. Surfaced `bind:`/`on change:` event ordering gap (now documented and implemented).
-- ~~**v0.9.0 Product Search**~~ — **DONE.** First cold test on v0.9.0-cheatsheet after the reactive-fetch footgun became a transpile error. 3/4 transpile (Opus 4.7, GPT-5.4, Gemini 3 Flash); Gemma 4 E4B drifted. All 3/3 frontier models adopted the trigger-variable pattern *syntactically* and named the footgun rule in commentary. But **only 1/3 (Gemini) used the canonical semantics** — Opus and GPT both wrote `on change: trigger = bound_var` which evades the narrow detection while preserving per-keystroke fetch behaviour. First empirical case for widening the detection in v0.10. Writeup: `tests/v0.9.0/Product_Search.md`.
+Documentation set (~15–25k words across Tutorial, Reference, Cookbook, Examples gallery). Language Server (LSP-compatible, ~1,500–3,000 lines reusing transpiler AST). VS Code refactoring tools. Snippets extension. Hosting at `ignilang.dev` via VitePress or mdBook. Detail moves to a dedicated planning doc when any becomes near-term.
 
 ## Process notes
 
-- **Cheatsheet size discipline.** After three docs-only ships in a row added 60–100 words each (v0.11.2 → v0.11.3 → v0.11.4), v0.11.5 executed the first prune-before-add pass: cheatsheet 2,931 → 2,536 words (target 2,500), micro 750 → 714 words (soft 600 target, accepted gap this pass). Four context-specific callouts migrated to the full spec's reference sections: reactive-fetch footgun (input + `locate()` cases), `Counting by field` prose, and the visual-defaults list. Canonical idioms (`length(filter(...))`, trigger-variable one-liner, `fetch`/`locate` syntax) stay inline in the cheatsheet. **Ongoing rule:** subsequent docs-only iterations must prune before adding. Prune targets are patches that are context-specific (a single cold-test finding, a single-model workaround) rather than foundational; those belong in the full spec's reference sections, not the cheatsheet's learning path.
-
-## Ideas
-
-Unfiltered. No timeline. Some of these might be bad. Signal strength noted where cold tests or reviews have data.
-
-- **Error-state primitive** — `forecast.error.message` + `forecast.error.status`; `is error` stays the branching test. 2/3 panel signal (`docs/private/89` Tier 2 #1, concrete shape from Opus, no new keyword, scoped). Strongest 2/3 finding in panel 89 with an actionable shape. Needs a design note before syntax lands.
-- **`layout stack:` for z-axis layouts** — FAB over list, badge on avatar corner, overlays. Current workaround zero. 1/3 sharp (Gemini, `docs/private/89` Tier 2 #2); proposed to mirror Flutter's `Stack` widget. Needs a design note + Stage 0 cold test.
-- **`on submit:` modifier on `input`** — fires on Enter/Done keyboard, closes the reactive-fetch footgun ergonomically without the trigger-variable boilerplate. Shape: `input bind: draft, on submit: query = draft`. 1/3 sharp (Gemini, `docs/private/89` Tier 2 #3) + addresses 2/3 "trigger-variable feels hacky" signal. Needs a design note + Stage 0 cold test.
-- **Human-readability study** *(dissertation methodology, not a language feature)* — 10-person think-aloud, Igni snippet vs Flutter equivalent, measure prediction accuracy + time. 1/3 sharp (Opus, `docs/private/89` Tier 3 #1). The README headline claim — "LLM accuracy and human readability track each other" — is measured only on the LLM side; the human half is untested. Cheapest dissertation-credibility upgrade in the backlog. Either outcome strengthens the chapter (validates the claim or makes the divergence a finding the dissertation owns honestly).
-- **Mobile platform-manifest injection when `locate()` is used** — iOS `NSLocationWhenInUseUsageDescription` in `.igni/ios/Runner/Info.plist` and Android `ACCESS_FINE_LOCATION` in `AndroidManifest.xml`. Transpiler already injects `geolocator` into `pubspec.yaml`; the sibling manifest strings are missing, so `locate()` routes straight to `is error` on iOS (graceful but wrong). Gated on mobile becoming first-class (currently v1.0 is web-first per `CLAUDE.md` "What this project is not"). Evidence: `docs/private/68_mobile_smoke_test.md` (Finding C). Sibling runtime-permission-request is a further deferred step.
-- `paginate:` on `each` — spec-defined but transpiler not implemented. Low priority (no cold test has exercised it)
-- ~~`upper()` / `lower()` string builtins~~ — **SHIPPED in v0.7.1** (8/8 compounded signal from Alert Dashboard)
-- `trim()` string builtin — Claude flagged in v0.6.2 review; no cold-test evidence yet. Would need its own signal before shipping (same bar as `upper`/`lower` cleared).
-- `unique(list, item => key)` for deduplication
-- Date/time primitives — Claude flagged in v0.6.2 review
-- Form validation pattern (multi-field, cross-field)
-- Named slots for wrapper components (`body header:`, `body footer:`) — 3/4 models flagged single slot as limiting
-- Lifecycle hooks (`on appear`, `on disappear`) — 3/4 models flagged. Needed for analytics, refresh-on-return
-- Shared state namespacing or grouping — 4/4 models flagged flat namespace scaling
-- Animations and transitions
-- `debounce:` modifier on `input bind:` — 4/4 models flagged the async footgun
-- Derived state / memoisation — 3/4 v0.7.0 ship-review flags (Gemini 3.1 Pro, GPT 5.3, Gemini 3 Flash) on the reactive-recompute-at-scale concern. No cold-test evidence yet because no existing test app exercises reactivity over a large enough dataset. **Action:** design a targeted cold-test app (moderately large filtered list with a bound input field) to verify whether the predicted O(N)-per-keystroke is a real problem or theoretical. Flutter's render engine may already absorb it for typical sizes; measure before adding syntax
-- Package/module system for sharing components across projects
-- Scroll behaviour (scroll-to-bottom on chat append)
-- Deep links, query params, modal stacks, back-stack management
-- ~~Map/dictionary type~~ — moved to Stream 3 as v0.7 candidate
-- String interpolation — 2/4 models flagged `+` concatenation as verbose. Rating assessment flagged it as medium-high impact for human writability. Explicitly deferred from `v0.7.0`; if revisited, the next step is a `{}`-only design note with exact syntax and error behavior, then a focused cold test.
-- ~~`button background:`~~ — resolved by full-width rounded buttons (v0.6.6)
-- ~~Background image on layouts~~ — **resolved.** Spec and transpiler both done.
-- ~~`image fill: true`~~ — **resolved.** Background image feature on screens/layouts eliminated the need.
-- Async cancellation / stale response handling — ChatGPT flagged race conditions
-- Error boundaries / component-level fallback — ChatGPT flagged no crash isolation
-- ~~**Default padding for zero-config screens**~~ **FIXED 2026-04-22** in commit `4b6fbc9` as part of the visual-default styling pass. 16px default applied via codegen in `genScreen()` when root uiNode is not an explicit `layout` (guard: `rootOwnsLayout()`). User-supplied `layout ... padding:` wins — no double-padding. Documented in `spec/archive/v0.11.2-cheatsheet.md` under Styling → Visual defaults and in `spec/archive/v0.11.2-micro.md` Rules section.
+- **Cheatsheet size discipline.** Subsequent docs-only iterations prune before adding. Context-specific patches (single cold-test findings, single-model workarounds) belong in the full spec's reference sections, not the cheatsheet's learning path. Last prune: v0.11.5 (cheatsheet 2,931 → 2,536 words).
+- **Tier discipline.** New items default to Future. Promoted by cold-test or human-testing signal, not enthusiasm.
+- **Methodology stages** for spec changes: pre-implementation design review (panel reads design note), Stage 0 (pre-ship cold test, skippable when prior is strong), Stage 3 (post-ship behavioural validation, pre-registered thresholds), post-ship spec critique (panel reads shipped artifact). Chat-UI experiments archive locally in `docs/private/` for substance even when uncitable.

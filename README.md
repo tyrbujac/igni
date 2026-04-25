@@ -82,6 +82,12 @@ Under the hood, a hidden `.igni/` Flutter project is created automatically. You 
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) for how the pieces fit together (repo layout, spec files, transpiler pipeline, validation methodology). See [`docs/tutorial.md`](docs/tutorial.md) to learn Igni end-to-end.
 
+## What Igni is for
+
+Igni's sweet spot is **CRUD apps, forms, list-detail UIs, and fetch-driven utility apps** — habit trackers, lightweight CRMs, simple e-commerce, internal tools, settings screens, multi-screen flows. The reactivity model and token-first styling earn their keep on this band.
+
+Igni is **not for creative tools** — photo editors, DAWs, video editors, drawing apps, real-time games, physics simulations all need primitives Igni explicitly rejects (imperative drawing surfaces, frame loops, raw layout dimensions, granular per-subtree reactivity, pointer events with drag lifecycle). These aren't oversights; they're the deliberate cost of the spec budget that makes Igni learnable cold. Three independent frontier-model panels converged on the same five-primitive gap (see `docs/private/92` for the local research record). For creative tools, reach for Flutter / React / SwiftUI directly.
+
 ## Why not Flutter / React / SwiftUI?
 
 Igni is downstream of the same declarative-UI lineage as SwiftUI and Jetpack Compose, built specifically for LLM-assisted workflows. Compared to mainstream options:
