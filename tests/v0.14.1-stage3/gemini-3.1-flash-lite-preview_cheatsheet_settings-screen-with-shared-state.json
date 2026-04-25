@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-flash-lite-preview",
+  "model_id": "gemini-3.1-flash-lite-preview",
+  "prompt_name": "Settings screen with shared state",
+  "prompt_slug": "settings-screen-with-shared-state",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.14.1-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.14.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "5d169ed2bd1afea82b78daf0691731b362283e2733058465b36d6fc9f229f469",
+  "spec_words": 3347,
+  "timestamp": "2026-04-25T21:01:04.672Z",
+  "duration_ms": 6323,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 6419,
+    "output_tokens": 424,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.00224075,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "error_category": null,
+    "igni_lines": 27
+  }
+}

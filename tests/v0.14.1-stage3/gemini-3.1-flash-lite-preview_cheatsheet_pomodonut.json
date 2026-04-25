@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-flash-lite-preview",
+  "model_id": "gemini-3.1-flash-lite-preview",
+  "prompt_name": "Pomodonut",
+  "prompt_slug": "pomodonut",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.14.1-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.14.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "5d169ed2bd1afea82b78daf0691731b362283e2733058465b36d6fc9f229f469",
+  "spec_words": 3347,
+  "timestamp": "2026-04-25T21:01:21.755Z",
+  "duration_ms": 16343,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 6648,
+    "output_tokens": 928,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.003054,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: Unexpected character: '%'\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-WwTStM/app.igni:43 |     rem = s % 60\n                                                                                   |             ^",
+    "error_category": "model_error",
+    "igni_lines": 69
+  }
+}

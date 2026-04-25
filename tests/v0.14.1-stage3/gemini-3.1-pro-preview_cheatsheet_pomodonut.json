@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Pomodonut",
+  "prompt_slug": "pomodonut",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.14.1-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.14.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "5d169ed2bd1afea82b78daf0691731b362283e2733058465b36d6fc9f229f469",
+  "spec_words": 3347,
+  "timestamp": "2026-04-25T21:00:56.872Z",
+  "duration_ms": 63921,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 6648,
+    "output_tokens": 1407,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.03018,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: `current_rem = ...` — assignments aren't allowed inside `layout`, `each`, or `if` UI blocks. UI blocks render; they don't reassign state.\n\n  For per-element values inside an `each`, use a function:\n\n    color_for(item):\n      if item is selected:\n        return brand\n      return subtle\n\n    each item in items:\n      label item, color: color_for(item)\n\n  Or compute the value at screen scope (above the layout block) and read it inline.\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-1gHJSK/app.igni:25 |       current_rem = 0\n                                                                                   |                  ^\n\n  Error: Expected \"screen\", got \"\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-1gHJSK/app.igni:28 |   bg_color = red\n                                                                                   |   ^\n\n  Error: Expected \":\", got \".\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-1gHJSK/app.igni:30 |   if not shared.is_work:\n                                                                                   |                ^\n\n  Error: Expected \":\", got \".\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-1gHJSK/app.igni:39 |       if shared.running:\n                                                                                   |                ^\n\n  Error: Expected \":\", got \".\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-1gHJSK/app.igni:50 |     shared.end_time = now() + shared.paused_remaining\n                                                                                   |           ^\n\n  Error: Expected \":\", got \".\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-1gHJSK/app.igni:50 |     shared.end_time = now() + shared.paused_remaining\n                                                                                   |                                     ^\n\n  Error: Expected \":\", got \".\"\n\n    /var/folders/rh/7f3gz0l",
+    "error_category": "model_error",
+    "igni_lines": 122
+  }
+}
