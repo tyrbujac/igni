@@ -6,6 +6,12 @@ export const DESIGN_TOKENS: Record<string, number> = {
   large: 24,
 };
 
+export const MAX_WIDTH_TOKENS: Record<string, number> = {
+  phone: 480,
+  tablet: 768,
+  desktop: 1200,
+};
+
 export const STYLE_MAP: Record<string, string> = {
   heading: 'Theme.of(context).textTheme.headlineLarge!',
   'heading.small': 'Theme.of(context).textTheme.headlineSmall!',
@@ -91,6 +97,13 @@ export function resolveDesignToken(expr: Expr): number {
     return expr.value;
   }
   return 16;
+}
+
+export function resolveMaxWidthToken(expr: Expr): number | null {
+  if (expr.type === 'Ident' && expr.name in MAX_WIDTH_TOKENS) {
+    return MAX_WIDTH_TOKENS[expr.name];
+  }
+  return null;
 }
 
 export function resolveStyle(expr: Expr): string {

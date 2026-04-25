@@ -8,7 +8,7 @@ import {
   ThemeBlock, ThemeTextTokenName,
 } from './ast.js';
 import {
-  findProp, resolveIdentName, resolveDesignToken, resolveStyle,
+  findProp, resolveIdentName, resolveDesignToken, resolveMaxWidthToken, resolveStyle,
   resolveAlign, resolveBackground, resolveColor, mapIconName,
   inferType, isStringExpr, substituteLambdaParam, isImageBackground,
   generateIconLookupHelper, isDarkBackgroundExpr, generateStyleValueResolvers,
@@ -928,6 +928,14 @@ export class CodeGenerator {
         dec += decParts.join(', ') + ')';
         code = `Container(\n${decInd}  decoration: ${dec},\n${decInd})`;
       }
+      const maxWidthProp = findProp(node.properties, 'max_width');
+      if (maxWidthProp) {
+        const maxWidthPx = resolveMaxWidthToken(maxWidthProp.value);
+        if (maxWidthPx !== null) {
+          const mwInd = this.indent(depth);
+          code = `ConstrainedBox(\n${mwInd}  constraints: const BoxConstraints(maxWidth: ${maxWidthPx}),\n${mwInd}  child: ${code},\n${mwInd})`;
+        }
+      }
       code = this.wrapWithGestures(code, node.events, depth);
       const fillProp = findProp(node.properties, 'fill');
       if (fillProp) {
@@ -992,6 +1000,14 @@ export class CodeGenerator {
       if (radius) decParts.push(`borderRadius: BorderRadius.circular(${radius})`);
       dec += decParts.join(', ') + ')';
       code = `Container(\n${decInd}  decoration: ${dec},\n${decInd}  child: ${code},\n${decInd})`;
+    }
+    const maxWidthProp = findProp(node.properties, 'max_width');
+    if (maxWidthProp) {
+      const maxWidthPx = resolveMaxWidthToken(maxWidthProp.value);
+      if (maxWidthPx !== null) {
+        const mwInd = this.indent(depth);
+        code = `ConstrainedBox(\n${mwInd}  constraints: const BoxConstraints(maxWidth: ${maxWidthPx}),\n${mwInd}  child: ${code},\n${mwInd})`;
+      }
     }
     code = this.wrapWithGestures(code, node.events, depth);
     const fillProp = findProp(node.properties, 'fill');

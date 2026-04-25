@@ -42,7 +42,9 @@ class _MiCardScreenState extends State<MiCardScreen> {
                 style: TextStyle(color: Colors.white),
               ),
               const SizedBox(height: 16),
-              Container(
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Container(
                 decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
                 child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -63,8 +65,11 @@ class _MiCardScreenState extends State<MiCardScreen> {
                 ),
               ),
               ),
+              ),
               const SizedBox(height: 16),
-              Container(
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Container(
                 decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
                 child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -83,6 +88,7 @@ class _MiCardScreenState extends State<MiCardScreen> {
                     ],
                   ),
                 ),
+              ),
               ),
               ),
             ],

@@ -6,10 +6,10 @@ screen MiCard, background: teal:
 
     label "IGNI DEVELOPER", color: white
 
-    layout horizontal, gap: medium, align: center, padding: medium, background: card, rounded: medium:
+    layout horizontal, gap: medium, align: center, max_width: phone, padding: medium, background: card, rounded: medium:
       icon "phone", color: teal
       label "+44 123 456 7890"
 
-    layout horizontal, gap: medium, align: center, padding: medium, background: card, rounded: medium:
+    layout horizontal, gap: medium, align: center, max_width: phone, padding: medium, background: card, rounded: medium:
       icon "mail", color: teal
       label "joe@bloggs.dev"

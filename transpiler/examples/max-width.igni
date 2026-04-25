@@ -1,0 +1,27 @@
+screen MaxWidthDemo:
+  layout vertical, padding: large, gap: medium:
+    label "max_width composition rules", style: heading
+
+    label "1. Shrink-wrap-then-cap (no fill)", style: caption
+    layout vertical, max_width: phone, background: card, rounded: medium, padding: medium:
+      label "Capped at 480px"
+
+    label "2. Cap-then-fill remainder (fill: true, parent wider)", style: caption
+    layout vertical, fill: true, max_width: tablet, background: subtle, rounded: medium, padding: medium:
+      label "Capped at 768px inside fill"
+
+    label "3. Multi-fill siblings, one capped", style: caption
+    layout horizontal, gap: small:
+      layout vertical, fill: true, max_width: phone, background: card, rounded: medium, padding: medium:
+        label "capped 480"
+      layout vertical, fill: true, background: subtle, rounded: medium, padding: medium:
+        label "uncapped"
+
+    label "4. Box model — cap includes padding/background", style: caption
+    layout vertical, max_width: phone, padding: large, background: card, rounded: medium:
+      label "480 outer, 432 inner"
+
+    label "5. Centered MiCard-style card", style: caption
+    layout vertical, align: center, max_width: phone, padding: medium, background: card, rounded: medium:
+      label "MiCard", style: heading
+      label "+44 123 456 7890"

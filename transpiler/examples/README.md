@@ -1,6 +1,6 @@
 # Examples
 
-44 `.igni` apps, each paired with a reference `.expected.dart` for diff-testing. Also usable as a learning gallery — browse to see Igni in action.
+45 `.igni` apps, each paired with a reference `.expected.dart` for diff-testing. Also usable as a learning gallery — browse to see Igni in action.
 
 To run any example in a browser:
 
@@ -30,7 +30,8 @@ npx tsx ../src/cli.ts counter.igni
 - **`dashboard`** — nested layouts, `badge`, `divider`, dense-information card layouts.
 - **`bg-image`** — `background: "image.png"` on screens and layouts; `fill: true`.
 - **`input-button-defaults`** — the visual-default rendering (outlined input, intrinsic button, scaffold background).
-- **`mi-card`** — Angela Yu's identity-card app rebuilt in Igni. Static layout only: teal screen background, round avatar, `heading` + `color: white` text, two card-backgrounded info rows with icons. 15 LOC — the static-UI regime in the LOC benchmark.
+- **`mi-card`** — Angela Yu's identity-card app rebuilt in Igni. Static layout only: teal screen background, round avatar, `heading` + `color: white` text, two card-backgrounded info rows with icons capped at `max_width: phone` (so the cards don't stretch the window on desktop — the v0.13 dogfood case). 15 LOC — the static-UI regime in the LOC benchmark.
+- **`max-width`** — five composition cases for `max_width:` (v0.13): shrink-wrap-then-cap, fill+cap, multi-fill-sibling redistribution, box-model-includes-padding, and a centered MiCard-style card. Tokens `phone` (480) / `tablet` (768) / `desktop` (1200).
 
 ### Lists & mutation
 
