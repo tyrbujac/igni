@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Pomodonut",
+  "prompt_slug": "pomodonut",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.14.0-pomodonut/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.14.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "3c0c7e0730c8ed9661e7c1b9aa8742db902fef251fd5098d707c46808722a80d",
+  "spec_words": 3254,
+  "timestamp": "2026-04-25T20:36:04.453Z",
+  "duration_ms": 45763,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 6455,
+    "output_tokens": 1303,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.028546,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: toggle bind: must be a simple variable name, not a field access like obj.field\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-268TAj/app.igni:107 |     layout vertical, fill: true:\n                                                                                    |           ^\n\n  Error: Expected \"screen\", got \"\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-268TAj/app.igni:110 |     button \"Back\", color: brand, on tap: navigate back\n                                                                                    |                                                       ^",
+    "error_category": "model_error",
+    "igni_lines": 110
+  }
+}

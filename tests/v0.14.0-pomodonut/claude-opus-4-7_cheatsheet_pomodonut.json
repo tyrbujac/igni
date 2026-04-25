@@ -1,0 +1,32 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Pomodonut",
+  "prompt_slug": "pomodonut",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.14.0-pomodonut/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.14.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "3c0c7e0730c8ed9661e7c1b9aa8742db902fef251fd5098d707c46808722a80d",
+  "spec_words": 3254,
+  "timestamp": "2026-04-25T20:34:09.099Z",
+  "duration_ms": 48615,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 545,
+    "output_tokens": 3634,
+    "cache_creation_tokens": 8298,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.1454375,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: slider bind: must be a simple variable name, not a field access like obj.field\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-xtR44c/app.igni:97 |     label shared.work_minutes\n                                                                                   |          ^\n\n  Error: slider bind: must be a simple variable name, not a field access like obj.field\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-xtR44c/app.igni:103 |     label shared.break_minutes\n                                                                                    |          ^\n\n  Error: toggle bind: must be a simple variable name, not a field access like obj.field\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-xtR44c/app.igni:109 |     button \"Back\", on tap: navigate back\n                                                                                    |           ^\n\n  Error: Expected \"screen\", got \"\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-xtR44c/app.igni:109 |     button \"Back\", on tap: navigate back\n                                                                                    |                                         ^",
+    "error_category": "model_error",
+    "igni_lines": 109
+  }
+}
