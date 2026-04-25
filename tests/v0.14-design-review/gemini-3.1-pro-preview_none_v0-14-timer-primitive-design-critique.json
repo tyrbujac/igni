@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "v0.14 timer-primitive design critique",
+  "prompt_slug": "v0-14-timer-primitive-design-critique",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.14-design-review/prompts.md",
+  "spec_path": null,
+  "spec_tier": "none",
+  "spec_sha256": null,
+  "spec_words": 0,
+  "timestamp": "2026-04-25T19:19:10.179Z",
+  "duration_ms": 35718,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 9515,
+    "output_tokens": 1522,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.037294,
+  "transpile": null
+}
