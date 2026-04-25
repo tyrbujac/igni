@@ -4,11 +4,11 @@
 
 A programming language for building UIs — designed to be read.
 
-**Status: research prototype.** Final-year CS dissertation project investigating whether LLM output accuracy and human readability track each other. Spec is at v0.12.2; transpiler covers most of it; the tutorial has been through multiple cold-run iterations. Not yet production-ready. See [§ Status](#status) for the methodology + evidence.
+**Status: research prototype.** Final-year CS dissertation project investigating whether LLM output accuracy and human readability track each other. Spec is at <!-- SYNC:version -->v0.13.1<!-- /SYNC:version -->; transpiler covers most of it; the tutorial has been through multiple cold-run iterations. Not yet production-ready. See [§ Status](#status) for the methodology + evidence.
 
 **The hypothesis:** LLM accuracy and human readability track each other. Remove the ambiguity that trips LLMs up — no brackets on component invocation, one way to update state, a single spec document — and the language becomes nicer for humans too. Igni is that experiment.
 
-**Concrete evidence so far:** Igni's syntax gets cold-tested on frontier LLMs (Claude, GPT, Gemini) — each round measures whether models write correct code from the docs alone, no examples. The most recent test produced **0/7 wrong inventions** after a one-paragraph docs fix, down from 3/7 silent bugs before. That loop is how the object-update syntax, trigger wording, and geolocation primitive got locked in — the language evolves toward phrasings frontier models reach for first. Methodology and full per-round numbers in [tests/README.md](tests/README.md).
+**Concrete evidence so far:** Igni's syntax gets cold-tested on frontier LLMs (Claude, GPT, Gemini) — each round measures whether models write correct code from the docs alone, no examples. The most recent test produced **4/4 frontier adoption** of v0.13's `max_width:` tokens unprompted (Stage 3 against the docs-patched cheatsheet). An earlier round produced **0/7 wrong inventions** after a one-paragraph docs fix, down from 3/7 silent bugs. That loop is how object-update syntax, trigger wording, the geolocation primitive, and now `max_width:` tokens got locked in — the language evolves toward phrasings frontier models reach for first. Methodology and full per-round numbers in [tests/README.md](tests/README.md).
 
 Igni transpiles to Dart/Flutter. You write short, readable source files. The toolchain handles the rest.
 
