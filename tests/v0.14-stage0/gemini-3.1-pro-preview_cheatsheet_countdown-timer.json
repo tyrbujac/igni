@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Countdown timer",
+  "prompt_slug": "countdown-timer",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.14-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.14-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "9a7ac2d5d73b092cc630beaad157efffbb5391562591be7de33775f59c7072e3",
+  "spec_words": 3257,
+  "timestamp": "2026-04-25T19:41:27.888Z",
+  "duration_ms": 31643,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 6197,
+    "output_tokens": 601,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.019606,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: Unexpected token \"every\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-tx1Gs6/app.igni:7 |   every 1s:\n                                                                                  |        ^\n\n  Error: Unexpected token \"\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-tx1Gs6/app.igni:8 |     if running:\n                                                                                  |     ^\n\n  Error: Unexpected token \"\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-tx1Gs6/app.igni:9 |       tick = now()\n                                                                                  |       ^\n\n  Error: Expected \"screen\", got \"\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-tx1Gs6/app.igni:11 |   layout vertical, gap: large, align: center:\n                                                                                   |   ^",
+    "error_category": "model_error",
+    "igni_lines": 42
+  }
+}

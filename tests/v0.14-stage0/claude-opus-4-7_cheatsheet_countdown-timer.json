@@ -1,0 +1,32 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Countdown timer",
+  "prompt_slug": "countdown-timer",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.14-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.14-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "9a7ac2d5d73b092cc630beaad157efffbb5391562591be7de33775f59c7072e3",
+  "spec_words": 3257,
+  "timestamp": "2026-04-25T19:39:41.716Z",
+  "duration_ms": 29928,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 152,
+    "output_tokens": 1999,
+    "cache_creation_tokens": 8308,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.10266,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: Unexpected token \"every\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-FtUY1H/app.igni:7 |   every 1s:\n                                                                                  |        ^\n\n  Error: Unexpected token \"\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-FtUY1H/app.igni:8 |     if running:\n                                                                                  |     ^\n\n  Error: Unexpected token \"\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-FtUY1H/app.igni:9 |       tick = now()\n                                                                                  |       ^\n\n  Error: Expected \"screen\", got \"\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-FtUY1H/app.igni:11 |   layout vertical, gap: large, align: center, padding: large:\n                                                                                   |   ^",
+    "error_category": "model_error",
+    "igni_lines": 45
+  }
+}
