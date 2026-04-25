@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-flash-lite-preview",
+  "model_id": "gemini-3.1-flash-lite-preview",
+  "prompt_name": "Multi-column desktop dashboard",
+  "prompt_slug": "multi-column-desktop-dashboard",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.13.0-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.13.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "c6cad5db03964a0639d3f6f28007b438a4f041c516d6edcf4308c7bb2dbee6e0",
+  "spec_words": 2789,
+  "timestamp": "2026-04-25T09:50:33.875Z",
+  "duration_ms": 10071,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 5503,
+    "output_tokens": 810,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.00259075,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "error_category": null,
+    "igni_lines": 48
+  }
+}

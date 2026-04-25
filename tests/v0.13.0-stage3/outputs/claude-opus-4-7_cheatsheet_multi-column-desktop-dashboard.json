@@ -1,0 +1,32 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Multi-column desktop dashboard",
+  "prompt_slug": "multi-column-desktop-dashboard",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.13.0-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.13.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "c6cad5db03964a0639d3f6f28007b438a4f041c516d6edcf4308c7bb2dbee6e0",
+  "spec_words": 2789,
+  "timestamp": "2026-04-25T09:44:34.282Z",
+  "duration_ms": 49090,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 412,
+    "output_tokens": 3608,
+    "cache_creation_tokens": 7102,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.1366475,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "error_category": null,
+    "igni_lines": 59
+  }
+}
