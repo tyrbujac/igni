@@ -1,0 +1,8 @@
+screen Bad:
+  count = 0
+
+  every 2:
+    count = count + 1
+
+  layout vertical:
+    label count

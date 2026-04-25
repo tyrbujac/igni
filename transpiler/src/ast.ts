@@ -172,6 +172,12 @@ export interface FunctionDef extends NodeBase {
   body: Statement[];
 }
 
+export interface EveryNode extends NodeBase {
+  type: 'Every';
+  seconds: number;
+  body: Statement[];
+}
+
 // -- UI nodes --
 
 export interface Layout extends NodeBase {
@@ -298,7 +304,7 @@ export type UINode = Layout | LabelNode | ButtonNode | InputNode | ToggleNode | 
 
 // -- Top-level --
 
-export type ScreenItem = VariableDecl | UINode | FunctionDef;
+export type ScreenItem = VariableDecl | UINode | FunctionDef | EveryNode;
 
 export interface Screen extends NodeBase {
   type: 'Screen';

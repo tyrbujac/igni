@@ -5,7 +5,7 @@ import {
   Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
   Property, EventHandler, FunctionDef, FunctionCall, Statement, EachNode,
   NavigateTo, NavigateBack, ComponentDef, ComponentItem, ComponentInvocation,
-  LambdaExpr, EqualityExpr, InExpr, ReturnStmt, IfStmt, EachStmt, EmitStmt,
+  LambdaExpr, EqualityExpr, InExpr, ReturnStmt, IfStmt, EachStmt, EveryNode, EmitStmt,
   IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
   ListLit, ObjectLit, ObjectUpdate, FieldAccess, IndexAccess,
@@ -352,6 +352,8 @@ export class Parser {
           items.push(this.parseFunctionDef());
         } else if (this.check(TokenType.If)) {
           items.push(this.parseIf(true));
+        } else if (this.check(TokenType.Every)) {
+          items.push(this.parseEvery());
         } else {
           items.push(this.parseUINode());
         }
@@ -417,6 +419,22 @@ export class Parser {
       case TokenType.Toggle: return this.parseToggle();
       case TokenType.If:     return this.parseIf(false);
       case TokenType.Each:   return this.parseEach();
+      case TokenType.Every:
+        // v0.14: `every` is a screen-body-only block. Reaching parseUINode
+        // means it appeared inside a layout / each / if / button body. Targeted
+        // error mirrors the assign-in-UI-body rejection precedent (v1.0
+        // criterion-2): emit specific guidance, not the generic UI-element
+        // error.
+        return this.error(
+          '`every <duration>:` blocks must be at screen body scope (peer to function definitions and the screen\'s top-level layout), not inside a `layout`, `each`, `if`, or other UI block.\n\n' +
+          '  Move the `every` block above the `layout` line:\n\n' +
+          '    screen MyScreen:\n' +
+          '      tick = now()\n\n' +
+          '      every 1s:\n' +
+          '        tick = now()\n\n' +
+          '      layout vertical:\n' +
+          '        label tick\n'
+        );
       case TokenType.Spinner:
         this.advance();
         this.consume(TokenType.Newline, 'Expected newline');
@@ -940,6 +958,47 @@ export class Parser {
     }
 
     return { type: 'IfStmt', condition, then, else_, loc: this.loc(start) };
+  }
+
+  // `every <duration>:` — recurring-timer block at screen-body scope (v0.14).
+  // Body is statements (function-body shape), NOT UI nodes — it reassigns
+  // state which the lexical-reactivity rule then re-renders. Multi-block per
+  // screen is allowed (each block its own Timer.periodic in codegen). v0.14
+  // accepts only `1s`, `5s`, `30s`; everything else is a parse-time reject
+  // pointing at the planned extension path.
+  private parseEvery(): EveryNode {
+    const start = this.current();
+    this.consume(TokenType.Every, 'Expected "every"');
+
+    if (!this.check(TokenType.Number)) {
+      const tok = this.current();
+      this.error(`every requires a duration token like "1s", "5s", or "30s"; got "${tok.value}"`);
+    }
+    const numTok = this.advance();
+    if (numTok.value.includes('.')) {
+      this.error(`duration must be an integer; numeric values are not accepted (use "1s", "5s", or "30s")`);
+    }
+    if (!this.check(TokenType.Identifier)) {
+      this.error(`duration must include a unit suffix; v0.14 supports "1s", "5s", "30s"`);
+    }
+    const suffixTok = this.advance();
+    const fullToken = numTok.value + suffixTok.value;
+    const allowed = ['1s', '5s', '30s'];
+    if (!allowed.includes(fullToken)) {
+      this.error(`duration "${fullToken}" not supported in v0.14 — use "1s", "5s", or "30s". See ROADMAP for planned extensions.`);
+    }
+    const seconds = parseInt(numTok.value, 10);
+
+    this.consume(TokenType.Colon, 'Expected ":"');
+    this.consume(TokenType.Newline, 'Expected newline');
+    this.consume(TokenType.Indent, 'Expected indent');
+    const body: Statement[] = [];
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      body.push(this.parseStatement());
+      if (this.check(TokenType.Newline)) this.advance();
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent');
+    return { type: 'Every', seconds, body, loc: this.loc(start) };
   }
 
   private parseEachStmt(): EachStmt {

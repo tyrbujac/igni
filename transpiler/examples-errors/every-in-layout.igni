@@ -1,0 +1,7 @@
+screen Bad:
+  count = 0
+
+  layout vertical:
+    every 1s:
+      count = count + 1
+    label count

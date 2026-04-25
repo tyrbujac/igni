@@ -1,0 +1,15 @@
+
+  Error: duration "100ms" not supported in v0.14 — use "1s", "5s", or "30s". See ROADMAP for planned extensions.
+
+    every-unsupported-duration.igni:4 |   every 100ms:
+                                      |              ^
+
+  Error: Unexpected token "" — expected a UI element
+
+    every-unsupported-duration.igni:5 |     count = count + 1
+                                      |     ^
+
+  Error: Expected "screen", got "layout"
+
+    every-unsupported-duration.igni:7 |   layout vertical:
+                                      |         ^

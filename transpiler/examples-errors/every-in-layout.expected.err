@@ -1,0 +1,27 @@
+
+  Error: `every <duration>:` blocks must be at screen body scope (peer to function definitions and the screen's top-level layout), not inside a `layout`, `each`, `if`, or other UI block.
+
+  Move the `every` block above the `layout` line:
+
+    screen MyScreen:
+      tick = now()
+
+      every 1s:
+        tick = now()
+
+      layout vertical:
+        label tick
+
+
+    every-in-layout.igni:5 |     every 1s:
+                           |          ^
+
+  Error: Unexpected token "" — expected a UI element
+
+    every-in-layout.igni:6 |       count = count + 1
+                           |       ^
+
+  Error: Expected "screen", got "label"
+
+    every-in-layout.igni:7 |     label count
+                           |          ^

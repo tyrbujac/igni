@@ -1,0 +1,14 @@
+screen TimestampDemo:
+  opened_at = now()
+  current = now()
+
+  every 1s:
+    current = now()
+
+  layout vertical, padding: large, gap: medium:
+    label opened_at
+    label current
+    label seconds_open(opened_at, current)
+
+  seconds_open(start, t):
+    return t - start

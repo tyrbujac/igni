@@ -1,0 +1,15 @@
+
+  Error: duration must include a unit suffix; v0.14 supports "1s", "5s", "30s"
+
+    every-numeric-duration.igni:4 |   every 2:
+                                  |          ^
+
+  Error: Unexpected token "" — expected a UI element
+
+    every-numeric-duration.igni:5 |     count = count + 1
+                                  |     ^
+
+  Error: Expected "screen", got "layout"
+
+    every-numeric-duration.igni:7 |   layout vertical:
+                                  |         ^

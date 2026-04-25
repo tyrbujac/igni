@@ -1,0 +1,38 @@
+screen Pomodonut:
+  duration = 1500
+  start_time = 0
+  running = false
+  tick = now()
+
+  every 1s:
+    if running:
+      tick = now()
+
+  layout vertical, gap: large, align: center, padding: large:
+    label remaining(duration, start_time, tick), style: heading
+
+    layout horizontal, gap: medium:
+      button "Start", color: brand, on tap: start()
+      button "Pause", on tap: pause()
+      button "Reset", color: subtle, on tap: reset()
+
+  start():
+    start_time = now()
+    tick = start_time
+    running = true
+
+  pause():
+    running = false
+
+  reset():
+    running = false
+    start_time = 0
+    tick = now()
+
+  remaining(dur, s, t):
+    if s is 0:
+      return dur
+    elapsed = t - s
+    if elapsed >= dur:
+      return 0
+    return dur - elapsed

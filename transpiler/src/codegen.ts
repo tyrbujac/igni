@@ -2,7 +2,7 @@ import {
   Program, Screen, ScreenItem, VariableDecl,
   UINode, Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode, EachNode,
   ComponentDef, ComponentItem, ComponentInvocation,
-  Property, EventHandler, FunctionDef, Statement, Expr, Ident, IsExpr, NodeBase,
+  Property, EventHandler, FunctionDef, EveryNode, Statement, Expr, Ident, IsExpr, NodeBase,
   LambdaExpr, EqualityExpr, IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
   SourceLocation,
   ThemeBlock, ThemeTextTokenName,
@@ -122,6 +122,8 @@ export class CodeGenerator {
     const hasLocate = program.screens.some(s =>
       s.body.some(item => item.type === 'VariableDecl' && item.value.type === 'FunctionCall' && item.value.name === 'locate')
     );
+    // v0.14: any `every` block on any screen pulls in dart:async for Timer.
+    const hasEvery = program.screens.some(s => s.body.some(i => i.type === 'Every'));
 
     let code = `import 'package:flutter/material.dart';\n`;
     if (this.hasFetch) {
@@ -136,6 +138,9 @@ export class CodeGenerator {
     }
     if (hasLocate) {
       code += `import 'package:geolocator/geolocator.dart';\n`;
+    }
+    if (hasEvery) {
+      code += `import 'dart:async';\n`;
     }
     code += '\n';
 
@@ -442,6 +447,7 @@ export class CodeGenerator {
     const stateDecls: string[] = [];
     const uiNodes: UINode[] = [];
     const funcDefs: FunctionDef[] = [];
+    const everyBlocks: EveryNode[] = [];
 
     this.fetchVars = [];
     const buildLocals: string[] = [];
@@ -556,6 +562,8 @@ export class CodeGenerator {
         }
       } else if (item.type === 'FunctionDef') {
         funcDefs.push(item);
+      } else if (item.type === 'Every') {
+        everyBlocks.push(item);
       } else if (item.type === 'Comment') {
         if (inBuildLocals) {
           buildLocals.push(`    // ${item.text}`);
@@ -651,8 +659,20 @@ export class CodeGenerator {
       preBuild += (preBuild ? '\n' : '') + '  final _audioPlayer = AudioPlayer();';
     }
 
-    // initState (controllers + fetch calls)
-    const needsInitState = hasControllers || hasFetchVars;
+    // v0.14: `every <duration>:` block fields. Each block gets its own
+    // Timer.periodic instance, started in initState and cancelled in dispose.
+    // Multi-block per screen → each indexed by parse order. `Timer?` so
+    // dispose can null-check before cancelling.
+    const hasEveryBlocks = everyBlocks.length > 0;
+    if (hasEveryBlocks) {
+      const everyDecls = everyBlocks
+        .map((_, i) => `  Timer? _everyTimer${i};`)
+        .join('\n');
+      preBuild += (preBuild ? '\n' : '') + everyDecls;
+    }
+
+    // initState (controllers + fetch calls + every-block timers)
+    const needsInitState = hasControllers || hasFetchVars || hasEveryBlocks;
     if (needsInitState) {
       const initLines: string[] = [];
       for (const v of this.ctx.boundInputVars) {
@@ -662,15 +682,31 @@ export class CodeGenerator {
         const prefix = f.kind === 'locate' ? '_locate' : '_fetch';
         initLines.push(`    ${prefix}${f.name[0].toUpperCase() + f.name.slice(1)}();`);
       }
+      for (let i = 0; i < everyBlocks.length; i++) {
+        const block = everyBlocks[i];
+        // Body uses the screen's stateVars / declaredLocals, just like a
+        // function body. genStmt wraps state-var assignments in setState
+        // automatically — no additional wrapping needed here.
+        this.declaredLocals = new Set();
+        const body = this.genStmtBlock(block.body, 3).trimEnd();
+        initLines.push(
+          `    _everyTimer${i} = Timer.periodic(const Duration(seconds: ${block.seconds}), (_) {\n${body}\n    });`
+        );
+      }
       preBuild += `\n\n  @override\n  void initState() {\n    super.initState();\n${initLines.join('\n')}\n  }`;
     }
 
-    // dispose (controllers only)
-    if (hasControllers) {
-      const disposals = this.ctx.boundInputVars
-        .map(v => `    _${v}Controller.dispose();`)
-        .join('\n');
-      preBuild += `\n\n  @override\n  void dispose() {\n${disposals}\n    super.dispose();\n  }`;
+    // dispose (controllers + every-block timers)
+    const needsDispose = hasControllers || hasEveryBlocks;
+    if (needsDispose) {
+      const disposalLines: string[] = [];
+      for (const v of this.ctx.boundInputVars) {
+        disposalLines.push(`    _${v}Controller.dispose();`);
+      }
+      for (let i = 0; i < everyBlocks.length; i++) {
+        disposalLines.push(`    _everyTimer${i}?.cancel();`);
+      }
+      preBuild += `\n\n  @override\n  void dispose() {\n${disposalLines.join('\n')}\n    super.dispose();\n  }`;
     }
 
     // Fetch methods
@@ -1577,7 +1613,7 @@ export class CodeGenerator {
       for (const item of screen.body) {
         if (item.type === 'FunctionDef') item.body.forEach(checkStmt);
       }
-      const uiNodes = screen.body.filter((i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef');
+      const uiNodes = screen.body.filter((i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef' && i.type !== 'Every');
       checkUI(uiNodes);
     }
     for (const comp of program.components) {
@@ -1680,7 +1716,7 @@ export class CodeGenerator {
       }
     };
     const uiNodes = screen.body.filter(
-      (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef'
+      (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef' && i.type !== 'Every'
     );
     walk(uiNodes);
     return targets;
@@ -1843,7 +1879,7 @@ export class CodeGenerator {
         else if (item.type === 'FunctionDef') item.body.forEach(walkStmt);
       }
       const uiNodes = screen.body.filter(
-        (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef'
+        (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef' && i.type !== 'Every'
       );
       walkUI(uiNodes);
     }
@@ -1996,7 +2032,7 @@ export class CodeGenerator {
         else if (item.type === 'FunctionDef') item.body.forEach(walkStmt);
       }
       const uiNodes = screen.body.filter(
-        (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef'
+        (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef' && i.type !== 'Every'
       );
       walkUI(uiNodes);
     }
@@ -2049,7 +2085,7 @@ export class CodeGenerator {
 
     for (const screen of program.screens) {
       const uiNodes = screen.body.filter(
-        (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef'
+        (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef' && i.type !== 'Every'
       );
       walkUI(uiNodes);
     }
@@ -2699,6 +2735,12 @@ export class CodeGenerator {
     if (call.name === 'random' && args.length === 2) {
       return `(Random().nextInt(${args[1]} - ${args[0]} + 1) + ${args[0]})`;
     }
+    if (call.name === 'now' && args.length === 0) {
+      // v0.14: integer seconds since 1970-01-01 UTC. Non-reactive — bare
+      // calls are evaluated at the moment of the call, no caching, no
+      // reactivity hookup. Captured timestamps live in regular state vars.
+      return `(DateTime.now().millisecondsSinceEpoch ~/ 1000)`;
+    }
     if (call.name === 'locate') {
       // `locate()` is screen-body only — handled in the VariableDecl path
       // above. Reaching this point means it was used as a sub-expression
@@ -2776,7 +2818,7 @@ export class CodeGenerator {
       return false;
     };
     for (const screen of program.screens) {
-      const uiNodes = screen.body.filter(i => i.type !== 'VariableDecl' && i.type !== 'FunctionDef') as UINode[];
+      const uiNodes = screen.body.filter(i => i.type !== 'VariableDecl' && i.type !== 'FunctionDef' && i.type !== 'Every') as UINode[];
       if (check(uiNodes)) return true;
       for (const item of screen.body) {
         if (item.type === 'FunctionDef' && checkStmts(item.body)) return true;
@@ -2811,7 +2853,8 @@ export class CodeGenerator {
     };
     for (const item of screen.body) {
       if (item.type === 'FunctionDef' && checkStmts(item.body)) return true;
-      if (item.type !== 'VariableDecl' && item.type !== 'FunctionDef') {
+      if (item.type === 'Every' && checkStmts(item.body)) return true;
+      if (item.type !== 'VariableDecl' && item.type !== 'FunctionDef' && item.type !== 'Every') {
         if (checkNodes([item])) return true;
       }
     }

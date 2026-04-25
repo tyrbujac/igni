@@ -1,0 +1,8 @@
+screen Clock:
+  tick = now()
+
+  every 1s:
+    tick = now()
+
+  layout vertical, padding: large:
+    label tick, style: heading

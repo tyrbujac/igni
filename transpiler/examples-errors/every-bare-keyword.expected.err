@@ -1,0 +1,15 @@
+
+  Error: every requires a duration token like "1s", "5s", or "30s"; got "second"
+
+    every-bare-keyword.igni:4 |   every second:
+                              |               ^
+
+  Error: Unexpected token "" — expected a UI element
+
+    every-bare-keyword.igni:5 |     count = count + 1
+                              |     ^
+
+  Error: Expected "screen", got "layout"
+
+    every-bare-keyword.igni:7 |   layout vertical:
+                              |         ^
