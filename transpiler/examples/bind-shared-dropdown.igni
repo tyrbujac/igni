@@ -1,0 +1,17 @@
+shared:
+  region = "EU"
+
+screen Home:
+  regions = ["EU", "US", "Asia"]
+
+  layout vertical, padding: large, gap: medium:
+    label "Current region: " + shared.region, style: heading
+    button "Change", on tap: navigate to Picker
+
+screen Picker:
+  options = ["EU", "US", "Asia"]
+
+  layout vertical, padding: large, gap: medium:
+    label "Pick region", style: heading.small
+    dropdown bind: shared.region, options: options
+    button "Back", on tap: navigate back

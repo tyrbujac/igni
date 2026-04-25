@@ -1,0 +1,15 @@
+shared:
+  sound_on = true
+
+screen Counter:
+  count = 0
+
+  layout vertical, padding: large, gap: medium:
+    label count, style: heading
+    button "Tap", on tap: count = count + 1
+    button "Settings", on tap: navigate to Settings
+
+screen Settings:
+  layout vertical, padding: large, gap: medium:
+    toggle bind: shared.sound_on, label: "Sound on tap"
+    button "Back", on tap: navigate back

@@ -15,6 +15,19 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.14.1 — 2026-04-26
+*Widens `bind:` to accept `shared.X` directly on `slider`/`toggle`/`checkbox`/`dropdown`. Transpiler-only patch — no spec syntax addition.*
+
+- **`bind: shared.X` widening** for `slider`, `toggle`, `checkbox`, `dropdown`. Parser accepts field access on `shared` as the bind target; codegen emits `shared.update(() { shared.X = value; })` instead of bare assignment so the SharedState ChangeNotifier fires and the app-root `ListenableBuilder` re-renders. Plain (non-shared) bind paths keep the existing `setState`-wrapped emit byte-identical, so every pre-v0.14.1 fixture is unchanged.
+- **`input` is the exception.** `input bind: shared.X` is rejected at parse time with an error pointing at the canonical bridge pattern (`draft = shared.title` + `input bind: draft, on change: shared.title = draft`). Reason: `input` backs onto Flutter's `TextEditingController`, which needs a stable Dart identifier for its controller field — `_shared.titleController` isn't valid Dart. Zero models reached for `input bind: shared.X` in the v0.14.0 Pomodonut rerun (settings UIs use slider/toggle for typed values), so this scope cut is honest.
+- **Each-loop field access (`bind: obj.field`) stays rejected.** Different codegen story (needs `replace()` auto-wiring); separate future widening when a real-app surfaces compounding signal. v0.11.4 4/6 hit on each-loop binds; v0.14.1 doesn't address that path.
+- **Motivation:** 11/14 cumulative signal across three runs — v0.11.4 Stage 3 (4/6) + Pomodonut original (3/4 on slider/toggle bind: shared) + Pomodonut rerun against v0.14.0 (4/4 — every cell hit it). Strongest carry-forward gap in the backlog. The Pomodonut rerun confirmed the gap was the sole blocker for criterion-4 #2 close — every model used `every`/`now()` correctly and every model failed at `slider bind: shared.X` or `toggle bind: shared.X`.
+- **6 new transpiler fixtures.** Positive: `bind-shared-slider`, `bind-shared-toggle`, `bind-shared-checkbox`, `bind-shared-dropdown` (each pairs a main screen with a settings screen using the shared state). Negative: `bind-input-shared` (rejection with the bridge-pattern hint), `bind-each-field` (rejection with the future-widening note). Test count 77 → 83.
+- **Methodology — Stage 2 design review intentionally skipped.** v0.13 and v0.14 used Stage 2 for new spec syntax with genuine shape uncertainty. v0.14.1 has no shape uncertainty — the syntax is what 11/14 panel cells already produced; the only "alternative shape" is "document the workaround," which the 11/14 evidence already rejects. **Distinguishing rule for the methodology chapter: Stage 2 is for new-syntax shape choice; transpiler widenings of existing-syntax-already-being-produced don't need it.** Design note: `docs/private/96`. Stage 3 follows in the next commit.
+- **`on change:` clarification kept from v0.14.0.** No additional patches.
+
+---
+
 ## v0.14.0 — 2026-04-26
 *Adds `every <duration>:` recurring-timer block at screen scope + non-reactive `now()` builtin. First time-based reactivity in Igni.*
 

@@ -1,0 +1,6 @@
+shared:
+  title = ""
+
+screen Editor:
+  layout vertical, padding: large:
+    input bind: shared.title, placeholder: "Title"

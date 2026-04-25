@@ -51,6 +51,17 @@ export class CodeGenerator {
   private indent(depth: number): string {
     return '  '.repeat(depth);
   }
+
+  // v0.14.1: bind: shared.X widening — onChanged writes wrap in shared.update()
+  // so the SharedState ChangeNotifier fires and the app-root ListenableBuilder
+  // re-renders. Plain (non-shared) bind: keeps the existing setState path so
+  // every pre-v0.14.1 snapshot is byte-identical.
+  private genBindWrite(bindPath: string, valueExpr: string, ind: string): string {
+    if (bindPath.startsWith('shared.')) {
+      return `${ind}    shared.update(() {\n${ind}      ${bindPath} = ${valueExpr};\n${ind}    });\n`;
+    }
+    return `${ind}    setState(() {\n${ind}      ${bindPath} = ${valueExpr};\n${ind}    });\n`;
+  }
   private allScreens: Screen[] = [];
 
   private allComponents: ComponentDef[] = [];
@@ -1151,9 +1162,7 @@ export class CodeGenerator {
     let code = `${ind}TextField(\n`;
     code += `${ind}  controller: _${node.bind}Controller,\n`;
     code += `${ind}  onChanged: (value) {\n`;
-    code += `${ind}    setState(() {\n`;
-    code += `${ind}      ${node.bind} = value;\n`;
-    code += `${ind}    });\n`;
+    code += this.genBindWrite(node.bind, 'value', ind);
     if (changeEvent) {
       code += this.genChangeActionBody(changeEvent, depth + 2);
     }
@@ -1195,9 +1204,7 @@ export class CodeGenerator {
       code += `${ind}  value: ${node.bind},\n`;
       code += `${ind}  title: Text(${labelStr}),\n`;
       code += `${ind}  onChanged: (value) {\n`;
-      code += `${ind}    setState(() {\n`;
-      code += `${ind}      ${node.bind} = value;\n`;
-      code += `${ind}    });\n`;
+      code += this.genBindWrite(node.bind, 'value', ind);
       if (changeEvent) {
         code += this.genChangeActionBody(changeEvent, depth + 2);
       }
@@ -1209,9 +1216,7 @@ export class CodeGenerator {
     let code = `${ind}Switch(\n`;
     code += `${ind}  value: ${node.bind},\n`;
     code += `${ind}  onChanged: (value) {\n`;
-    code += `${ind}    setState(() {\n`;
-    code += `${ind}      ${node.bind} = value;\n`;
-    code += `${ind}    });\n`;
+    code += this.genBindWrite(node.bind, 'value', ind);
     if (changeEvent) {
       code += this.genChangeActionBody(changeEvent, depth + 2);
     }
@@ -1300,9 +1305,7 @@ export class CodeGenerator {
     code += `${ind}  min: ${min}.toDouble(),\n`;
     code += `${ind}  max: ${max}.toDouble(),\n`;
     code += `${ind}  onChanged: (value) {\n`;
-    code += `${ind}    setState(() {\n`;
-    code += `${ind}      ${node.bind} = value.round();\n`;
-    code += `${ind}    });\n`;
+    code += this.genBindWrite(node.bind, 'value.round()', ind);
     if (changeEvent) {
       code += this.genChangeActionBody(changeEvent, depth + 2);
     }
@@ -1327,9 +1330,7 @@ export class CodeGenerator {
       code += `${ind}  value: ${node.bind},\n`;
       code += `${ind}  title: Text(${labelStr}),\n`;
       code += `${ind}  onChanged: (value) {\n`;
-      code += `${ind}    setState(() {\n`;
-      code += `${ind}      ${node.bind} = value ?? false;\n`;
-      code += `${ind}    });\n`;
+      code += this.genBindWrite(node.bind, 'value ?? false', ind);
       if (changeEvent) {
         code += this.genChangeActionBody(changeEvent, depth + 2);
       }
@@ -1346,9 +1347,7 @@ export class CodeGenerator {
     let code = `${ind}Checkbox(\n`;
     code += `${ind}  value: ${node.bind},\n`;
     code += `${ind}  onChanged: (value) {\n`;
-    code += `${ind}    setState(() {\n`;
-    code += `${ind}      ${node.bind} = value ?? false;\n`;
-    code += `${ind}    });\n`;
+    code += this.genBindWrite(node.bind, 'value ?? false', ind);
     if (changeEvent) {
       code += this.genChangeActionBody(changeEvent, depth + 2);
     }
@@ -1372,9 +1371,7 @@ export class CodeGenerator {
     code += `${ind}  value: ${node.bind},\n`;
     code += `${ind}  items: (${optionsExpr} as List).map((e) => DropdownMenuItem<dynamic>(value: e, child: Text(e.toString()))).toList(),\n`;
     code += `${ind}  onChanged: (value) {\n`;
-    code += `${ind}    setState(() {\n`;
-    code += `${ind}      ${node.bind} = value;\n`;
-    code += `${ind}    });\n`;
+    code += this.genBindWrite(node.bind, 'value', ind);
     if (changeEvent) {
       code += this.genChangeActionBody(changeEvent, depth + 2);
     }

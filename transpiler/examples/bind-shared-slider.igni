@@ -1,0 +1,17 @@
+shared:
+  step = 1
+
+screen Counter:
+  count = 0
+
+  layout vertical, padding: large, gap: medium:
+    label count, style: heading
+    button "Add", on tap: count = count + shared.step
+    button "Settings", on tap: navigate to Settings
+
+screen Settings:
+  layout vertical, padding: large, gap: medium:
+    label "Step size", style: heading.small
+    slider bind: shared.step, min: 1, max: 10
+    label shared.step
+    button "Back", on tap: navigate back

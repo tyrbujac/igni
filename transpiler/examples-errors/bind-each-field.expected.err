@@ -1,0 +1,10 @@
+
+  Error: checkbox bind: must be a simple variable name or `shared.X`. Field access on objects (e.g. `obj.field`) inside an `each` block is not yet supported — use the canonical reassignment pattern with `replace()`.
+
+    bind-each-field.igni:7 | 
+                           | ^
+
+  Error: Expected "screen", got ""
+
+    bind-each-field.igni:7 | 
+                           | ^

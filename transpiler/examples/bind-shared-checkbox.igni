@@ -1,0 +1,13 @@
+shared:
+  agreed = false
+
+screen Home:
+  layout vertical, padding: large, gap: medium:
+    label "Welcome", style: heading
+    button "Accept terms", on tap: navigate to Terms
+
+screen Terms:
+  layout vertical, padding: large, gap: medium:
+    label "Read carefully:", style: body
+    checkbox bind: shared.agreed, label: "I agree to the terms"
+    button "Back", on tap: navigate back

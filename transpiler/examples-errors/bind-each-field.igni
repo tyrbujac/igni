@@ -1,0 +1,6 @@
+screen TodoList:
+  items = [{title: "Buy milk", done: false}, {title: "Walk dog", done: true}]
+
+  layout vertical, padding: large, gap: medium:
+    each item in items:
+      checkbox bind: item.done, label: item.title

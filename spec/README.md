@@ -2,11 +2,11 @@
 
 The language definition. Three tiers of the same spec, plus the history.
 
-## Current (v0.14.0)
+## Current (v0.14.1)
 
-- **[`v0.14.0.md`](v0.14.0.md)** — **full spec.** Canonical definition in learning order: hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → recurrence → reference. Read this once; refer back by section.
-- **[`v0.14.0-cheatsheet.md`](v0.14.0-cheatsheet.md)** — **cheatsheet.** Same language, condensed to ~3,300 words. Optimised for cold-LLM context and human skim-reading. Primary input for test runs.
-- **[`v0.14.0-micro.md`](v0.14.0-micro.md)** — **micro reference.** ~770 words, rules-only, no prose, no tradeoffs. Third context tier for cold tests that want to vary context size as an independent variable.
+- **[`v0.14.1.md`](v0.14.1.md)** — **full spec.** Canonical definition in learning order: hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → recurrence → reference. Read this once; refer back by section.
+- **[`v0.14.1-cheatsheet.md`](v0.14.1-cheatsheet.md)** — **cheatsheet.** Same language, condensed to ~3,400 words. Optimised for cold-LLM context and human skim-reading. Primary input for test runs.
+- **[`v0.14.1-micro.md`](v0.14.1-micro.md)** — **micro reference.** ~780 words, rules-only, no prose, no tradeoffs. Third context tier for cold tests that want to vary context size as an independent variable.
 
 Pick the tier that matches your need: full for understanding, cheatsheet for writing Igni, micro for squeezing context.
 

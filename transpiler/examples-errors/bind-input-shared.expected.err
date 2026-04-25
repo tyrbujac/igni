@@ -1,0 +1,8 @@
+
+  Error: input bind: doesn't accept `shared.X` directly — input needs a stable local variable for its text controller. Use a local var bridged via on change::
+
+    draft = shared.title
+    input bind: draft, on change: shared.title = draft
+
+    bind-input-shared.igni:7 | 
+                             | ^
