@@ -15,6 +15,17 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.13.1 — 2026-04-25
+*Docs-only patch tightening v0.13.0's `max_width:` prose against three convergent findings from a post-ship spec/cheatsheet teachability critique.*
+
+- **Composition rule 4 wording.** Replaced "remaining space is redistributed proportionally among uncapped `fill: true` siblings" with "remaining space is redistributed equally among the remaining uncapped `fill: true` siblings", and added the parenthetical "(Igni has no flex-weight property — all `fill: true` siblings have weight 1)". The word "proportionally" implied flex-weights that don't exist in Igni; all three reviewers (GPT-5.5, Opus 4.7, Gemini 3.1 Pro) flagged it as a likely LLM-hallucination vector — a model could plausibly invent a `flex: 2` property to satisfy "proportionally". Tightening makes the equal-weight reality explicit.
+- **`full` / `none` / `auto` rejection.** v0.13.0 explicitly rejected `full` but left `none` and `auto` as plausible CSS-trained guess-targets. Strengthened the spec prose ("There is no `full`, `none`, or `auto` token"), the cheatsheet ("no `full` / `none` / `auto` token"), and the micro ("no `full` / `none` / `auto` token") to plug all three. The spec line also adds "the three tokens above are exhaustive; omission is the fourth state" — Opus's recommended framing.
+- **Cheatsheet second example.** Added a `fill: true, max_width: tablet` × uncapped `fill: true` sibling example below the existing MiCard card example. v0.13.0's cheatsheet compressed the entire composition rule 4 (the new behaviour reviewers said developers and LLMs would actually copy from) into a single sentence; the second example is the canonical pattern for "main content column + flexible sidebar." All three reviewers said add it.
+- **No transpiler change, no language change.** Token set unchanged: `phone` / `tablet` / `desktop`, omission = uncapped. Code semantics identical to v0.13.0.
+- **Methodology — first post-ship spec-critique run.** Distinct from the pre-implementation design-review run at `tests/v0.13-design-review/` (which read the design note before any code). This new shape (`tests/v0.13.0-spec-critique/`, $0.19, ~3 min wall-clock) reads the *shipped artifact* and asks for clarity gaps. Caught three actionable ambiguities before Stage 3 ran. Worth flagging in the dissertation methodology chapter as a candidate method-extension. Single-model raises (align: center ambiguity, horizontal-layout clarification, compile failure mode for numeric values, "no-op" wording in rule 3) logged in `docs/private/91_v0130_postship.md` for future consideration; not acted on now to keep attribution clean.
+
+---
+
 ## v0.13.0 — 2026-04-25
 *Adds `max_width:` as a layout property — token-only width cap motivated by the MiCard desktop dogfood gap.*
 

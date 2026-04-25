@@ -1,0 +1,25 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "v0.13.0 spec/cheatsheet/micro teachability critique",
+  "prompt_slug": "v0-13-0-spec-cheatsheet-micro-teachability-critique",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.13.0-spec-critique/prompts.md",
+  "spec_path": null,
+  "spec_tier": "none",
+  "spec_sha256": null,
+  "spec_words": 0,
+  "timestamp": "2026-04-25T09:33:55.013Z",
+  "duration_ms": 36837,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 2393,
+    "output_tokens": 1914,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.059815,
+  "transpile": null
+}
