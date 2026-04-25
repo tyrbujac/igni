@@ -80,7 +80,7 @@ When Flutter or generated Dart reports an error from `main.dart`, Igni maps it b
 
 Under the hood, a hidden `.igni/` Flutter project is created automatically. You never touch it — just edit `.igni` files and save.
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) for how the pieces fit together (repo layout, spec files, transpiler pipeline, validation methodology). See [`docs/tutorial.md`](docs/tutorial.md) to learn Igni end-to-end.
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) for how the pieces fit together (repo layout, spec files, transpiler pipeline, validation methodology). To learn Igni: start with [`docs/tutorial.md`](docs/tutorial.md), then keep [`docs/cookbook.md`](docs/cookbook.md) handy for task-shaped recipes. Coming from Flutter? See [`docs/migrating-from-flutter.md`](docs/migrating-from-flutter.md).
 
 ## What Igni is for
 
