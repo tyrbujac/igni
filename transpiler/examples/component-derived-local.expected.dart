@@ -46,8 +46,9 @@ class _ShopScreenState extends State<ShopScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            for (final item in items) ...[
+            for (final (_i, item) in items.indexed) ...[
               Entry(item: item),
+              if (_i < items.length - 1) const SizedBox(height: 16),
             ],
           ],
         ),

@@ -57,10 +57,11 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Text('Add'),
             ),
             const SizedBox(height: 16),
-            for (final item in shared.items) ...[
+            for (final (_i, item) in shared.items.indexed) ...[
               Text(
                 item['name'].toString(),
               ),
+              if (_i < shared.items.length - 1) const SizedBox(height: 16),
             ],
           ],
         ),

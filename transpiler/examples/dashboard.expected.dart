@@ -131,7 +131,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: Theme.of(context).textTheme.headlineSmall!,
                 ),
                 const SizedBox(height: 8),
-                for (final event in activities) ...[
+                for (final (_i, event) in activities.indexed) ...[
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Row(
@@ -148,6 +148,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                   ),
+                  if (_i < activities.length - 1) const SizedBox(height: 8),
                 ],
               ],
             ),

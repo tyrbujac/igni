@@ -45,10 +45,11 @@ class _CartScreenState extends State<CartScreen> {
               style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
-            for (final item in items) ...[
+            for (final (_i, item) in items.indexed) ...[
               Text(
                 item['name'].toString() + ' - \$'.toString().toString() + item['price'].toString(),
               ),
+              if (_i < items.length - 1) const SizedBox(height: 16),
             ],
             const SizedBox(height: 16),
             Text(

@@ -39,10 +39,11 @@ class _DerivedCountsScreenState extends State<DerivedCountsScreen> {
               info.toString() + ' info'.toString(),
             ),
             const SizedBox(height: 16),
-            for (final item in items) ...[
+            for (final (_i, item) in items.indexed) ...[
               Text(
                 item['level'].toString().toUpperCase().toString() + ' — '.toString().toString() + item['name'].toString(),
               ),
+              if (_i < items.length - 1) const SizedBox(height: 16),
             ],
           ],
         ),

@@ -852,7 +852,7 @@ export class CodeGenerator {
 
   // -- UI node generation --
 
-  private genUINode(node: UINode, depth: number, inRow = false): string {
+  private genUINode(node: UINode, depth: number, inRow = false, parentGap?: { dim: 'width' | 'height'; px: number }): string {
     let code = '';
     switch (node.type) {
       case 'Layout': code = this.genLayout(node, depth); break;
@@ -861,7 +861,7 @@ export class CodeGenerator {
       case 'Input':  code = this.genInput(node, depth, inRow); break;
       case 'Toggle': code = this.genToggle(node, depth); break;
       case 'If':     code = this.genIf(node, depth); break;
-      case 'Each':   code = this.genEach(node, depth); break;
+      case 'Each':   code = this.genEach(node, depth, parentGap); break;
       case 'Spinner': code = `${this.indent(depth)}const CircularProgressIndicator()`; break;
       case 'Divider': code = `${this.indent(depth)}const Divider()`; break;
       case 'Comment': code = `${this.indent(depth)}// ${node.text}`; break;
@@ -894,15 +894,21 @@ export class CodeGenerator {
     const colDepth = depth + wrappers;
     const ind = this.indent(colDepth);
 
-    // Build children with spacers
+    // Build children with spacers. When the parent has a `gap:`, also pass
+    // the gap context to each-loop children so they can self-space between
+    // their own iterations (parent's gap-between-children logic only sees the
+    // each-loop as a single spread-child slot).
     const isRow = node.direction === 'horizontal';
+    const parentGap = gapSize !== null
+      ? { dim: gapDimension as 'width' | 'height', px: gapSize }
+      : undefined;
     const childLines: string[] = [];
     for (let i = 0; i < node.children.length; i++) {
       const child = node.children[i];
       if (child.type === 'Comment') {
         childLines.push(this.genUINode(child, colDepth + 2, isRow));
       } else {
-        childLines.push(`${this.genUINode(child, colDepth + 2, isRow)},`);
+        childLines.push(`${this.genUINode(child, colDepth + 2, isRow, parentGap)},`);
         if (gapSize !== null && i < node.children.length - 1 && node.children[i + 1].type !== 'Comment') {
           childLines.push(`${ind}    const SizedBox(${gapDimension}: ${gapSize}),`);
         }
@@ -1394,7 +1400,7 @@ export class CodeGenerator {
     return code;
   }
 
-  private genEach(node: EachNode, depth: number): string {
+  private genEach(node: EachNode, depth: number, parentGap?: { dim: 'width' | 'height'; px: number }): string {
     const ind = this.indent(depth);
     const listExpr = this.exprToDart(node.list);
 
@@ -1434,6 +1440,20 @@ export class CodeGenerator {
         `${ind1}),`,
         `${ind})`,
       ].join('\n');
+    }
+
+    // When the parent layout has a `gap:`, emit a SizedBox spacer between
+    // iterations using the indexed-for form so duplicate elements in the list
+    // don't break the "is last" check (`x != xs.last` would mis-classify
+    // earlier duplicates of the last value).
+    if (parentGap) {
+      let code = `${ind}for (final (_i, ${node.variable}) in ${listExpr}.indexed) ...[`;
+      for (const child of node.children) {
+        code += '\n' + this.genUINode(child, depth + 1) + ',';
+      }
+      code += `\n${this.indent(depth + 1)}if (_i < ${listExpr}.length - 1) const SizedBox(${parentGap.dim}: ${parentGap.px}),`;
+      code += `\n${ind}]`;
+      return code;
     }
 
     let code = `${ind}for (final ${node.variable} in ${listExpr}) ...[`;

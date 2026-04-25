@@ -52,8 +52,9 @@ class _NoteListScreenState extends State<NoteListScreen> {
               style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
-            for (final note in notes) ...[
+            for (final (_i, note) in notes.indexed) ...[
               NoteCard(title: note['title'], body: note['body']),
+              if (_i < notes.length - 1) const SizedBox(height: 16),
             ],
           ],
         ),

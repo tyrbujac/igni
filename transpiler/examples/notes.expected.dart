@@ -28,7 +28,7 @@ class _NoteListScreenState extends State<NoteListScreen> {
               style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
-            for (final note in notes) ...[
+            for (final (_i, note) in notes.indexed) ...[
               ElevatedButton(
                 style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                 onPressed: () {
@@ -36,6 +36,7 @@ class _NoteListScreenState extends State<NoteListScreen> {
                 },
                 child: Text(note['title'].toString()),
               ),
+              if (_i < notes.length - 1) const SizedBox(height: 16),
             ],
           ],
         ),

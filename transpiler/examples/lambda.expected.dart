@@ -33,10 +33,11 @@ class _ContactsScreenState extends State<ContactsScreen> {
               style: Theme.of(context).textTheme.bodyLarge!,
             ),
             const SizedBox(height: 16),
-            for (final contact in (List.from(contacts.where((c) => (c['active']) == true).toList())..sort((a, b) => (a['name'] as Comparable).compareTo(b['name'])))) ...[
+            for (final (_i, contact) in (List.from(contacts.where((c) => (c['active']) == true).toList())..sort((a, b) => (a['name'] as Comparable).compareTo(b['name']))).indexed) ...[
               Text(
                 contact['name'].toString(),
               ),
+              if (_i < (List.from(contacts.where((c) => (c['active']) == true).toList())..sort((a, b) => (a['name'] as Comparable).compareTo(b['name']))).length - 1) const SizedBox(height: 16),
             ],
             const SizedBox(height: 16),
             Text(
@@ -44,10 +45,11 @@ class _ContactsScreenState extends State<ContactsScreen> {
               style: Theme.of(context).textTheme.bodyLarge!,
             ),
             const SizedBox(height: 16),
-            for (final contact in (List.from(contacts)..sort((a, b) => (a['name'] as Comparable).compareTo(b['name']))).reversed.toList()) ...[
+            for (final (_i, contact) in (List.from(contacts)..sort((a, b) => (a['name'] as Comparable).compareTo(b['name']))).reversed.toList().indexed) ...[
               Text(
                 contact['name'].toString(),
               ),
+              if (_i < (List.from(contacts)..sort((a, b) => (a['name'] as Comparable).compareTo(b['name']))).reversed.toList().length - 1) const SizedBox(height: 16),
             ],
           ],
         ),

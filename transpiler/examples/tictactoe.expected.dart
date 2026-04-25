@@ -111,10 +111,10 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
               const SizedBox(height: 16),
               Column(
                 children: [
-                  for (final row_start in [0, 3, 6]) ...[
+                  for (final (_i, row_start) in [0, 3, 6].indexed) ...[
                     Row(
                       children: [
-                        for (final offset in [0, 1, 2]) ...[
+                        for (final (_i, offset) in [0, 1, 2].indexed) ...[
                           Expanded(
                             child:                           GestureDetector(
                             onTap: () {
@@ -139,9 +139,11 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
                           ),
                           ),
                           ),
+                          if (_i < [0, 1, 2].length - 1) const SizedBox(width: 8),
                         ],
                       ],
                     ),
+                    if (_i < [0, 3, 6].length - 1) const SizedBox(height: 8),
                   ],
                 ],
               ),

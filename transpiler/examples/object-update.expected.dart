@@ -67,7 +67,7 @@ class _ObjectUpdateDemoScreenState extends State<ObjectUpdateDemoScreen> {
               user['profile']['city'].toString(),
             ),
             const SizedBox(height: 16),
-            for (final item in items) ...[
+            for (final (_i, item) in items.indexed) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -83,6 +83,7 @@ class _ObjectUpdateDemoScreenState extends State<ObjectUpdateDemoScreen> {
                   ),
                 ],
               ),
+              if (_i < items.length - 1) const SizedBox(height: 16),
             ],
           ],
         ),

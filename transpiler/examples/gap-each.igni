@@ -1,0 +1,16 @@
+screen GapEach:
+  layout vertical, padding: large, gap: medium:
+    label "Vertical gap between each iterations", style: heading
+    layout vertical, gap: medium:
+      each n in [1, 2, 3]:
+        label n
+
+    label "Horizontal gap between each iterations", style: heading
+    layout horizontal, gap: small:
+      each m in [1, 2, 3]:
+        label m
+
+    label "Duplicate-element list (the bug-class fixed)", style: heading
+    layout vertical, gap: small:
+      each x in [7, 7, 7]:
+        label x
