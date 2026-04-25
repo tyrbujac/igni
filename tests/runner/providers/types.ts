@@ -6,6 +6,7 @@ export type CallParams = {
   model: string;
   maxTokens: number;
   thinkingBudget: number | null;
+  effort: 'low' | 'medium' | 'high' | null;
 };
 
 export type ProviderUsage = {

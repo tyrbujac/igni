@@ -14,11 +14,13 @@ export class OpenAIProvider implements Provider {
     const userContent = params.spec ? `${params.spec}\n\n${params.prompt}` : params.prompt;
 
     const started = Date.now();
-    const response = await this.client.chat.completions.create({
+    const request: any = {
       model: params.model,
       max_completion_tokens: params.maxTokens,
       messages: [{ role: 'user', content: userContent }],
-    });
+    };
+    if (params.effort) request.reasoning_effort = params.effort;
+    const response = await this.client.chat.completions.create(request);
     const duration_ms = Date.now() - started;
 
     const choice = response.choices[0];

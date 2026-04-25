@@ -9,7 +9,7 @@ API-based cold-test driver for four providers. Replaces the manual "paste spec i
 | Provider | Transport | Env var | Example model ID |
 |---|---|---|---|
 | Anthropic | Official SDK | `ANTHROPIC_API_KEY` | `claude-opus-4-7` |
-| OpenAI | Official SDK | `OPENAI_API_KEY` | `gpt-5.4` |
+| OpenAI | Official SDK | `OPENAI_API_KEY` | `gpt-5.5` (current default), `gpt-5.4` |
 | Google | Official SDK (`@google/generative-ai`) | `GOOGLE_API_KEY` (or `GEMINI_API_KEY`) | `gemini-3-flash-preview` |
 | Ollama | HTTP `POST /api/chat` | `OLLAMA_URL` (default `http://localhost:11434`) | `gemma4:e4b` |
 
@@ -39,16 +39,19 @@ npx tsx run.ts \
   --out ../v0.8.1/outputs
 ```
 
-OpenAI with cheatsheet:
+OpenAI with cheatsheet (GPT-5.5, high reasoning effort):
 
 ```bash
 export OPENAI_API_KEY=sk-...
 npx tsx run.ts \
-  --model gpt-5.4 \
+  --model gpt-5.5 \
+  --effort high \
   --spec ../../spec/v0.8.0-cheatsheet.md \
   --prompts ../v0.8.1/prompts.md \
   --out ../v0.8.1/outputs
 ```
+
+`--effort` is OpenAI-only (sent as `reasoning_effort` to `chat.completions.create`); other providers ignore it. Omit for OpenAI's default behaviour. `gpt-5.5` is the current default; `gpt-5.4` remains pinned for back-compat.
 
 Google with micro (Gemini 3 Flash preview):
 

@@ -40,6 +40,16 @@ export const PRICING: Record<string, Pricing> = {
     cache_read: 0.25,
   },
 
+  // OpenAI — GPT-5.5 (released 2026-04-25). Input/output rates confirmed by Tyr;
+  // cache_read set at 10% of input following the historical OpenAI ratio
+  // (gpt-5.4: 0.25 / 2.5 = 10%). VERIFY against openai.com pricing page before
+  // any cost-ratio claim enters published results.
+  'gpt-5.5-2026-04-23': {
+    input: 5,
+    output: 30,
+    cache_read: 0.5,
+  },
+
   // Google — sourced 2026-04-18 from https://ai.google.dev/gemini-api/docs/pricing
   // Text/image/video rate (audio input is $1.00 but we don't send audio).
   'gemini-3-flash-preview': {
@@ -82,6 +92,7 @@ export const PRICING: Record<string, Pricing> = {
 export const MODEL_PINS: Record<string, string> = {
   // OpenAI — echoing the requested model; checkpoint date appears on model_id.
   'gpt-5.4': 'gpt-5.4-2026-03-05',
+  'gpt-5.5': 'gpt-5.5-2026-04-23',
 
   // Google — Google's SDK currently echoes the requested model back as model_id,
   // so these pin to self. If that behaviour changes (e.g. Google starts

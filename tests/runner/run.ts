@@ -31,6 +31,7 @@ type Args = {
   noGrade: boolean;
   maxTokens: number;
   thinkingBudget: number | null;
+  effort: 'low' | 'medium' | 'high' | null;
 };
 
 function parseArgs(argv: string[]): Args {
@@ -42,6 +43,7 @@ function parseArgs(argv: string[]): Args {
     noGrade: false,
     maxTokens: 8192,
     thinkingBudget: null,
+    effort: null,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -57,6 +59,11 @@ function parseArgs(argv: string[]): Args {
     else if (a === '--no-grade') args.noGrade = true;
     else if (a === '--max-tokens') args.maxTokens = Number(next());
     else if (a === '--thinking') args.thinkingBudget = Number(next());
+    else if (a === '--effort') {
+      const v = next();
+      if (v !== 'low' && v !== 'medium' && v !== 'high') die(`--effort must be low|medium|high, got "${v}"`);
+      args.effort = v;
+    }
     else if (a === '--help' || a === '-h') { usage(); process.exit(0); }
     else die(`unknown arg: ${a}`);
   }
@@ -95,6 +102,9 @@ Optional:
                      10k→5k cut cost ~40% with no visible code-quality loss.
                      Forces temperature=1. Other providers silently ignore.
                      Opus 4.7 context is 200k tokens by default — no flag needed.
+  --effort <bucket>  OpenAI reasoning effort: low | medium | high. Sent as
+                     reasoning_effort to chat.completions.create. Other
+                     providers silently ignore. Independent from --thinking.
   --dry-run          Parse prompts and print what would be sent; no API calls.
 
 Environment:
@@ -152,6 +162,7 @@ async function runOne(
   outDir: string,
   maxTokens: number,
   thinkingBudget: number | null,
+  effort: 'low' | 'medium' | 'high' | null,
   doGrade: boolean,
 ): Promise<void> {
   console.log(`  [${prompt.index}] ${prompt.title} (${prompt.slug})`);
@@ -161,6 +172,7 @@ async function runOne(
     model,
     maxTokens,
     thinkingBudget,
+    effort,
   });
 
   // Pin check — if the requested alias has a declared expected model_id in
@@ -273,6 +285,13 @@ async function main() {
       console.log(`  thinking: ${args.thinkingBudget} tokens (ignored — ${providerName} doesn't support it here)`);
     }
   }
+  if (args.effort) {
+    if (providerName === 'openai') {
+      console.log(`  effort: ${args.effort} (reasoning_effort on chat.completions.create)`);
+    } else {
+      console.log(`  effort: ${args.effort} (ignored — ${providerName} doesn't support reasoning_effort)`);
+    }
+  }
   console.log();
 
   if (args.dryRun) {
@@ -286,7 +305,7 @@ async function main() {
 
   const provider = makeProvider(providerName);
   for (const p of selected) {
-    await runOne(provider, spec, specPath, specTier, p, promptPath, args.model, outDir, args.maxTokens, args.thinkingBudget, !args.noGrade);
+    await runOne(provider, spec, specPath, specTier, p, promptPath, args.model, outDir, args.maxTokens, args.thinkingBudget, args.effort, !args.noGrade);
   }
   console.log(`\ndone.`);
 }
