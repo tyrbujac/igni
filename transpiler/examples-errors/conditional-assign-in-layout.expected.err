@@ -1,0 +1,22 @@
+
+  Error: `status_color = ...` — assignments aren't allowed inside `layout`, `each`, or `if` UI blocks. UI blocks render; they don't reassign state.
+
+  For per-element values inside an `each`, use a function:
+
+    color_for(item):
+      if item is selected:
+        return brand
+      return subtle
+
+    each item in items:
+      label item, color: color_for(item)
+
+  Or compute the value at screen scope (above the layout block) and read it inline.
+
+    conditional-assign-in-layout.igni:6 |       status_color = danger
+                                        |                   ^
+
+  Error: Expected "screen", got "label"
+
+    conditional-assign-in-layout.igni:7 |     label "System status", color: status_color
+                                        |          ^

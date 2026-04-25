@@ -1,0 +1,22 @@
+
+  Error: `tab_color = ...` — assignments aren't allowed inside `layout`, `each`, or `if` UI blocks. UI blocks render; they don't reassign state.
+
+  For per-element values inside an `each`, use a function:
+
+    color_for(item):
+      if item is selected:
+        return brand
+      return subtle
+
+    each item in items:
+      label item, color: color_for(item)
+
+  Or compute the value at screen scope (above the layout block) and read it inline.
+
+    assign-in-ui-body.igni:7 |       tab_color = subtle
+                             |                ^
+
+  Error: Expected "screen", got ""
+
+    assign-in-ui-body.igni:11 | 
+                              | ^

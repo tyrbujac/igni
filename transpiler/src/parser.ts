@@ -439,6 +439,19 @@ export class Parser {
           this.consume(TokenType.Newline, 'Expected newline');
           return { type: 'Body', loc: this.loc(token) };
         }
+        if (this.isVariableDecl()) {
+          return this.error(
+            `\`${token.value} = ...\` — assignments aren't allowed inside \`layout\`, \`each\`, or \`if\` UI blocks. UI blocks render; they don't reassign state.\n\n` +
+            `  For per-element values inside an \`each\`, use a function:\n\n` +
+            `    color_for(item):\n` +
+            `      if item is selected:\n` +
+            `        return brand\n` +
+            `      return subtle\n\n` +
+            `    each item in items:\n` +
+            `      label item, color: color_for(item)\n\n` +
+            `  Or compute the value at screen scope (above the layout block) and read it inline.`
+          );
+        }
         if (token.value[0] >= 'A' && token.value[0] <= 'Z') {
           return this.parseComponentInvocation();
         }

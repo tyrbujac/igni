@@ -1,0 +1,7 @@
+screen StatusPanel:
+  warning = false
+
+  layout vertical, padding: large:
+    if warning:
+      status_color = danger
+    label "System status", color: status_color

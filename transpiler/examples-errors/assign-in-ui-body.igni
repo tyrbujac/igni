@@ -1,0 +1,10 @@
+screen Dashboard:
+  tabs = ["Overview", "Reports", "Settings"]
+  selected_tab = "Overview"
+
+  layout horizontal, padding: large, gap: large:
+    each tab in tabs:
+      tab_color = subtle
+      if tab is selected_tab:
+        tab_color = brand
+      label tab, color: tab_color, on tap: selected_tab = tab
