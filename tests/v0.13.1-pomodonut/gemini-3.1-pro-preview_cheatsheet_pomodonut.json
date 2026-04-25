@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Pomodonut",
+  "prompt_slug": "pomodonut",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.13.1-pomodonut/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.13.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "c6cad5db03964a0639d3f6f28007b438a4f041c516d6edcf4308c7bb2dbee6e0",
+  "spec_words": 2789,
+  "timestamp": "2026-04-25T17:31:56.373Z",
+  "duration_ms": 42994,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 5595,
+    "output_tokens": 1225,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.02589,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: toggle bind: must be a simple variable name, not a field access like obj.field\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-uS63F6/app.igni:95 |     layout vertical, fill: true:\n                                                                                   |           ^\n\n  Error: Expected \"screen\", got \"dec_work\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-uS63F6/app.igni:98 |   dec_work():\n                                                                                   |           ^\n\n  Error: Expected \":\", got \".\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-uS63F6/app.igni:99 |     if shared.work_mins > 1:\n                                                                                   |              ^\n\n  Error: Expected \":\", got \".\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-uS63F6/app.igni:100 |       shared.work_mins = shared.work_mins - 1\n                                                                                    |             ^\n\n  Error: Expected \":\", got \".\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-uS63F6/app.igni:100 |       shared.work_mins = shared.work_mins - 1\n                                                                                    |                                ^\n\n  Error: Expected \":\", got \".\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-uS63F6/app.igni:103 |     shared.work_mins = shared.work_mins + 1\n                                                                                    |           ^\n\n  Error: Expected \":\", got \".\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-uS63F6/app.igni:103 |     shared.work_mins = shared.work_mins + 1\n                                                                                    |                              ^\n\n  Error: Expected \":\", got \".\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-uS63F6/app.igni:106 |  ",
+    "error_category": "model_error",
+    "igni_lines": 110
+  }
+}

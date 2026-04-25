@@ -1,0 +1,95 @@
+shared:
+  work_minutes = 25
+  break_minutes = 5
+  sound_on = true
+
+screen Pomodonut:
+  mode = "work"
+  remaining_min = 25
+  remaining_sec = 0
+  running = false
+
+  title_color = brand
+  if mode is "break":
+    title_color = green
+
+  layout vertical, gap: large, padding: large, align: center:
+    label mode_label(), style: heading, color: title_color
+    label time_text(), style: heading, color: title_color
+
+    layout horizontal, gap: medium:
+      button start_label(), color: brand, on tap: toggle_run()
+      button "Reset", color: subtle, on tap: reset()
+
+    button "Settings", on tap: navigate to Settings
+
+    # Manual tick driver — Igni v0.13.1 has no timer primitive.
+    button "Tick (1s)", color: subtle, on tap: tick()
+
+  mode_label():
+    if mode is "work":
+      return "Work"
+    return "Break"
+
+  start_label():
+    if running:
+      return "Pause"
+    return "Start"
+
+  pad(n):
+    if n < 10:
+      return "0" + round(n, 0)
+    return round(n, 0)
+
+  time_text():
+    return pad(remaining_min) + ":" + pad(remaining_sec)
+
+  segment_minutes():
+    if mode is "work":
+      return shared.work_minutes
+    return shared.break_minutes
+
+  toggle_run():
+    running = not running
+
+  reset():
+    running = false
+    remaining_min = segment_minutes()
+    remaining_sec = 0
+
+  tick():
+    if not running:
+      return
+    if remaining_sec > 0:
+      remaining_sec = remaining_sec - 1
+      return
+    if remaining_min > 0:
+      remaining_min = remaining_min - 1
+      remaining_sec = 59
+      return
+    if shared.sound_on:
+      play("ding.wav")
+    if mode is "work":
+      mode = "break"
+    else:
+      mode = "work"
+    remaining_min = segment_minutes()
+    remaining_sec = 0
+
+screen Settings:
+  work_local = shared.work_minutes
+  break_local = shared.break_minutes
+  sound_local = shared.sound_on
+
+  layout vertical, gap: medium, padding: large:
+    label "Work duration", style: heading.small
+    slider bind: work_local, min: 1, max: 60, on change: shared.work_minutes = work_local
+    label round(work_local, 0) + " min"
+
+    label "Break duration", style: heading.small
+    slider bind: break_local, min: 1, max: 30, on change: shared.break_minutes = break_local
+    label round(break_local, 0) + " min"
+
+    toggle bind: sound_local, label: "Sound on segment change", on change: shared.sound_on = sound_local
+
+    button "Back", on tap: navigate back
