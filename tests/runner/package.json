@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "run": "tsx run.ts",
-    "cold-test": "tsx cold-test.ts"
+    "cold-test": "tsx cold-test.ts",
+    "summarize": "tsx summarize.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",
