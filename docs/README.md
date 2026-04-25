@@ -5,6 +5,7 @@ Human-facing documentation. Complements the formal spec under [`../spec/`](../sp
 ## What's here
 
 - **[`tutorial.md`](tutorial.md)** — beginner walkthrough, no programming experience needed. The current canonical tutorial (latest revision after multiple cold-run iterations, including real-user testing). Start here if you've never written Igni.
+- **[`cycle.md`](cycle.md)** — the 9-stage spec-iteration cycle (design → review → ship → Stage 3 → critique → synthesis → patch). Names each stage's command + output + human checkpoint. Read this before touching the spec.
 - **[`mobile.md`](mobile.md)** — running Igni apps on iOS simulator / Android emulator via `igni run ios` / `igni run android`. Device selection rules, auto-boot behaviour, known gotchas (Cloudflare bot-challenge on third-party APIs, SafeArea history).
 - **[`preregistration-phase4.md`](preregistration-phase4.md)** — dissertation pre-registration doc for Phase 4 cold-test methodology.
 - **`archive/`** — prior tutorial drafts (`tutorial-v1.md` through `tutorial-v2.4.md`). Historical; the current walkthrough is `tutorial.md`.

@@ -72,4 +72,4 @@ Documentation set (~15–25k words across Tutorial, Reference, Cookbook, Example
 
 - **Cheatsheet size discipline.** Subsequent docs-only iterations prune before adding. Context-specific patches (single cold-test findings, single-model workarounds) belong in the full spec's reference sections, not the cheatsheet's learning path. Last prune: v0.11.5 (cheatsheet 2,931 → 2,536 words).
 - **Tier discipline.** New items default to Future. Promoted by cold-test or human-testing signal, not enthusiasm.
-- **Methodology stages** for spec changes: pre-implementation design review (panel reads design note), Stage 0 (pre-ship cold test, skippable when prior is strong), Stage 3 (post-ship behavioural validation, pre-registered thresholds), post-ship spec critique (panel reads shipped artifact). Chat-UI experiments archive locally in `docs/private/` for substance even when uncitable.
+- **Spec-iteration cycle** — 9 named stages with commands and human checkpoints. See [`docs/cycle.md`](docs/cycle.md) for the canonical reference. v0.13 ship (`docs/private/91`) is the worked example.
