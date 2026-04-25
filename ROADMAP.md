@@ -7,8 +7,6 @@ Tasks tiered by horizon: **Immediate** (sub-day, unblocking), **Next milestone**
 - **Immediate**
   - **Mum tutorial rerun on 2026-04-25** against `docs/tutorial.md` (v2.5.1, targeting Igni v0.13.1). External human-test signal; gates Tier 2 cheatsheet improvements (`docs/private/64`).
   - **Transpiler-coverage gaps for v1.0 criterion 2** — conditional assignment in layouts, bare statements in UI blocks. Fresh signal 2026-04-25: Gemini 3.1 Pro hit the bare-statements case in v0.13.0 Stage 3 (`tab_color = subtle` placed inside a layout block). Sub-day each.
-  - **Codegen scope-tracking — same variable name reused across sibling `each` blocks at function-body level.** Surfaced 2026-04-26 from Connect Four's `check_winner()` function (4 sibling each blocks all using `hit = four_in_a_row(...)`). First each block emits `dynamic hit = ...` (declaration); subsequent siblings emit bare `hit = ...` (assumed reassignment), but the first declaration is scoped to its for-loop, so siblings reference an out-of-scope variable. Workaround at source: declare `hit = ""` at function-body top before any each block. Fix: codegen should track declarations scope-aware, OR conservatively redeclare in each loop. Sub-day. Same class of bug as gap×each (5c8345e).
-  - **Lexer — unary minus on number literals.** Surfaced 2026-04-26 from Connect Four. `four_in_a_row(r, c, -1, 1)` is rejected because `-` is `TokenType.Minus` and the lexer doesn't unary-prefix a literal. Workaround: `0 - 1`. Same lexical class as the `max-width` hyphen issue from v0.12 → v0.12.1. Fix: extend the lexer's number-literal scan to accept a leading `-` when the previous token isn't an expression terminator. Or: normalise unary minus at parse time. Sub-day; rejection-fixture candidate also worth pinning.
 
 - **Next milestone — three small real apps shipped (v1.0 criterion 4).** Quantity bar replacing the previous Boojy-subset framing. Chat-UI experiments (`docs/private/92`) confirmed Boojy is structurally wrong for Igni (creative-tool primitives Igni explicitly excludes), so criterion 4 is now "three small real apps" rather than "one flagship dogfood." First candidate: mum's tutorial-driven app (today's external cold-run). Two more TBD — personal-use side projects, not creative-tool-class. Audience scope documented in README "What Igni is for" + ARCHITECTURE "What this project is *not*."
 
@@ -16,6 +14,7 @@ Tasks tiered by horizon: **Immediate** (sub-day, unblocking), **Next milestone**
 
 ### Recently shipped
 
+- **2026-04-26 session:** two transpiler bugs surfaced by Connect Four closed — lexer unary-minus on number literals + codegen scope-aware `declaredLocals` save/restore at each-block boundaries. Connect Four's source-level workarounds removed. New positive fixture `negative-numbers.igni`, new negative fixture `unary-minus-non-literal.igni` (pin: identifier-prefix unary minus stays rejected).
 - **2026-04-25 session:** v0.13.0 + v0.13.1 `max_width` ship + Stage 3 4/4 + `gap:` × `each` transpiler fix. Details in `docs/private/91`, `92`; commits `8499bdd` `eca6148` `3681c2d` `5c8345e` `b787d2c` `a7cca4f`.
 - Earlier sessions: `CHANGELOG.md`.
 

@@ -58,7 +58,6 @@ screen ConnectFour:
 
   check_winner():
     result = ""
-    hit = ""
 
     each r in [0, 1, 2, 3, 4, 5]:
       each c in [0, 1, 2, 3]:
@@ -80,7 +79,7 @@ screen ConnectFour:
 
     each r in [3, 4, 5]:
       each c in [0, 1, 2, 3]:
-        hit = four_in_a_row(r, c, 0 - 1, 1)
+        hit = four_in_a_row(r, c, -1, 1)
         if hit is not empty:
           result = hit
 

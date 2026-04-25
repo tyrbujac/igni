@@ -55,10 +55,9 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
 
   dynamic check_winner() {
     dynamic result = '';
-    dynamic hit = '';
     for (final r in [0, 1, 2, 3, 4, 5]) {
       for (final c in [0, 1, 2, 3]) {
-        hit = four_in_a_row(r, c, 0, 1);
+        dynamic hit = four_in_a_row(r, c, 0, 1);
         if (hit.isNotEmpty) {
           result = hit;
         }
@@ -66,7 +65,7 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
     }
     for (final c in [0, 1, 2, 3, 4, 5, 6]) {
       for (final r in [0, 1, 2]) {
-        hit = four_in_a_row(r, c, 1, 0);
+        dynamic hit = four_in_a_row(r, c, 1, 0);
         if (hit.isNotEmpty) {
           result = hit;
         }
@@ -74,7 +73,7 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
     }
     for (final r in [0, 1, 2]) {
       for (final c in [0, 1, 2, 3]) {
-        hit = four_in_a_row(r, c, 1, 1);
+        dynamic hit = four_in_a_row(r, c, 1, 1);
         if (hit.isNotEmpty) {
           result = hit;
         }
@@ -82,7 +81,7 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
     }
     for (final r in [3, 4, 5]) {
       for (final c in [0, 1, 2, 3]) {
-        hit = four_in_a_row(r, c, 0 - 1, 1);
+        dynamic hit = four_in_a_row(r, c, -1, 1);
         if (hit.isNotEmpty) {
           result = hit;
         }

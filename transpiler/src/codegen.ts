@@ -2410,9 +2410,18 @@ export class CodeGenerator {
         break;
       }
       case 'EachStmt': {
+        // Save declaredLocals at entry, restore at exit. Inside the loop we
+        // see variables from the enclosing scope (so accumulator patterns like
+        // `t = 0` then `each: t = t + ...` keep working as bare reassignments).
+        // On exit we revert: any variable first-declared inside the loop body
+        // is removed from the tracking, so a sibling `each` with the same
+        // variable name re-declares it inside its own for-body — matching
+        // Dart's actual scoping where each `for (...) { ... }` is its own scope.
+        const savedLocals = new Set(this.declaredLocals);
         code = `${ind}for (final ${s.variable} in ${this.exprToDart(s.list)}) {\n`;
         code += this.genStmtBlock(s.body, depth + 1);
         code += `${ind}}\n`;
+        this.declaredLocals = savedLocals;
         break;
       }
       case 'EmitStmt': {
