@@ -96,6 +96,7 @@ npx tsx ../src/cli.ts counter.igni
 ### Games
 
 - **`tictactoe`** — two-player noughts and crosses. 3×3 grid via nested layouts, flat-list-of-objects board, `replace()` + `{target with mark: player}` for cell updates, `each` over row indices with arithmetic indexer.
+- **`connectfour`** — two-player Connect Four. 7×6 grid (42-cell flat list), drop-by-column input via `find()` over reversed row indices, win detection via a `four_in_a_row(r, c, dr, dc)` helper called from four nested-`each` direction sweeps. Also surfaces the unary-minus literal limitation: `four_in_a_row(r, c, -1, 1)` is rejected (lexer treats `-` as `TokenType.Minus`); `0 - 1` works.
 
 ### Smoke test
 

@@ -1,0 +1,103 @@
+screen ConnectFour:
+  cells = [
+    {id: 0, mark: ""}, {id: 1, mark: ""}, {id: 2, mark: ""}, {id: 3, mark: ""}, {id: 4, mark: ""}, {id: 5, mark: ""}, {id: 6, mark: ""},
+    {id: 7, mark: ""}, {id: 8, mark: ""}, {id: 9, mark: ""}, {id: 10, mark: ""}, {id: 11, mark: ""}, {id: 12, mark: ""}, {id: 13, mark: ""},
+    {id: 14, mark: ""}, {id: 15, mark: ""}, {id: 16, mark: ""}, {id: 17, mark: ""}, {id: 18, mark: ""}, {id: 19, mark: ""}, {id: 20, mark: ""},
+    {id: 21, mark: ""}, {id: 22, mark: ""}, {id: 23, mark: ""}, {id: 24, mark: ""}, {id: 25, mark: ""}, {id: 26, mark: ""}, {id: 27, mark: ""},
+    {id: 28, mark: ""}, {id: 29, mark: ""}, {id: 30, mark: ""}, {id: 31, mark: ""}, {id: 32, mark: ""}, {id: 33, mark: ""}, {id: 34, mark: ""},
+    {id: 35, mark: ""}, {id: 36, mark: ""}, {id: 37, mark: ""}, {id: 38, mark: ""}, {id: 39, mark: ""}, {id: 40, mark: ""}, {id: 41, mark: ""}
+  ]
+  player = "red"
+  winner = ""
+
+  layout vertical, padding: large, gap: medium, align: center:
+    label "Connect Four", style: heading
+
+    if winner is empty:
+      label "Turn: " + player
+    else:
+      if winner is "draw":
+        label "Draw — board full", style: heading.small
+      else:
+        label winner + " wins!", style: heading.small
+
+    layout horizontal, gap: small:
+      each col in [0, 1, 2, 3, 4, 5, 6]:
+        button "↓", on tap: drop(col)
+
+    layout vertical, gap: small:
+      each r in [0, 1, 2, 3, 4, 5]:
+        layout horizontal, gap: small:
+          each c in [0, 1, 2, 3, 4, 5, 6]:
+            layout vertical, fill: true, padding: medium, background: subtle, rounded: medium, align: center:
+              label cells[r * 7 + c].mark, style: heading
+
+    button "New Game", on tap: reset()
+
+  drop(col):
+    if winner is empty:
+      target_row = find([5, 4, 3, 2, 1, 0], r => cells[r * 7 + col].mark is empty)
+      if target_row is not null:
+        target = cells[target_row * 7 + col]
+        cells = replace(cells, target, {target with mark: player})
+        winner = check_winner()
+        if winner is empty:
+          if player is "red":
+            player = "yellow"
+          else:
+            player = "red"
+
+  four_in_a_row(r, c, dr, dc):
+    a = cells[r * 7 + c].mark
+    b = cells[(r + dr) * 7 + (c + dc)].mark
+    cc = cells[(r + 2 * dr) * 7 + (c + 2 * dc)].mark
+    d = cells[(r + 3 * dr) * 7 + (c + 3 * dc)].mark
+    if a is not empty and a is b and b is cc and cc is d:
+      return a
+    return ""
+
+  check_winner():
+    result = ""
+    hit = ""
+
+    each r in [0, 1, 2, 3, 4, 5]:
+      each c in [0, 1, 2, 3]:
+        hit = four_in_a_row(r, c, 0, 1)
+        if hit is not empty:
+          result = hit
+
+    each c in [0, 1, 2, 3, 4, 5, 6]:
+      each r in [0, 1, 2]:
+        hit = four_in_a_row(r, c, 1, 0)
+        if hit is not empty:
+          result = hit
+
+    each r in [0, 1, 2]:
+      each c in [0, 1, 2, 3]:
+        hit = four_in_a_row(r, c, 1, 1)
+        if hit is not empty:
+          result = hit
+
+    each r in [3, 4, 5]:
+      each c in [0, 1, 2, 3]:
+        hit = four_in_a_row(r, c, 0 - 1, 1)
+        if hit is not empty:
+          result = hit
+
+    if result is empty:
+      filled = length(filter(cells, c => c.mark is not empty))
+      if filled is 42:
+        result = "draw"
+    return result
+
+  reset():
+    cells = [
+      {id: 0, mark: ""}, {id: 1, mark: ""}, {id: 2, mark: ""}, {id: 3, mark: ""}, {id: 4, mark: ""}, {id: 5, mark: ""}, {id: 6, mark: ""},
+      {id: 7, mark: ""}, {id: 8, mark: ""}, {id: 9, mark: ""}, {id: 10, mark: ""}, {id: 11, mark: ""}, {id: 12, mark: ""}, {id: 13, mark: ""},
+      {id: 14, mark: ""}, {id: 15, mark: ""}, {id: 16, mark: ""}, {id: 17, mark: ""}, {id: 18, mark: ""}, {id: 19, mark: ""}, {id: 20, mark: ""},
+      {id: 21, mark: ""}, {id: 22, mark: ""}, {id: 23, mark: ""}, {id: 24, mark: ""}, {id: 25, mark: ""}, {id: 26, mark: ""}, {id: 27, mark: ""},
+      {id: 28, mark: ""}, {id: 29, mark: ""}, {id: 30, mark: ""}, {id: 31, mark: ""}, {id: 32, mark: ""}, {id: 33, mark: ""}, {id: 34, mark: ""},
+      {id: 35, mark: ""}, {id: 36, mark: ""}, {id: 37, mark: ""}, {id: 38, mark: ""}, {id: 39, mark: ""}, {id: 40, mark: ""}, {id: 41, mark: ""}
+    ]
+    player = "red"
+    winner = ""
