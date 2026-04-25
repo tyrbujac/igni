@@ -259,6 +259,35 @@ screen ProfileCard:
 
 On a 1600px desktop window, the card caps at 480px (the `phone` token) and the parent's `align: center` centres it horizontally. Without `max_width:`, the card would stretch the full window width. The three tokens — `phone` (480) / `tablet` (768) / `desktop` (1200) — are the only valid widths. Numeric values like `max_width: 540` are rejected at compile time.
 
+### Render a coloured cell with no visible text (game pieces, status dots, etc.)
+
+```igni
+screen Board:
+  cells = [
+    {id: 0, mark: ""}, {id: 1, mark: "red"}, {id: 2, mark: "yellow"}
+  ]
+
+  color_for(mark):
+    if mark is "red":
+      return red
+    if mark is "yellow":
+      return yellow
+    return subtle
+
+  layout horizontal, padding: large, gap: medium:
+    each cell in cells:
+      layout vertical, fill: true, padding: medium, background: color_for(cell.mark), rounded: large, align: center:
+        label "·", style: heading, color: color_for(cell.mark)
+```
+
+Two traps stacked here, both worth knowing:
+
+1. **Without the inner `label`, the cell collapses.** An empty `layout vertical, fill: true, padding: medium, background: ...` has no intrinsic content height; in a horizontal row of `fill: true` siblings, the row's height equals its tallest child, and zero-height children give a zero-height row. The whole grid disappears. Putting *anything* with line-height inside (a label, an icon, a fixed-size image) anchors the cell.
+
+2. **Use a fixed-length placeholder, not the variable string.** Writing `label cell.mark, ...` looks tempting since the text is invisible anyway. But `"red"` (3 chars) and `"yellow"` (6 chars) are different widths; in a narrow cell `"yellow"` wraps to 2 lines and `"red"` doesn't, so the cells become unequal heights. A single dot (`"·"` here, but any single character works) is the same width everywhere — never wraps, every cell same height. Colour-matched-to-background keeps it invisible.
+
+The same `color_for(...)` is called for both `background:` and `color:` — Igni doesn't allow variable assignment at layout-body level, so the duplication is structural rather than a smell. Used in `transpiler/examples/connectfour.igni`.
+
 ### Anchor a button to the bottom of the screen
 
 ```igni
