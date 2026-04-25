@@ -19,7 +19,7 @@ screen ConnectFour:
       if winner is "draw":
         label "Draw — board full", style: heading.small
       else:
-        label winner + " wins!", style: heading.small
+        label winner + " wins!", style: heading.small, color: color_for(winner)
 
     layout horizontal, gap: small:
       each col in [0, 1, 2, 3, 4, 5, 6]:
@@ -29,8 +29,8 @@ screen ConnectFour:
       each r in [0, 1, 2, 3, 4, 5]:
         layout horizontal, gap: small:
           each c in [0, 1, 2, 3, 4, 5, 6]:
-            layout vertical, fill: true, padding: medium, background: subtle, rounded: medium, align: center:
-              label cells[r * 7 + c].mark, style: heading
+            layout vertical, fill: true, padding: medium, background: color_for(cells[r * 7 + c].mark), rounded: large, align: center:
+              label "·", style: heading, color: color_for(cells[r * 7 + c].mark)
 
     button "New Game", on tap: reset()
 
@@ -101,3 +101,10 @@ screen ConnectFour:
     ]
     player = "red"
     winner = ""
+
+  color_for(mark):
+    if mark is "red":
+      return red
+    if mark is "yellow":
+      return yellow
+    return subtle

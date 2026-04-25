@@ -109,6 +109,16 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
     });
   }
 
+  dynamic color_for(dynamic mark) {
+    if (mark == 'red') {
+      return 'red';
+    }
+    if (mark == 'yellow') {
+      return 'yellow';
+    }
+    return 'subtle';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -138,7 +148,7 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
                 ] else ...[
                   Text(
                     winner.toString() + ' wins!'.toString(),
-                    style: Theme.of(context).textTheme.headlineSmall!,
+                    style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: _igniColorValue(context, color_for(winner))),
                   ),
                 ],
               ],
@@ -166,7 +176,7 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
                         for (final (_i, c) in [0, 1, 2, 3, 4, 5, 6].indexed) ...[
                           Expanded(
                             child: Container(
-                            decoration: BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.circular(16)),
+                            decoration: BoxDecoration(color: _igniBackgroundValue(context, color_for((r * 7 + c >= 0 && r * 7 + c < cells.length ? cells[r * 7 + c] : null)['mark'])), borderRadius: BorderRadius.circular(24)),
                             child: Padding(
                             padding: const EdgeInsets.all(16),
                             child: Center(
@@ -174,8 +184,8 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    (r * 7 + c >= 0 && r * 7 + c < cells.length ? cells[r * 7 + c] : null)['mark'].toString(),
-                                    style: Theme.of(context).textTheme.headlineLarge!,
+                                    '·',
+                                    style: Theme.of(context).textTheme.headlineLarge!.copyWith(color: _igniColorValue(context, color_for((r * 7 + c >= 0 && r * 7 + c < cells.length ? cells[r * 7 + c] : null)['mark']))),
                                   ),
                                 ],
                               ),
@@ -206,5 +216,48 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
         ),
       ),
     );
+  }
+}
+
+Color _igniColorValue(BuildContext context, dynamic value) {
+  if (value is Color) return value;
+  switch (value) {
+    case 'brand': return Theme.of(context).colorScheme.primary;
+    case 'subtle': return Colors.grey;
+    case 'danger': return Colors.red;
+    case 'green': return Colors.green;
+    case 'red': return Colors.red;
+    case 'blue': return Colors.blue;
+    case 'white': return Colors.white;
+    case 'black': return Colors.black;
+    case 'yellow': return Colors.yellow;
+    case 'orange': return Colors.orange;
+    case 'purple': return Colors.purple;
+    case 'teal': return Colors.teal;
+    case 'card':
+      throw FlutterError('Igni: `card` is background-only. Use it with `background:`, not `color:`.');
+    default:
+      return Colors.grey;
+  }
+}
+
+Color _igniBackgroundValue(BuildContext context, dynamic value) {
+  if (value is Color) return value;
+  switch (value) {
+    case 'card': return Theme.of(context).cardColor;
+    case 'brand': return Theme.of(context).colorScheme.primary;
+    case 'subtle': return Colors.grey;
+    case 'danger': return Colors.red;
+    case 'green': return Colors.green;
+    case 'red': return Colors.red;
+    case 'blue': return Colors.blue;
+    case 'white': return Colors.white;
+    case 'black': return Colors.black;
+    case 'yellow': return Colors.yellow;
+    case 'orange': return Colors.orange;
+    case 'purple': return Colors.purple;
+    case 'teal': return Colors.teal;
+    default:
+      return Theme.of(context).cardColor;
   }
 }
