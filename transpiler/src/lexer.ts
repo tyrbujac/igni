@@ -191,6 +191,18 @@ export class Lexer {
       return;
     }
 
+    // Unary minus on number literal — only when the previous token doesn't
+    // complete an expression (so `x - 1` stays binary subtraction, but
+    // `f(r, c, -1, 1)` and `total = -5` parse as negative numbers).
+    if (ch === '-' && this.pos + 1 < this.source.length
+        && this.isDigit(this.source[this.pos + 1])
+        && this.isUnaryMinusContext()) {
+      this.pos++;     // consume the '-'
+      this.col++;
+      this.scanNumber(true);
+      return;
+    }
+
     // Single-character tokens
     const singles: Record<string, TokenType> = {
       ':': TokenType.Colon,
@@ -221,7 +233,7 @@ export class Lexer {
     this.error(`Unexpected character: '${ch}'`);
   }
 
-  private scanNumber(): void {
+  private scanNumber(negative: boolean = false): void {
     const start = this.pos;
     while (this.pos < this.source.length && this.isDigit(this.source[this.pos])) {
       this.pos++;
@@ -236,7 +248,26 @@ export class Lexer {
         this.col++;
       }
     }
-    this.emit(TokenType.Number, this.source.slice(start, this.pos));
+    const lexeme = this.source.slice(start, this.pos);
+    this.emit(TokenType.Number, negative ? '-' + lexeme : lexeme);
+  }
+
+  // True when the next `-` should be treated as a unary minus on a number
+  // literal rather than as a binary subtraction operator. Binary minus follows
+  // anything that completes an expression: an identifier, a literal, or a
+  // closing bracket. Everything else (operators, separators, openers, keywords,
+  // newlines, indents, start-of-file) is unary context.
+  private isUnaryMinusContext(): boolean {
+    const last = this.tokens[this.tokens.length - 1];
+    if (!last) return true;
+    return !(
+      last.type === TokenType.Identifier ||
+      last.type === TokenType.Number ||
+      last.type === TokenType.String ||
+      last.type === TokenType.RParen ||
+      last.type === TokenType.RBracket ||
+      last.type === TokenType.RBrace
+    );
   }
 
   private scanString(): void {

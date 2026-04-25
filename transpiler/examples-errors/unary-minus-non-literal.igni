@@ -1,0 +1,4 @@
+screen Counter:
+  count = 5
+  layout vertical:
+    label -count

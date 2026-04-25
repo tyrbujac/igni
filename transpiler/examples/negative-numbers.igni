@@ -1,0 +1,17 @@
+screen NegativeNumbers:
+  temperature = -5
+  offsets = [-3, -2, -1, 0, 1, 2, 3]
+  scale = -1.5
+
+  layout vertical, padding: large, gap: medium, align: center:
+    label "Negative number literals", style: heading
+
+    label "Temperature: " + temperature + "°C"
+    label "Scale factor: " + scale
+
+    label "Offsets:"
+    each o in offsets:
+      label o
+
+    button "Bump down", on tap: temperature = temperature + -1
+    button "Reset to -5", on tap: temperature = -5

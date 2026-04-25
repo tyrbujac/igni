@@ -1,0 +1,10 @@
+
+  Error: Unexpected token: "-"
+
+    unary-minus-non-literal.igni:4 |     label -count
+                                   |           ^
+
+  Error: Expected "screen", got ""
+
+    unary-minus-non-literal.igni:5 | 
+                                   | ^

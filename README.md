@@ -133,7 +133,7 @@ my-app/
 
 **Latest methodology result:** the v0.10 domain-swap round (Shopping + Apothecary + Spaceship Cargo, 3 × 4 models × cheatsheet tier) produced 9/9 frontier adoption of `{target with ...}` unprompted. Three runs at varying domain distance from e-commerce rules out the "shopping-cart corpus density" confound — the cheatsheet teaches the syntax, the domain doesn't supply it. First post-ship result strong enough to call directly-supported rather than suggestive.
 
-**Transpiler:** Working. <!-- SYNC:example-count -->47<!-- /SYNC:example-count --> example apps compile and run in the browser; iOS simulator and Android emulator supported via `igni run ios` / `igni run android` (device auto-pick, auto-boot, `--device` override). Covers:
+**Transpiler:** Working. <!-- SYNC:example-count -->48<!-- /SYNC:example-count --> example apps compile and run in the browser; iOS simulator and Android emulator supported via `igni run ios` / `igni run android` (device auto-pick, auto-boot, `--device` override). Covers:
 
 - **Composition** — screens, components, wrapper components with `body` slot, layouts
 - **Control flow** — `if`/`else`, `each` loops (with `paginate:` for lazy rendering), functions, lambdas
@@ -168,7 +168,7 @@ igni/
 │   ├── README.md
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point
-│   ├── examples/            # <!-- SYNC:example-count -->47<!-- /SYNC:example-count --> .igni apps + .expected.dart references
+│   ├── examples/            # <!-- SYNC:example-count -->48<!-- /SYNC:example-count --> .igni apps + .expected.dart references
 │   └── examples-errors/     # pinned transpile-rejection fixtures
 ├── tests/                   # cold-LLM test results + methodology
 │   ├── README.md
