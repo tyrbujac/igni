@@ -1,0 +1,5 @@
+
+  Error: `count` is a whole number, but `/` returns a fractional one (`5 / 2` is `2.5`). Wrap the expression with `floor(...)` to round down — e.g. `count = floor(count / 2)`.
+
+    int-divide-assignment.igni:7 |     button "Divide by Two", on tap: count = count / 2
+                                 |                                                   ^

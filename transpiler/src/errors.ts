@@ -1,11 +1,13 @@
 export class TranspileError extends Error {
   line: number;
   column: number;
+  hint?: string;
 
-  constructor(message: string, line: number, column: number) {
+  constructor(message: string, line: number, column: number, hint?: string) {
     super(message);
     this.line = line;
     this.column = column;
+    this.hint = hint;
   }
 }
 
@@ -25,6 +27,7 @@ export interface ErrorLocation {
   column: number;
   sourceLine: string;
   context?: string;
+  hint?: string;
 }
 
 function formatErrorBlock(message: string, location: ErrorLocation): string {
@@ -37,6 +40,9 @@ function formatErrorBlock(message: string, location: ErrorLocation): string {
   }
   out += `    ${filePrefix}${location.line} | ${location.sourceLine}\n`;
   out += `    ${' '.repeat((filePrefix + String(location.line)).length)} | ${caret}\n`;
+  if (location.hint) {
+    out += `    ${' '.repeat((filePrefix + String(location.line)).length)} | Hint: ${location.hint}\n`;
+  }
   return out;
 }
 
@@ -49,6 +55,7 @@ export function formatError(err: TranspileError, source: string, file?: string):
     line: err.line,
     column: err.column,
     sourceLine: srcLine,
+    hint: err.hint,
   });
 }
 

@@ -79,7 +79,7 @@ class _DemoScreenState extends State<DemoScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Selected: '.toString() + active.toString(),
+              'Selected: '.toString() + (((active) as dynamic)?.toString() ?? ''),
             ),
           ],
         ),

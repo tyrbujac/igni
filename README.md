@@ -2,9 +2,11 @@
 
 [![test](https://github.com/tyrbujac/igni/actions/workflows/test.yml/badge.svg)](https://github.com/tyrbujac/igni/actions/workflows/test.yml)
 
+**Designs that translate, not redesign.**
+
 A programming language for building UIs — designed to be read.
 
-**Status: research prototype.** Final-year CS dissertation project investigating whether LLM output accuracy and human readability track each other. Spec is at <!-- SYNC:version -->v0.14.1<!-- /SYNC:version -->; transpiler covers most of it; the tutorial has been through multiple cold-run iterations. Not yet production-ready. See [§ Status](#status) for the methodology + evidence.
+**Status: research prototype.** Final-year CS dissertation project investigating whether LLM output accuracy and human readability track each other. Spec is at <!-- SYNC:version -->v0.15.0<!-- /SYNC:version -->; transpiler covers most of it; the tutorial has been through multiple cold-run iterations. Not yet production-ready. See [§ Status](#status) for the methodology + evidence.
 
 **The hypothesis:** LLM accuracy and human readability track each other. Remove the ambiguity that trips LLMs up — no brackets on component invocation, one way to update state, a single spec document — and the language becomes nicer for humans too. Igni is that experiment.
 
@@ -66,7 +68,7 @@ First run needs internet — `flutter create` fetches scaffold packages from pub
 
 Igni is designed to be injected straight into your LLM's context window.
 
-1. **The context:** paste the entire contents of [`spec/v0.12.2-cheatsheet.md`](spec/v0.12.2-cheatsheet.md) into your system prompt or initial message.
+1. **The context:** paste the entire contents of [`spec/v0.15.0-cheatsheet.md`](spec/v0.15.0-cheatsheet.md) into your system prompt or initial message.
 2. **The persona:** add this instruction: *"You are an expert Igni developer. Write concise, idiomatic Igni code using strictly the provided rules. Do not invent syntax."*
 3. **The prompt:** ask for the specific UI you need. Example: *"Build a `screen Settings:` with a dark mode toggle bound to a boolean variable, and a red logout button."*
 
@@ -85,6 +87,8 @@ See [`ARCHITECTURE.md`](ARCHITECTURE.md) for how the pieces fit together (repo l
 ## What Igni is for
 
 Igni's sweet spot is **CRUD apps, forms, list-detail UIs, and fetch-driven utility apps** — habit trackers, lightweight CRMs, simple e-commerce, internal tools, settings screens, multi-screen flows. The reactivity model and token-first styling earn their keep on this band.
+
+The canonical user is a designer-engineer pairing Figma auto-layout designs with an LLM that authors Igni — the vocabulary match (Figma auto-layout ↔ Igni `layout`, Figma Variables ↔ Igni `theme:`) keeps the translation step low-coercion. Igni stays a useful UI language whether or not Figma is in the loop; the auto-layout / Variables alignment is a *consequence* of the spec design, not a constraint added later.
 
 Igni is **not for creative tools** — photo editors, DAWs, video editors, drawing apps, real-time games, physics simulations all need primitives Igni explicitly rejects (imperative drawing surfaces, frame loops, raw layout dimensions, granular per-subtree reactivity, pointer events with drag lifecycle). These aren't oversights; they're the deliberate cost of the spec budget that makes Igni learnable cold. Three independent frontier-model panels converged on the same five-primitive gap (see `docs/private/92` for the local research record). For creative tools, reach for Flutter / React / SwiftUI directly.
 
@@ -127,13 +131,13 @@ my-app/
 
 ## Status
 
-**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.14.1<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.14.1<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.14.1-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.14.1-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.14.1-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.14.1-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.15.0<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.15.0<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.15.0-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.15.0-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.15.0-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.15.0-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
-<!-- SYNC:latest-spec-changes -->**Latest spec change: v0.14.1** (2026-04-26) — *Widens `bind:` to accept `shared.X` directly on `slider`/`toggle`/`checkbox`/`dropdown`. Transpiler-only patch — no spec syntax addition.* See [`CHANGELOG.md`](CHANGELOG.md) for full history.<!-- /SYNC:latest-spec-changes -->
+<!-- SYNC:latest-spec-changes -->**Latest spec change: v0.15.1** (2026-04-26) — *Transpiler hygiene + tutorial v2.12. Three Igni-level errors replace silent failures and Dart-level leaks surfaced by mum-tester round 2. No spec syntax changes.* See [`CHANGELOG.md`](CHANGELOG.md) for full history.<!-- /SYNC:latest-spec-changes -->
 
 **Latest methodology result:** the v0.10 domain-swap round (Shopping + Apothecary + Spaceship Cargo, 3 × 4 models × cheatsheet tier) produced 9/9 frontier adoption of `{target with ...}` unprompted. Three runs at varying domain distance from e-commerce rules out the "shopping-cart corpus density" confound — the cheatsheet teaches the syntax, the domain doesn't supply it. First post-ship result strong enough to call directly-supported rather than suggestive.
 
-**Transpiler:** Working. <!-- SYNC:example-count -->57<!-- /SYNC:example-count --> example apps compile and run in the browser; iOS simulator and Android emulator supported via `igni run ios` / `igni run android` (device auto-pick, auto-boot, `--device` override). Covers:
+**Transpiler:** Working. <!-- SYNC:example-count -->58<!-- /SYNC:example-count --> example apps compile and run in the browser; iOS simulator and Android emulator supported via `igni run ios` / `igni run android` (device auto-pick, auto-boot, `--device` override). Covers:
 
 - **Composition** — screens, components, wrapper components with `body` slot, layouts
 - **Control flow** — `if`/`else`, `each` loops (with `paginate:` for lazy rendering), functions, lambdas
@@ -160,15 +164,15 @@ igni/
 ├── LICENSE                  # GPL v3 (transpiler) + CC BY-SA 4.0 (spec/docs)
 ├── spec/
 │   ├── README.md
-│   ├── <!-- SYNC:version -->v0.14.1<!-- /SYNC:version -->.md             # current canonical spec
-│   ├── <!-- SYNC:version -->v0.14.1<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
-│   ├── <!-- SYNC:version -->v0.14.1<!-- /SYNC:version -->-micro.md       # current canonical micro reference
-│   └── archive/             # historical <!-- SYNC:historical-range-files -->v0.2.md → v0.14.0.md<!-- /SYNC:historical-range-files --> (never edited after shipping)
+│   ├── <!-- SYNC:version -->v0.15.0<!-- /SYNC:version -->.md             # current canonical spec
+│   ├── <!-- SYNC:version -->v0.15.0<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
+│   ├── <!-- SYNC:version -->v0.15.0<!-- /SYNC:version -->-micro.md       # current canonical micro reference
+│   └── archive/             # historical <!-- SYNC:historical-range-files -->v0.2.md → v0.14.3.md<!-- /SYNC:historical-range-files --> (never edited after shipping)
 ├── transpiler/
 │   ├── README.md
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point
-│   ├── examples/            # <!-- SYNC:example-count -->57<!-- /SYNC:example-count --> .igni apps + .expected.dart references
+│   ├── examples/            # <!-- SYNC:example-count -->58<!-- /SYNC:example-count --> .igni apps + .expected.dart references
 │   └── examples-errors/     # pinned transpile-rejection fixtures
 ├── tests/                   # cold-LLM test results + methodology
 │   ├── README.md

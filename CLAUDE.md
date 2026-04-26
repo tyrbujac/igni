@@ -2,7 +2,9 @@
 
 Guidance for Claude and other AI assistants working on the Igni language project. Human-facing architecture lives in [`ARCHITECTURE.md`](ARCHITECTURE.md); read that first if you don't already know the repo. Project summary is in [`README.md`](README.md).
 
-**Status: transpiler stage.** The TypeScript-to-Dart transpiler covers most of the <!-- SYNC:version -->v0.14.1<!-- /SYNC:version --> spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter. *Originally named Rocket (v0.2–v0.3.1), renamed to Igni at v0.3.2.*
+**Positioning.** *Designs that translate, not redesign.* A UI language whose primitives match Figma's auto-layout vocabulary; the canonical user is a designer-engineer + LLM pair authoring Igni from Figma source. The AI-assisted-creator framing is the parent category; this is its concrete instance. See `docs/private/97_figma_to_igni_workflow.md` for Path C scope and v0.15 expansion plan.
+
+**Status: transpiler stage.** The TypeScript-to-Dart transpiler covers most of the <!-- SYNC:version -->v0.15.0<!-- /SYNC:version --> spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter. *Originally named Rocket (v0.2–v0.3.1), renamed to Igni at v0.3.2.*
 
 ## Igni at a glance
 
@@ -41,7 +43,8 @@ If a proposal violates one of these, it's wrong by definition — push back inst
 - **For exploratory questions, give 2-3 sentences and the main tradeoff** — not an essay. Tyr will ask for depth if he wants it.
 - **For structural changes, use the plan-then-execute pattern**: explore, propose a plan, get approval, then write. Plan mode is appropriate for non-trivial spec edits.
 - **Never delete or overwrite a snapshot version.** Preserve them as historical artifacts in `spec/archive/`.
-- **`docs/private/` is an append-only chronological research record.** Each new entry takes the *next* integer prefix — run `ls docs/private/ | sort -V | tail -5` to find the highest in use, then increment. Never backfill low numbers, never reuse, never pick a number that looks "thematically right." Numbering is the timeline; order is the history.
+- **`docs/private/` is an append-only chronological research record.** Each new entry takes the *next* integer prefix — run `ls docs/private/ | sort -V | tail -5` to find the highest in use, then increment. Never backfill low numbers, never reuse, never pick a number that looks "thematically right." Numbering is the timeline; order is the history. **Exception:** `docs/private/trap-journal.md` is a structured append-only log without integer prefix — entries are date-prefixed rows, not individual files. Add new traps at the bottom; aggregate snapshot at the bottom is updated periodically.
+- **Automation principle — plumbing yes, judgement no** *(see `docs/private/104_automation_principle.md`)*. Before automating any part of the cycle, ask: "would automating this make the dissertation methodology chapter weaker?" If yes, don't. The synthesis layers (cold-test convergence-counting, patch-vs-defer decisions, "honest no" detection) are where the dissertation contribution lives; keep them human-mediated. Plumbing (file shuffling, request fan-out, output formatting) is fair game.
 - **Teach the language first; don't open with release notes.** The top of a canonical spec should explain what Igni is, what it is for, and why its design helps both humans and LLMs before diving into version history.
 - **Keep the opening stable across future versions.** Prefer: positioning, status, one-line current-version delta, then `Hello World`. If older version changes matter, put them in `CHANGELOG.md`, not in a stack of top-of-file historical summaries.
 - **Keep future specs clean by default.** If you spot a readability or positioning improvement to the spec or cheatsheet, propose it to Tyr first and get approval before editing; don't silently "improve" the framing while making unrelated spec changes.
@@ -58,7 +61,7 @@ If a proposal violates one of these, it's wrong by definition — push back inst
 - **Don't use brackets, braces, parentheses on component invocation, ternary operators, or string interpolation.** These are explicitly out.
 - **Don't bind a `fetch` URL directly to a text input** — that's the v0.5-documented common pitfall. Use the trigger-variable pattern (see Async Data in the spec).
 - **When a spec version ships without transpiler coverage, mark it *partial* in `CHANGELOG.md` and prioritise transpiler catchup before starting another spec change.** v0.12 → v0.12.1 is the reference case: v0.12's `theme:` spec shipped 2026-04-22 without transpiler; catchup the next day surfaced a lexer/spec conflict (hyphenated font tokens vs `TokenType.Minus`) that the spec writer hadn't predicted. v0.12.1 resolved it via a snake_case rename rather than bending the lexer. Surfacing implementation-level blockers at catchup time is expected, not pathological; the rule is to let catchup complete before stacking another spec change on top. See `docs/private/84_v0121_font_token_rename.md`.
-- **Test transpiler changes by running `npm test` in `transpiler/`.** This runs all <!-- SYNC:total-tests -->84<!-- /SYNC:total-tests --> diff tests automatically. Zero diff = pass. Then browser-test via `igni run` against a test `.igni` file.
+- **Test transpiler changes by running `npm test` in `transpiler/`.** This runs all <!-- SYNC:total-tests -->90<!-- /SYNC:total-tests --> diff tests automatically. Zero diff = pass. Then browser-test via `igni run` against a test `.igni` file.
 
 ## ROADMAP tiering
 

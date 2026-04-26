@@ -33,11 +33,11 @@ class _NegativeNumbersScreenState extends State<NegativeNumbersScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Temperature: '.toString() + temperature.toString().toString() + '°C'.toString(),
+                'Temperature: '.toString() + (((temperature) as dynamic)?.toString() ?? '').toString() + '°C'.toString(),
               ),
               const SizedBox(height: 16),
               Text(
-                'Scale factor: '.toString() + scale.toString(),
+                'Scale factor: '.toString() + (((scale) as dynamic)?.toString() ?? ''),
               ),
               const SizedBox(height: 16),
               Text(

@@ -10,7 +10,7 @@ class Entry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dynamic label_text = item['name'].toString() + ': \$'.toString().toString() + item['price'].toString();
+    final dynamic label_text = (((item['name']) as dynamic)?.toString() ?? '') + ': \$'.toString().toString() + (((item['price']) as dynamic)?.toString() ?? '');
     return Container(
       decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
       child: Padding(

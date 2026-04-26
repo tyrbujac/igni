@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             Text(
-              'Current region: '.toString() + shared.region.toString(),
+              'Current region: '.toString() + (((shared.region) as dynamic)?.toString() ?? ''),
               style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),

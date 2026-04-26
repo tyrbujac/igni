@@ -1,0 +1,7 @@
+screen Counter:
+  count = 0
+
+  layout vertical, gap: large, padding: large, align: center:
+    label count, style: heading
+    button "Add one", on tap: count = count + 1
+    button "Divide by Two", on tap: count = count / 2

@@ -11,8 +11,14 @@
 *.swo
 *~
 
-# AI tooling (local agent state)
-.claude/
+# AI tooling (local agent state — except project-level skills, which are
+# methodology artefacts and version-controlled with the project).
+# Pattern: ignore contents of .claude/ except skills/ subtree. Note `.claude/*`
+# (with asterisk) — negation only works when the parent dir isn't fully
+# excluded.
+.claude/*
+!.claude/skills/
+!.claude/skills/**
 
 # Windows
 Thumbs.db

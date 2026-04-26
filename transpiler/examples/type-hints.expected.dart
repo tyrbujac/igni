@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
             for (final (_i, item) in shared.items.indexed) ...[
               Text(
-                item['name'].toString(),
+                (((item['name']) as dynamic)?.toString() ?? ''),
               ),
               if (_i < shared.items.length - 1) const SizedBox(height: 16),
             ],

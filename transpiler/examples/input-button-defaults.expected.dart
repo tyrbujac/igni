@@ -63,7 +63,7 @@ class _FormScreenState extends State<FormScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Hello, '.toString() + name.toString(),
+              'Hello, '.toString() + (((name) as dynamic)?.toString() ?? ''),
             ),
           ],
         ),

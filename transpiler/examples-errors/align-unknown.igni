@@ -1,0 +1,3 @@
+screen Demo:
+  layout vertical, align: right:
+    label "Hi"

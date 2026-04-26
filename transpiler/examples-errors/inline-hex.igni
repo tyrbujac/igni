@@ -1,0 +1,3 @@
+screen Demo:
+  layout vertical, padding: large:
+    label "Hi", color: "#FF0000"

@@ -71,7 +71,7 @@ class _WhereScreenState extends State<WhereScreen> {
                 ),
               ] else ...[
                 Text(
-                  here['latitude'].toStringAsFixed(4).toString() + ', '.toString().toString() + here['longitude'].toStringAsFixed(4).toString(),
+                  (((here['latitude'].toStringAsFixed(4)) as dynamic)?.toString() ?? '') + ', '.toString().toString() + (((here['longitude'].toStringAsFixed(4)) as dynamic)?.toString() ?? ''),
                 ),
               ],
             ],

@@ -1,13 +1,14 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, readdirSync, statSync, copyFileSync, cpSync } from 'node:fs';
-import { join, basename, dirname } from 'node:path';
+import { join, basename, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawn, execSync } from 'node:child_process';
+import { spawn, spawnSync, execSync } from 'node:child_process';
 import { createServer as createHttpServer, ServerResponse, Server as HttpServer } from 'node:http';
 import { AddressInfo } from 'node:net';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 import { watch } from 'chokidar';
 import sharp from 'sharp';
+import { injectDependencies } from './scaffold-deps.js';
 import { Lexer } from './lexer.js';
 import { Parser } from './parser.js';
 import { CodeGenerator, GeneratedLineMapEntry } from './codegen.js';
@@ -18,10 +19,17 @@ import { Program } from './ast.js';
 // then interpret positional args. For `run`, the first positional after `run`
 // can be a target keyword (`ios` / `android` / `macos`); otherwise it (or the
 // next one) is the .igni file. For `build`, the first positional is the build
-// target (`macos` / `apk` / `web`).
+// target (`macos` / `apk` / `web`). For `new`, the first positional is either
+// a target keyword (cwd-mode) or a project name; if it's a name, the second
+// positional may be a target keyword.
 type Target = 'web' | 'ios' | 'android' | 'macos';
 type BuildTarget = 'macos' | 'apk' | 'web';
 type WebMode = 'chrome' | 'serve';
+
+function isTargetKeyword(s: string | undefined): s is Target {
+  return s === 'web' || s === 'ios' || s === 'android' || s === 'macos';
+}
+
 const { command, target, webMode, buildTarget, commandArg, deviceFlag, nameFlag } = (() => {
   const raw = process.argv.slice(2);
   const clean: string[] = [];
@@ -48,6 +56,20 @@ const { command, target, webMode, buildTarget, commandArg, deviceFlag, nameFlag 
   if (cmd === 'build' && (arg === 'macos' || arg === 'apk' || arg === 'web')) {
     buildTgt = arg as BuildTarget;
     arg = clean[2];
+  }
+  // `igni new` parsing mirrors `igni run`: first positional may be a target
+  // keyword (cwd-mode + target); otherwise it's a project name and the second
+  // positional may be a target keyword. See plan: tutorial dress-rehearsal
+  // 2026-04-26 surfaced the friction of `new <name> → cd <name> → run`.
+  if (cmd === 'new') {
+    if (isTargetKeyword(arg)) {
+      tgt = arg;
+      arg = undefined;
+    } else if (arg !== undefined) {
+      // First positional is the project name; check second for a target.
+      const second = clean[2];
+      if (isTargetKeyword(second)) tgt = second;
+    }
   }
   return { command: cmd, target: tgt, webMode: wMode, buildTarget: buildTgt, commandArg: arg, deviceFlag: device, nameFlag: name };
 })();
@@ -84,7 +106,15 @@ function printUsage(): void {
   console.log('  igni build web        Build a static web bundle in dist/web/');
   console.log('  igni run --name "Dice Roller"           Override the app display name');
   console.log('  igni build macos --name "Dice Roller"   Same, for release builds');
-  console.log('  igni new my-app       Create a new Igni app');
+  console.log('  igni new              Scaffold app.igni in current directory and run it (Chrome)');
+  console.log('  igni new ios          Same, targeting iOS simulator');
+  console.log('  igni new android      Same, targeting Android emulator');
+  console.log('  igni new macos        Same, targeting macOS desktop');
+  console.log('  igni new my-app       Create my-app/, scaffold app.igni inside, and run it');
+  console.log('  igni new my-app ios   Same, targeting iOS simulator');
+  console.log('');
+  console.log('  Note: ios/android/macos/web are reserved as target keywords for `igni new`.');
+  console.log('        To name an app one of these, use --name "iOS App".');
 }
 
 // --- Find .igni files ---
@@ -870,20 +900,16 @@ function syncAudio(): void {
   }
 
   if (files.length > 0) {
-    // Ensure assets section exists
+    // Ensure assets section exists. The audioplayers dependency itself is
+    // handled by ensureDependencies() (codegen-import-driven) — keeping that
+    // separate from the asset-folder copy lets play()-with-no-asset apps
+    // still compile.
     const pubspecPath = join(igniDir, 'pubspec.yaml');
     let pubspec = readFileSync(pubspecPath, 'utf-8');
     if (!pubspec.includes('  assets:')) {
       pubspec = pubspec.replace(
         /(\s*uses-material-design:\s*true)/,
         '$1\n\n  assets:\n    - assets/'
-      );
-    }
-    // Ensure audioplayers dependency
-    if (!pubspec.includes('audioplayers:')) {
-      pubspec = pubspec.replace(
-        /(\s*cupertino_icons:[^\n]*)/,
-        '$1\n  audioplayers: ^6.1.0'
       );
     }
     writeFileSync(pubspecPath, pubspec);
@@ -993,23 +1019,9 @@ function buildFontsBlock(specs: { family: string; files: { file: string; weight?
 function ensureDependencies(dart: string): void {
   const pubspecPath = join(igniDir, 'pubspec.yaml');
   if (!existsSync(pubspecPath)) return;
-  let pubspec = readFileSync(pubspecPath, 'utf-8');
-  let dirty = false;
-
-  if (dart.includes("package:http/") && !pubspec.includes('http:')) {
-    pubspec = pubspec.replace(
-      /(\s*cupertino_icons:[^\n]*)/,
-      '$1\n  http: ^1.2.0'
-    );
-    dirty = true;
-  }
-  if (dart.includes("package:geolocator/") && !pubspec.includes('geolocator:')) {
-    pubspec = pubspec.replace(
-      /(\s*cupertino_icons:[^\n]*)/,
-      '$1\n  geolocator: ^13.0.1'
-    );
-    dirty = true;
-  }
+  const original = readFileSync(pubspecPath, 'utf-8');
+  let pubspec = injectDependencies(dart, original);
+  let dirty = pubspec !== original;
   // Drop a stale `google_fonts:` entry if it was injected by a prior Igni version.
   // v0.12.1 used the `google_fonts` package; v0.12.3 bundles the fonts locally via
   // syncFonts() and no longer depends on it. Leaving the old dep does no harm but
@@ -1073,37 +1085,77 @@ function printMappedFlutterError(line: string, transpileResult: TranspileResult)
   return true;
 }
 
-function createNewProject(name: string | undefined): void {
-  if (!name) {
-    console.error('Usage: igni new <project-name>');
-    process.exit(1);
+const STARTER_IGNI = [
+  'screen Hello:',
+  '  label "Welcome"',
+  '',
+].join('\n');
+
+// Scaffold a starter app then auto-run it. Two modes:
+//   - cwd-mode (no `name`): write `app.igni` into the current directory and
+//     call `run()` directly. Refused if cwd has user-visible files.
+//   - named-folder mode (`name` set): mkdir ./<name>/, scaffold inside, then
+//     re-exec `igni run` with `cwd: projectDir` via spawnSync — `run()` reads
+//     the module-level `cwd` constant captured at startup, so it can't
+//     operate on a different directory without either threading cwd through
+//     ~6 functions or re-execing. The re-exec is the smaller change.
+//
+// Surfaced 2026-04-26 during the tutorial dress-rehearsal: previously
+// `igni new <name>` printed a "Next: cd <name> / igni run" hint, which was
+// a three-step ceremony the first user (mum) would have to navigate before
+// seeing anything render. Auto-run + cwd-mode + target keyword collapses
+// it to one command. See plan for the four supported shapes.
+async function scaffoldThenRun(
+  name: string | undefined,
+  targetPlatform: Target,
+  wMode: WebMode,
+  explicitDevice: string | undefined,
+  explicitName: string | undefined,
+): Promise<void> {
+  if (name) {
+    const projectDir = join(cwd, name);
+    if (existsSync(projectDir)) {
+      console.error(`Directory already exists: ${name}`);
+      process.exit(1);
+    }
+    mkdirSync(projectDir, { recursive: true });
+    writeFileSync(join(projectDir, 'app.igni'), STARTER_IGNI);
+    writeFileSync(join(projectDir, '.gitignore'), '.igni/\n');
+    console.log(`Created ${name}/app.igni\n`);
+
+    const childArgs = ['run'];
+    if (targetPlatform !== 'web') childArgs.push(targetPlatform);
+    if (explicitDevice) childArgs.push('--device', explicitDevice);
+    if (explicitName) childArgs.push('--name', explicitName);
+    // Re-exec the bash shim (`transpiler/bin/igni`) rather than process.argv[1]:
+    // when the CLI runs via `npx tsx`, argv[1] is the path to igni.ts itself,
+    // which isn't directly executable. The bin shim handles tsx setup. This
+    // resolves correctly whether igni.ts is loaded from src/ (dev) or dist/
+    // (build) — both are siblings of bin/.
+    const igniBin = join(__dirname, '..', 'bin', 'igni');
+    const result = spawnSync(igniBin, childArgs, { cwd: projectDir, stdio: 'inherit' });
+    process.exit(result.status ?? 0);
+  } else {
+    if (existsSync(join(cwd, 'app.igni')) || existsSync(igniDir)) {
+      console.error('This directory already contains an Igni project. Run `igni run` to start it.');
+      process.exit(1);
+    }
+    const visible = readdirSync(cwd).filter(f => !f.startsWith('.'));
+    if (visible.length > 0) {
+      console.error(
+        'Current directory is not empty. Either:\n' +
+        '  - cd into an empty folder and re-run igni new, or\n' +
+        '  - run: igni new <name>   (creates a subfolder)'
+      );
+      process.exit(1);
+    }
+    writeFileSync(join(cwd, 'app.igni'), STARTER_IGNI);
+    if (!existsSync(join(cwd, '.gitignore'))) {
+      writeFileSync(join(cwd, '.gitignore'), '.igni/\n');
+    }
+    console.log('Created app.igni\n');
+    await run(targetPlatform, wMode, explicitDevice, explicitName);
   }
-
-  const projectDir = join(cwd, name);
-  if (existsSync(projectDir)) {
-    console.error(`Directory already exists: ${name}`);
-    process.exit(1);
-  }
-
-  mkdirSync(projectDir, { recursive: true });
-  writeFileSync(
-    join(projectDir, 'app.igni'),
-    [
-      'screen Hello:',
-      '  count = 0',
-      '',
-      '  layout vertical, align: center, gap: medium, padding: large:',
-      '    label count, style: heading',
-      '    button "Add", on tap: count = count + 1',
-      '',
-    ].join('\n')
-  );
-  writeFileSync(join(projectDir, '.gitignore'), '.igni/\n');
-
-  console.log(`Created ${name}\n`);
-  console.log('Next:');
-  console.log(`  cd ${name}`);
-  console.log('  igni run\n');
 }
 
 // --- Main ---
@@ -1314,19 +1366,25 @@ async function run(targetPlatform: Target, wMode: WebMode, explicitDevice: strin
     if (outcome.ok) {
       transpileResult = outcome.result;
       writeOutput(injectAppTitle(outcome.result.dart, displayName));
-      // Send 'R' to Flutter to trigger hot restart (not 'r' hot reload).
-      // Hot reload keeps the existing State instance and its field values,
-      // so changing `name = "Michael"` to `name = "Tyr"` (or adding a new
-      // field) leaves the running app with stale state. Hot restart is
-      // slightly slower but always shows the edited source faithfully —
-      // which is the pedagogical promise of the tutorial.
-      flutter.stdin.write('R');
-      console.log(`  Recompiled (${basename(filePath)})`);
+      // Send 'r' to Flutter to trigger hot reload (not 'R' hot restart).
+      // Hot reload patches changed code while preserving widget state — the
+      // user keeps their counter value, scroll position, form input, etc.
+      // across saves. Trade-off: initial-value edits don't reflect (changing
+      // `count = 0` to `count = 5` won't update the displayed count because
+      // the existing State instance keeps its current value). Users can hit
+      // `R` (capital) manually in the terminal for a full restart when they
+      // need to reset state. Reverses the v0.5-era default of hot restart;
+      // surfaced 2026-04-26 by tutorial dress-rehearsal — restart-by-default
+      // wiped the counter on every save during normal editing.
+      flutter.stdin.write('r');
+      console.log(`  Reloaded (${basename(filePath)})`);
     } else {
       // Transpile failure: write an error-screen main.dart so the browser
-      // shows the error instead of the stale last-good build, and hot-restart
-      // to swap the app over. Beginners saving a typo otherwise see the old
-      // app still running with no signal their save failed.
+      // shows the error instead of the stale last-good build. Use hot RESTART
+      // (not reload) here: the error screen has a different widget tree shape
+      // and we want a clean swap, not a reload-patch that may fall back to
+      // restart anyway. Beginners saving a typo otherwise see the old app
+      // still running with no signal their save failed.
       writeOutput(buildErrorScreenDart(outcome.errorText, displayName));
       flutter.stdin.write('R');
       console.log(`  Error in ${basename(filePath)} — see above. Browser shows the error until you fix it.`);
@@ -1336,7 +1394,33 @@ async function run(targetPlatform: Target, wMode: WebMode, explicitDevice: strin
   flutter.on('close', (code) => {
     watcher.close();
     reloadServer?.close();
-    process.exit(code ?? 0);
+
+    // v0.15.x: surface buffered stderr + a clear banner when Flutter exits
+    // before reaching `appReady` (compile error during build) or with a
+    // non-zero code. Pre-fix, the close handler just `process.exit`-ed
+    // silently, leaving the user with a spinner-overwritten prompt and no
+    // signal that anything went wrong. Pomodonut session 2026-04-26 spent
+    // 15+ minutes diagnosing what turned out to be a Flutter compile-fail
+    // being swallowed by the build spinner. Doc 102 (project review) Top-5
+    // improvement #4 promoted this from saved-memory-bypass-note to fix.
+    if (code !== 0 || !appReady) {
+      clearInterval(spinner);
+      process.stdout.write('\r\x1b[2K');  // clear spinner line
+      const codeSuffix = (code !== null && code !== 0) ? ` (exit code ${code})` : '';
+      process.stderr.write(`\n  ✗ Flutter exited with errors${codeSuffix}\n\n`);
+      if (stderrBuffer.length > 0) {
+        process.stderr.write('  Captured Flutter errors:\n');
+        for (const line of stderrBuffer) {
+          process.stderr.write('    ' + line + '\n');
+        }
+        process.stderr.write('\n');
+      }
+      const igniRel = relative(cwd, igniDir) || '.igni';
+      process.stderr.write(`  Diagnose: cd ${igniRel} && flutter run -d chrome\n`);
+      process.stderr.write(`  (Generated Dart: ${join(igniRel, 'lib', 'main.dart')})\n\n`);
+    }
+
+    process.exit(code ?? 1);
   });
 }
 
@@ -1492,11 +1576,12 @@ if (command === 'run') {
   }
   build(buildTarget, nameFlag);
 } else if (command === 'new') {
-  if (nameFlag) {
-    console.error('--name is not valid with `igni new`. Pass the project name as a positional: igni new my-app');
+  // --name now overrides the folder-derived display name (forwarded to run()).
+  if (deviceFlag && (target === 'web' || target === 'macos')) {
+    console.error('--device is only valid with iOS / Android targets.');
     process.exit(1);
   }
-  createNewProject(commandArg);
+  scaffoldThenRun(commandArg, target, webMode, deviceFlag, nameFlag);
 } else {
   printUsage();
   process.exit(1);

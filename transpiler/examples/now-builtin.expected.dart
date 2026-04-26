@@ -55,7 +55,7 @@ class _TimestampDemoScreenState extends State<TimestampDemoScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              seconds_open(opened_at, current).toString(),
+              (((seconds_open(opened_at, current)) as dynamic)?.toString() ?? ''),
             ),
           ],
         ),

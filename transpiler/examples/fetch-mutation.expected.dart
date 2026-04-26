@@ -73,7 +73,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 style: Theme.of(context).textTheme.headlineLarge!,
               ),
               Text(
-                result['id'].toString(),
+                (((result['id']) as dynamic)?.toString() ?? ''),
               ),
             ],
           ],

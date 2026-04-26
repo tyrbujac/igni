@@ -52,6 +52,25 @@ if [ -d "$SCRIPT_DIR/examples-errors" ]; then
   done
 fi
 
+# Scaffold suite — covers pubspec dep injection and other scaffold-level
+# concerns the diff-tests don't catch (since cli.ts is codegen-only).
+# Each `*.test.ts` runs as a self-contained TS script that exits non-zero
+# on failure.
+if [ -d "$SCRIPT_DIR/scaffold-tests" ]; then
+  for f in "$SCRIPT_DIR"/scaffold-tests/*.test.ts; do
+    [ -f "$f" ] || continue
+    name=$(basename "$f" .test.ts)
+    if npx tsx "$f" >/dev/null 2>&1; then
+      echo "PASS  scaffold/$name"
+      PASS=$((PASS + 1))
+    else
+      echo "FAIL  scaffold/$name"
+      FAIL=$((FAIL + 1))
+      FAILURES+=("scaffold/$name")
+    fi
+  done
+fi
+
 echo ""
 echo "$PASS passed, $FAIL failed"
 if [ $FAIL -gt 0 ]; then

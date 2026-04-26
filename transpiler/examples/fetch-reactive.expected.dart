@@ -37,7 +37,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<void> _fetchResults() async {
     try {
-      final response = await http.get(Uri.parse('/api/search?q='.toString() + active.toString()));
+      final response = await http.get(Uri.parse('/api/search?q='.toString() + (((active) as dynamic)?.toString() ?? '')));
       if (response.statusCode == 200) {
         setState(() {
           results = jsonDecode(response.body);
@@ -59,7 +59,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _currentResultsUrl = '/api/search?q='.toString() + active.toString();
+    final _currentResultsUrl = '/api/search?q='.toString() + (((active) as dynamic)?.toString() ?? '');
     if (_currentResultsUrl != _lastResultsUrl) {
       _lastResultsUrl = _currentResultsUrl;
       _resultsLoading = true;
@@ -111,7 +111,7 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ] else ...[
               Text(
-                'Results for: '.toString() + active.toString(),
+                'Results for: '.toString() + (((active) as dynamic)?.toString() ?? ''),
                 style: Theme.of(context).textTheme.headlineLarge!,
               ),
             ],

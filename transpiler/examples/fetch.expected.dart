@@ -63,11 +63,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ),
             ] else ...[
               Text(
-                user['name'].toString(),
+                (((user['name']) as dynamic)?.toString() ?? ''),
                 style: Theme.of(context).textTheme.headlineLarge!,
               ),
               Text(
-                user['login'].toString(),
+                (((user['login']) as dynamic)?.toString() ?? ''),
               ),
             ],
           ],

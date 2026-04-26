@@ -54,7 +54,7 @@ class _GreetingScreenState extends State<GreetingScreen> {
             const SizedBox(height: 16),
             if (name.isNotEmpty) ...[
               Text(
-                'Hello, '.toString() + name.toString(),
+                'Hello, '.toString() + (((name) as dynamic)?.toString() ?? ''),
               ),
             ] else ...[
               Text(

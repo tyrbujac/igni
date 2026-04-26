@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'dart:async';
 
 class SharedState extends ChangeNotifier {
@@ -145,14 +146,14 @@ class _PomodonutScreenState extends State<PomodonutScreen> {
   }
 
   dynamic format_time(dynamic s) {
-    dynamic m = s / 60;
+    dynamic m = (s / 60).floor();
     dynamic sec = s - m * 60;
-    return pad(m).toString() + ':'.toString().toString() + pad(sec).toString();
+    return (((pad(m)) as dynamic)?.toString() ?? '') + ':'.toString().toString() + (((pad(sec)) as dynamic)?.toString() ?? '');
   }
 
   dynamic pad(dynamic n) {
     if (n < 10) {
-      return '0'.toString() + n.toStringAsFixed(0).toString();
+      return '0'.toString() + (((n.toStringAsFixed(0)) as dynamic)?.toString() ?? '');
     }
     return n.toStringAsFixed(0);
   }
@@ -168,43 +169,46 @@ class _PomodonutScreenState extends State<PomodonutScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                segment_label().toString(),
+                (((segment_label()) as dynamic)?.toString() ?? ''),
                 style: Theme.of(context).textTheme.headlineLarge!.copyWith(color: _igniColorValue(context, segment_color())),
               ),
               const SizedBox(height: 24),
               Text(
-                format_time(remaining()).toString(),
+                (((format_time(remaining())) as dynamic)?.toString() ?? ''),
                 style: Theme.of(context).textTheme.headlineLarge!,
               ),
               const SizedBox(height: 24),
-              Row(
-                children: [
-                  if (running) ...[
+              Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (running) ...[
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.grey, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                        onPressed: () {
+                          pause();
+                        },
+                        child: const Text('Pause'),
+                      ),
+                    ] else ...[
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                        onPressed: () {
+                          start();
+                        },
+                        child: const Text('Start'),
+                      ),
+                    ],
+                    const SizedBox(width: 16),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.grey, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                       onPressed: () {
-                        pause();
+                        reset();
                       },
-                      child: const Text('Pause'),
-                    ),
-                  ] else ...[
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                      onPressed: () {
-                        start();
-                      },
-                      child: const Text('Start'),
+                      child: const Text('Reset'),
                     ),
                   ],
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.grey, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                    onPressed: () {
-                      reset();
-                    },
-                    child: const Text('Reset'),
-                  ),
-                ],
+                ),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -259,7 +263,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(width: 16),
                   Text(
-                    shared.work_minutes.toString(),
+                    (((shared.work_minutes) as dynamic)?.toString() ?? ''),
                   ),
                 ],
               ),
@@ -286,7 +290,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(width: 16),
                   Text(
-                    shared.break_minutes.toString(),
+                    (((shared.break_minutes) as dynamic)?.toString() ?? ''),
                   ),
                 ],
               ),

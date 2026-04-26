@@ -32,7 +32,7 @@ class ContactRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            contact['name'].toString(),
+            (((contact['name']) as dynamic)?.toString() ?? ''),
             style: Theme.of(context).textTheme.bodyLarge!,
           ),
           if (contact['favourite']) ...[
@@ -174,12 +174,12 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
         child: Column(
           children: [
             Text(
-              current['name'].toString(),
+              (((current['name']) as dynamic)?.toString() ?? ''),
               style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
             Text(
-              current['phone'].toString(),
+              (((current['phone']) as dynamic)?.toString() ?? ''),
               style: Theme.of(context).textTheme.bodyLarge!,
             ),
             const SizedBox(height: 16),

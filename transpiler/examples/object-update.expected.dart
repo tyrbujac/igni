@@ -60,11 +60,11 @@ class _ObjectUpdateDemoScreenState extends State<ObjectUpdateDemoScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              user['name'].toString(),
+              (((user['name']) as dynamic)?.toString() ?? ''),
             ),
             const SizedBox(height: 16),
             Text(
-              user['profile']['city'].toString(),
+              (((user['profile']['city']) as dynamic)?.toString() ?? ''),
             ),
             const SizedBox(height: 16),
             for (final (_i, item) in items.indexed) ...[
@@ -72,7 +72,7 @@ class _ObjectUpdateDemoScreenState extends State<ObjectUpdateDemoScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    item['text'].toString(),
+                    (((item['text']) as dynamic)?.toString() ?? ''),
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),

@@ -1,0 +1,10 @@
+theme:
+  color:
+    brand: "#FF6B35"
+    primary_700: "#1D4ED8"
+    surface_elevated: "#F5F5F5"
+
+screen Settings:
+  layout vertical, padding: large, gap: medium, background: surface_elevated:
+    label "Settings", style: heading, color: brand
+    button "Sign in", color: primary_700, on tap: print("clicked")

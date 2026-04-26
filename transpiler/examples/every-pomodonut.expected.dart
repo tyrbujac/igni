@@ -90,7 +90,7 @@ class _PomodonutScreenState extends State<PomodonutScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                remaining(duration, start_time, tick).toString(),
+                (((remaining(duration, start_time, tick)) as dynamic)?.toString() ?? ''),
                 style: Theme.of(context).textTheme.headlineLarge!,
               ),
               const SizedBox(height: 24),

@@ -35,7 +35,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
             const SizedBox(height: 16),
             for (final (_i, contact) in (List.from(contacts.where((c) => (c['active']) == true).toList())..sort((a, b) => (a['name'] as Comparable).compareTo(b['name']))).indexed) ...[
               Text(
-                contact['name'].toString(),
+                (((contact['name']) as dynamic)?.toString() ?? ''),
               ),
               if (_i < (List.from(contacts.where((c) => (c['active']) == true).toList())..sort((a, b) => (a['name'] as Comparable).compareTo(b['name']))).length - 1) const SizedBox(height: 16),
             ],
@@ -47,7 +47,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
             const SizedBox(height: 16),
             for (final (_i, contact) in (List.from(contacts)..sort((a, b) => (a['name'] as Comparable).compareTo(b['name']))).reversed.toList().indexed) ...[
               Text(
-                contact['name'].toString(),
+                (((contact['name']) as dynamic)?.toString() ?? ''),
               ),
               if (_i < (List.from(contacts)..sort((a, b) => (a['name'] as Comparable).compareTo(b['name']))).reversed.toList().length - 1) const SizedBox(height: 16),
             ],

@@ -1,5 +1,7 @@
 # Igni architecture
 
+*Designs that translate, not redesign.* Positioning anchor — see `docs/private/97_figma_to_igni_workflow.md` for Path C scope and v0.15 expansion plan.
+
 How the pieces fit. Companion to [`README.md`](README.md) (what + why) and [`CLAUDE.md`](CLAUDE.md) (AI-assistant guidance).
 
 ## Repo layout
@@ -15,10 +17,10 @@ igni/
 ├── assets/                    # logo (igni.svg, igni-dark-mode.svg, PNGs)
 ├── spec/
 │   ├── README.md
-│   ├── <!-- SYNC:version -->v0.14.1<!-- /SYNC:version -->.md             # current canonical spec
-│   ├── <!-- SYNC:version -->v0.14.1<!-- /SYNC:version -->-cheatsheet.md  # current cheatsheet (learning order)
-│   ├── <!-- SYNC:version -->v0.14.1<!-- /SYNC:version -->-micro.md       # current micro reference (~700 words)
-│   └── archive/               # historical snapshots <!-- SYNC:historical-range-files -->v0.2.md → v0.14.0.md<!-- /SYNC:historical-range-files -->
+│   ├── <!-- SYNC:version -->v0.15.0<!-- /SYNC:version -->.md             # current canonical spec
+│   ├── <!-- SYNC:version -->v0.15.0<!-- /SYNC:version -->-cheatsheet.md  # current cheatsheet (learning order)
+│   ├── <!-- SYNC:version -->v0.15.0<!-- /SYNC:version -->-micro.md       # current micro reference (~700 words)
+│   └── archive/               # historical snapshots <!-- SYNC:historical-range-files -->v0.2.md → v0.14.3.md<!-- /SYNC:historical-range-files -->
 ├── tests/                     # cold-LLM test infrastructure
 │   ├── README.md              # test methodology
 │   └── v<spec_version>/       # prompts + results per spec round
@@ -28,7 +30,7 @@ igni/
 │   ├── README.md
 │   ├── src/                   # lexer, parser, codegen, CLI
 │   ├── bin/igni               # CLI entry point (bash shim to src/igni.ts)
-│   ├── examples/              # <!-- SYNC:example-count -->57<!-- /SYNC:example-count --> .igni apps + .expected.dart refs
+│   ├── examples/              # <!-- SYNC:example-count -->58<!-- /SYNC:example-count --> .igni apps + .expected.dart refs
 │   ├── examples-errors/       # pinned transpile-rejection fixtures + .expected.err
 │   └── run-tests.sh           # automated diff-test runner
 ├── docs/
@@ -48,13 +50,13 @@ Each `tests/v<spec_version>/` folder contains the prompts used for that round an
 
 Three tiers of the same language at [`spec/`](spec/):
 
-- **[`spec/v0.12.2.md`](spec/v0.12.2.md)** — **current full spec** in learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference).
-- **[`spec/v0.12.2-cheatsheet.md`](spec/v0.12.2-cheatsheet.md)** — condensed (~2,500 words). Same language, optimised for cold-LLM context and human skim. Primary input for cold-test rounds.
-- **[`spec/v0.12.2-micro.md`](spec/v0.12.2-micro.md)** — rules-only (~700 words). Third context tier for tests that vary context size as an independent variable.
+- **[`spec/v0.15.0.md`](spec/v0.15.0.md)** — **current full spec** in learning order (hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → reference).
+- **[`spec/v0.15.0-cheatsheet.md`](spec/v0.15.0-cheatsheet.md)** — condensed (~3,500 words). Same language, optimised for cold-LLM context and human skim. Primary input for cold-test rounds.
+- **[`spec/v0.15.0-micro.md`](spec/v0.15.0-micro.md)** — rules-only (~1,000 words). Third context tier for tests that vary context size as an independent variable.
 
-Historical versions (v0.2 → v0.12.1) live under [`spec/archive/`](spec/archive/). Each is an immutable snapshot — never edited after ship — because cold-LLM tests stay reproducible against a frozen baseline. See [`CHANGELOG.md`](CHANGELOG.md) for the per-version evolution narrative.
+Historical versions live under [`spec/archive/`](spec/archive/). Each is an immutable snapshot — never edited after ship — because cold-LLM tests stay reproducible against a frozen baseline. See [`CHANGELOG.md`](CHANGELOG.md) for the per-version evolution narrative.
 
-**When proposing spec changes,** fork `spec/v0.12.2.md` (+ cheatsheet + micro) to a new version file rather than editing in place. Historical versions (v0.2 → v0.12.1) live under `spec/archive/`. Full snapshot rule in `CLAUDE.md` for AI-assisted edits.
+**When proposing spec changes,** fork `spec/v0.15.0.md` (+ cheatsheet + micro) to a new version file rather than editing in place. Full snapshot rule in `CLAUDE.md` for AI-assisted edits.
 
 ## Transpiler
 
@@ -66,11 +68,11 @@ TypeScript project at [`transpiler/`](transpiler/) that compiles `.igni` source 
 
 **Currently supported:** `screen` (StatefulWidget), screen properties (`title:` → AppBar, `background:` → Scaffold colour), `component` (StatelessWidget), wrapper components with `body` slot, variables (int/double/String/bool/List) with optional type hints, assignable styling tokens (`brand`, `subtle`, `danger`, colour palette, background-only `card`), `layout` (vertical/horizontal, align, gap, padding, background, rounded, spread, `fill: true` for Expanded), implicit vertical layout for screen bodies, `label` (with `align:` for text alignment), `button` + `on tap`, `input bind:` + `placeholder:`, `toggle bind:`, `image` (size, round, `on tap:`, local assets + network URLs), `icon` (size, color, `on tap:`), `slider` (bind, min, max), `checkbox` (bind, label), `dropdown` (bind, options), `badge` (color), `spinner`, `if`/`else`/`else if`, `not`, `is`/`is not` equality, `is empty`/`is null`/`is in`/`is loading`/`is error` and their negations, comparison operators (`>`/`<`/`>=`/`<=`), `and`/`or`, `each` loops (with optional `paginate: N` lazy rendering), `navigate to`/`navigate back` (multi-screen with params), `shared:` state via ChangeNotifier, `fetch` + `spinner`, list builtins (`without`/`replace`/`find`/`count`/`length`/`filter`/`sorted`/`reversed`), string builtins (`contains`/`upper`/`lower`), `emit <event> [<arg>]` with `on <event>:` wiring, `random(min, max)`, lambda expressions, `return` in functions, screen-internal functions with params, list literals, object literals, field access, list indexing (null on out-of-bounds), arithmetic, float literals, string concatenation with `+`, `play("file.wav")` audio, `print()` for console debugging, `on touch:` event (fires on contact; `on tap:` fires on release), `locate()` geolocation builtin via `geolocator` plugin. Visual defaults: 16px screen-body padding (unless explicit `layout`), 16px `bodyMedium`, `#FAFAFA` scaffold, outlined input border, intrinsic button width, 480px input max-width outside Row context, `SafeArea` wrap when no `title:` (prevents notch clipping on iOS). Error-message pipeline filters Dart-SDK / Flutter framework stack frames and maps runtime stack frames back to `.igni` lines.
 
-**<!-- SYNC:example-count -->57<!-- /SYNC:example-count --> example apps** in [`transpiler/examples/`](transpiler/examples/) — each a `.igni` source + `.expected.dart` reference. Covers counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full, components, shared (cross-screen state), fetch (async API), fetch-mutation, fetch-reactive, dice, dicee (Angela Yu course project with AppBar + local images), mi-card (Angela Yu identity-card, pure static-layout regime), dashboard, fn-return, lambda, primitives, shopping (full e-commerce), wrapper (body slot), logic, type-hints, contacts (list indexing, comparisons), on-change, bg-image, tutorial (smoke test), string-case, derived-counts, stepper (emit/on events), pagination. See [`transpiler/examples/README.md`](transpiler/examples/README.md) for one-liner descriptions.
+**<!-- SYNC:example-count -->58<!-- /SYNC:example-count --> example apps** in [`transpiler/examples/`](transpiler/examples/) — each a `.igni` source + `.expected.dart` reference. Covers counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full, components, shared (cross-screen state), fetch (async API), fetch-mutation, fetch-reactive, dice, dicee (Angela Yu course project with AppBar + local images), mi-card (Angela Yu identity-card, pure static-layout regime), dashboard, fn-return, lambda, primitives, shopping (full e-commerce), wrapper (body slot), logic, type-hints, contacts (list indexing, comparisons), on-change, bg-image, tutorial (smoke test), string-case, derived-counts, stepper (emit/on events), pagination. See [`transpiler/examples/README.md`](transpiler/examples/README.md) for one-liner descriptions.
 
-**Testing:** `npm test` in `transpiler/` runs <!-- SYNC:total-tests -->84<!-- /SYNC:total-tests --> diff tests (positive + negative rejection cases). Zero diff = pass. Browser smoke-test via `igni run` from any directory containing `.igni` files.
+**Testing:** `npm test` in `transpiler/` runs <!-- SYNC:total-tests -->90<!-- /SYNC:total-tests --> diff tests (positive + negative rejection cases). Zero diff = pass. Browser smoke-test via `igni run` from any directory containing `.igni` files.
 
-**Not yet supported (v0.12.2 spec features):** `theme:` block sub-paths beyond font overrides — `spacing:` / `color:` sub-blocks, plus `size:` / `weight:` / `color:` fields inside `text:` bundles (planned; see Appendix C). (`theme: text: <role>: font:` shipped in v0.12.1. `paginate:` on `each` shipped 2026-04-22 as syntax + lazy `ListView.builder` codegen; auto-load-more on scroll deferred pending async integration.)
+**Not yet supported (v0.15.0 spec features):** `theme:` block sub-paths beyond font overrides — `spacing:` / `color:` sub-blocks, plus `size:` / `weight:` / `color:` fields inside `text:` bundles (planned for v0.15+, Path C scope; see `docs/private/97`). (`theme: text: <role>: font:` shipped in v0.12.1. `paginate:` on `each` shipped 2026-04-22 as syntax + lazy `ListView.builder` codegen; auto-load-more on scroll deferred pending async integration.)
 
 **Transpile-time rules enforced** (rejections, not warnings): reactive-fetch footgun — `fetch("..." + bound_var)` rejected, use the trigger-variable pattern; `emit <event>` placement — only valid as the action of `on tap:` / `on touch:` / `on change:`; bare access to `shared:` variables — `hold = hold + [...]` rejected, always use `shared.hold` ("visible coupling marker" rule); `count(list, lambda)` — rejected with a fix-it pointing at `length(filter(list, predicate))` (only the value form `count(list, value)` is supported). See `transpiler/examples-errors/` for the pinned negative fixtures.
 
@@ -117,3 +119,4 @@ Rule: don't edit text *inside* any `<!-- SYNC:... -->` region by hand — run th
 - **Not a multi-target language for v1.** Web is the v1 target so that "three commands to first pixel" stays achievable. Mobile compilation is opt-in later via the Flutter toolchain (see [`docs/mobile.md`](docs/mobile.md)).
 - **Not for creative tools.** Photoshop / Ableton / video-editor class apps need primitives Igni explicitly rejects: imperative drawing surfaces (`canvas`), frame-loops (`on frame:`), raw layout dimensions (numeric `width:` / `height:`), granular per-subtree reactivity, pointer-event coordinates with drag lifecycle. The token-first / one-way / no-magic principles that make Igni learnable in one sitting structurally exclude these capabilities. Three independent LLM panels converged on the same five-primitive gap (`docs/private/92`). Igni's audience is CRUD / forms / list-detail / fetch-driven utility apps; creative tools belong in Flutter / React / SwiftUI directly.
 - **Not aiming at a single canonical "real app."** v1.0 criterion 4 is "three small real apps shipped" — quantity over flagship-app weight. Earlier framing pointed at a Boojy subset; that's been retired (Boojy is creative-tools-class, see above).
+- **Not a translator for absolute-positioned Figma frames.** The Figma → Igni path (see `ROADMAP.md` Post-v1.0 + `docs/private/97_figma_to_igni_workflow.md`) requires source files to use Figma auto-layout. Absolute-positioned frames carry per-child `x`, `y` coordinates that don't map to flow-layout primitives without heuristic guessing. The translator rejects them with a clear error pointing at "convert to auto-layout" rather than coercing — same posture as the no-`canvas` / no-`on frame:` rejections above.

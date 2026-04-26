@@ -138,11 +138,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          event['text'].toString(),
+                          (((event['text']) as dynamic)?.toString() ?? ''),
                           style: Theme.of(context).textTheme.bodyLarge!,
                         ),
                         Text(
-                          event['time'].toString(),
+                          (((event['time']) as dynamic)?.toString() ?? ''),
                           style: Theme.of(context).textTheme.bodySmall!,
                         ),
                       ],

@@ -83,7 +83,7 @@ class _TodoScreenState extends State<TodoScreen> {
             ] else ...[
               for (final item in items) ...[
                 Text(
-                  item['text'].toString(),
+                  (((item['text']) as dynamic)?.toString() ?? ''),
                 ),
               ],
             ],

@@ -1,0 +1,6 @@
+
+  Error: Expected indent, got "name"
+
+    screen-no-indent.igni:2 | name = ""
+                            |     ^
+                            | Hint: did you forget to indent the line under `screen Hello:`?

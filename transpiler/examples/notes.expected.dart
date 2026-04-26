@@ -34,7 +34,7 @@ class _NoteListScreenState extends State<NoteListScreen> {
                 onPressed: () {
                   Navigator.push(context, MaterialPageRoute(builder: (context) => NoteDetailScreen(note: note)));
                 },
-                child: Text(note['title'].toString()),
+                child: Text((((note['title']) as dynamic)?.toString() ?? '')),
               ),
               if (_i < notes.length - 1) const SizedBox(height: 16),
             ],
@@ -66,12 +66,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         child: Column(
           children: [
             Text(
-              widget.note['title'].toString(),
+              (((widget.note['title']) as dynamic)?.toString() ?? ''),
               style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
             Text(
-              widget.note['body'].toString(),
+              (((widget.note['body']) as dynamic)?.toString() ?? ''),
             ),
             const SizedBox(height: 16),
             ElevatedButton(

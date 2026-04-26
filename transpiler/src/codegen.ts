@@ -34,13 +34,14 @@ export interface GeneratedOutput {
 // this slice can be extracted and passed to sub-generators in a later refactor.
 interface ScreenContext {
   stateVars: string[];
+  stateVarTypes: Record<string, string>;
   boundInputVars: string[];
   screenParams: readonly string[];
   isComponent: boolean;
 }
 
 function newScreenContext(): ScreenContext {
-  return { stateVars: [], boundInputVars: [], screenParams: [], isComponent: false };
+  return { stateVars: [], stateVarTypes: {}, boundInputVars: [], screenParams: [], isComponent: false };
 }
 
 export class CodeGenerator {
@@ -72,6 +73,10 @@ export class CodeGenerator {
   private needsIconLookup = false;
   private needsStyleResolvers = false;
   private emitLineMarkers = false;
+  // v0.15.0: theme: color: <token>: "<hex>" overrides + user-defined tokens.
+  // Populated from program.theme.color at build start; consulted by
+  // resolveColor / resolveBackground / _igniColorValue runtime resolver.
+  private themeColors: Record<string, string> = {};
 
   generate(program: Program): string {
     return this.build(program, false).dart;
@@ -86,6 +91,13 @@ export class CodeGenerator {
     this.allScreens = program.screens;
     this.allComponents = program.components;
     this.hasShared = program.shared.length > 0;
+    // v0.15.0: load theme.color overrides + user-defined tokens.
+    this.themeColors = {};
+    if (program.theme) {
+      for (const t of program.theme.color) {
+        this.themeColors[t.name] = t.hex;
+      }
+    }
     this.validateEmitPlacement(program);
     this.validateAsyncReactivity(program);
     this.validateSharedPrefix(program);
@@ -173,7 +185,11 @@ export class CodeGenerator {
     // viewport. Brand colour stays as ColorScheme.primary for ElevatedButton.
     const scaffoldBg = anyDarkScreen ? '' : ', scaffoldBackgroundColor: const Color(0xFFFAFAFA)';
     const textTheme = this.buildTextTheme(program.theme);
-    const igniTheme = `theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)${brightness})${scaffoldBg}, textTheme: ${textTheme})`;
+    // v0.15.0: theme: color: brand: "#X" overrides the MaterialApp seed.
+    const seedHex = this.themeColors['brand']
+      ? `0xFF${this.themeColors['brand'].slice(1).toUpperCase().padStart(6, '0')}`
+      : '0xFFEB1555';
+    const igniTheme = `theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(${seedHex})${brightness})${scaffoldBg}, textTheme: ${textTheme})`;
     if (this.hasShared) {
       code += this.genSharedState(program.shared) + '\n';
       code += `void main() {\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, ${igniTheme}, home: ${firstName}Screen()),\n  ));\n}\n`;
@@ -193,7 +209,7 @@ export class CodeGenerator {
       code += '\n' + generateIconLookupHelper() + '\n';
     }
     if (this.needsStyleResolvers) {
-      code += '\n' + generateStyleValueResolvers() + '\n';
+      code += '\n' + generateStyleValueResolvers(this.themeColors) + '\n';
     }
 
     if (!emitLineMarkers) {
@@ -416,19 +432,50 @@ export class CodeGenerator {
   }
 
   private genColorValue(expr: Expr): string {
+    // v0.15.0: inline hex codes outside theme: blocks are rejected.
+    if (expr.type === 'StringLit' && expr.value.startsWith('#')) {
+      throw new TranspileError(
+        `Inline hex colours are not supported. Use a token from \`theme: color:\` ` +
+        `or one of the 12 built-in tokens (brand, subtle, danger, green, red, blue, ` +
+        `white, black, yellow, orange, purple, teal). ` +
+        `Define a theme: color: token (e.g. \`my_red: "${expr.value}"\`) and reference it by name.`,
+        expr.loc?.line ?? 1,
+        expr.loc?.column ?? 1,
+      );
+    }
     if (expr.type === 'Ident' && expr.name === 'card' && !this.isUserDeclaredName(expr.name)) {
       throw new TranspileError('`card` is background-only. Use it with `background:`, not `color:`.', expr.loc?.line ?? 1, expr.loc?.column ?? 1);
     }
+    // v0.15.0: user-defined theme tokens are valid Idents in colour positions.
+    if (expr.type === 'Ident' && expr.name in this.themeColors) {
+      return resolveColor(expr, this.themeColors);
+    }
     if (this.isBuiltinStyleValue(expr) && expr.type === 'Ident' && isColorTokenName(expr.name)) {
-      return resolveColor(expr);
+      return resolveColor(expr, this.themeColors);
     }
     this.needsStyleResolvers = true;
     return `_igniColorValue(context, ${this.exprToDart(expr)})`;
   }
 
   private genBackgroundValue(expr: Expr): string {
+    // v0.15.0: inline hex codes outside theme: blocks are rejected. (Image-
+    // string backgrounds — e.g. `background: "sunset.jpg"` — stay valid;
+    // only `#`-prefixed strings hit this rejection.)
+    if (expr.type === 'StringLit' && expr.value.startsWith('#')) {
+      throw new TranspileError(
+        `Inline hex colours are not supported. Use a token from \`theme: color:\` ` +
+        `or one of the 12 built-in tokens, or the background-only token \`card\`. ` +
+        `Define a theme: color: token (e.g. \`my_bg: "${expr.value}"\`) and reference it by name.`,
+        expr.loc?.line ?? 1,
+        expr.loc?.column ?? 1,
+      );
+    }
+    // v0.15.0: user-defined theme tokens are valid Idents in background positions.
+    if (expr.type === 'Ident' && expr.name in this.themeColors) {
+      return resolveBackground(expr, this.themeColors);
+    }
     if (this.isBuiltinStyleValue(expr)) {
-      return resolveBackground(expr);
+      return resolveBackground(expr, this.themeColors);
     }
     this.needsStyleResolvers = true;
     return `_igniBackgroundValue(context, ${this.exprToDart(expr)})`;
@@ -454,7 +501,7 @@ export class CodeGenerator {
   }
 
   private genScreen(screen: Screen): string {
-    this.ctx = { stateVars: [], boundInputVars: [], screenParams: screen.params, isComponent: false };
+    this.ctx = { stateVars: [], stateVarTypes: {}, boundInputVars: [], screenParams: screen.params, isComponent: false };
     const stateDecls: string[] = [];
     const uiNodes: UINode[] = [];
     const funcDefs: FunctionDef[] = [];
@@ -546,6 +593,7 @@ export class CodeGenerator {
             kind: 'fetch',
           });
           this.ctx.stateVars.push(item.name);
+          this.ctx.stateVarTypes[item.name] = 'dynamic';
         } else if (item.value.type === 'FunctionCall' && item.value.name === 'locate') {
           // `locate()` is a no-arg async builtin that reuses the fetch
           // loading/error machinery. v0.11.0 spec: the loaded value is a
@@ -559,16 +607,19 @@ export class CodeGenerator {
             kind: 'locate',
           });
           this.ctx.stateVars.push(item.name);
+          this.ctx.stateVarTypes[item.name] = 'dynamic';
         } else if (buildLocalVars.has(item.name) || inBuildLocals) {
           // Variable is conditionally reassigned or follows one — build() local
           inBuildLocals = true;
           this.ctx.stateVars.push(item.name);
+          this.ctx.stateVarTypes[item.name] = inferType(item.value, item.typeHint);
           const alreadyDeclared = buildLocals.some(l => l.includes(`var ${item.name} `));
           buildLocals.push(this.withMarker(item, `local:${item.name}`, alreadyDeclared
             ? `    ${item.name} = ${this.exprToDart(item.value)};`
             : `    var ${item.name} = ${this.exprToDart(item.value)};`));
         } else {
           this.ctx.stateVars.push(item.name);
+          this.ctx.stateVarTypes[item.name] = inferType(item.value, item.typeHint);
           stateDecls.push(this.genStateVar(item));
         }
       } else if (item.type === 'FunctionDef') {
@@ -2384,6 +2435,51 @@ export class CodeGenerator {
     return code;
   }
 
+  // Recurse into the RHS of an assignment looking for `/` (which always
+  // returns a fractional number in Dart). Returns the loc of the first `/`
+  // found, or null. Skips into floor/ceil/round arg lists since those
+  // builtins collapse double → int. Surfaces the int-divide trap (mum's
+  // HELP.md 2026-04-26) at the Igni level instead of leaking a Dart type
+  // error.
+  private findFloatDivision(expr: Expr): { line: number; column: number } | null {
+    if (expr.type === 'BinaryExpr') {
+      if (expr.op === '/') {
+        return expr.loc ? { line: expr.loc.line, column: expr.loc.column } : { line: 0, column: 0 };
+      }
+      return this.findFloatDivision(expr.left) ?? this.findFloatDivision(expr.right);
+    }
+    if (expr.type === 'FunctionCall') {
+      if (expr.name === 'floor' || expr.name === 'ceil' || expr.name === 'round') {
+        return null;
+      }
+      for (const a of expr.args) {
+        const r = this.findFloatDivision(a);
+        if (r) return r;
+      }
+      return null;
+    }
+    if (expr.type === 'UnaryExpr') return this.findFloatDivision(expr.operand);
+    if (expr.type === 'FieldAccess') return this.findFloatDivision(expr.object);
+    if (expr.type === 'IndexAccess') {
+      return this.findFloatDivision(expr.object) ?? this.findFloatDivision(expr.index);
+    }
+    return null;
+  }
+
+  // Called wherever an int-typed state variable is reassigned (genStmt
+  // Assignment case + genOnPressed Assignment branch). Throws an Igni-level
+  // error pointing at the `/` if the RHS contains float division.
+  private checkIntDivideAssignment(target: string, value: Expr): void {
+    if (this.ctx.stateVarTypes[target] !== 'int') return;
+    const divLoc = this.findFloatDivision(value);
+    if (!divLoc) return;
+    throw new TranspileError(
+      `\`${target}\` is a whole number, but \`/\` returns a fractional one (\`5 / 2\` is \`2.5\`). Wrap the expression with \`floor(...)\` to round down — e.g. \`${target} = floor(${target} / 2)\`.`,
+      divLoc.line,
+      divLoc.column,
+    );
+  }
+
   private genStmt(s: Statement, depth: number): string {
     const ind = this.indent(depth);
     let code = '';
@@ -2395,6 +2491,7 @@ export class CodeGenerator {
         }
         const isStateVar = this.ctx.stateVars.includes(s.target);
         if (isStateVar) {
+          this.checkIntDivideAssignment(s.target, s.value);
           code = `${ind}setState(() {\n${ind}  ${s.target} = ${this.exprToDart(s.value)};\n${ind}});\n`;
           if (this.ctx.boundInputVars.includes(s.target)) {
             code += `${ind}_${s.target}Controller.text = ${s.target};\n`;
@@ -2512,6 +2609,9 @@ export class CodeGenerator {
       throw new TranspileError(`Unsupported event handler action type: ${action.type}`, action.loc?.line ?? 1, action.loc?.column ?? 1);
     }
 
+    if (this.ctx.stateVars.includes(action.target)) {
+      this.checkIntDivideAssignment(action.target, action.value);
+    }
     const dartExpr = this.exprToDart(action.value);
 
     if (this.ctx.stateVars.includes(action.target)) {
@@ -2621,7 +2721,18 @@ export class CodeGenerator {
           ? `(${this.exprToDart(expr.right)})`
           : this.exprToDart(expr.right);
         if (expr.op === '+' && isStringExpr(expr)) {
-          return `${leftStr}.toString() + ${rightStr}.toString()`;
+          // Mum's `HELP.md` 2026-04-26: hot-reload on Flutter Web can leave a
+          // previously-defined reference as JS undefined; `.toString()` on
+          // undefined throws. Wrap operands that could be undefined in
+          // `((x) as dynamic)?.toString() ?? ''`. Skip the wrap for literals
+          // and nested string-concat results — those are guaranteed non-null.
+          const isSafe = (e: Expr): boolean =>
+            e.type === 'StringLit' ||
+            e.type === 'NumberLit' ||
+            (e.type === 'BinaryExpr' && e.op === '+');
+          const guard = (s: string, e: Expr) =>
+            isSafe(e) ? `${s}.toString()` : `(((${s}) as dynamic)?.toString() ?? '')`;
+          return `${guard(leftStr, expr.left)} + ${guard(rightStr, expr.right)}`;
         }
         if (expr.op === 'and') return `${leftStr} && ${rightStr}`;
         if (expr.op === 'or') return `${leftStr} || ${rightStr}`;
@@ -2682,6 +2793,14 @@ export class CodeGenerator {
       // and double. Added in v0.6.9 as a targeted fix to the "BMI displays
       // 21.456734..." gap flagged by 4/4 cold-test models.
       return `${args[0]}.toStringAsFixed(${args[1]})`;
+    }
+    if (call.name === 'floor' && args.length === 1) {
+      // `floor(x)` returns the largest int <= x. Added in v0.14.3 — needed
+      // for time formatting (`m = floor(s / 60)` extracts integer minutes
+      // from a float-divided value). Surfaced 2026-04-26 by pomodonut
+      // browser-test: format_time(s) couldn't display correct MM:SS without
+      // integer extraction since Igni's `/` is always float division.
+      return `(${args[0]}).floor()`;
     }
     if (call.name === 'without' && args.length === 2) {
       return `${args[0]}.where((e) => e != ${args[1]}).toList()`;
@@ -2768,7 +2887,13 @@ export class CodeGenerator {
       case 'FieldAccess':
       case 'IndexAccess':
       case 'FunctionCall':
-        return this.exprToDart(expr) + '.toString()';
+        // Null-safe coercion: hot reload on Flutter Web can leave a previously-
+        // valid reference as JS undefined while old widget state is still
+        // mounted (mum's `HELP.md` 2026-04-26: `Cannot read properties of
+        // undefined (reading 'Symbol(dartx.toString)')`). `?.toString() ?? ''`
+        // returns '' for null/undefined; the outer parens keep `??` from
+        // grabbing the `+` neighbours in concatenated label strings.
+        return '(((' + this.exprToDart(expr) + ') as dynamic)?.toString() ?? \'\')';
       case 'LambdaExpr':
       case 'EqualityExpr':
       case 'InExpr':
@@ -2820,6 +2945,13 @@ export class CodeGenerator {
       for (const item of screen.body) {
         if (item.type === 'FunctionDef' && checkStmts(item.body)) return true;
         if (item.type === 'VariableDecl' && checkExpr(item.value)) return true;
+        // v0.14.2: `every` blocks also count toward the program-level builtin
+        // detection (used to gate imports). Without this, a `play()` /
+        // `random()` / etc. called only inside an `every` block emits the
+        // field initialiser (detectBuiltinInScreen catches it) but skips
+        // the corresponding import (detectBuiltin missed it). Caught
+        // 2026-04-26 during pomodonut browser-test.
+        if (item.type === 'Every' && checkStmts(item.body)) return true;
       }
     }
     return false;

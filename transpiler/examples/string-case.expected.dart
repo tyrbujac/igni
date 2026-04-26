@@ -25,17 +25,17 @@ class _StringCaseScreenState extends State<StringCaseScreen> {
         child: Column(
           children: [
             Text(
-              level.toString().toUpperCase().toString(),
+              (((level.toString().toUpperCase()) as dynamic)?.toString() ?? ''),
               style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),
             Text(
-              title.toString().toLowerCase().toString(),
+              (((title.toString().toLowerCase()) as dynamic)?.toString() ?? ''),
               style: Theme.of(context).textTheme.bodyLarge!,
             ),
             const SizedBox(height: 16),
             Text(
-              'info'.toString().toUpperCase().toString(),
+              ((('info'.toString().toUpperCase()) as dynamic)?.toString() ?? ''),
               style: TextStyle(color: Colors.green),
             ),
             const SizedBox(height: 16),

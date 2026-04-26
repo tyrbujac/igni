@@ -136,7 +136,7 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
               const SizedBox(height: 16),
               if (winner.isEmpty) ...[
                 Text(
-                  'Turn: '.toString() + player.toString(),
+                  'Turn: '.toString() + (((player) as dynamic)?.toString() ?? ''),
                 ),
               ] else ...[
                 if (winner == 'draw') ...[
@@ -146,7 +146,7 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
                   ),
                 ] else ...[
                   Text(
-                    winner.toString() + ' wins!'.toString(),
+                    (((winner) as dynamic)?.toString() ?? '') + ' wins!'.toString(),
                     style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: _igniColorValue(context, color_for(winner))),
                   ),
                 ],

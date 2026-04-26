@@ -33,7 +33,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 itemBuilder: (context, index) {
                   final post = posts[index];
                   return Text(
-                    post['title'].toString(),
+                    (((post['title']) as dynamic)?.toString() ?? ''),
                   );
                 },
               ),

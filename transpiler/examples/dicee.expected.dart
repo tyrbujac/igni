@@ -39,7 +39,7 @@ class _DiceeScreenState extends State<DiceeScreen> {
                 roll();
               },
               child: Image.asset(
-              'assets/' + 'dice'.toString() + die1.toString().toString() + '.png'.toString(),
+              'assets/' + 'dice'.toString() + (((die1) as dynamic)?.toString() ?? '').toString() + '.png'.toString(),
               width: 120,
               height: 120,
               fit: BoxFit.cover,
@@ -51,7 +51,7 @@ class _DiceeScreenState extends State<DiceeScreen> {
                 roll();
               },
               child: Image.asset(
-              'assets/' + 'dice'.toString() + die2.toString().toString() + '.png'.toString(),
+              'assets/' + 'dice'.toString() + (((die2) as dynamic)?.toString() ?? '').toString() + '.png'.toString(),
               width: 120,
               height: 120,
               fit: BoxFit.cover,

@@ -47,17 +47,17 @@ class _CartScreenState extends State<CartScreen> {
             const SizedBox(height: 16),
             for (final (_i, item) in items.indexed) ...[
               Text(
-                item['name'].toString() + ' - \$'.toString().toString() + item['price'].toString(),
+                (((item['name']) as dynamic)?.toString() ?? '') + ' - \$'.toString().toString() + (((item['price']) as dynamic)?.toString() ?? ''),
               ),
               if (_i < items.length - 1) const SizedBox(height: 16),
             ],
             const SizedBox(height: 16),
             Text(
-              'Total: \$'.toString() + total().toString(),
+              'Total: \$'.toString() + (((total()) as dynamic)?.toString() ?? ''),
             ),
             const SizedBox(height: 16),
             Text(
-              status().toString(),
+              (((status()) as dynamic)?.toString() ?? ''),
             ),
           ],
         ),

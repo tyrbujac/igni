@@ -91,7 +91,7 @@ class _TodoScreenState extends State<TodoScreen> {
                 Row(
                   children: [
                     Text(
-                      item['text'].toString(),
+                      (((item['text']) as dynamic)?.toString() ?? ''),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(

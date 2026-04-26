@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-flash-lite-preview",
+  "model_id": "gemini-3.1-flash-lite-preview",
+  "prompt_name": "Multiple overrides + user-defined tokens",
+  "prompt_slug": "multiple-overrides-user-defined-tokens",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.15.0-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.15.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "94059bea76a17206e267b7db83b44f8d765625b3348e962371e1144cfa0f5d50",
+  "spec_words": 3657,
+  "timestamp": "2026-04-26T14:14:42.032Z",
+  "duration_ms": 1269,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 6923,
+    "output_tokens": 165,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.00197825,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "error_category": null,
+    "igni_lines": 18
+  }
+}

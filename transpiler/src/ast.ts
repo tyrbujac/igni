@@ -331,9 +331,19 @@ export interface ThemeTextToken extends NodeBase {
   font?: string;
 }
 
+// v0.15.0: theme: color: <token>: "<hex>"
+// Either an override of a built-in colour token, or a user-defined token.
+// `name` is post-flattening (Figma `brand/border/subtle` → `brand_border_subtle`).
+export interface ThemeColorToken extends NodeBase {
+  type: 'ThemeColorToken';
+  name: string;
+  hex: string;
+}
+
 export interface ThemeBlock extends NodeBase {
   type: 'ThemeBlock';
   text: ThemeTextToken[];
+  color: ThemeColorToken[];
 }
 
 export interface Program extends NodeBase {

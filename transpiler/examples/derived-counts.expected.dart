@@ -27,21 +27,21 @@ class _DerivedCountsScreenState extends State<DerivedCountsScreen> {
         child: Column(
           children: [
             Text(
-              critical.toString() + ' critical'.toString(),
+              (((critical) as dynamic)?.toString() ?? '') + ' critical'.toString(),
               style: Theme.of(context).textTheme.headlineSmall!,
             ),
             const SizedBox(height: 16),
             Text(
-              warning.toString() + ' warning'.toString(),
+              (((warning) as dynamic)?.toString() ?? '') + ' warning'.toString(),
             ),
             const SizedBox(height: 16),
             Text(
-              info.toString() + ' info'.toString(),
+              (((info) as dynamic)?.toString() ?? '') + ' info'.toString(),
             ),
             const SizedBox(height: 16),
             for (final (_i, item) in items.indexed) ...[
               Text(
-                item['level'].toString().toUpperCase().toString() + ' — '.toString().toString() + item['name'].toString(),
+                (((item['level'].toString().toUpperCase()) as dynamic)?.toString() ?? '') + ' — '.toString().toString() + (((item['name']) as dynamic)?.toString() ?? ''),
               ),
               if (_i < items.length - 1) const SizedBox(height: 16),
             ],

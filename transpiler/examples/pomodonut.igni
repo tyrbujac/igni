@@ -26,7 +26,7 @@ screen Pomodonut, title: "Pomodonut":
   layout vertical, gap: large, padding: large, align: center:
     label segment_label(), style: heading, color: segment_color()
     label format_time(remaining()), style: heading
-    layout horizontal, gap: medium:
+    layout horizontal, gap: medium, align: center:
       if running:
         button "Pause", color: subtle, on tap: pause()
       else:
@@ -74,7 +74,7 @@ screen Pomodonut, title: "Pomodonut":
     tick = now()
 
   format_time(s):
-    m = s / 60
+    m = floor(s / 60)
     sec = s - m * 60
     return pad(m) + ":" + pad(sec)
 

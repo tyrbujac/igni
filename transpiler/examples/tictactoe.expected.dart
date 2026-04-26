@@ -93,7 +93,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
               const SizedBox(height: 16),
               if (winner.isEmpty) ...[
                 Text(
-                  'Your move, '.toString() + player.toString(),
+                  'Your move, '.toString() + (((player) as dynamic)?.toString() ?? ''),
                 ),
               ] else ...[
                 if (winner == 'draw') ...[
@@ -103,7 +103,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
                   ),
                 ] else ...[
                   Text(
-                    winner.toString() + ' takes it!'.toString(),
+                    (((winner) as dynamic)?.toString() ?? '') + ' takes it!'.toString(),
                     style: Theme.of(context).textTheme.headlineSmall!,
                   ),
                 ],
@@ -129,7 +129,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    (row_start + offset >= 0 && row_start + offset < cells.length ? cells[row_start + offset] : null)['mark'].toString(),
+                                    ((((row_start + offset >= 0 && row_start + offset < cells.length ? cells[row_start + offset] : null)['mark']) as dynamic)?.toString() ?? ''),
                                     style: Theme.of(context).textTheme.headlineLarge!,
                                   ),
                                 ],

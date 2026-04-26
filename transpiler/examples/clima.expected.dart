@@ -62,7 +62,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
 
   Future<void> _fetchForecast() async {
     try {
-      final response = await http.get(Uri.parse('https://api.example.com/forecast?c='.toString() + coords.toString()));
+      final response = await http.get(Uri.parse('https://api.example.com/forecast?c='.toString() + (((coords) as dynamic)?.toString() ?? '')));
       if (response.statusCode == 200) {
         setState(() {
           forecast = jsonDecode(response.body);
@@ -84,7 +84,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _currentForecastUrl = 'https://api.example.com/forecast?c='.toString() + coords.toString();
+    final _currentForecastUrl = 'https://api.example.com/forecast?c='.toString() + (((coords) as dynamic)?.toString() ?? '');
     if (_currentForecastUrl != _lastForecastUrl) {
       _lastForecastUrl = _currentForecastUrl;
       _forecastLoading = true;
@@ -111,7 +111,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
                   style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                   onPressed: () {
                     setState(() {
-                      coords = here['latitude'].toStringAsFixed(4).toString() + ','.toString().toString() + here['longitude'].toStringAsFixed(4).toString();
+                      coords = (((here['latitude'].toStringAsFixed(4)) as dynamic)?.toString() ?? '') + ','.toString().toString() + (((here['longitude'].toStringAsFixed(4)) as dynamic)?.toString() ?? '');
                     });
                   },
                   child: const Text('Get forecast'),
@@ -128,7 +128,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
                   ),
                 ] else ...[
                   Text(
-                    forecast['summary'].toString(),
+                    (((forecast['summary']) as dynamic)?.toString() ?? ''),
                   ),
                 ],
               ],

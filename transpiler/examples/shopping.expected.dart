@@ -76,11 +76,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     Column(
                       children: [
                         Text(
-                          product['name'].toString(),
+                          (((product['name']) as dynamic)?.toString() ?? ''),
                           style: Theme.of(context).textTheme.headlineSmall!,
                         ),
                         Text(
-                          '\$'.toString() + product['price'].toString(),
+                          '\$'.toString() + (((product['price']) as dynamic)?.toString() ?? ''),
                         ),
                       ],
                     ),
@@ -167,11 +167,11 @@ class _CartScreenState extends State<CartScreen> {
                       Column(
                         children: [
                           Text(
-                            item['name'].toString(),
+                            (((item['name']) as dynamic)?.toString() ?? ''),
                             style: Theme.of(context).textTheme.headlineSmall!,
                           ),
                           Text(
-                            '\$'.toString() + item['price'].toString().toString() + ' (Qty: '.toString().toString() + item['quantity'].toString().toString() + ')'.toString(),
+                            '\$'.toString() + (((item['price']) as dynamic)?.toString() ?? '').toString() + ' (Qty: '.toString().toString() + (((item['quantity']) as dynamic)?.toString() ?? '').toString() + ')'.toString(),
                           ),
                         ],
                       ),
@@ -188,7 +188,7 @@ class _CartScreenState extends State<CartScreen> {
               ],
               const Divider(),
               Text(
-                'Total: \$'.toString() + cart_total().toString(),
+                'Total: \$'.toString() + (((cart_total()) as dynamic)?.toString() ?? ''),
                 style: Theme.of(context).textTheme.headlineSmall!,
               ),
             ],

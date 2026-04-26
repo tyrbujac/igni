@@ -73,7 +73,7 @@ class _DemoScreenState extends State<DemoScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Volume: '.toString() + volume.toString(),
+              'Volume: '.toString() + (((volume) as dynamic)?.toString() ?? ''),
             ),
             const SizedBox(height: 16),
             CheckboxListTile(
@@ -97,7 +97,7 @@ class _DemoScreenState extends State<DemoScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Selected: '.toString() + selected.toString(),
+              'Selected: '.toString() + (((selected) as dynamic)?.toString() ?? ''),
             ),
             const SizedBox(height: 16),
             const Divider(),

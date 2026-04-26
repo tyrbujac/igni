@@ -1,0 +1,5 @@
+
+  Error: align takes start, center, or end (RTL-safe vocabulary). Got "right". Use "end" — in a left-to-right layout, "end" means right; in right-to-left, it means left.
+
+    align-unknown.igni:2 |   layout vertical, align: right:
+                         |                                ^

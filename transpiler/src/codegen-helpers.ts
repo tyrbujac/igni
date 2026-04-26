@@ -1,4 +1,5 @@
 import { Expr, Property } from './ast.js';
+import { TranspileError } from './errors.js';
 
 export const DESIGN_TOKENS: Record<string, number> = {
   small: 8,
@@ -121,7 +122,35 @@ export function resolveAlign(expr: Expr): string {
   if (expr.type === 'Ident' && expr.name in ALIGN_MAP) {
     return ALIGN_MAP[expr.name];
   }
-  return 'MainAxisAlignment.start';
+  const loc = expr.loc;
+  if (expr.type === 'Ident') {
+    if (expr.name === 'right') {
+      throw new TranspileError(
+        `align takes start, center, or end (RTL-safe vocabulary). Got "right". ` +
+        `Use "end" — in a left-to-right layout, "end" means right; in right-to-left, it means left.`,
+        loc?.line ?? 0,
+        loc?.column ?? 0,
+      );
+    }
+    if (expr.name === 'left') {
+      throw new TranspileError(
+        `align takes start, center, or end (RTL-safe vocabulary). Got "left". ` +
+        `Use "start" — in a left-to-right layout, "start" means left; in right-to-left, it means right.`,
+        loc?.line ?? 0,
+        loc?.column ?? 0,
+      );
+    }
+    throw new TranspileError(
+      `align takes start, center, or end (RTL-safe vocabulary). Got "${expr.name}".`,
+      loc?.line ?? 0,
+      loc?.column ?? 0,
+    );
+  }
+  throw new TranspileError(
+    `align expects an identifier — start, center, or end.`,
+    loc?.line ?? 0,
+    loc?.column ?? 0,
+  );
 }
 
 export function isImageBackground(expr: Expr): boolean {
@@ -140,30 +169,82 @@ export function isDarkBackgroundExpr(expr: Expr | undefined): boolean {
   return DARK_BACKGROUND_NAMES.has(expr.name);
 }
 
-export function resolveBackground(expr: Expr): string {
+export function resolveBackground(expr: Expr, themeColors?: Record<string, string>): string {
+  // v0.15.0: inline hex codes outside theme: blocks are rejected. (Image-string
+  // backgrounds — e.g. `background: "sunset.jpg"` — are still valid; only `#`-
+  // prefixed strings are treated as inline-hex attempts.)
+  if (expr.type === 'StringLit' && expr.value.startsWith('#')) {
+    const loc = expr.loc;
+    throw new TranspileError(
+      `Inline hex colours are not supported. Use a token from \`theme: color:\` ` +
+      `or one of the 12 built-in tokens. ` +
+      `Define a theme: color: token (e.g. \`my_red: "${expr.value}"\`) and reference it by name.`,
+      loc?.line ?? 0,
+      loc?.column ?? 0,
+    );
+  }
   if (expr.type === 'Ident') {
     if (expr.name === 'card') return 'Theme.of(context).cardColor';
     if (expr.name === 'overlay') return 'Colors.black54';
+    if (themeColors && expr.name in themeColors) return hexToDartColor(themeColors[expr.name]);
     if (expr.name in COLOR_MAP) return COLOR_MAP[expr.name];
   }
   return 'Theme.of(context).cardColor';
 }
 
-export function resolveColor(expr: Expr): string {
-  if (expr.type === 'Ident' && expr.name in COLOR_MAP) {
-    return COLOR_MAP[expr.name];
+// v0.15.0: convert "#RRGGBB" hex to Dart Color literal. Parser enforces
+// 6-digit form only — shorthand "#RGB" is a parse error per spec §theme: color:.
+export function hexToDartColor(hex: string): string {
+  const h = hex.startsWith('#') ? hex.slice(1) : hex;
+  return `const Color(0xFF${h.toUpperCase()})`;
+}
+
+export function resolveColor(expr: Expr, themeColors?: Record<string, string>): string {
+  // v0.15.0: inline hex codes outside theme: blocks are rejected.
+  if (expr.type === 'StringLit' && expr.value.startsWith('#')) {
+    const loc = expr.loc;
+    throw new TranspileError(
+      `Inline hex colours are not supported. Use a token from \`theme: color:\` ` +
+      `or one of the 12 built-in tokens (brand, subtle, danger, green, red, blue, ` +
+      `white, black, yellow, orange, purple, teal). ` +
+      `Define a theme: color: token (e.g. \`my_red: "${expr.value}"\`) and reference it by name.`,
+      loc?.line ?? 0,
+      loc?.column ?? 0,
+    );
+  }
+  if (expr.type === 'Ident') {
+    if (themeColors && expr.name in themeColors) {
+      return hexToDartColor(themeColors[expr.name]);
+    }
+    if (expr.name in COLOR_MAP) {
+      return COLOR_MAP[expr.name];
+    }
   }
   return 'Colors.grey';
 }
 
-export function generateStyleValueResolvers(): string {
-  const colorCases = Object.entries(COLOR_MAP)
-    .map(([name, color]) => `    case '${name}': return ${color};`)
+export function generateStyleValueResolvers(themeColors: Record<string, string> = {}): string {
+  // v0.15.0: theme.color overrides built-in token resolution; user-defined
+  // tokens add new cases. Iterate themeColors *first* and skip those names
+  // when emitting COLOR_MAP cases, so overrides win without duplicate cases.
+  const themeCases = Object.entries(themeColors)
+    .map(([name, hex]) => `    case '${name}': return ${hexToDartColor(hex)};`)
     .join('\n');
+  const colorCases = [
+    themeCases,
+    Object.entries(COLOR_MAP)
+      .filter(([name]) => !(name in themeColors))
+      .map(([name, color]) => `    case '${name}': return ${color};`)
+      .join('\n'),
+  ].filter(s => s).join('\n');
   const backgroundCases = [
     `    case 'card': return Theme.of(context).cardColor;`,
-    ...Object.entries(COLOR_MAP).map(([name, color]) => `    case '${name}': return ${color};`),
-  ].join('\n');
+    themeCases,
+    Object.entries(COLOR_MAP)
+      .filter(([name]) => !(name in themeColors))
+      .map(([name, color]) => `    case '${name}': return ${color};`)
+      .join('\n'),
+  ].filter(s => s).join('\n');
   return `Color _igniColorValue(BuildContext context, dynamic value) {
   if (value is Color) return value;
   switch (value) {

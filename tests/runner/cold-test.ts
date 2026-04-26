@@ -13,7 +13,7 @@
 // --thinking is routed to Anthropic + Google models; --effort to OpenAI.
 // Flags inapplicable to a given model are dropped automatically.
 
-import { spawnSync } from 'node:child_process';
+import { spawnSync, spawn } from 'node:child_process';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, basename, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,6 +39,7 @@ type Args = {
   maxTokens: string | null;
   noGrade: boolean;
   grep: string | null;
+  parallel: boolean;
 };
 
 function die(msg: string): never {
@@ -68,6 +69,13 @@ Optional:
   --no-grade         Skip transpile auto-grade (for prose-output prompts).
   --grep <pattern>   Regex; counts matches per output .md, prints in summary.
                      Use for adoption checks (e.g. --grep 'max_width:').
+  --parallel         Run providers concurrently (within-provider stays
+                     sequential for rate-limit safety). 4-model panels
+                     typically hit ~3 concurrent pipelines (anthropic +
+                     openai + google). Speeds iteration ~3-4×. NOT recom-
+                     mended for canonical ship-validation runs (Stage 0 /
+                     Stage 3) — sequential default keeps request ordering
+                     deterministic for dissertation reproducibility.
 
 Provider routing (matches run.ts):
   claude-*        → anthropic   (--thinking applies)
@@ -76,7 +84,10 @@ Provider routing (matches run.ts):
   gemma*, ...     → ollama      (neither applies)
 
 After all runs complete, prints a summary table: per cell transpile
-status, optional grep count, cost. Sequential execution (rate-limit-safe).
+status, optional grep count, cost. Sequential execution by default
+(rate-limit-safe + deterministic for canonical runs). --parallel groups
+models by provider and runs cross-provider concurrent, within-provider
+sequential.
 `);
 }
 
@@ -92,6 +103,7 @@ function parseArgs(argv: string[]): Args {
     maxTokens: null,
     noGrade: false,
     grep: null,
+    parallel: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -106,6 +118,7 @@ function parseArgs(argv: string[]): Args {
     else if (a === '--max-tokens') args.maxTokens = next();
     else if (a === '--no-grade') args.noGrade = true;
     else if (a === '--grep') args.grep = next();
+    else if (a === '--parallel') args.parallel = true;
     else if (a === '--help' || a === '-h') { usage(); process.exit(0); }
     else die(`unknown arg: ${a}`);
   }
@@ -183,13 +196,9 @@ function printSummary(args: Args): void {
   if (args.grep) console.log(`Total ${args.grep} matches: ${totalGrep}`);
 }
 
-function main(): void {
-  const args = parseArgs(process.argv.slice(2));
-
-  console.log(`cold-test — ${args.models.length} models × prompts (${basename(args.prompts)})`);
-  console.log(`  panel: ${args.models.join(', ')}`);
-  console.log(`  out:   ${args.out}\n`);
-
+// Sequential mode (canonical for ship-validation): per v0.13/v0.14/v0.15.0
+// precedent. stdio: 'inherit' streams output live for terminal observability.
+function runSequential(args: Args): void {
   for (let i = 0; i < args.models.length; i++) {
     const model = args.models[i];
     const provider = inferProviderFromModel(model);
@@ -202,8 +211,93 @@ function main(): void {
     }
     console.log('');
   }
+}
+
+// Parallel mode: groups models by provider, runs cross-provider concurrent +
+// within-provider sequential. Conservative w.r.t. Gemini rate limits (two
+// gemini-* models in the default panel run sequentially within their group).
+// Output is captured per-model and printed on each model's completion (no
+// interleaving). Speeds iteration ~3-4× for the typical 4-model panel.
+//
+// NOTE: parallelism breaks request-completion ordering. NOT recommended for
+// canonical ship-validation runs whose outputs get cited in dissertation
+// methodology — sequential mode keeps the order deterministic. Use --parallel
+// for iterative work (Stage 2 panels mid-design, A/B variants), sequential
+// for v<X>-stage0/v<X>-stage3 ship validation.
+function runOneModel(args: Args, model: string): Promise<void> {
+  return new Promise((resolveP, reject) => {
+    const provider = inferProviderFromModel(model);
+    const runArgs = buildRunArgs(args, model);
+    const startedAt = Date.now();
+    console.log(`[${model}] starting (${provider})`);
+    const child = spawn('npx', runArgs, { cwd: HERE });
+    let buffer = '';
+    child.stdout.on('data', d => { buffer += d.toString(); });
+    child.stderr.on('data', d => { buffer += d.toString(); });
+    child.on('close', code => {
+      const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+      if (code !== 0) {
+        console.error(`[${model}] FAIL (exit ${code}) after ${elapsed}s`);
+        process.stderr.write(buffer);
+        reject(new Error(`${model} exited ${code}`));
+        return;
+      }
+      console.log(`[${model}] done in ${elapsed}s`);
+      // Print buffered output indented for clarity. The terminal already
+      // shows interleaved start/done markers so we know which output is
+      // whose; the indent is a visual separator.
+      for (const line of buffer.split('\n')) {
+        if (line) console.log(`  ${line}`);
+      }
+      console.log('');
+      resolveP();
+    });
+    child.on('error', reject);
+  });
+}
+
+async function runParallel(args: Args): Promise<void> {
+  // Group models by provider — within-provider stays sequential to avoid
+  // hitting per-provider rate limits (especially Gemini). Cross-provider
+  // groups run concurrently via Promise.all.
+  const byProvider = new Map<string, string[]>();
+  for (const model of args.models) {
+    const provider = inferProviderFromModel(model);
+    if (!byProvider.has(provider)) byProvider.set(provider, []);
+    byProvider.get(provider)!.push(model);
+  }
+  console.log(`=== parallel mode: ${byProvider.size} provider groups, ${args.models.length} cells total ===\n`);
+  for (const [provider, models] of byProvider) {
+    console.log(`  ${provider}: ${models.join(', ')}`);
+  }
+  console.log('');
+
+  const groupPromises = Array.from(byProvider.values()).map(async (models) => {
+    for (const model of models) {
+      await runOneModel(args, model);
+    }
+  });
+  await Promise.all(groupPromises);
+}
+
+async function main(): Promise<void> {
+  const args = parseArgs(process.argv.slice(2));
+
+  console.log(`cold-test — ${args.models.length} models × prompts (${basename(args.prompts)})`);
+  console.log(`  panel: ${args.models.join(', ')}`);
+  console.log(`  out:   ${args.out}`);
+  console.log(`  mode:  ${args.parallel ? 'parallel (per-provider grouped)' : 'sequential (canonical)'}\n`);
+
+  if (args.parallel) {
+    await runParallel(args);
+  } else {
+    runSequential(args);
+  }
 
   printSummary(args);
 }
 
-main();
+main().catch(err => {
+  console.error('cold-test failed:', err.message);
+  process.exit(1);
+});

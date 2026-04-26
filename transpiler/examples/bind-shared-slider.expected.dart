@@ -102,7 +102,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              shared.step.toString(),
+              (((shared.step) as dynamic)?.toString() ?? ''),
             ),
             const SizedBox(height: 16),
             ElevatedButton(

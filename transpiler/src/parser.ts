@@ -9,7 +9,7 @@ import {
   IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
   ListLit, ObjectLit, ObjectUpdate, FieldAccess, IndexAccess,
-  ThemeBlock, ThemeTextToken, ThemeTextTokenName,
+  ThemeBlock, ThemeTextToken, ThemeTextTokenName, ThemeColorToken,
 } from './ast.js';
 
 const FONT_TOKENS = new Set([
@@ -130,7 +130,7 @@ export class Parser {
     this.consume(TokenType.Shared, 'Expected "shared"');
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint('shared:'));
     const vars: VariableDecl[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       const posBefore = this.pos;
@@ -155,8 +155,9 @@ export class Parser {
     this.consume(TokenType.Theme, 'Expected "theme"');
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint('theme:'));
     let text: ThemeTextToken[] | undefined;
+    let color: ThemeColorToken[] | undefined;
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       const posBefore = this.pos;
       try {
@@ -168,13 +169,16 @@ export class Parser {
         if (subName === 'text') {
           if (text !== undefined) this.error('Duplicate `text:` sub-block in theme');
           text = this.parseThemeTextSubBlock();
-        } else if (subName === 'spacing' || subName === 'color') {
+        } else if (subName === 'color') {
+          if (color !== undefined) this.error('Duplicate `color:` sub-block in theme');
+          color = this.parseThemeColorSubBlock();
+        } else if (subName === 'spacing') {
           this.error(
-            `theme \`${subName}:\` sub-block is not live in v0.12.1 — only \`text:\` is supported. ` +
-            `See spec v0.12.1 §Styling.`
+            `theme \`spacing:\` sub-block is planned for v0.15.1 — not yet live. ` +
+            `Currently supported: \`text:\` (v0.12.1+), \`color:\` (v0.15.0+).`
           );
         } else {
-          this.error(`Unknown theme sub-block "${subName}" — only \`text:\` is supported in v0.12.1.`);
+          this.error(`Unknown theme sub-block "${subName}" — supported: \`text:\`, \`color:\`.`);
         }
       } catch (e) {
         if (e instanceof TranspileError) {
@@ -187,7 +191,7 @@ export class Parser {
       this.assertProgress(posBefore);
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
-    return { type: 'ThemeBlock', text: text ?? [], loc: this.loc(start) };
+    return { type: 'ThemeBlock', text: text ?? [], color: color ?? [], loc: this.loc(start) };
   }
 
   // Recovery inside theme/text sub-blocks: advance past the current line, then
@@ -219,7 +223,7 @@ export class Parser {
     this.consume(TokenType.Identifier, 'Expected "text"'); // already verified by caller
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint('text:'));
     const tokens: ThemeTextToken[] = [];
     const seen = new Set<string>();
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
@@ -305,6 +309,76 @@ export class Parser {
     return tokens;
   }
 
+  // v0.15.0: theme: color: <token>: "<hex>"
+  // <token> accepts any lower-case identifier (underscores allowed). Built-in
+  // names (brand/subtle/danger/etc.) are valid as overrides; other names are
+  // user-defined tokens that codegen treats the same way.
+  // <hex> is "#RRGGBB" or "#RGB". Anything else is a parse error.
+  private parseThemeColorSubBlock(): ThemeColorToken[] {
+    this.consume(TokenType.Identifier, 'Expected "color"');
+    this.consume(TokenType.Colon, 'Expected ":"');
+    this.consume(TokenType.Newline, 'Expected newline');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint('color:'));
+    const tokens: ThemeColorToken[] = [];
+    const seen = new Set<string>();
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      const posBefore = this.pos;
+      try {
+        const nameTok = this.current();
+        if (nameTok.type !== TokenType.Identifier) {
+          this.error(`Expected theme color token name, got "${nameTok.value}"`);
+        }
+        const name = nameTok.value;
+        if (!/^[a-z][a-z0-9_]*$/.test(name)) {
+          this.error(
+            `theme color token \`${name}\` must be a lower-case identifier ` +
+            `(letters, digits, underscores; starts with a letter). ` +
+            `For Figma nested groups, flatten with underscore: e.g. \`brand_border_subtle\`.`
+          );
+        }
+        if (seen.has(name)) {
+          this.error(`Duplicate theme color token \`${name}\`.`);
+        }
+        seen.add(name);
+        this.advance();
+        this.consume(TokenType.Colon, 'Expected ":"');
+        const valueTok = this.current();
+        if (valueTok.type !== TokenType.String) {
+          throw new TranspileError(
+            `theme color \`${name}\`: value must be a hex string like "#RRGGBB" or "#RGB", got ${valueTok.type}.`,
+            valueTok.line, valueTok.column,
+          );
+        }
+        const hex = valueTok.value;
+        if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+          throw new TranspileError(
+            `theme color \`${name}\`: invalid hex \`${hex}\`. Expected "#RRGGBB" (6-digit hex). ` +
+            `Shorthand "#RGB" is not supported — use full 6-digit form to keep one canonical syntax.`,
+            valueTok.line, valueTok.column,
+          );
+        }
+        this.advance();
+        this.consume(TokenType.Newline, 'Expected newline');
+        tokens.push({
+          type: 'ThemeColorToken',
+          name,
+          hex,
+          loc: this.loc(nameTok),
+        });
+      } catch (e) {
+        if (e instanceof TranspileError) {
+          this.errors.push(e);
+          this.synchronizeThemeLine();
+        } else {
+          throw e;
+        }
+      }
+      this.assertProgress(posBefore);
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent');
+    return tokens;
+  }
+
   // -- Top-level --
 
   private parseScreen(): Screen {
@@ -330,7 +404,7 @@ export class Parser {
     }
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint(`screen ${name}:`));
     const body = this.parseScreenBody();
     this.consume(TokenType.Dedent, 'Expected dedent');
     return { type: 'Screen', name, params, properties, body, loc: this.loc(start) };
@@ -500,7 +574,19 @@ export class Parser {
         this.consume(TokenType.Dedent, 'Expected dedent');
       }
     } else {
+      // No colon — could be a legitimate empty layout (v0.13 `fill:`/`on
+      // touch:` interactive surfaces with no children), or the user forgot
+      // the colon and indented children below. Disambiguate by peeking past
+      // the newline: if next is Indent, it's the latter — error.
+      const colonPos = this.current();
       this.consume(TokenType.Newline, 'Expected newline');
+      if (this.check(TokenType.Indent)) {
+        throw new TranspileError(
+          `Expected ":" — this layout has indented content below, so it needs a colon to attach it. (For an empty layout with no children, leave the next line at the same indent.)`,
+          colonPos.line,
+          colonPos.column,
+        );
+      }
     }
     return { type: 'Layout', direction, properties, events, children, loc: this.loc(start) };
   }
@@ -682,7 +768,7 @@ export class Parser {
 
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint(`each ${variable} in ...:`));
     const children: UINode[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       children.push(this.parseUINode());
@@ -707,7 +793,7 @@ export class Parser {
     this.consume(TokenType.RParen, 'Expected ")"');
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint(`component ${name}(...):`));
     const body: ComponentItem[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       const posBefore = this.pos;
@@ -770,7 +856,7 @@ export class Parser {
     if (this.check(TokenType.Colon)) {
       this.advance(); // consume :
       this.consume(TokenType.Newline, 'Expected newline');
-      this.consume(TokenType.Indent, 'Expected indent');
+      this.consume(TokenType.Indent, 'Expected indent', this.indentHint(`${name} ...:`));
       while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
         children.push(this.parseUINode());
       }
@@ -794,7 +880,7 @@ export class Parser {
     const condition = this.parseExpr();
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint('if ...:'));
     const then: (UINode | VariableDecl)[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       then.push(this.parseIfBodyItem(allowAssignments));
@@ -811,7 +897,7 @@ export class Parser {
         const cond = this.parseExpr();
         this.consume(TokenType.Colon, 'Expected ":"');
         this.consume(TokenType.Newline, 'Expected newline');
-        this.consume(TokenType.Indent, 'Expected indent');
+        this.consume(TokenType.Indent, 'Expected indent', this.indentHint('else if ...:'));
         const body: (UINode | VariableDecl)[] = [];
         while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
           body.push(this.parseIfBodyItem(allowAssignments));
@@ -821,7 +907,7 @@ export class Parser {
       } else {
         this.consume(TokenType.Colon, 'Expected ":"');
         this.consume(TokenType.Newline, 'Expected newline');
-        this.consume(TokenType.Indent, 'Expected indent');
+        this.consume(TokenType.Indent, 'Expected indent', this.indentHint('else:'));
         else_ = [];
         while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
           else_.push(this.parseIfBodyItem(allowAssignments));
@@ -946,7 +1032,7 @@ export class Parser {
     const condition = this.parseExpr();
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint('if ...:'));
     const then: Statement[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       then.push(this.parseStatement());
@@ -964,7 +1050,7 @@ export class Parser {
       } else {
         this.consume(TokenType.Colon, 'Expected ":"');
         this.consume(TokenType.Newline, 'Expected newline');
-        this.consume(TokenType.Indent, 'Expected indent');
+        this.consume(TokenType.Indent, 'Expected indent', this.indentHint('else:'));
         else_ = [];
         while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
           else_.push(this.parseStatement());
@@ -1008,7 +1094,7 @@ export class Parser {
 
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint(`every ${fullToken}:`));
     const body: Statement[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       body.push(this.parseStatement());
@@ -1026,7 +1112,7 @@ export class Parser {
     const list = this.parseExpr();
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint(`each ${variable} in ...:`));
     const body: Statement[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       body.push(this.parseStatement());
@@ -1456,12 +1542,19 @@ export class Parser {
     return tok;
   }
 
-  private consume(type: TokenType, message: string): Token {
+  private consume(type: TokenType, message: string, hint?: string): Token {
     this.skipComments();
     if (this.current().type === type) {
       return this.advance();
     }
-    return this.error(`${message}, got "${this.current().value}"`);
+    return this.error(`${message}, got "${this.current().value}"`, hint);
+  }
+
+  // Build the "Hint: did you forget to indent the line under `<opener>`?"
+  // string passed to consume(Indent, ...). Centralised so the wording stays
+  // consistent across the 15 block-opener call sites.
+  private indentHint(opener: string): string {
+    return `did you forget to indent the line under \`${opener}\`?`;
   }
 
   private skipComments(): void {
@@ -1481,8 +1574,8 @@ export class Parser {
     return { line: token.line, column: token.column };
   }
 
-  private error(message: string): never {
+  private error(message: string, hint?: string): never {
     const tok = this.current();
-    throw new TranspileError(message, tok.line, tok.column);
+    throw new TranspileError(message, tok.line, tok.column, hint);
   }
 }

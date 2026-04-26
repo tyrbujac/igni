@@ -1,0 +1,10 @@
+
+  Error: Expected ":" — this layout has indented content below, so it needs a colon to attach it. (For an empty layout with no children, leave the next line at the same indent.)
+
+    layout-no-colon.igni:2 |   layout vertical, align: center
+                           |                                 ^
+
+  Error: Expected "screen", got ""
+
+    layout-no-colon.igni:4 | 
+                           | ^

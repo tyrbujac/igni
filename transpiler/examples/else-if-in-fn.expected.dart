@@ -44,7 +44,7 @@ class _GraderScreenState extends State<GraderScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Grade: '.toString() + grade_for(score).toString(),
+              'Grade: '.toString() + (((grade_for(score)) as dynamic)?.toString() ?? ''),
               style: Theme.of(context).textTheme.headlineLarge!,
             ),
             const SizedBox(height: 16),

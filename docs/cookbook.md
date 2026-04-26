@@ -304,6 +304,18 @@ screen Editor:
 
 Put `fill: true` on every content section *above* the button — those sections share the remaining vertical space, and the un-`fill`ed button at the end naturally falls to the bottom. There's no special "bottom bar" syntax; bottom-anchoring is just a consequence of how `fill:` distributes space. Add more `fill: true` sections above the button and they all share equally.
 
+### Centre a row of buttons inside a centred column
+
+```igni
+layout vertical, padding: large, gap: large, align: center:
+  label "Pomodonut", style: heading
+  layout horizontal, gap: medium, align: center:    # ← align: center on the inner row too
+    button "Start", color: brand, on tap: start()
+    button "Reset", color: subtle, on tap: reset()
+```
+
+`align: center` on a vertical layout centres each direct child *as a box* — but a horizontal child's box defaults to filling the available width, so its own children (the buttons) cluster at the box's left edge. The fix is one extra `align: center` on the inner horizontal so it centres its own children too. The asymmetry shows up the first time you put two buttons side-by-side under a centred heading; once you've hit it, the rule is "centring nests — every layout level that should centre its children needs `align: center`." Surfaced 2026-04-26 by the pomodonut browser-test.
+
 ---
 
 ## Components
