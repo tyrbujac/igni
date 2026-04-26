@@ -1,0 +1,23 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.5",
+  "model_id": "gpt-5.5-2026-04-23",
+  "prompt_name": "Igni meta-review",
+  "prompt_slug": "igni-meta-review",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.15.0-meta-review/prompt.md",
+  "spec_path": null,
+  "spec_tier": "none",
+  "spec_sha256": null,
+  "spec_words": 0,
+  "timestamp": "2026-04-26T21:05:14.843Z",
+  "duration_ms": 125443,
+  "stop_reason": "length",
+  "usage": {
+    "input_tokens": 29604,
+    "output_tokens": 8192,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.39378,
+  "transpile": null
+}
