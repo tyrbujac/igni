@@ -2,26 +2,26 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 void main() {
-  runApp(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 17, height: 1.5))), home: ClockScreen()));
+  runApp(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 17, height: 1.5))), home: ScrubberScreen()));
 }
 
-class ClockScreen extends StatefulWidget {
-  const ClockScreen({super.key});
+class ScrubberScreen extends StatefulWidget {
+  const ScrubberScreen({super.key});
 
   @override
-  State<ClockScreen> createState() => _ClockScreenState();
+  State<ScrubberScreen> createState() => _ScrubberScreenState();
 }
 
-class _ClockScreenState extends State<ClockScreen> {
-  var tick = (DateTime.now().millisecondsSinceEpoch ~/ 1000);
+class _ScrubberScreenState extends State<ScrubberScreen> {
+  int pos = 0;
   Timer? _everyTimer0;
 
   @override
   void initState() {
     super.initState();
-    _everyTimer0 = Timer.periodic(const Duration(milliseconds: 1000), (_) {
+    _everyTimer0 = Timer.periodic(const Duration(milliseconds: 100), (_) {
       setState(() {
-        tick = (DateTime.now().millisecondsSinceEpoch ~/ 1000);
+        pos = pos + 1;
       });
     });
   }
@@ -42,7 +42,7 @@ class _ClockScreenState extends State<ClockScreen> {
         child: Column(
           children: [
             Text(
-              '$tick',
+              '$pos',
               style: Theme.of(context).textTheme.headlineLarge!,
             ),
           ],

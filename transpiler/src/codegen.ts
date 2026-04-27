@@ -6,7 +6,7 @@ import {
   LambdaExpr, EqualityExpr, IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
   SourceLocation,
   ThemeBlock, ThemeTextTokenName,
-  TestBlock, TestStatement,
+  TestBlock, TestStatement, RenderStmt, ExpectStmt,
 } from './ast.js';
 import {
   findProp, resolveIdentName, resolveDesignToken, resolveMaxWidthToken, resolveStyle,
@@ -588,23 +588,250 @@ export class CodeGenerator {
     return visit(screenBg);
   }
 
-  // v0.18 spike: emit a single `testWidgets("name", (tester) async { ... })`
-  // block from a parsed `test "name":` AST node. Spike statement support:
-  // RenderStmt → `await tester.pumpWidget(MaterialApp(home: <Name>Screen()));`
-  // ExpectSeenStmt → `expect(find.text("..."), findsOneWidget);`
-  // Per `docs/private/112_v018_testing_infrastructure.md`.
+  // Emit a single `testWidgets("name", (tester) async { ... })` block from a
+  // parsed `test "name":` AST node. Per doc 112, body statements include
+  // render, event-sims (tap/change/submit/toggle), and assertions including
+  // predicate forms (seen/on) and general boolean expressions over screen
+  // state. Mock blocks (`mock fetch:`, `mock every:`) are also handled here.
   private genTestBlock(test: TestBlock, igniTheme: string): string {
     const escName = JSON.stringify(test.name);
+    // Track which screen we last rendered so state-var access can cast to its
+    // private state class (`_<Name>ScreenState`). Tests live in the same Dart
+    // library as the screens they render (the `igni test` CLI bundles them),
+    // so the underscore-prefixed state class is in scope.
+    let renderedScreen: string | null = null;
     let body = '';
     for (const stmt of test.body) {
       if (stmt.type === 'RenderStmt') {
-        body += `    await tester.pumpWidget(MaterialApp(debugShowCheckedModeBanner: false, ${igniTheme}, home: ${stmt.screenName}Screen()));\n`;
-      } else if (stmt.type === 'ExpectSeenStmt') {
-        const escText = JSON.stringify(stmt.text);
-        body += `    expect(find.text(${escText}), findsOneWidget);\n`;
+        renderedScreen = stmt.screenName;
+        body += this.genRenderStmt(stmt, igniTheme);
+        continue;
       }
+      if (!renderedScreen) {
+        // Parser already enforces this, but defensive.
+        throw new Error(`Test statement ${stmt.type} reached codegen without a prior RenderStmt.`);
+      }
+      body += this.genTestStmt(stmt, renderedScreen);
     }
     return `  testWidgets(${escName}, (tester) async {\n${body}  });\n`;
+  }
+
+  private genRenderStmt(stmt: RenderStmt, igniTheme: string): string {
+    // Find the screen so we can detect shared-state usage and cast the State
+    // class. Components-as-render-target are deferred to v0.19.
+    const screen = this.allScreens.find(s => s.name === stmt.screenName);
+    const widget = `${stmt.screenName}Screen()`;
+    let pump: string;
+    if (this.hasShared) {
+      pump =
+        `    await tester.pumpWidget(ListenableBuilder(\n` +
+        `      listenable: shared,\n` +
+        `      builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, ${igniTheme}, home: ${widget}),\n` +
+        `    ));\n`;
+    } else {
+      pump = `    await tester.pumpWidget(MaterialApp(debugShowCheckedModeBanner: false, ${igniTheme}, home: ${widget}));\n`;
+    }
+    let extra = '    await tester.pump();\n';
+    // shared.X: value pre-set args. Apply before the pump so the first build
+    // sees the seeded state. Production-state args (non-shared) are applied
+    // post-pump via the cached state object.
+    for (const arg of stmt.args) {
+      if (arg.name.startsWith('shared.')) {
+        const subName = arg.name.slice('shared.'.length);
+        const valueDart = this.exprToDart(arg.value);
+        // Emit before the pump
+        pump = `    shared.${subName} = ${valueDart};\n` + pump;
+      }
+    }
+    return pump + extra;
+  }
+
+  private genTestStmt(stmt: TestStatement, renderedScreen: string): string {
+    if (stmt.type === 'TapStmt') {
+      const escLabel = JSON.stringify(stmt.label);
+      return (
+        `    await tester.tap(find.text(${escLabel}));\n` +
+        `    await tester.pumpAndSettle();\n`
+      );
+    }
+    if (stmt.type === 'ChangeStmt') {
+      const escId = JSON.stringify(stmt.varName);
+      const valueDart = this.exprToDart(stmt.value);
+      return (
+        `    await tester.enterText(find.byKey(const ValueKey(${escId})), ${valueDart});\n` +
+        `    await tester.pumpAndSettle();\n`
+      );
+    }
+    if (stmt.type === 'SubmitStmt') {
+      const escId = JSON.stringify(stmt.varName);
+      return (
+        `    await tester.testTextInput.receiveAction(TextInputAction.done);\n` +
+        `    await tester.pumpAndSettle();\n` +
+        `    // submit ${escId}\n`
+      );
+    }
+    if (stmt.type === 'ToggleStmt') {
+      const escId = JSON.stringify(stmt.varName);
+      return (
+        `    await tester.tap(find.byKey(const ValueKey(${escId})));\n` +
+        `    await tester.pumpAndSettle();\n`
+      );
+    }
+    if (stmt.type === 'SlideStmt') {
+      // Sliders need precise programmatic value setting; use the widget's
+      // onChanged callback grabbed from the rendered Slider.
+      const escId = JSON.stringify(stmt.varName);
+      const valueDart = this.exprToDart(stmt.value);
+      return (
+        `    {\n` +
+        `      final slider = tester.widget<Slider>(find.byKey(const ValueKey(${escId})));\n` +
+        `      slider.onChanged?.call(${valueDart}.toDouble());\n` +
+        `      await tester.pumpAndSettle();\n` +
+        `    }\n`
+      );
+    }
+    if (stmt.type === 'ExpectStmt') {
+      return this.genExpectStmt(stmt, renderedScreen);
+    }
+    if (stmt.type === 'MockFetchBlock') {
+      // Deferred to mock-infrastructure phase. Emit a clear runtime error so
+      // tests using `mock fetch:` don't silently no-op during dev.
+      return `    fail('mock fetch: not yet wired (v0.18 mock infrastructure pending)');\n`;
+    }
+    if (stmt.type === 'MockEveryBlock') {
+      return `    fail('mock every: not yet wired (v0.18 mock infrastructure pending)');\n`;
+    }
+    throw new Error(`Unknown test statement type: ${(stmt as { type: string }).type}`);
+  }
+
+  private genExpectStmt(stmt: ExpectStmt, renderedScreen: string): string {
+    // Predicate-form short-circuits — cleaner Dart than a generic isTrue cast.
+    if (stmt.expr.type === 'SeenPredicate') {
+      const escText = JSON.stringify(stmt.expr.text);
+      return `    expect(find.text(${escText}), findsAtLeastNWidgets(1));\n`;
+    }
+    if (stmt.expr.type === 'UnaryExpr' && stmt.expr.op === 'not' && stmt.expr.operand.type === 'SeenPredicate') {
+      const escText = JSON.stringify(stmt.expr.operand.text);
+      return `    expect(find.text(${escText}), findsNothing);\n`;
+    }
+    if (stmt.expr.type === 'OnPredicate') {
+      return `    expect(find.byType(${stmt.expr.screenName}Screen), findsOneWidget);\n`;
+    }
+    if (stmt.expr.type === 'UnaryExpr' && stmt.expr.op === 'not' && stmt.expr.operand.type === 'OnPredicate') {
+      return `    expect(find.byType(${stmt.expr.operand.screenName}Screen), findsNothing);\n`;
+    }
+    // Generic `expect <bool-expression>` — translate state-var refs through
+    // the rendered screen's state object.
+    const dart = this.testExprToDart(stmt.expr, renderedScreen);
+    return `    expect(${dart}, isTrue);\n`;
+  }
+
+  // Translate an expression in test scope. State-var references (Idents
+  // matching the rendered screen's stateVars) are rewritten as
+  // `(tester.state(find.byType(<Name>Screen)) as _<Name>ScreenState).<var>`.
+  // Test-scope builtins (`value_of`, `requested`, `request_count`) are
+  // special-cased.
+  private testExprToDart(expr: Expr, renderedScreen: string): string {
+    const screen = this.allScreens.find(s => s.name === renderedScreen);
+    const stateVars = new Set<string>();
+    if (screen) {
+      for (const item of screen.body) {
+        if (item.type === 'VariableDecl') stateVars.add(item.name);
+      }
+    }
+    const stateAccess = `(tester.state(find.byType(${renderedScreen}Screen)) as _${renderedScreen}ScreenState)`;
+    const walk = (e: Expr): string => {
+      switch (e.type) {
+        case 'NumberLit': return `${e.value}`;
+        case 'StringLit': return `'${e.value.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\$/g, '\\$')}'`;
+        case 'Ident':
+          if (stateVars.has(e.name)) return `${stateAccess}.${e.name}`;
+          if (e.name === 'true' || e.name === 'false') return e.name;
+          return e.name;
+        case 'FieldAccess': {
+          const obj = walk(e.object);
+          if (e.object.type === 'Ident' && e.object.name === 'shared') {
+            return `shared.${e.field}`;
+          }
+          // Dart-builtin properties on Lists / Strings / Maps. Use dot access;
+          // bracket access (`['length']`) would be a map-key lookup, not the
+          // builtin property.
+          const dartProps = new Set(['length', 'isEmpty', 'isNotEmpty', 'first', 'last']);
+          if (dartProps.has(e.field)) {
+            return `${obj}.${e.field}`;
+          }
+          return `${obj}['${e.field}']`;
+        }
+        case 'IndexAccess': {
+          const list = walk(e.object);
+          const idx = walk(e.index);
+          return `(${idx} >= 0 && ${idx} < ${list}.length ? ${list}[${idx}] : null)`;
+        }
+        case 'BinaryExpr':
+          return `${walk(e.left)} ${e.op} ${walk(e.right)}`;
+        case 'EqualityExpr':
+          return `${walk(e.left)} ${e.negated ? '!=' : '=='} ${walk(e.right)}`;
+        case 'IsExpr': {
+          // `x is empty` / `x is null` / `x is loading` / `x is error`
+          const t = walk(e.target);
+          switch (e.check) {
+            case 'empty': return `${t}.isEmpty`;
+            case 'not empty': return `${t}.isNotEmpty`;
+            case 'null': return `${t} == null`;
+            case 'not null': return `${t} != null`;
+            case 'loading': return `${t} == null`;
+            case 'error': return `${t} is Exception`;
+          }
+          return t;
+        }
+        case 'InExpr':
+          return `${e.negated ? '!' : ''}${walk(e.list)}.contains(${walk(e.target)})`;
+        case 'UnaryExpr':
+          return `!(${walk(e.operand)})`;
+        case 'FunctionCall': {
+          if (e.name === 'value_of') {
+            // value_of(<id>) → state-var access (lexical-reactivity makes the
+            // bound var the canonical input value).
+            if (e.args.length !== 1 || e.args[0].type !== 'Ident') {
+              throw new Error('value_of() expects one identifier argument');
+            }
+            const idName = (e.args[0] as Ident).name;
+            return `${stateAccess}.${idName}`;
+          }
+          if (e.name === 'requested' || e.name === 'request_count') {
+            // Mock infrastructure pending.
+            return `false /* ${e.name}() needs mock infrastructure */`;
+          }
+          // Screen-internal function call: `total_with_tax(100, 0.2)` →
+          // `(state).total_with_tax(100, 0.2)`. Per Q13: `render` puts
+          // screen-internal functions in test scope.
+          const args = e.args.map(walk).join(', ');
+          if (screen) {
+            const fnDef = screen.body.find(it => it.type === 'FunctionDef' && (it as { name: string }).name === e.name);
+            if (fnDef) {
+              return `${stateAccess}.${e.name}(${args})`;
+            }
+          }
+          return `${e.name}(${args})`;
+        }
+        case 'ListLit':
+          if (e.elements.length === 0) return '[]';
+          return `[${e.elements.map(walk).join(', ')}]`;
+        case 'ObjectLit':
+          return `{${e.entries.map(en => `'${en.key}': ${walk(en.value)}`).join(', ')}}`;
+        case 'ObjectUpdate':
+          return `{...${walk(e.base)}, ${e.updates.map(u => `'${u.key}': ${walk(u.value)}`).join(', ')}}`;
+        case 'LambdaExpr':
+          return `(${e.param}) => ${walk(e.body)}`;
+        case 'SeenPredicate':
+        case 'OnPredicate':
+          // Predicate forms should only appear at the top level of an expect
+          // statement; reaching them inside nested expressions is a parser
+          // bug.
+          throw new Error(`Internal error: ${e.type} reached testExprToDart inner walk.`);
+      }
+    };
+    return walk(expr);
   }
 
   private genScreen(screen: Screen): string {
@@ -859,7 +1086,7 @@ export class CodeGenerator {
         this.declaredLocals = new Set();
         const body = this.genStmtBlock(block.body, 3).trimEnd();
         initLines.push(
-          `    _everyTimer${i} = Timer.periodic(const Duration(seconds: ${block.seconds}), (_) {\n${body}\n    });`
+          `    _everyTimer${i} = Timer.periodic(const Duration(milliseconds: ${block.milliseconds}), (_) {\n${body}\n    });`
         );
       }
       preBuild += `\n\n  @override\n  void initState() {\n    super.initState();\n${initLines.join('\n')}\n  }`;
@@ -1334,6 +1561,7 @@ export class CodeGenerator {
     const changeEvent = node.events.find(e => e.event === 'change');
 
     let code = `${ind}TextField(\n`;
+    code += `${ind}  key: const ValueKey(${JSON.stringify(node.bind)}),\n`;
     code += `${ind}  controller: _${node.bind}Controller,\n`;
     code += `${ind}  onChanged: (value) {\n`;
     code += this.genBindWrite(node.bind, 'value', ind);
@@ -1375,6 +1603,7 @@ export class CodeGenerator {
 
     if (labelStr) {
       let code = `${ind}SwitchListTile(\n`;
+      code += `${ind}  key: const ValueKey(${JSON.stringify(node.bind)}),\n`;
       code += `${ind}  value: ${node.bind},\n`;
       code += `${ind}  title: Text(${labelStr}),\n`;
       code += `${ind}  onChanged: (value) {\n`;
@@ -1388,6 +1617,7 @@ export class CodeGenerator {
     }
 
     let code = `${ind}Switch(\n`;
+    code += `${ind}  key: const ValueKey(${JSON.stringify(node.bind)}),\n`;
     code += `${ind}  value: ${node.bind},\n`;
     code += `${ind}  onChanged: (value) {\n`;
     code += this.genBindWrite(node.bind, 'value', ind);
@@ -1475,6 +1705,7 @@ export class CodeGenerator {
     const changeEvent = node.events.find(e => e.event === 'change');
 
     let code = `${ind}Slider(\n`;
+    code += `${ind}  key: const ValueKey(${JSON.stringify(node.bind)}),\n`;
     code += `${ind}  value: ${node.bind}.toDouble(),\n`;
     code += `${ind}  min: ${min}.toDouble(),\n`;
     code += `${ind}  max: ${max}.toDouble(),\n`;
@@ -3005,6 +3236,12 @@ export class CodeGenerator {
       }
       case 'FunctionCall':
         return this.genFunctionCallExpr(expr);
+      case 'SeenPredicate':
+      case 'OnPredicate':
+        // Test-scope predicate forms are translated by genTestExpr (test
+        // bodies). Reaching them here means a parser bug let one leak into
+        // production codegen.
+        throw new Error(`Internal error: ${expr.type} reached production exprToDart.`);
     }
   }
 
@@ -3121,6 +3358,9 @@ export class CodeGenerator {
       case 'EqualityExpr':
       case 'InExpr':
         return "'" + '${' + this.exprToDart(expr) + "}'";
+      case 'SeenPredicate':
+      case 'OnPredicate':
+        throw new Error(`Internal error: ${expr.type} reached production exprToDisplayStr.`);
     }
   }
 

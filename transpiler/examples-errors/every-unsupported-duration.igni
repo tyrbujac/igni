@@ -1,7 +1,7 @@
 screen Bad:
   count = 0
 
-  every 100ms:
+  every 2s:
     count = count + 1
 
   layout vertical:

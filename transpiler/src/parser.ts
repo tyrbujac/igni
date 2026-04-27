@@ -10,7 +10,10 @@ import {
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
   ListLit, ObjectLit, ObjectUpdate, FieldAccess, IndexAccess,
   ThemeBlock, ThemeTextToken, ThemeTextTokenName, ThemeColorToken,
-  TestBlock, TestStatement, RenderStmt, ExpectSeenStmt,
+  TestBlock, TestStatement, RenderStmt, ExpectStmt,
+  TapStmt, ChangeStmt, SubmitStmt, ToggleStmt, SlideStmt,
+  MockFetchBlock, MockEveryBlock, MockFetchResponse,
+  SeenPredicate, OnPredicate,
 } from './ast.js';
 
 const FONT_TOKENS = new Set([
@@ -73,11 +76,10 @@ export class Parser {
     return { type: 'Program', screens, components, shared, theme, tests, loc: this.loc(start) };
   }
 
-  // v0.18 testing infrastructure — Stage 1.5 framework-spike scope only.
-  // Parses `test "name":` block with body of `render <Screen>` and
-  // `expect seen "<string>"` statements. Wider syntax (mocking, event-sims,
-  // value_of/on/requested/request_count builtins) deferred to full
-  // implementation phase. Per `docs/private/112_v018_testing_infrastructure.md`.
+  // v0.18 testing infrastructure. Per `docs/private/112_v018_testing_infrastructure.md`.
+  // Parses `test "name":` blocks. Body statements include `render`, event-sim
+  // verbs (tap/change/submit/toggle/slide), `expect <bool-expression>` (with
+  // `seen` / `on` predicate forms), and `mock fetch:` / `mock every:` blocks.
   private parseTestBlock(): TestBlock {
     const start = this.current();
     this.consume(TokenType.Test, 'Expected "test"');
@@ -108,51 +110,201 @@ export class Parser {
     return { type: 'TestBlock', name, body, loc: this.loc(start) };
   }
 
-  // Parses a single statement inside a `test "name":` body. Spike scope:
-  // `render <Identifier>` and `expect seen "<string>"`. Other forms emit a
-  // TranspileError pointing at the spike-scope limitation.
   private parseTestStatement(renderSeen: boolean): TestStatement {
     const start = this.current();
     if (!this.check(TokenType.Identifier)) {
       this.error(
-        `Expected a test statement — \`render <Screen>\` or \`expect seen "<string>"\`. Got "${this.current().value}". ` +
-        `(v0.18 spike scope is limited to these two forms; mocking, event-sims, and additional builtins ship in the full v0.18 implementation post-Stage-0.)`,
+        `Expected a test statement — \`render\`, \`tap\`, \`change\`, \`submit\`, \`toggle\`, \`slide\`, \`expect\`, or \`mock\`. Got "${this.current().value}".`,
       );
     }
     const verb = this.current().value;
+    const requiresRender = (verbName: string) =>
+      ['tap', 'change', 'submit', 'toggle', 'slide', 'expect', 'mock'].includes(verbName);
+    if (requiresRender(verb) && !renderSeen) {
+      this.error(
+        `\`${verb}\` requires a prior \`render <Screen>\` in the same test body — add \`render <Screen>\` before this line. ` +
+        '(Per doc 112 Q3-locked rule: parse-time check, statically decidable.)',
+      );
+    }
     if (verb === 'render') {
+      return this.parseRenderStmt(start);
+    }
+    if (verb === 'tap') {
       this.advance();
-      const screenTok = this.consume(TokenType.Identifier, 'Expected screen name after `render` — e.g. `render Counter`');
+      const labelTok = this.consume(TokenType.String, 'Expected button label as a string literal — e.g. `tap "Add"`');
       this.consume(TokenType.Newline, 'Expected newline');
-      return { type: 'RenderStmt', screenName: screenTok.value, loc: this.loc(start) };
+      return { type: 'TapStmt', label: labelTok.value, loc: this.loc(start) };
+    }
+    if (verb === 'change') {
+      this.advance();
+      const idTok = this.consume(TokenType.Identifier, 'Expected input id (the bound variable name) — e.g. `change draft: "buy milk"`');
+      this.consume(TokenType.Colon, 'Expected ":" after input id — e.g. `change draft: "buy milk"`');
+      const value = this.parseExpr();
+      this.consume(TokenType.Newline, 'Expected newline');
+      return { type: 'ChangeStmt', varName: idTok.value, value, loc: this.loc(start) };
+    }
+    if (verb === 'submit') {
+      this.advance();
+      const idTok = this.consume(TokenType.Identifier, 'Expected input id — e.g. `submit search`');
+      this.consume(TokenType.Newline, 'Expected newline');
+      return { type: 'SubmitStmt', varName: idTok.value, loc: this.loc(start) };
+    }
+    if (verb === 'toggle') {
+      this.advance();
+      const idTok = this.consume(TokenType.Identifier, 'Expected toggle id — e.g. `toggle dark_mode`');
+      this.consume(TokenType.Newline, 'Expected newline');
+      return { type: 'ToggleStmt', varName: idTok.value, loc: this.loc(start) };
+    }
+    if (verb === 'slide') {
+      this.advance();
+      const idTok = this.consume(TokenType.Identifier, 'Expected slider id — e.g. `slide volume to 0.7`');
+      const toTok = this.current();
+      if (toTok.type !== TokenType.Identifier || toTok.value !== 'to') {
+        this.error(`Expected "to" after slider id — \`slide ${idTok.value} to <value>\`. Got "${toTok.value}".`);
+      }
+      this.advance();
+      const value = this.parseExpr();
+      this.consume(TokenType.Newline, 'Expected newline');
+      return { type: 'SlideStmt', varName: idTok.value, value, loc: this.loc(start) };
     }
     if (verb === 'expect') {
-      this.advance();
-      // Spike scope: only `expect seen "<string>"` is supported. The full v0.18
-      // design accepts arbitrary `expect <bool-expression>` (per Q4 in doc 112);
-      // the spike narrows to one shape so the parser can lock end-to-end before
-      // the full expression-evaluator-in-test-scope work begins.
-      if (!this.check(TokenType.Identifier) || this.current().value !== 'seen') {
-        this.error(
-          `v0.18 spike scope: only \`expect seen "<string>"\` is supported. Got \`expect ${this.current().value}\`. ` +
-          `Wider \`expect <bool-expression>\` shapes ship in the full v0.18 implementation post-Stage-0.`,
-        );
-      }
-      this.advance();
-      const textTok = this.consume(TokenType.String, 'Expected string literal — e.g. `expect seen "Hello"`');
-      this.consume(TokenType.Newline, 'Expected newline');
-      if (!renderSeen) {
-        this.error(
-          'event-sim / `expect seen` requires a prior `render <Screen>` in the same test body — add `render <Screen>` before this line. ' +
-          '(Per doc 112 Q3-locked rule: parse-time check, statically decidable.)',
-        );
-      }
-      return { type: 'ExpectSeenStmt', text: textTok.value, loc: this.loc(start) };
+      return this.parseExpectStmt(start);
+    }
+    if (verb === 'mock') {
+      return this.parseMockBlock(start);
     }
     this.error(
-      `Unknown test statement verb "${verb}". v0.18 spike accepts \`render <Screen>\` and \`expect seen "<string>"\` only. ` +
-      `Wider verbs (mocking, event-sims, additional assertions) ship in the full v0.18 implementation post-Stage-0.`,
+      `Unknown test statement verb "${verb}". Valid verbs: \`render\`, \`tap\`, \`change\`, \`submit\`, \`toggle\`, \`slide\`, \`expect\`, \`mock\`.`,
     );
+  }
+
+  private parseRenderStmt(start: Token): RenderStmt {
+    this.advance(); // consume `render`
+    const screenTok = this.consume(TokenType.Identifier, 'Expected screen or component name after `render` — e.g. `render Counter`');
+    const args: { name: string; value: Expr }[] = [];
+    // Optional named args: `render Component, name: value, name: value`
+    while (this.check(TokenType.Comma)) {
+      this.advance();
+      // arg name may be `shared.name` or a plain identifier
+      let argName: string;
+      const nameTok = this.consume(TokenType.Identifier, 'Expected argument name after "," — e.g. `render Profile, user: ada`');
+      if (this.check(TokenType.Dot)) {
+        this.advance();
+        const subTok = this.consume(TokenType.Identifier, 'Expected sub-name after "." in render argument');
+        argName = `${nameTok.value}.${subTok.value}`;
+      } else {
+        argName = nameTok.value;
+      }
+      this.consume(TokenType.Colon, 'Expected ":" after argument name in render');
+      const value = this.parseExpr();
+      args.push({ name: argName, value });
+    }
+    this.consume(TokenType.Newline, 'Expected newline');
+    return { type: 'RenderStmt', screenName: screenTok.value, args, loc: this.loc(start) };
+  }
+
+  private parseExpectStmt(start: Token): ExpectStmt {
+    this.advance(); // consume `expect`
+    // Predicate forms: `seen "<text>"` and `on <Screen>`. May be preceded by
+    // `not` (UnaryExpr wrapping the predicate).
+    let inverted = false;
+    if (this.check(TokenType.Not)) {
+      const nextTok = this.peek(1);
+      if (nextTok && nextTok.type === TokenType.Identifier && (nextTok.value === 'seen' || nextTok.value === 'on')) {
+        this.advance(); // consume `not`
+        inverted = true;
+      }
+    }
+    let expr: Expr;
+    if (this.check(TokenType.Identifier) && this.current().value === 'seen') {
+      const seenTok = this.advance();
+      const textTok = this.consume(TokenType.String, 'Expected string literal — e.g. `expect seen "Hello"`');
+      const predicate: SeenPredicate = { type: 'SeenPredicate', text: textTok.value, loc: this.loc(seenTok) };
+      expr = inverted ? { type: 'UnaryExpr', op: 'not', operand: predicate, loc: this.loc(start) } : predicate;
+    } else if (this.check(TokenType.Identifier) && this.current().value === 'on') {
+      const onTok = this.advance();
+      const screenTok = this.consume(TokenType.Identifier, 'Expected screen name — e.g. `expect on Dashboard`');
+      const predicate: OnPredicate = { type: 'OnPredicate', screenName: screenTok.value, loc: this.loc(onTok) };
+      expr = inverted ? { type: 'UnaryExpr', op: 'not', operand: predicate, loc: this.loc(start) } : predicate;
+    } else {
+      // Generic `expect <bool-expression>`
+      expr = this.parseExpr();
+    }
+    this.consume(TokenType.Newline, 'Expected newline');
+    return { type: 'ExpectStmt', expr, loc: this.loc(start) };
+  }
+
+  private parseMockBlock(start: Token): MockFetchBlock | MockEveryBlock {
+    this.advance(); // consume `mock`
+    if (!this.check(TokenType.Identifier)) {
+      this.error('Expected `mock fetch:` or `mock every:` after `mock`.');
+    }
+    const kindTok = this.advance();
+    if (kindTok.value !== 'fetch' && kindTok.value !== 'every') {
+      this.error(`Unknown mock target "${kindTok.value}". v0.18 supports \`mock fetch:\` and \`mock every:\` only.`);
+    }
+    this.consume(TokenType.Colon, 'Expected ":"');
+    this.consume(TokenType.Newline, 'Expected newline');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint(`mock ${kindTok.value}:`));
+    if (kindTok.value === 'fetch') {
+      const entries: { url: string; response: MockFetchResponse }[] = [];
+      while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+        const urlTok = this.consume(TokenType.String, 'Expected URL string literal — e.g. `"/api/users": { ... }`');
+        this.consume(TokenType.Colon, 'Expected ":" after URL string');
+        let response: MockFetchResponse;
+        if (this.check(TokenType.Identifier) && this.current().value === 'error') {
+          this.advance();
+          const msgTok = this.consume(TokenType.String, 'Expected error message string — e.g. `error "network timeout"`');
+          response = { kind: 'error', message: msgTok.value };
+        } else {
+          response = { kind: 'ok', value: this.parseExpr() };
+        }
+        entries.push({ url: urlTok.value, response });
+        if (this.check(TokenType.Newline)) this.advance();
+      }
+      this.consume(TokenType.Dedent, 'Expected dedent');
+      return { type: 'MockFetchBlock', entries, loc: this.loc(start) };
+    }
+    // mock every:
+    const advances: { milliseconds: number }[] = [];
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      if (!this.check(TokenType.Identifier) || this.current().value !== 'advance') {
+        this.error(`Expected \`advance <duration>\` inside \`mock every:\`. Got "${this.current().value}".`);
+      }
+      this.advance();
+      if (!this.check(TokenType.Number)) {
+        this.error(`advance requires a duration token like "1s", "5s", or "30s"; got "${this.current().value}"`);
+      }
+      const numTok = this.advance();
+      if (!this.check(TokenType.Identifier)) {
+        this.error('advance duration must include a unit suffix (ms or s)');
+      }
+      const suffixTok = this.advance();
+      const fullToken = numTok.value + suffixTok.value;
+      const ms = this.parseAdvanceDuration(fullToken);
+      advances.push({ milliseconds: ms });
+      if (this.check(TokenType.Newline)) this.advance();
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent');
+    return { type: 'MockEveryBlock', advances, loc: this.loc(start) };
+  }
+
+  private parseAdvanceDuration(token: string): number {
+    // `mock every: advance <duration>` accepts the same whitelist as
+    // `every <duration>:` plus a few coarser tokens for quick fast-forwarding.
+    const allowed: Record<string, number> = {
+      '16ms': 16,
+      '100ms': 100,
+      '500ms': 500,
+      '1s': 1000,
+      '5s': 5000,
+      '30s': 30000,
+      '60s': 60000,
+    };
+    if (!(token in allowed)) {
+      this.error(`advance duration "${token}" not supported — use "16ms", "100ms", "500ms", "1s", "5s", "30s", or "60s".`);
+    }
+    return allowed[token];
   }
 
   // Belt-and-braces: every catch loop that calls synchronizeTopLevel or
@@ -1185,31 +1337,41 @@ export class Parser {
   // `every <duration>:` — recurring-timer block at screen-body scope (v0.14).
   // Body is statements (function-body shape), NOT UI nodes — it reassigns
   // state which the lexical-reactivity rule then re-renders. Multi-block per
-  // screen is allowed (each block its own Timer.periodic in codegen). v0.14
-  // accepts only `1s`, `5s`, `30s`; everything else is a parse-time reject
-  // pointing at the planned extension path.
+  // screen is allowed (each block its own Timer.periodic in codegen).
+  // v0.18 widened the whitelist with sub-second tokens (16ms / 100ms / 500ms)
+  // per Q-D doc 112: animation frames, scrubbers, fast UIs without arbitrary-
+  // ms parsing. Everything else is a parse-time reject pointing at the
+  // planned extension path.
   private parseEvery(): EveryNode {
     const start = this.current();
     this.consume(TokenType.Every, 'Expected "every"');
 
+    const allowedTokens = '"16ms", "100ms", "500ms", "1s", "5s", or "30s"';
     if (!this.check(TokenType.Number)) {
       const tok = this.current();
-      this.error(`every requires a duration token like "1s", "5s", or "30s"; got "${tok.value}"`);
+      this.error(`every requires a duration token like ${allowedTokens}; got "${tok.value}"`);
     }
     const numTok = this.advance();
     if (numTok.value.includes('.')) {
-      this.error(`duration must be an integer; numeric values are not accepted (use "1s", "5s", or "30s")`);
+      this.error(`duration must be an integer; numeric values are not accepted (use ${allowedTokens})`);
     }
     if (!this.check(TokenType.Identifier)) {
-      this.error(`duration must include a unit suffix; v0.14 supports "1s", "5s", "30s"`);
+      this.error(`duration must include a unit suffix; v0.18 supports ${allowedTokens}`);
     }
     const suffixTok = this.advance();
     const fullToken = numTok.value + suffixTok.value;
-    const allowed = ['1s', '5s', '30s'];
-    if (!allowed.includes(fullToken)) {
-      this.error(`duration "${fullToken}" not supported in v0.14 — use "1s", "5s", or "30s". See ROADMAP for planned extensions.`);
+    const allowed: Record<string, number> = {
+      '16ms': 16,
+      '100ms': 100,
+      '500ms': 500,
+      '1s': 1000,
+      '5s': 5000,
+      '30s': 30000,
+    };
+    if (!(fullToken in allowed)) {
+      this.error(`duration "${fullToken}" not supported in v0.18 — use ${allowedTokens}. See ROADMAP for planned extensions.`);
     }
-    const seconds = parseInt(numTok.value, 10);
+    const milliseconds = allowed[fullToken];
 
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
@@ -1220,7 +1382,7 @@ export class Parser {
       if (this.check(TokenType.Newline)) this.advance();
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
-    return { type: 'Every', seconds, body, loc: this.loc(start) };
+    return { type: 'Every', milliseconds, body, loc: this.loc(start) };
   }
 
   private parseEachStmt(): EachStmt {

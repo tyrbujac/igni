@@ -41,7 +41,7 @@ class _PomodonutScreenState extends State<PomodonutScreen> {
   @override
   void initState() {
     super.initState();
-    _everyTimer0 = Timer.periodic(const Duration(seconds: 1), (_) {
+    _everyTimer0 = Timer.periodic(const Duration(milliseconds: 1000), (_) {
       if (running) {
         setState(() {
           tick = (DateTime.now().millisecondsSinceEpoch ~/ 1000);
@@ -252,6 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Slider(
+                    key: const ValueKey("shared.work_minutes"),
                     value: shared.work_minutes.toDouble(),
                     min: 1.toDouble(),
                     max: 60.toDouble(),
@@ -279,6 +280,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Slider(
+                    key: const ValueKey("shared.break_minutes"),
                     value: shared.break_minutes.toDouble(),
                     min: 1.toDouble(),
                     max: 30.toDouble(),
@@ -297,6 +299,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 24),
             SwitchListTile(
+              key: const ValueKey("shared.sound_on"),
               value: shared.sound_on,
               title: Text('Sound'),
               onChanged: (value) {

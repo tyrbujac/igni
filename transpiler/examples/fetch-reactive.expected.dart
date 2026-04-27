@@ -77,6 +77,7 @@ class _SearchScreenState extends State<SearchScreen> {
               children: [
                 Expanded(
                   child: TextField(
+                  key: const ValueKey("query"),
                   controller: _queryController,
                   onChanged: (value) {
                     setState(() {

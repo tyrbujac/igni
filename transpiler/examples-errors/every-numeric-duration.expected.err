@@ -1,5 +1,5 @@
 
-  Error: duration must include a unit suffix; v0.14 supports "1s", "5s", "30s"
+  Error: duration must include a unit suffix; v0.18 supports "16ms", "100ms", "500ms", "1s", "5s", or "30s"
 
     every-numeric-duration.igni:4 |   every 2:
                                   |          ^

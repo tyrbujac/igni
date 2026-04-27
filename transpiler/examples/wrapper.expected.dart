@@ -65,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 children: [
                   Switch(
+                    key: const ValueKey("dark_mode"),
                     value: dark_mode,
                     onChanged: (value) {
                       setState(() {
@@ -74,6 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 8),
                   Switch(
+                    key: const ValueKey("notifications"),
                     value: notifications,
                     onChanged: (value) {
                       setState(() {

@@ -62,6 +62,7 @@ class _DemoScreenState extends State<DemoScreen> {
             const Divider(),
             const SizedBox(height: 16),
             Slider(
+              key: const ValueKey("volume"),
               value: volume.toDouble(),
               min: 0.toDouble(),
               max: 100.toDouble(),

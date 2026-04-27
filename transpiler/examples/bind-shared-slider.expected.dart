@@ -91,6 +91,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 16),
             Slider(
+              key: const ValueKey("shared.step"),
               value: shared.step.toDouble(),
               min: 1.toDouble(),
               max: 10.toDouble(),

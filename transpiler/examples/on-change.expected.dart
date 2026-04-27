@@ -93,6 +93,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 16),
             SwitchListTile(
+              key: const ValueKey("notifications"),
               value: notifications,
               title: Text('Notifications'),
               onChanged: (value) {
@@ -104,6 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 16),
             Slider(
+              key: const ValueKey("volume"),
               value: volume.toDouble(),
               min: 0.toDouble(),
               max: 100.toDouble(),
@@ -129,6 +131,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 320),
               child: TextField(
+              key: const ValueKey("city"),
               controller: _cityController,
               onChanged: (value) {
                 setState(() {

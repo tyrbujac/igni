@@ -18,6 +18,7 @@ class LoginForm extends StatelessWidget {
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 320),
           child: TextField(
+          key: const ValueKey("email"),
           controller: _emailController,
           onChanged: (value) {
             setState(() {
@@ -34,6 +35,7 @@ class LoginForm extends StatelessWidget {
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 320),
           child: TextField(
+          key: const ValueKey("password"),
           controller: _passwordController,
           onChanged: (value) {
             setState(() {

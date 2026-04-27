@@ -1,5 +1,5 @@
 
-  Error: every requires a duration token like "1s", "5s", or "30s"; got "second"
+  Error: every requires a duration token like "16ms", "100ms", "500ms", "1s", "5s", or "30s"; got "second"
 
     every-bare-keyword.igni:4 |   every second:
                               |               ^

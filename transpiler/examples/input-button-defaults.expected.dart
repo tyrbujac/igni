@@ -39,6 +39,7 @@ class _FormScreenState extends State<FormScreen> {
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 320),
               child: TextField(
+              key: const ValueKey("name"),
               controller: _nameController,
               onChanged: (value) {
                 setState(() {

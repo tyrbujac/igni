@@ -1,7 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  runApp(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 17, height: 1.5))), home: TodoScreen()));
+  testWidgets("shows empty state on initial render", (tester) async {
+    await tester.pumpWidget(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 17, height: 1.5))), home: TodoScreen()));
+    await tester.pump();
+    expect(find.text("No tasks yet"), findsAtLeastNWidgets(1));
+  });
+  testWidgets("adding an item renders it and clears the draft", (tester) async {
+    await tester.pumpWidget(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 17, height: 1.5))), home: TodoScreen()));
+    await tester.pump();
+    await tester.enterText(find.byKey(const ValueKey("draft")), 'buy milk');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Add"));
+    await tester.pumpAndSettle();
+    expect(find.text("buy milk"), findsAtLeastNWidgets(1));
+    expect(find.text("No tasks yet"), findsNothing);
+    expect((tester.state(find.byType(TodoScreen)) as _TodoScreenState).draft == '', isTrue);
+    expect((tester.state(find.byType(TodoScreen)) as _TodoScreenState).items.length == 1, isTrue);
+  });
 }
 
 class TodoScreen extends StatefulWidget {

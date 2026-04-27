@@ -1,0 +1,30 @@
+screen Todo:
+  items = []
+  draft = ""
+
+  add():
+    items = items + [{text: draft}]
+    draft = ""
+
+  layout vertical, padding: large, gap: medium:
+    label "Todo", style: heading
+    input bind: draft, placeholder: "New task"
+    button "Add", on tap: add()
+    if items is empty:
+      label "No tasks yet"
+    else:
+      each item in items:
+        label item.text
+
+test "shows empty state on initial render":
+  render Todo
+  expect seen "No tasks yet"
+
+test "adding an item renders it and clears the draft":
+  render Todo
+  change draft: "buy milk"
+  tap "Add"
+  expect seen "buy milk"
+  expect not seen "No tasks yet"
+  expect value_of(draft) is ""
+  expect items.length is 1

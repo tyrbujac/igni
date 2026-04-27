@@ -105,6 +105,7 @@ class HeightCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Slider(
+            key: const ValueKey("shared.height"),
             value: shared.height.toDouble(),
             min: 120.toDouble(),
             max: 220.toDouble(),

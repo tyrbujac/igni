@@ -86,6 +86,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           children: [
             SwitchListTile(
+              key: const ValueKey("shared.sound_on"),
               value: shared.sound_on,
               title: Text('Sound on tap'),
               onChanged: (value) {

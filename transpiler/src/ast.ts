@@ -92,7 +92,7 @@ export interface InExpr extends NodeBase {
   negated: boolean;
 }
 
-export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr | LambdaExpr | EqualityExpr | InExpr | ListLit | ObjectLit | ObjectUpdate | FieldAccess | IndexAccess | FunctionCall;
+export type Expr = NumberLit | StringLit | Ident | BinaryExpr | UnaryExpr | IsExpr | LambdaExpr | EqualityExpr | InExpr | ListLit | ObjectLit | ObjectUpdate | FieldAccess | IndexAccess | FunctionCall | SeenPredicate | OnPredicate;
 
 // -- Properties and events --
 
@@ -181,7 +181,7 @@ export interface FunctionDef extends NodeBase {
 
 export interface EveryNode extends NodeBase {
   type: 'Every';
-  seconds: number;
+  milliseconds: number;
   body: Statement[];
 }
 
@@ -362,26 +362,103 @@ export interface Program extends NodeBase {
   tests: TestBlock[];
 }
 
-// v0.18 testing infrastructure — Stage 1.5 framework-spike scope.
-// Only the smallest viable shape is implemented: `test "name":` with a body of
-// `render <Screen>` + `expect seen "<string>"` statements. Mocking, event-sims
-// beyond a single render, value_of/on/requested/request_count builtins, and
-// the `igni test` CLI are deferred to the full implementation phase post-Stage-0.
-// Per `docs/private/112_v018_testing_infrastructure.md`.
+// v0.18 testing infrastructure. Per `docs/private/112_v018_testing_infrastructure.md`.
+// `test "name":` blocks live as siblings to screens/components in `*.test.igni`
+// files. Each test body is a sequence of statements:
+//   - render: `render <Screen>` or `render <Component>, arg: value`
+//   - event sims: `tap "<label>"`, `change <id>: <value>`, `submit <id>`,
+//     `toggle <id>`, `slide <id> to <value>`
+//   - assertions: `expect <bool-expression>` (general form). Predicate forms
+//     `seen "<text>"` and `on <Screen>` are special test-scope syntax that
+//     parse without parens directly under `expect` / `expect not`.
+//   - mocks: `mock fetch:` (URL→response map) and `mock every:` with
+//     `advance <duration>` directives.
 export interface TestBlock extends NodeBase {
   type: 'TestBlock';
   name: string;
   body: TestStatement[];
 }
 
-export type TestStatement = RenderStmt | ExpectSeenStmt;
+export type TestStatement =
+  | RenderStmt
+  | ExpectStmt
+  | TapStmt
+  | ChangeStmt
+  | SubmitStmt
+  | ToggleStmt
+  | SlideStmt
+  | MockFetchBlock
+  | MockEveryBlock;
 
 export interface RenderStmt extends NodeBase {
   type: 'RenderStmt';
   screenName: string;
+  // Optional named args. Keys are param names (regular var name or
+  // "shared.<name>"); values are arbitrary expressions.
+  args: { name: string; value: Expr }[];
 }
 
-export interface ExpectSeenStmt extends NodeBase {
-  type: 'ExpectSeenStmt';
+// `expect <expression>`. The expression may be:
+//   - A general boolean expression evaluated against test scope (state vars,
+//     screen-internal functions, `value_of(...)`, `requested(...)`,
+//     `request_count(...)`).
+//   - A predicate form (`SeenPredicate`, `OnPredicate`) wrapped in `Expression`.
+//   - A `NotExpr` containing any of the above.
+export interface ExpectStmt extends NodeBase {
+  type: 'ExpectStmt';
+  expr: Expr;
+}
+
+// Predicate forms expressible only inside `expect` / `expect not`. They look
+// like keyword + argument (no parens) but are stored as Expression nodes so
+// they can be negated and combined with the rest of the expression evaluator.
+export interface SeenPredicate extends NodeBase {
+  type: 'SeenPredicate';
   text: string;
+}
+
+export interface OnPredicate extends NodeBase {
+  type: 'OnPredicate';
+  screenName: string;
+}
+
+export interface TapStmt extends NodeBase {
+  type: 'TapStmt';
+  label: string;
+}
+
+export interface ChangeStmt extends NodeBase {
+  type: 'ChangeStmt';
+  varName: string;
+  value: Expr;
+}
+
+export interface SubmitStmt extends NodeBase {
+  type: 'SubmitStmt';
+  varName: string;
+}
+
+export interface ToggleStmt extends NodeBase {
+  type: 'ToggleStmt';
+  varName: string;
+}
+
+export interface SlideStmt extends NodeBase {
+  type: 'SlideStmt';
+  varName: string;
+  value: Expr;
+}
+
+export interface MockFetchBlock extends NodeBase {
+  type: 'MockFetchBlock';
+  entries: { url: string; response: MockFetchResponse }[];
+}
+
+export type MockFetchResponse =
+  | { kind: 'ok'; value: Expr }
+  | { kind: 'error'; message: string };
+
+export interface MockEveryBlock extends NodeBase {
+  type: 'MockEveryBlock';
+  advances: { milliseconds: number }[];
 }

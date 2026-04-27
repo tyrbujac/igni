@@ -1,8 +1,8 @@
 
-  Error: duration "100ms" not supported in v0.14 — use "1s", "5s", or "30s". See ROADMAP for planned extensions.
+  Error: duration "2s" not supported in v0.18 — use "16ms", "100ms", "500ms", "1s", "5s", or "30s". See ROADMAP for planned extensions.
 
-    every-unsupported-duration.igni:4 |   every 100ms:
-                                      |              ^
+    every-unsupported-duration.igni:4 |   every 2s:
+                                      |           ^
 
   Error: Unexpected token "" — expected a UI element
 

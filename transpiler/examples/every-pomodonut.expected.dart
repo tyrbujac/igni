@@ -22,7 +22,7 @@ class _PomodonutScreenState extends State<PomodonutScreen> {
   @override
   void initState() {
     super.initState();
-    _everyTimer0 = Timer.periodic(const Duration(seconds: 1), (_) {
+    _everyTimer0 = Timer.periodic(const Duration(milliseconds: 1000), (_) {
       if (running) {
         setState(() {
           tick = (DateTime.now().millisecondsSinceEpoch ~/ 1000);

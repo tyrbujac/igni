@@ -100,6 +100,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 320),
               child: TextField(
+              key: const ValueKey("query"),
               controller: _queryController,
               onChanged: (value) {
                 setState(() {
@@ -114,6 +115,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
             ),
             const SizedBox(height: 16),
             Switch(
+              key: const ValueKey("favourites_only"),
               value: favourites_only,
               onChanged: (value) {
                 setState(() {

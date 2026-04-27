@@ -16,6 +16,7 @@ class QueryBar extends StatelessWidget {
       children: [
         Expanded(
           child: TextField(
+          key: const ValueKey("text"),
           controller: _textController,
           onChanged: (value) {
             setState(() {

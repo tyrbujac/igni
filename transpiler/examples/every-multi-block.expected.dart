@@ -26,12 +26,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   void initState() {
     super.initState();
     _draftController = TextEditingController(text: draft);
-    _everyTimer0 = Timer.periodic(const Duration(seconds: 1), (_) {
+    _everyTimer0 = Timer.periodic(const Duration(milliseconds: 1000), (_) {
       setState(() {
         saved_seconds_ago = (DateTime.now().millisecondsSinceEpoch ~/ 1000) - last_saved;
       });
     });
-    _everyTimer1 = Timer.periodic(const Duration(seconds: 5), (_) {
+    _everyTimer1 = Timer.periodic(const Duration(milliseconds: 5000), (_) {
       setState(() {
         save_count = save_count + 1;
       });
@@ -39,7 +39,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         last_saved = (DateTime.now().millisecondsSinceEpoch ~/ 1000);
       });
     });
-    _everyTimer2 = Timer.periodic(const Duration(seconds: 30), (_) {
+    _everyTimer2 = Timer.periodic(const Duration(milliseconds: 30000), (_) {
       setState(() {
         save_count = save_count;
       });
@@ -67,6 +67,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 320),
               child: TextField(
+              key: const ValueKey("draft"),
               controller: _draftController,
               onChanged: (value) {
                 setState(() {

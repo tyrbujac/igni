@@ -61,6 +61,7 @@ class _TodoScreenState extends State<TodoScreen> {
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 320),
               child: TextField(
+              key: const ValueKey("draft"),
               controller: _draftController,
               onChanged: (value) {
                 setState(() {

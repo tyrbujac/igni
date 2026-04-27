@@ -50,6 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 320),
               child: TextField(
+              key: const ValueKey("username"),
               controller: _usernameController,
               onChanged: (value) {
                 setState(() {
@@ -66,6 +67,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 320),
               child: TextField(
+              key: const ValueKey("email"),
               controller: _emailController,
               onChanged: (value) {
                 setState(() {
@@ -80,6 +82,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 16),
             Switch(
+              key: const ValueKey("dark_mode"),
               value: dark_mode,
               onChanged: (value) {
                 setState(() {
@@ -89,6 +92,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 16),
             Switch(
+              key: const ValueKey("notifications"),
               value: notifications,
               onChanged: (value) {
                 setState(() {

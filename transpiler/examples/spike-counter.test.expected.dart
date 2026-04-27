@@ -4,7 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets("counter starts at zero", (tester) async {
     await tester.pumpWidget(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 17, height: 1.5))), home: CounterSpikeScreen()));
-    expect(find.text("0"), findsOneWidget);
+    await tester.pump();
+    expect(find.text("0"), findsAtLeastNWidgets(1));
   });
 }
 

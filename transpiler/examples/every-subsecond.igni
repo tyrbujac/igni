@@ -1,0 +1,8 @@
+screen Scrubber:
+  pos = 0
+
+  every 100ms:
+    pos = pos + 1
+
+  layout vertical, padding: large:
+    label pos, style: heading

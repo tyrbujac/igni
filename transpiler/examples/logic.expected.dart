@@ -31,6 +31,7 @@ class _AccessScreenState extends State<AccessScreen> {
             ),
             const SizedBox(height: 16),
             Switch(
+              key: const ValueKey("logged_in"),
               value: logged_in,
               onChanged: (value) {
                 setState(() {
@@ -40,6 +41,7 @@ class _AccessScreenState extends State<AccessScreen> {
             ),
             const SizedBox(height: 16),
             Switch(
+              key: const ValueKey("verified"),
               value: verified,
               onChanged: (value) {
                 setState(() {

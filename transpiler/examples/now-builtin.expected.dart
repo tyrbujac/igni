@@ -20,7 +20,7 @@ class _TimestampDemoScreenState extends State<TimestampDemoScreen> {
   @override
   void initState() {
     super.initState();
-    _everyTimer0 = Timer.periodic(const Duration(seconds: 1), (_) {
+    _everyTimer0 = Timer.periodic(const Duration(milliseconds: 1000), (_) {
       setState(() {
         current = (DateTime.now().millisecondsSinceEpoch ~/ 1000);
       });
