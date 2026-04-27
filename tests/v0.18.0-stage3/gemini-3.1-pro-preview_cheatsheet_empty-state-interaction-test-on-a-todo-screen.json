@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Empty state + interaction test on a Todo screen",
+  "prompt_slug": "empty-state-interaction-test-on-a-todo-screen",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.18.0-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.18.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "df2022d563e4d9aaff63ebee6d95f562d9581896ae26ce070a4758ca5da79a20",
+  "spec_words": 5786,
+  "timestamp": "2026-04-27T19:50:34.668Z",
+  "duration_ms": 18287,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 10860,
+    "output_tokens": 373,
+    "cache_read_tokens": 8175
+  },
+  "cost_usd": 0.027831,
+  "transpile": null
+}
