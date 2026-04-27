@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-flash-lite-preview",
+  "model_id": "gemini-3.1-flash-lite-preview",
+  "prompt_name": "Tip calculator",
+  "prompt_slug": "tip-calculator",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.16.0-extrapolation/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.16.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "0e96badfed3abd8736ed24c85001cf9ccef664c61f6036560b3cab970ce0bd1b",
+  "spec_words": 4135,
+  "timestamp": "2026-04-27T13:28:47.832Z",
+  "duration_ms": 2759,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 7806,
+    "output_tokens": 605,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.002859,
+  "transpile": null
+}
