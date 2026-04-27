@@ -27,6 +27,35 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.17.1 — 2026-04-27
+
+Docs-only iteration. Six cheatsheet patches surfaced by the v0.17.0 meta-review panel (`tests/v0.17.0-meta-review/`), a 7-cell chat-mode rating + critique across web UIs (gemini 3.1 pro, opus 4.7, gpt 5.3, gemini 3 flash; both cheatsheet and full-spec passes for the three capable models, cheatsheet-only for GPT). 7/7 cells flagged testing as a v1.0 gap; 4/7 raised the shared-namespace flatness + cross-screen ban as a god-object failure mode at scale; the cheatsheet-vs-spec within-model deltas surfaced specific Appendix-D / Appendix-B smells the cheatsheet was abbreviating. The deeper architectural critiques are queued for ROADMAP / v0.18 milestone design; this version applies the small docs-only patches that don't need a syntax cycle.
+
+### Changed
+
+- **§Reacting to users** — added a "Common mistake" callout to the *Derived state needs a function* paragraph, with a side-by-side `# ❌ wrong` / `# ✅ right` example showing top-level `total = count * price` (captures, doesn't track) vs `total(): return count * price` (tracks). GPT 5.3 named the non-reactivity of top-level derivation as "the biggest one" footgun for readers coming from React / Vue / Svelte / Solid; the rule was already documented but the surprise still landed, so the example was promoted to a louder callout.
+- **§Arranging things** — added explicit "Layout properties go on a single line — no `\` line-continuation" pin. Carries forward the v0.17.0 Stage 3 finding (flash-lite at noise tier reached for backslash-continuation; the language rejects it). Clarifies that long property lists factor into custom components, not text-formatting tricks.
+- **§Recurrence — `Durations` paragraph** — known-limitation note on the `1s/5s/30s` whitelist is now louder. Names sub-second `every` as an animation-loop primitive + the test-runner's time-mock target, both of which require it; v0.18+ candidate. Replaces "planned for v0.15+" boilerplate with an honest "wait, no workaround documented today."
+- **§Builtins (strings)** — added a "Case asymmetry" callout pinning that `contains()` is case-insensitive while `is` equality is case-sensitive. Documents the canonical case-insensitive equality pattern (`lower(a) is lower(b)`).
+- **§Builtins (utility) + the `now()` follow-up paragraph** — `round(x, n)` is now flagged as a string-return *display* function with an explicit warning that `if elapsed >= round(60, 1)` typechecks but compares int-against-string and silently miscompares. Concrete fix-it: use `floor()` for integer math, or compare against the unrounded value. Opus's spec-pass surfaced this as a runtime footgun.
+- **§Rules (reference)** — new bullet pinning the PascalCase-component / lowercase-function casing rule. Components are invoked without parens (`Avatar user.avatar, size: 80`); functions are called with parens (`greet("Tyr")`). Naming `myCard` (lowercase component) or `Greet` (capitalised function) is a parse-time error. Opus's spec-pass flagged this rule as missing from Appendix B despite being consistently followed by every example in the spec.
+- **Appendix B (full spec)** — same casing rule pinned, with a citation pointing back to the v0.17.0 meta-review panel for traceability.
+- **Micro reference** — opening sentence widened: "Lowercase = built-in primitive *or* user-defined function (called with parens); PascalCase = user-defined component (invoked without parens)." Previously distinguished only built-in vs user-defined; now also distinguishes user-side function vs component.
+
+### Methodology
+
+- **Three-precedent chat-mode-meta-review pattern.** v0.14.1 + v0.15.0 + v0.17.0 have now each produced sharper signal than parallel API panels — open-ended rating + "biggest things before v1.0" framing surfaces architectural critique that structured Stage 0/2/3 prompts don't. Promotion to a recurring stage in `docs/cycle.md` is queued as a separate methodology decision; this iteration codifies the *patch-list-flowing-from-meta-review* pattern at the implementation layer.
+- **Cheatsheet-vs-spec within-model delta validated as a methodology instrument.** Opus's spec-pass surfaced six specific Appendix-content smells the cheatsheet pass missed; gemini-3-flash's bonus pair (added on the day) gave a third within-model delta that wasn't planned. Future meta-review panels should keep the dual-pass shape for at least one capable reasoner.
+
+### Test count / spec ship
+
+- No transpiler change. `npm test` 108/108 still green.
+- `spec/v0.17.0.md` / `-cheatsheet.md` / `-micro.md` archived to `spec/archive/`.
+- `spec/v0.17.1.md` / `-cheatsheet.md` / `-micro.md` shipped.
+- SYNC markers regenerated.
+
+---
+
 ## v0.17.0 — 2026-04-27
 
 First Path C primitive shipped via the new methodology branch for *visual-chrome* primitives: three-prong promotion gate (Path C prior + peer-language survey + hand-translation validation) replaces the cold-test-only gate that systematically under-signals on decorative-and-substitutable visual chrome. Sequenced cycle: `border:` ships now, `shadow:` deferred to v0.18 with pre-registered watch-list triggers (`docs/private/111`).
