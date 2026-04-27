@@ -1,0 +1,9 @@
+screen CounterSpike:
+  count = 0
+  layout vertical, padding: large:
+    label count, style: heading
+    button "Add", on tap: count = count + 1
+
+test "counter starts at zero":
+  render CounterSpike
+  expect seen "0"

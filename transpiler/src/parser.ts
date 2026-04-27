@@ -10,6 +10,7 @@ import {
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
   ListLit, ObjectLit, ObjectUpdate, FieldAccess, IndexAccess,
   ThemeBlock, ThemeTextToken, ThemeTextTokenName, ThemeColorToken,
+  TestBlock, TestStatement, RenderStmt, ExpectSeenStmt,
 } from './ast.js';
 
 const FONT_TOKENS = new Set([
@@ -32,6 +33,7 @@ export class Parser {
     const screens: Screen[] = [];
     const components: ComponentDef[] = [];
     const shared: VariableDecl[] = [];
+    const tests: TestBlock[] = [];
     let theme: ThemeBlock | undefined;
     while (!this.check(TokenType.EOF)) {
       const posBefore = this.pos;
@@ -50,6 +52,8 @@ export class Parser {
           } else {
             theme = next;
           }
+        } else if (this.check(TokenType.Test)) {
+          tests.push(this.parseTestBlock());
         } else {
           screens.push(this.parseScreen());
         }
@@ -66,7 +70,89 @@ export class Parser {
     if (this.errors.length > 0) {
       throw new AggregateTranspileError(this.errors);
     }
-    return { type: 'Program', screens, components, shared, theme, loc: this.loc(start) };
+    return { type: 'Program', screens, components, shared, theme, tests, loc: this.loc(start) };
+  }
+
+  // v0.18 testing infrastructure — Stage 1.5 framework-spike scope only.
+  // Parses `test "name":` block with body of `render <Screen>` and
+  // `expect seen "<string>"` statements. Wider syntax (mocking, event-sims,
+  // value_of/on/requested/request_count builtins) deferred to full
+  // implementation phase. Per `docs/private/112_v018_testing_infrastructure.md`.
+  private parseTestBlock(): TestBlock {
+    const start = this.current();
+    this.consume(TokenType.Test, 'Expected "test"');
+    const nameTok = this.consume(TokenType.String, 'Expected test name as a string literal — e.g. `test "counter starts at 0":`');
+    const name = nameTok.value;
+    this.consume(TokenType.Colon, 'Expected ":"');
+    this.consume(TokenType.Newline, 'Expected newline');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint('test'));
+    const body: TestStatement[] = [];
+    let renderSeen = false;
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      const posBefore = this.pos;
+      try {
+        const stmt = this.parseTestStatement(renderSeen);
+        if (stmt.type === 'RenderStmt') renderSeen = true;
+        body.push(stmt);
+      } catch (e) {
+        if (e instanceof TranspileError) {
+          this.errors.push(e);
+          this.synchronizeLine();
+        } else {
+          throw e;
+        }
+      }
+      this.assertProgress(posBefore);
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent');
+    return { type: 'TestBlock', name, body, loc: this.loc(start) };
+  }
+
+  // Parses a single statement inside a `test "name":` body. Spike scope:
+  // `render <Identifier>` and `expect seen "<string>"`. Other forms emit a
+  // TranspileError pointing at the spike-scope limitation.
+  private parseTestStatement(renderSeen: boolean): TestStatement {
+    const start = this.current();
+    if (!this.check(TokenType.Identifier)) {
+      this.error(
+        `Expected a test statement — \`render <Screen>\` or \`expect seen "<string>"\`. Got "${this.current().value}". ` +
+        `(v0.18 spike scope is limited to these two forms; mocking, event-sims, and additional builtins ship in the full v0.18 implementation post-Stage-0.)`,
+      );
+    }
+    const verb = this.current().value;
+    if (verb === 'render') {
+      this.advance();
+      const screenTok = this.consume(TokenType.Identifier, 'Expected screen name after `render` — e.g. `render Counter`');
+      this.consume(TokenType.Newline, 'Expected newline');
+      return { type: 'RenderStmt', screenName: screenTok.value, loc: this.loc(start) };
+    }
+    if (verb === 'expect') {
+      this.advance();
+      // Spike scope: only `expect seen "<string>"` is supported. The full v0.18
+      // design accepts arbitrary `expect <bool-expression>` (per Q4 in doc 112);
+      // the spike narrows to one shape so the parser can lock end-to-end before
+      // the full expression-evaluator-in-test-scope work begins.
+      if (!this.check(TokenType.Identifier) || this.current().value !== 'seen') {
+        this.error(
+          `v0.18 spike scope: only \`expect seen "<string>"\` is supported. Got \`expect ${this.current().value}\`. ` +
+          `Wider \`expect <bool-expression>\` shapes ship in the full v0.18 implementation post-Stage-0.`,
+        );
+      }
+      this.advance();
+      const textTok = this.consume(TokenType.String, 'Expected string literal — e.g. `expect seen "Hello"`');
+      this.consume(TokenType.Newline, 'Expected newline');
+      if (!renderSeen) {
+        this.error(
+          'event-sim / `expect seen` requires a prior `render <Screen>` in the same test body — add `render <Screen>` before this line. ' +
+          '(Per doc 112 Q3-locked rule: parse-time check, statically decidable.)',
+        );
+      }
+      return { type: 'ExpectSeenStmt', text: textTok.value, loc: this.loc(start) };
+    }
+    this.error(
+      `Unknown test statement verb "${verb}". v0.18 spike accepts \`render <Screen>\` and \`expect seen "<string>"\` only. ` +
+      `Wider verbs (mocking, event-sims, additional assertions) ship in the full v0.18 implementation post-Stage-0.`,
+    );
   }
 
   // Belt-and-braces: every catch loop that calls synchronizeTopLevel or

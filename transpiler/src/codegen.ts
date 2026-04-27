@@ -6,6 +6,7 @@ import {
   LambdaExpr, EqualityExpr, IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
   SourceLocation,
   ThemeBlock, ThemeTextTokenName,
+  TestBlock, TestStatement,
 } from './ast.js';
 import {
   findProp, resolveIdentName, resolveDesignToken, resolveMaxWidthToken, resolveStyle,
@@ -94,14 +95,30 @@ export class CodeGenerator {
   private themeColors: Record<string, string> = {};
 
   generate(program: Program): string {
-    return this.build(program, false).dart;
+    // v0.18 spike: auto-detect test mode when the program contains `test "name":`
+    // blocks (parsed into `program.tests`). The spike's `igni test` CLI uses
+    // this auto-detection rather than a separate code path; sibling
+    // `*.test.igni` files transpile cleanly via the same `igni run`/`igni build`
+    // codegen entry.
+    return this.build(program, false, program.tests.length > 0).dart;
   }
 
   generateWithSourceMap(program: Program): GeneratedOutput {
     return this.build(program, true);
   }
 
-  private build(program: Program, emitLineMarkers: boolean): GeneratedOutput {
+  // v0.18 testing infrastructure — Stage 1.5 framework-spike scope.
+  // When the input file contains `test "name":` blocks (parsed into
+  // `program.tests`), emit a `flutter_test`-flavored Dart file: same screen
+  // classes via existing codegen, plus a test main with `testWidgets(...)`
+  // blocks instead of the production `runApp()`. The CLI (`igni test`)
+  // dispatches `*.test.igni` files through this method.
+  // Per `docs/private/112_v018_testing_infrastructure.md`.
+  generateTestFile(program: Program): string {
+    return this.build(program, false, true).dart;
+  }
+
+  private build(program: Program, emitLineMarkers: boolean, testMode: boolean = false): GeneratedOutput {
     this.emitLineMarkers = emitLineMarkers;
     this.allScreens = program.screens;
     this.allComponents = program.components;
@@ -164,6 +181,9 @@ export class CodeGenerator {
     const hasEvery = program.screens.some(s => s.body.some(i => i.type === 'Every'));
 
     let code = `import 'package:flutter/material.dart';\n`;
+    if (testMode) {
+      code += `import 'package:flutter_test/flutter_test.dart';\n`;
+    }
     if (this.hasFetch) {
       code += `import 'package:http/http.dart' as http;\n`;
       code += `import 'dart:convert';\n`;
@@ -205,7 +225,22 @@ export class CodeGenerator {
       ? `0xFF${this.themeColors['brand'].slice(1).toUpperCase().padStart(6, '0')}`
       : '0xFFEB1555';
     const igniTheme = `theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(${seedHex})${brightness})${scaffoldBg}, textTheme: ${textTheme})`;
-    if (this.hasShared) {
+    if (testMode) {
+      // v0.18 spike: emit `void main() { testWidgets(...); ... }` instead of
+      // `runApp(...)`. Each `test "name":` block becomes a `testWidgets` call.
+      // Spike scope: render → pumpWidget(MaterialApp(home: <Name>Screen()));
+      // expect seen "<string>" → expect(find.text("<string>"), findsOneWidget).
+      // Wider statement support (mocking, event-sims, additional assertions)
+      // ships in the full v0.18 implementation post-Stage-0.
+      if (this.hasShared) {
+        code += this.genSharedState(program.shared) + '\n';
+      }
+      code += 'void main() {\n';
+      for (const test of program.tests) {
+        code += this.genTestBlock(test, igniTheme);
+      }
+      code += '}\n';
+    } else if (this.hasShared) {
       code += this.genSharedState(program.shared) + '\n';
       code += `void main() {\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, ${igniTheme}, home: ${firstName}Screen()),\n  ));\n}\n`;
     } else {
@@ -551,6 +586,25 @@ export class CodeGenerator {
       return visit(value, seen);
     };
     return visit(screenBg);
+  }
+
+  // v0.18 spike: emit a single `testWidgets("name", (tester) async { ... })`
+  // block from a parsed `test "name":` AST node. Spike statement support:
+  // RenderStmt → `await tester.pumpWidget(MaterialApp(home: <Name>Screen()));`
+  // ExpectSeenStmt → `expect(find.text("..."), findsOneWidget);`
+  // Per `docs/private/112_v018_testing_infrastructure.md`.
+  private genTestBlock(test: TestBlock, igniTheme: string): string {
+    const escName = JSON.stringify(test.name);
+    let body = '';
+    for (const stmt of test.body) {
+      if (stmt.type === 'RenderStmt') {
+        body += `    await tester.pumpWidget(MaterialApp(debugShowCheckedModeBanner: false, ${igniTheme}, home: ${stmt.screenName}Screen()));\n`;
+      } else if (stmt.type === 'ExpectSeenStmt') {
+        const escText = JSON.stringify(stmt.text);
+        body += `    expect(find.text(${escText}), findsOneWidget);\n`;
+      }
+    }
+    return `  testWidgets(${escName}, (tester) async {\n${body}  });\n`;
   }
 
   private genScreen(screen: Screen): string {

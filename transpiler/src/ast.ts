@@ -359,4 +359,29 @@ export interface Program extends NodeBase {
   components: ComponentDef[];
   shared: VariableDecl[];
   theme?: ThemeBlock;
+  tests: TestBlock[];
+}
+
+// v0.18 testing infrastructure — Stage 1.5 framework-spike scope.
+// Only the smallest viable shape is implemented: `test "name":` with a body of
+// `render <Screen>` + `expect seen "<string>"` statements. Mocking, event-sims
+// beyond a single render, value_of/on/requested/request_count builtins, and
+// the `igni test` CLI are deferred to the full implementation phase post-Stage-0.
+// Per `docs/private/112_v018_testing_infrastructure.md`.
+export interface TestBlock extends NodeBase {
+  type: 'TestBlock';
+  name: string;
+  body: TestStatement[];
+}
+
+export type TestStatement = RenderStmt | ExpectSeenStmt;
+
+export interface RenderStmt extends NodeBase {
+  type: 'RenderStmt';
+  screenName: string;
+}
+
+export interface ExpectSeenStmt extends NodeBase {
+  type: 'ExpectSeenStmt';
+  text: string;
 }
