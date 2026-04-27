@@ -1,0 +1,25 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Visual-chrome empirical-pull-blindspot framing critique",
+  "prompt_slug": "visual-chrome-empirical-pull-blindspot-framing-critique",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.17.0-border-design-review/prompts.md",
+  "spec_path": null,
+  "spec_tier": "none",
+  "spec_sha256": null,
+  "spec_words": 0,
+  "timestamp": "2026-04-27T14:12:14.140Z",
+  "duration_ms": 37501,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 2631,
+    "output_tokens": 1951,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.06193,
+  "transpile": null
+}

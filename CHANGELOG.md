@@ -27,6 +27,33 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.17.0 — 2026-04-27
+
+First Path C primitive shipped via the new methodology branch for *visual-chrome* primitives: three-prong promotion gate (Path C prior + peer-language survey + hand-translation validation) replaces the cold-test-only gate that systematically under-signals on decorative-and-substitutable visual chrome. Sequenced cycle: `border:` ships now, `shadow:` deferred to v0.18 with pre-registered watch-list triggers (`docs/private/111`).
+
+### Added
+
+- **`border:` layout property.** `border: thin` / `medium` / `thick` outlines a layout. Composes with `rounded:` (border follows the rounded corners) and `background:` (border draws on top of the fill — both can be set on the same layout). Pair with `color:` for an explicit theme token, or omit to use `subtle` (the default). Width vocabulary is cosmetic-not-spatial: pixel tokens fit padding/gap because spacing is geometry, but border thickness is visual emphasis — `thin/medium/thick` reads more naturally than numeric tokens. Numeric/pixel widths and inline hex on `color:` are rejected at codegen with fix-it messages. `border:` on `button` is also rejected — button is a styled primitive whose appearance comes from theme tokens, while `border:` is a layout property that composes with `rounded:`/`background:`/the layout's bounds. For an outlined button, wrap a `button` in a bordered layout (the canonical shape pinned in the cheatsheet, derived from 3/3 different workarounds in the v0.17 Stage 0 panel — see `tests/v0.17.0-stage0/`).
+
+### Changed
+
+- **Cheatsheet `### Border` subsection** added, with a two-helper selected-state pattern (width AND colour both shift on selection). The two-helper redundancy was the convergent unprompted shape from v0.17 Stage 0 (3/3 frontier models reached for it independently — single-helper teaching was under-determined). Inline comment in the example explains the redundancy: either alone is ambiguous (a thicker border could be hover state; a brand-coloured border could be a category marker).
+- **Cheatsheet outlined-button pin.** `border:` is layout-only; the canonical shape for an outlined button is `layout vertical, rounded: medium, border: thin: button "X", on tap: ...`. The pin pre-empts future "just add border to button" proposals.
+- **Micro reference** updated with one-line `border:` summary in the layout properties paragraph.
+- **`validateButtonTap` renamed to `validateButtons`** in codegen (now does both no-tap rejection and v0.17 border-on-button rejection).
+
+### Methodology
+
+- **Visual-chrome-under-signals pattern** documented (`docs/private/111`, "Why this primitive earns v0.17 despite zero empirical pull"). Pressure-tested by Stage 2 framing-critique panel (`tests/v0.17.0-border-design-review/`) — 3/3 REFINE on every question, 5 patches applied: decorative-vs-semantic boundary as the load-bearing rule, three-prong protocol replaces two-prong, named primitive class shrunk (border + shadow + advanced radius are clean fits; gradient + blur partial; opacity + rotation + scale + animation curves removed because they fail the boundary), mechanism layered, scope narrowed to "cold-test under functional/spec-extrapolation prompts."
+- **Two-failure-mode taxonomy** logged in trap journal (`docs/private/trap-journal.md` 2026-04-27 methodology entry): Stage 0 strong-passed cells can hide *under-taught patterns* (cheatsheet teaches A; panel converges unprompted on A+B — fix via cheatsheet patch) vs *stretched primitives* (3/3 produce different workarounds because the primitive is too narrow — fix via cheatsheet pin + watch for compounding signal). Different signal classes despite both passing the ship bar. Methodological contribution for the dissertation chapter.
+- **Cycle cost so far:** $0.149 Stage 2 framing-critique + $0.348 Stage 0 + Stage 3 ahead. Cumulative $0.497 pre-Stage-3.
+
+### Fixtures
+
+- **+6 test fixtures.** 3 positive: `border-outlined-card.igni` (width-only, default colour), `border-selected-state.igni` (two-helper pattern), `border-full-feature.igni` (all three widths + explicit theme colour). 3 negative: `border-numeric-rejection.igni`, `border-hex-inline-rejection.igni`, `border-on-button-rejection.igni`. Test count 102 → 108 passing.
+
+---
+
 ## v0.16.0 — 2026-04-27
 *Adds explicit handler-parameter syntax for component events. Parents write `on submit(text):` to receive an emitted value, `on submit(_):` to discard it, or bare `on submit:` for value-less events. Static validation rejects mismatch between child's `emit` signature and parent's handler. Cumulative cycle cost: $0.58 across Stage 2 + Stage 0.*
 

@@ -1,0 +1,23 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.5",
+  "model_id": "gpt-5.5-2026-04-23",
+  "prompt_name": "Outlined settings card",
+  "prompt_slug": "outlined-settings-card",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.17.0-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.17.0-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "ce277815abbf8cc113ef5b35555cce994bb680db52e5eaad35b4ad553cc7e30d",
+  "spec_words": 4335,
+  "timestamp": "2026-04-27T14:42:54.641Z",
+  "duration_ms": 16931,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 7540,
+    "output_tokens": 652,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.05726,
+  "transpile": null
+}

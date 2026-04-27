@@ -1,0 +1,5 @@
+
+  Error: border: takes width tokens — thin / medium / thick. Got numeric value 1. Border weight is cosmetic, not spatial — pixel tokens fit padding/gap because spacing is geometry, but border thickness is visual emphasis. Use `border: thin` (or medium/thick).
+
+    border-numeric-rejection.igni:2 |   layout vertical, padding: medium, border: 1:
+                                    |                                              ^

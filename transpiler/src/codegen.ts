@@ -12,6 +12,7 @@ import {
   resolveAlign, resolveBackground, resolveColor, mapIconName,
   inferType, isStringExpr, substituteLambdaParam, isImageBackground,
   generateIconLookupHelper, isDarkBackgroundExpr, generateStyleValueResolvers,
+  BORDER_WIDTH_TOKENS, isBorderWidthTokenName, resolveBorderWidthToken, generateBorderWidthResolver,
   isColorTokenName, isStyleValueName, isStyleValueExpr,
   resolveFontToken,
 } from './codegen-helpers.js';
@@ -82,6 +83,10 @@ export class CodeGenerator {
   private hasFetch = false;
   private needsIconLookup = false;
   private needsStyleResolvers = false;
+  // v0.17.0: emitted when a `border:` width on a layout uses a non-literal
+  // expression (function call, field access, etc.) and needs runtime token
+  // resolution. Literal tokens (`border: thin`) resolve at compile time.
+  private needsBorderWidthResolver = false;
   private emitLineMarkers = false;
   // v0.15.0: theme: color: <token>: "<hex>" overrides + user-defined tokens.
   // Populated from program.theme.color at build start; consulted by
@@ -112,7 +117,7 @@ export class CodeGenerator {
     this.validateAsyncReactivity(program);
     this.validateSharedPrefix(program);
     this.validateCountLambda(program);
-    this.validateButtonTap(program);
+    this.validateButtons(program);
 
     // No screens → emit a friendly placeholder app so `igni run` stays alive
     // while the user types their first screen. Parser produces an empty
@@ -217,6 +222,9 @@ export class CodeGenerator {
 
     if (this.needsIconLookup) {
       code += '\n' + generateIconLookupHelper() + '\n';
+    }
+    if (this.needsBorderWidthResolver) {
+      code += '\n' + generateBorderWidthResolver() + '\n';
     }
     if (this.needsStyleResolvers) {
       code += '\n' + generateStyleValueResolvers(this.themeColors) + '\n';
@@ -490,6 +498,40 @@ export class CodeGenerator {
     }
     this.needsStyleResolvers = true;
     return `_igniBackgroundValue(context, ${this.exprToDart(expr)})`;
+  }
+
+  // v0.17.0: width side of `border:`. Mirrors genColorValue: resolve literal
+  // tokens at compile time, emit a runtime helper for everything else (function
+  // calls, field access). Numeric/string literals are rejected — border weight
+  // is a token vocabulary (thin/medium/thick), not a pixel scale.
+  private genBorderWidth(expr: Expr): string {
+    if (expr.type === 'NumberLit') {
+      throw new TranspileError(
+        `border: takes width tokens — thin / medium / thick. Got numeric value ${expr.value}. ` +
+        `Border weight is cosmetic, not spatial — pixel tokens fit padding/gap because ` +
+        `spacing is geometry, but border thickness is visual emphasis. Use \`border: thin\` (or medium/thick).`,
+        expr.loc?.line ?? 1,
+        expr.loc?.column ?? 1,
+      );
+    }
+    if (expr.type === 'StringLit') {
+      throw new TranspileError(
+        `border: takes width tokens — thin / medium / thick. Got string literal "${expr.value}". ` +
+        `Don't quote width tokens — write \`border: thin\` (unquoted), not \`border: "thin"\`.`,
+        expr.loc?.line ?? 1,
+        expr.loc?.column ?? 1,
+      );
+    }
+    // Literal token Ident (thin / medium / thick) → compile-time resolve.
+    if (expr.type === 'Ident' && isBorderWidthTokenName(expr.name) && !this.isUserDeclaredName(expr.name)) {
+      const px = resolveBorderWidthToken(expr)!;
+      return `${px}.0`;
+    }
+    // Anything else (function call, field access, conditional, user-shadowed
+    // name) → runtime resolution. The function returns a token string at
+    // runtime; _igniBorderWidth maps it to a pixel value.
+    this.needsBorderWidthResolver = true;
+    return `_igniBorderWidth(${this.exprToDart(expr)})`;
   }
 
   private screenHasDarkBackground(screen: Screen): boolean {
@@ -1029,7 +1071,8 @@ export class CodeGenerator {
       let code = 'const SizedBox()';
       const bgProp = findProp(node.properties, 'background');
       const roundedProp = findProp(node.properties, 'rounded');
-      if (bgProp || roundedProp) {
+      const borderProp = findProp(node.properties, 'border');
+      if (bgProp || roundedProp || borderProp) {
         const decInd = this.indent(depth);
         const radius = roundedProp ? resolveDesignToken(roundedProp.value) : null;
         let dec = 'BoxDecoration(';
@@ -1040,6 +1083,13 @@ export class CodeGenerator {
           decParts.push(`color: ${this.genBackgroundValue(bgProp.value)}`);
         }
         if (radius) decParts.push(`borderRadius: BorderRadius.circular(${radius})`);
+        if (borderProp) {
+          const widthDart = this.genBorderWidth(borderProp.value);
+          const colorProp = findProp(node.properties, 'color');
+          const subtleIdent: Expr = { type: 'Ident', name: 'subtle', loc: borderProp.value.loc };
+          const colorDart = colorProp ? this.genColorValue(colorProp.value) : this.genColorValue(subtleIdent);
+          decParts.push(`border: Border.all(color: ${colorDart}, width: ${widthDart})`);
+        }
         dec += decParts.join(', ') + ')';
         code = `Container(\n${decInd}  decoration: ${dec},\n${decInd})`;
       }
@@ -1102,7 +1152,8 @@ export class CodeGenerator {
     }
     const bgProp = findProp(node.properties, 'background');
     const roundedProp = findProp(node.properties, 'rounded');
-    if (bgProp || roundedProp) {
+    const borderProp = findProp(node.properties, 'border');
+    if (bgProp || roundedProp || borderProp) {
       const decInd = this.indent(depth);
       const radius = roundedProp ? resolveDesignToken(roundedProp.value) : null;
       let dec = 'BoxDecoration(';
@@ -1113,6 +1164,13 @@ export class CodeGenerator {
         decParts.push(`color: ${this.genBackgroundValue(bgProp.value)}`);
       }
       if (radius) decParts.push(`borderRadius: BorderRadius.circular(${radius})`);
+      if (borderProp) {
+        const widthDart = this.genBorderWidth(borderProp.value);
+        const colorProp = findProp(node.properties, 'color');
+        const subtleIdent: Expr = { type: 'Ident', name: 'subtle', loc: borderProp.value.loc };
+        const colorDart = colorProp ? this.genColorValue(colorProp.value) : this.genColorValue(subtleIdent);
+        decParts.push(`border: Border.all(color: ${colorDart}, width: ${widthDart})`);
+      }
       dec += decParts.join(', ') + ')';
       code = `Container(\n${decInd}  decoration: ${dec},\n${decInd}  child: ${code},\n${decInd})`;
     }
@@ -2105,15 +2163,27 @@ export class CodeGenerator {
     }
   }
 
-  // A `button` with no `on tap:` modifier codegens to an ElevatedButton with
-  // no `onPressed` — dead UI the user can't interact with. The tutorial rerun
-  // on 2026-04-24 surfaced this as a real beginner footgun (an empty button
-  // appears pressable but does nothing). Reject at codegen with a fix-it.
-  private validateButtonTap(program: Program): void {
+  // Button-level validations run before codegen: (1) `button` with no `on tap:`
+  // is dead UI (surfaced by tutorial rerun 2026-04-24); (2) v0.17.0 `border:` is
+  // a layout property, rejected on `button` because button is a styled primitive
+  // (theme tokens drive its appearance) and `border:` is a layout property
+  // (composes with `rounded:`/`background:`). Wrap the button in a bordered
+  // layout for outlined-button needs — see Patch 2 in the v0.17 cheatsheet.
+  private validateButtons(program: Program): void {
     const walkUI = (nodes: UINode[]): void => {
       for (const n of nodes) {
         switch (n.type) {
           case 'Button':
+            if (n.properties.some(p => p.name === 'border')) {
+              throw new TranspileError(
+                '`border:` applies to layouts, not to `button`. For an outlined button, ' +
+                'wrap it in a bordered layout: `layout vertical, rounded: medium, border: thin: ' +
+                'button "X", on tap: ...`. `button` is a styled primitive whose appearance comes ' +
+                'from theme tokens (`color: brand`/`subtle`/`danger`); `border:` is a layout ' +
+                'property that composes with `rounded:`, `background:`, and the layout\'s bounds.',
+                n.loc?.line ?? 1, n.loc?.column ?? 1,
+              );
+            }
             if (!n.events.some(e => e.event === 'tap')) {
               throw new TranspileError(
                 '`button` requires an `on tap:` handler — say what the button should do, e.g. `, on tap: count = count + 1`. A button with no action renders as dead UI; the language refuses to emit one.',

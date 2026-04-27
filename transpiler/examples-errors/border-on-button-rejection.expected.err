@@ -1,0 +1,5 @@
+
+  Error: `border:` applies to layouts, not to `button`. For an outlined button, wrap it in a bordered layout: `layout vertical, rounded: medium, border: thin: button "X", on tap: ...`. `button` is a styled primitive whose appearance comes from theme tokens (`color: brand`/`subtle`/`danger`); `border:` is a layout property that composes with `rounded:`, `background:`, and the layout's bounds.
+
+    border-on-button-rejection.igni:3 |     button "Save", on tap: do_nothing(), border: thin
+                                      |           ^

@@ -1,0 +1,6 @@
+screen BorderOnButton:
+  layout vertical, padding: large:
+    button "Save", on tap: do_nothing(), border: thin
+
+  do_nothing():
+    return null

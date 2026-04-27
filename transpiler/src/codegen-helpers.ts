@@ -13,6 +13,15 @@ export const MAX_WIDTH_TOKENS: Record<string, number> = {
   desktop: 1200,
 };
 
+// v0.17.0: border width tokens. Cosmetic-not-spatial — these don't compose with
+// the spacing scale (gap/padding use DESIGN_TOKENS in pixels because spacing is
+// geometry; border weight is visual emphasis). Keep the map small and named.
+export const BORDER_WIDTH_TOKENS: Record<string, number> = {
+  thin: 1,
+  medium: 2,
+  thick: 4,
+};
+
 export const STYLE_MAP: Record<string, string> = {
   heading: 'Theme.of(context).textTheme.headlineLarge!',
   'heading.small': 'Theme.of(context).textTheme.headlineSmall!',
@@ -105,6 +114,37 @@ export function resolveMaxWidthToken(expr: Expr): number | null {
     return MAX_WIDTH_TOKENS[expr.name];
   }
   return null;
+}
+
+export function isBorderWidthTokenName(name: string): boolean {
+  return name in BORDER_WIDTH_TOKENS;
+}
+
+// v0.17.0: returns the pixel value for a literal width token, or null if the
+// expression isn't a literal token (caller emits a runtime resolver call).
+// Numeric/string literals are rejected upstream — this helper is the pixel
+// lookup, not the validator.
+export function resolveBorderWidthToken(expr: Expr): number | null {
+  if (expr.type === 'Ident' && expr.name in BORDER_WIDTH_TOKENS) {
+    return BORDER_WIDTH_TOKENS[expr.name];
+  }
+  return null;
+}
+
+// v0.17.0: runtime helper for `border:` width when the expression isn't a
+// literal token (e.g. `border: width_for(method)` where width_for returns a
+// width-token name at runtime). Mirrors `_igniColorValue` shape — emitted only
+// when the program uses dynamic width resolution.
+export function generateBorderWidthResolver(): string {
+  return `double _igniBorderWidth(dynamic value) {
+  if (value is num) return value.toDouble();
+  switch (value) {
+    case 'thin': return 1.0;
+    case 'medium': return 2.0;
+    case 'thick': return 4.0;
+    default: return 1.0;
+  }
+}`;
 }
 
 export function resolveStyle(expr: Expr): string {

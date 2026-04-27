@@ -1,0 +1,5 @@
+
+  Error: Inline hex colours are not supported. Use a token from `theme: color:` or one of the 12 built-in tokens (brand, subtle, danger, green, red, blue, white, black, yellow, orange, purple, teal). Define a theme: color: token (e.g. `my_red: "#FF0000"`) and reference it by name.
+
+    border-hex-inline-rejection.igni:2 |   layout vertical, padding: medium, border: thin, color: "#FF0000":
+                                       |                                                                   ^

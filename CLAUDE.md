@@ -4,7 +4,7 @@ Guidance for Claude and other AI assistants working on the Igni language project
 
 **Positioning.** *Designs that translate, not redesign.* A UI language whose primitives match Figma's auto-layout vocabulary; the canonical user is a designer-engineer + LLM pair authoring Igni from Figma source. The AI-assisted-creator framing is the parent category; this is its concrete instance. See `docs/private/97_figma_to_igni_workflow.md` for Path C scope and v0.15 expansion plan.
 
-**Status: transpiler stage.** The TypeScript-to-Dart transpiler covers most of the <!-- SYNC:version -->v0.16.0<!-- /SYNC:version --> spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter. *Originally named Rocket (v0.2–v0.3.1), renamed to Igni at v0.3.2.*
+**Status: transpiler stage.** The TypeScript-to-Dart transpiler covers most of the <!-- SYNC:version -->v0.17.0<!-- /SYNC:version --> spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter. *Originally named Rocket (v0.2–v0.3.1), renamed to Igni at v0.3.2.*
 
 ## Igni at a glance
 
@@ -61,7 +61,7 @@ If a proposal violates one of these, it's wrong by definition — push back inst
 - **Don't use brackets, braces, parentheses on component invocation, ternary operators, or string interpolation.** These are explicitly out.
 - **Don't bind a `fetch` URL directly to a text input** — that's the v0.5-documented common pitfall. Use the trigger-variable pattern (see Async Data in the spec).
 - **When a spec version ships without transpiler coverage, mark it *partial* in `CHANGELOG.md` and prioritise transpiler catchup before starting another spec change.** v0.12 → v0.12.1 is the reference case: v0.12's `theme:` spec shipped 2026-04-22 without transpiler; catchup the next day surfaced a lexer/spec conflict (hyphenated font tokens vs `TokenType.Minus`) that the spec writer hadn't predicted. v0.12.1 resolved it via a snake_case rename rather than bending the lexer. Surfacing implementation-level blockers at catchup time is expected, not pathological; the rule is to let catchup complete before stacking another spec change on top. See `docs/private/84_v0121_font_token_rename.md`.
-- **Test transpiler changes by running `npm test` in `transpiler/`.** This runs all <!-- SYNC:total-tests -->103<!-- /SYNC:total-tests --> diff tests automatically. Zero diff = pass. Then browser-test via `igni run` against a test `.igni` file.
+- **Test transpiler changes by running `npm test` in `transpiler/`.** This runs all <!-- SYNC:total-tests -->109<!-- /SYNC:total-tests --> diff tests automatically. Zero diff = pass. Then browser-test via `igni run` against a test `.igni` file.
 
 ## ROADMAP tiering
 

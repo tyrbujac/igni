@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Selected payment method",
+  "prompt_slug": "selected-payment-method",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.17.0-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.17.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "3b7c4b00ed1d438ac84fbfd24a605bcf2298dbaff79a1677a6a57aa1cd478d1f",
+  "spec_words": 4453,
+  "timestamp": "2026-04-27T15:53:41.685Z",
+  "duration_ms": 20887,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 8243,
+    "output_tokens": 407,
+    "cache_read_tokens": 8170
+  },
+  "cost_usd": 0.023004,
+  "transpile": null
+}

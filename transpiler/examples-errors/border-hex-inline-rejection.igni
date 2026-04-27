@@ -1,0 +1,3 @@
+screen BorderHexReject:
+  layout vertical, padding: medium, border: thin, color: "#FF0000":
+    label "Should fail"

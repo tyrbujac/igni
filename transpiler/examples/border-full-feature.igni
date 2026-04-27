@@ -1,0 +1,12 @@
+screen BorderFullFeature:
+  layout vertical, padding: large, gap: medium:
+    label "All width tokens", style: heading
+
+    layout vertical, padding: medium, rounded: medium, border: thin, color: subtle:
+      label "thin border (subtle)"
+
+    layout vertical, padding: medium, rounded: medium, border: medium, color: brand:
+      label "medium border (brand)"
+
+    layout vertical, padding: medium, rounded: medium, border: thick, color: danger:
+      label "thick border (danger)"
