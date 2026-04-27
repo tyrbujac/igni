@@ -2594,13 +2594,13 @@ export class CodeGenerator {
     if (expr.type === 'UnaryExpr') return this.exprReferencesAny(expr.operand, names);
     if (expr.type === 'EqualityExpr') return this.exprReferencesAny(expr.left, names) || this.exprReferencesAny(expr.right, names);
     if (expr.type === 'IsExpr') return this.exprReferencesAny(expr.target, names);
-    if (expr.type === 'InExpr') return this.exprReferencesAny(expr.value, names) || this.exprReferencesAny(expr.list, names);
+    if (expr.type === 'InExpr') return this.exprReferencesAny(expr.target, names) || this.exprReferencesAny(expr.list, names);
     if (expr.type === 'FieldAccess') return this.exprReferencesAny(expr.object, names);
     if (expr.type === 'IndexAccess') return this.exprReferencesAny(expr.object, names) || this.exprReferencesAny(expr.index, names);
     if (expr.type === 'FunctionCall') return expr.args.some(a => this.exprReferencesAny(a, names));
     if (expr.type === 'ListLit') return expr.elements.some(e => this.exprReferencesAny(e, names));
-    if (expr.type === 'ObjectLit') return expr.properties.some(p => this.exprReferencesAny(p.value, names));
-    if (expr.type === 'ObjectUpdate') return this.exprReferencesAny(expr.target, names) || expr.updates.some(u => this.exprReferencesAny(u.value, names));
+    if (expr.type === 'ObjectLit') return expr.entries.some(e => this.exprReferencesAny(e.value, names));
+    if (expr.type === 'ObjectUpdate') return this.exprReferencesAny(expr.base, names) || expr.updates.some(u => this.exprReferencesAny(u.value, names));
     return false;
   }
 
