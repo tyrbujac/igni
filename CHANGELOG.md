@@ -27,6 +27,43 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.18.0 — 2026-04-27
+
+Testing infrastructure. Tests live in sibling `*.test.igni` files, `igni test` discovers them and runs `flutter test` on the bundled output. The surface was locked across a full design cycle: Stage 1 design note (`docs/private/112_v018_testing_infrastructure.md`), Stage 2 panel critique (`tests/v0.18-testing-design-review/`) — Trigger A fired (3/3 panel cells voted to split snapshot to v0.19; applied immediately), Stage 0 cold-test (`tests/v0.18.0-stage0/`) — soft-fail attempt 1 (3-way divergence on the function-test access path), patch + re-run attempt 2 strong-pass with 3/3 canonical on every prompt × every model.
+
+### Added
+
+- **`test "name":` blocks in `*.test.igni` siblings.** Top-level construct alongside screens/components. Body is a sequence of statements (render, event-sims, mocks, assertions). Per Q1 doc 112: unified test block, not separate `unit` / `widget` / `integration` markers.
+- **`render <Screen>` / `render <Component>, arg: value`.** Mounts the target. The `shared.X: value` arg form pre-sets shared state before the screen builds. **`render` is the documented test-scope override that puts the rendered screen's internal functions in test scope** (Q13 doc 112; ratified post-Stage-0 after the function-test access-path divergence). Mirrors how `mock fetch:` is a documented test-scope override of production reactive-fetch semantics — bounded magic, source-visible at the call site.
+- **Event-sim verbs** — `tap "<exact label>"`, `change <id>: <value>`, `submit <id>`, `toggle <id>`, `slide <id> to <value>`. Selectors don't need test IDs: buttons resolve by visible text, inputs/toggles/sliders resolve by their `bind:` variable name. All event-sims require a prior `render` (parse-time error otherwise; per Q3 doc 112).
+- **`expect <bool-expression>` — single canonical form.** No matcher API (`.toBe(...)`), no `assert` alias. Predicate sub-forms `seen "<text>"` and `on <Screen>` parse without parens directly under `expect` / `expect not`. General expressions over rendered state work because `render` exposes the screen's internal state and functions in test scope: `expect items.length is 1`, `expect value_of(draft) is ""`, `expect total_with_tax(100, 0.2) is 120`.
+- **Test-scope builtins.** `seen "<string>"` (rendered-content match), `value_of(<id>)` (bound-input value), `on <Screen>` (current-screen assertion), `requested("<url>")` (was the URL fetched), `request_count("<url>")` (how many times). Resolve only inside test bodies; using them outside is a parse-time error.
+- **`mock fetch:` block.** URL → response map (or `error "<message>"`). Consulted on every `fetch()` call, including reactive re-fires. Mocks set up before `render` so the initial fetch hits them. Test-mode fetch codegen routes through `_igniHttpGet` wrapper instead of raw `http.get()`; missing mocks throw loudly so accidental real network calls don't pass silently.
+- **`mock every:` block + `advance <duration>`.** Jumps simulated time forward; all active `every <interval>:` blocks fire `<duration> / <interval>` times. Real wall-clock time unaffected. Same whitelist as production `every` (16ms / 100ms / 500ms / 1s / 5s / 30s) plus `60s` for coarser fast-forwarding.
+- **Sub-second `every` whitelist widening.** `16ms` / `100ms` / `500ms` added to the existing `1s` / `5s` / `30s` set (Q-D doc 112). Covers animation frames (60fps), scrubbers, fast UIs. Codegen now emits `Duration(milliseconds: <ms>)` uniformly. v0.17.1's "known-limitation" note in §Recurrence is closed.
+- **`igni test` CLI.** Discovers `*.test.igni` siblings, transpiles bundle with testMode forced on, writes to `.igni/test/igni_test.dart`, runs `flutter test`. Exit code propagates. Doesn't require an `app.igni` entry — any combination of test+screen files bundles cleanly.
+
+### Changed
+
+- **`every` codegen emits milliseconds.** AST renamed `seconds` → `milliseconds`; `Duration(seconds: 1)` → `Duration(milliseconds: 1000)`. No source-level change for users; production `1s` still spelled `1s`. All five existing `every`-fixture `.expected.dart` files regenerated.
+- **Bound TextField / Switch / Slider widgets gain `key: ValueKey("<bind>")` in production codegen.** Required for test selectors (`find.byKey`); incidentally helpful for hot-reload widget identity.
+
+### Methodology
+
+- **Patch-and-re-run resolves Stage 0 soft-fail.** Attempt 1's 3-way divergence on the function-test access path was a real design gap (the cheatsheet didn't resolve how tests access screen-internal functions). A single targeted cheatsheet patch (Option A: render-makes-function-reachable, framed as documented test-scope override) collapsed the divergence to 3/3 canonical on attempt 2. Validates the cycle's `Soft → patch teaching, re-run` rule empirically.
+- **Trigger A (Watch-list) fired and was applied mid-Stage-2.** 3/3 panel cells converged on splitting snapshot to v0.19 paired with animation primitives; doc 112 patched immediately. The Watch-list mechanism caught a real scope creep before implementation.
+- **Framework-shaped cycle adaptation.** Doc 112's "given screen Y, write tests for it" Stage 0 prompt framing (vs. "build an app using X") produced direct-comparison-quality signal across panels for framework-shaped infrastructure. Reproducible for any future framework-shaped cycle.
+
+### Test count / spec ship
+
+- `npm test` 112/112 green (was 108; +4 new test+source fixtures: spike-counter, todo, profile, every-subsecond).
+- End-to-end verified via `flutter test` on three smoke fixtures: counter (render + tap + expect seen/not seen), todo (event-sim + state-var assertions), profile (mock fetch + reactive re-fetch + requested/request_count).
+- `spec/v0.17.1.md` / `-cheatsheet.md` / `-micro.md` archived to `spec/archive/`.
+- `spec/v0.18.0.md` / `-cheatsheet.md` / `-micro.md` shipped with new §Testing section.
+- SYNC markers regenerated.
+
+---
+
 ## v0.17.1 — 2026-04-27
 
 Docs-only iteration. Six cheatsheet patches surfaced by the v0.17.0 meta-review panel (`tests/v0.17.0-meta-review/`), a 7-cell chat-mode rating + critique across web UIs (gemini 3.1 pro, opus 4.7, gpt 5.3, gemini 3 flash; both cheatsheet and full-spec passes for the three capable models, cheatsheet-only for GPT). 7/7 cells flagged testing as a v1.0 gap; 4/7 raised the shared-namespace flatness + cross-screen ban as a god-object failure mode at scale; the cheatsheet-vs-spec within-model deltas surfaced specific Appendix-D / Appendix-B smells the cheatsheet was abbreviating. The deeper architectural critiques are queued for ROADMAP / v0.18 milestone design; this version applies the small docs-only patches that don't need a syntax cycle.

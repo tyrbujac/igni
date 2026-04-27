@@ -17,10 +17,10 @@ igni/
 ├── assets/                    # logo (igni.svg, igni-dark-mode.svg, PNGs)
 ├── spec/
 │   ├── README.md
-│   ├── <!-- SYNC:version -->v0.17.1<!-- /SYNC:version -->.md             # current canonical spec
-│   ├── <!-- SYNC:version -->v0.17.1<!-- /SYNC:version -->-cheatsheet.md  # current cheatsheet (learning order)
-│   ├── <!-- SYNC:version -->v0.17.1<!-- /SYNC:version -->-micro.md       # current micro reference (~700 words)
-│   └── archive/               # historical snapshots <!-- SYNC:historical-range-files -->v0.2.md → v0.17.0.md<!-- /SYNC:historical-range-files -->
+│   ├── <!-- SYNC:version -->v0.18.0<!-- /SYNC:version -->.md             # current canonical spec
+│   ├── <!-- SYNC:version -->v0.18.0<!-- /SYNC:version -->-cheatsheet.md  # current cheatsheet (learning order)
+│   ├── <!-- SYNC:version -->v0.18.0<!-- /SYNC:version -->-micro.md       # current micro reference (~700 words)
+│   └── archive/               # historical snapshots <!-- SYNC:historical-range-files -->v0.2.md → v0.17.1.md<!-- /SYNC:historical-range-files -->
 ├── tests/                     # cold-LLM test infrastructure
 │   ├── README.md              # test methodology
 │   └── v<spec_version>/       # prompts + results per spec round
@@ -30,7 +30,7 @@ igni/
 │   ├── README.md
 │   ├── src/                   # lexer, parser, codegen, CLI
 │   ├── bin/igni               # CLI entry point (bash shim to src/igni.ts)
-│   ├── examples/              # <!-- SYNC:example-count -->67<!-- /SYNC:example-count --> .igni apps + .expected.dart refs
+│   ├── examples/              # <!-- SYNC:example-count -->71<!-- /SYNC:example-count --> .igni apps + .expected.dart refs
 │   ├── examples-errors/       # pinned transpile-rejection fixtures + .expected.err
 │   └── run-tests.sh           # automated diff-test runner
 ├── docs/
@@ -68,9 +68,9 @@ TypeScript project at [`transpiler/`](transpiler/) that compiles `.igni` source 
 
 **Currently supported:** `screen` (StatefulWidget), screen properties (`title:` → AppBar, `background:` → Scaffold colour), `component` (StatelessWidget), wrapper components with `body` slot, variables (int/double/String/bool/List) with optional type hints, assignable styling tokens (`brand`, `subtle`, `danger`, colour palette, background-only `card`), `layout` (vertical/horizontal, align, gap, padding, background, rounded, spread, `fill: true` for Expanded), implicit vertical layout for screen bodies, `label` (with `align:` for text alignment), `button` + `on tap`, `input bind:` + `placeholder:`, `toggle bind:`, `image` (size, round, `on tap:`, local assets + network URLs), `icon` (size, color, `on tap:`), `slider` (bind, min, max), `checkbox` (bind, label), `dropdown` (bind, options), `badge` (color), `spinner`, `if`/`else`/`else if`, `not`, `is`/`is not` equality, `is empty`/`is null`/`is in`/`is loading`/`is error` and their negations, comparison operators (`>`/`<`/`>=`/`<=`), `and`/`or`, `each` loops (with optional `paginate: N` lazy rendering), `navigate to`/`navigate back` (multi-screen with params), `shared:` state via ChangeNotifier, `fetch` + `spinner`, list builtins (`without`/`replace`/`find`/`count`/`length`/`filter`/`sorted`/`reversed`), string builtins (`contains`/`upper`/`lower`), `emit <event> [<arg>]` with `on <event>:` wiring, `random(min, max)`, lambda expressions, `return` in functions, screen-internal functions with params, list literals, object literals, field access, list indexing (null on out-of-bounds), arithmetic, float literals, string concatenation with `+`, `play("file.wav")` audio, `print()` for console debugging, `on touch:` event (fires on contact; `on tap:` fires on release), `locate()` geolocation builtin via `geolocator` plugin. Visual defaults: 16px screen-body padding (unless explicit `layout`), 16px `bodyMedium`, `#FAFAFA` scaffold, outlined input border, intrinsic button width, 480px input max-width outside Row context, `SafeArea` wrap when no `title:` (prevents notch clipping on iOS). Error-message pipeline filters Dart-SDK / Flutter framework stack frames and maps runtime stack frames back to `.igni` lines.
 
-**<!-- SYNC:example-count -->67<!-- /SYNC:example-count --> example apps** in [`transpiler/examples/`](transpiler/examples/) — each a `.igni` source + `.expected.dart` reference. Covers counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full, components, shared (cross-screen state), fetch (async API), fetch-mutation, fetch-reactive, dice, dicee (Angela Yu course project with AppBar + local images), mi-card (Angela Yu identity-card, pure static-layout regime), dashboard, fn-return, lambda, primitives, shopping (full e-commerce), wrapper (body slot), logic, type-hints, contacts (list indexing, comparisons), on-change, bg-image, tutorial (smoke test), string-case, derived-counts, stepper (emit/on events), pagination. See [`transpiler/examples/README.md`](transpiler/examples/README.md) for one-liner descriptions.
+**<!-- SYNC:example-count -->71<!-- /SYNC:example-count --> example apps** in [`transpiler/examples/`](transpiler/examples/) — each a `.igni` source + `.expected.dart` reference. Covers counter, settings, toggle, functions, greeting, todo, notes (multi-screen), todo-full, components, shared (cross-screen state), fetch (async API), fetch-mutation, fetch-reactive, dice, dicee (Angela Yu course project with AppBar + local images), mi-card (Angela Yu identity-card, pure static-layout regime), dashboard, fn-return, lambda, primitives, shopping (full e-commerce), wrapper (body slot), logic, type-hints, contacts (list indexing, comparisons), on-change, bg-image, tutorial (smoke test), string-case, derived-counts, stepper (emit/on events), pagination. See [`transpiler/examples/README.md`](transpiler/examples/README.md) for one-liner descriptions.
 
-**Testing:** `npm test` in `transpiler/` runs <!-- SYNC:total-tests -->107<!-- /SYNC:total-tests --> diff tests (positive + negative rejection cases). Zero diff = pass. Browser smoke-test via `igni run` from any directory containing `.igni` files.
+**Testing:** `npm test` in `transpiler/` runs <!-- SYNC:total-tests -->111<!-- /SYNC:total-tests --> diff tests (positive + negative rejection cases). Zero diff = pass. Browser smoke-test via `igni run` from any directory containing `.igni` files.
 
 **Not yet supported (v0.15.0 spec features):** `theme:` block sub-paths beyond font overrides — `spacing:` / `color:` sub-blocks, plus `size:` / `weight:` / `color:` fields inside `text:` bundles (planned for v0.15+, Path C scope; see `docs/private/97`). (`theme: text: <role>: font:` shipped in v0.12.1. `paginate:` on `each` shipped 2026-04-22 as syntax + lazy `ListView.builder` codegen; auto-load-more on scroll deferred pending async integration.)
 
