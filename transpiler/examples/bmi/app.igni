@@ -1,0 +1,68 @@
+shared:
+  height = 180
+  weight = 60
+  age = 20
+  gender = "male"
+
+theme:
+  color:
+    brand: "#EB1555"
+    card: "#EEEEEE"
+
+screen Input, title: "BMI CALCULATOR":
+  layout vertical, padding: medium, gap: medium:
+    layout horizontal, fill: true, gap: medium:
+      GenderCard "male", "MALE", accent: blue
+      GenderCard "female", "FEMALE", accent: brand
+    HeightCard
+    layout horizontal, fill: true, gap: medium:
+      ValueCard "WEIGHT", shared.weight, on step(d): shared.weight = shared.weight + d
+      ValueCard "AGE", shared.age, on step(d): shared.age = shared.age + d
+    button "CALCULATE", color: brand, on tap: navigate to Results
+
+screen Results, title: "YOUR RESULT":
+  bmi_value = shared.weight / ((shared.height / 100) * (shared.height / 100))
+  category = "NORMAL"
+  status_color = green
+  advice = "You have a normal body weight. Good job!"
+  if bmi_value >= 25:
+    category = "OVERWEIGHT"
+    status_color = orange
+    advice = "You have a higher than normal body weight. Try to exercise more."
+  else if bmi_value < 18.5:
+    category = "UNDERWEIGHT"
+    status_color = blue
+    advice = "You have a lower than normal body weight. You can eat a bit more."
+
+  layout vertical, padding: medium, gap: medium:
+    layout vertical, fill: true, gap: small, align: center:
+      label category, color: status_color, style: heading
+      label round(bmi_value, 1), style: heading
+      label advice, align: center
+    button "RE-CALCULATE", color: brand, on tap: navigate back
+
+component GenderCard(value, text, accent):
+  bg = card
+  fg = accent
+  if shared.gender is value:
+    bg = accent
+    fg = white
+  layout vertical, fill: true, padding: medium, background: bg, rounded: medium, align: center, gap: small, on tap: shared.gender = value:
+    icon value, size: large, color: fg
+    label text, color: fg
+
+component HeightCard:
+  layout vertical, fill: true, padding: medium, background: card, rounded: medium, gap: small:
+    label "HEIGHT"
+    layout horizontal, gap: small, align: center:
+      label shared.height, style: heading
+      label "cm"
+    slider bind: shared.height, min: 120, max: 220
+
+component ValueCard(label_text, value):
+  layout vertical, fill: true, padding: medium, background: card, rounded: medium, align: center, gap: small:
+    label label_text
+    label value, style: heading
+    layout horizontal, gap: medium, align: center:
+      button "-", shape: circle, color: subtle, on tap: emit step (-1)
+      button "+", shape: circle, color: subtle, on tap: emit step 1

@@ -59,6 +59,7 @@ class _DemoScreenState extends State<DemoScreen> {
             Row(
               children: [
                 GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () {
                     setState(() {
                       active = 'A';
@@ -68,6 +69,7 @@ class _DemoScreenState extends State<DemoScreen> {
                 ),
                 const SizedBox(width: 16),
                 GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () {
                     setState(() {
                       active = 'B';

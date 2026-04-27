@@ -14,7 +14,7 @@
 //   npx tsx scripts/sync-docs.ts          # apply updates
 //   npx tsx scripts/sync-docs.ts --check  # fail if drift
 
-import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -166,9 +166,12 @@ function regenerateGallery(repoPath: string, exampleCount: number): boolean {
 
   // Scan recursively so subfolder demos (e.g. examples/pomodonut/app.igni) appear.
   // The relative path (e.g. "pomodonut/app") is preserved as the entry name
-  // so the gallery's link points at the correct file.
+  // so the gallery's link points at the correct file. Skip directories whose
+  // name ends in `.igni` (the Flutter scaffold dir `igni run` creates inside
+  // each app subfolder is named `.igni`).
   const files = (readdirSync(examplesDir, { recursive: true }) as string[])
     .filter(f => typeof f === 'string' && f.endsWith('.igni'))
+    .filter(f => statSync(join(examplesDir, f)).isFile())
     .map(f => f.replace(/\.igni$/, ''))
     .sort();
 

@@ -137,3 +137,39 @@ v0.7.0 is ready to ship as the canonical spec.
 1. Run the four outputs through the transpiler; record stage-2 results.
 2. Run the **Alert Dashboard** prompt (tests/v0.7.0/prompts.md #2) against the same four models — directly probes the function-returns-colour and component-takes-colour-arg patterns. Results feed directly into whether the v0.7 architecture-flow examples in the spec are sufficient, or whether they need more prominence.
 3. If the Alert Dashboard run also passes 4/4, freeze v0.7.0 and begin v0.8 design work — with first-class event handlers in components as the lead candidate, driven by the 2/4 invention signal above.
+
+---
+
+## Retrospective: gap closed empirically at v0.16 (2026-04-27)
+
+**Status of the "first-class event handlers as component args" gap (2/4 invention signal at v0.7.0): closed.**
+
+v0.16.0 shipped `emit <name> <payload>` + `on <name>(arg):` event-payload binding (canonical example at `spec/v0.16.0.md` L1038–1089). Hand-translation of the BMI Calculator into `transpiler/examples/bmi/app.igni` (~70 lines) directly tests whether the design response actually delivers the shape the v0.7 panel reached for.
+
+**Result.** The exact reusable +/- stepper that GPT 5.3 invented `on decrease:` / `body.decrease()` for, and that Gemini Pro / Opus 4.6 worked around with string-key dispatch, is now expressible directly:
+
+```igni
+component ValueCard(label_text, value):
+  layout vertical, fill: true, padding: medium, background: card, rounded: medium, align: center, gap: small:
+    label label_text
+    label value, style: heading
+    layout horizontal, gap: medium, align: center:
+      button "-", shape: circle, color: subtle, on tap: emit step (-1)
+      button "+", shape: circle, color: subtle, on tap: emit step 1
+
+# at the call site:
+ValueCard "WEIGHT", shared.weight, on step(d): shared.weight = shared.weight + d
+ValueCard "AGE", shared.age, on step(d): shared.age = shared.age + d
+```
+
+Codegen produces clean Dart: `final void Function(dynamic)? onStep` field on the `ValueCard` widget, `onStep?.call(-1)` and `onStep?.call(1)` on the two button presses. No string-key dispatch, no two-function ceremony, no inventions needed. The v0.7-era convergent need is now spec-supported with one canonical syntax.
+
+**Friction tax surfaced, not predicted.** `emit step -1` (bare negative-int payload) fails parsing — the workaround is `emit step (-1)` with parens grouping. Bare unary-minus literals work fine in `temperature = -5` and `[-3, -2, -1, 0]`, but the `emit <name> <expr>` grammar trips on the `-`. Frontier models in 2026-04 are likely to write the bare form first and need one fix-it nudge or a cookbook entry to land. Logged in `docs/private/trap-journal.md` as a v0.27+ candidate (parser widen unary-minus to accept the same shape as list-literal acceptance).
+
+**Bigger trap surfaced at browser-test time.** Igni source `shared.weight = shared.weight + d` parsed cleanly, generated Dart, and passed `flutter analyze --no-pub` (the smoke harness). But `flutter run` — only invoked when Tyr ran `igni run` — failed with `A value of type 'num' can't be assigned to a variable of type 'int'`. Root cause: emit-payload params are typed `void Function(dynamic)?` at the closure boundary, so `int + dynamic → num` and Dart's strict assignment rejects `int = num`. Same shape as the v0.14.3 `format_time` int-divide trap; the v0.16.0 fixtures only used String/object payloads, so the int-delta shape — arguably the canonical use case for the new feature — was unexercised across 12 transpile-clean test cases and 12 strong-pass Stage 3 panel cases. **Same-session fix shipped:** `codegen.ts` now tracks `dynamicParamsInScope` and post-wraps `int_field = ...` RHS with `(...).toInt()` when the RHS references an in-scope payload param. New fixture `transpiler/examples/on-handler-int-payload.igni` covers the canonical Stepper shape; BMI's regenerated `app.expected.dart` reflects the wrap.
+
+**Methodology lift.** This now generalises to a 2-of-2 pattern: v0.13.1 pomodonut and v0.16 BMI both surfaced canonical-shape bugs that all of (npm test diff, smoke harness `flutter analyze`, the per-version Stage 3 panel) missed, only catchable by `flutter run` on a real-app translation. Per-version "first real-app translation" gate is now load-bearing for ship-readiness; a feature passing Stage 3 panels and 12 fixture cases is not the same thing as a feature that survives first contact with a non-trivial app.
+
+**Methodology note.** A panel's *unresolved* signal — the thing the spec was *trying* to make expressible — is the most useful retrospective handle two cycles later. The v0.7.0 row "first-class event handlers" was a single sentence in the panel verdict; following it through to v0.16 hand-translation produced empirical confirmation of design follow-through that no number of subsequent panel runs would have produced (panels probe forward, not back). For dissertation methodology: when a gap is logged with this much specificity, schedule a retrospective the moment the design response ships.
+
+Companion artefacts: `transpiler/examples/bmi/app.igni` (the hand-translation), `transpiler/examples/bmi/app.expected.dart` (golden fixture committed alongside), trap-journal entries dated 2026-04-27.

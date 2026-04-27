@@ -117,6 +117,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
                         for (final (_i, offset) in [0, 1, 2].indexed) ...[
                           Expanded(
                             child:                           GestureDetector(
+                            behavior: HitTestBehavior.opaque,
                             onTap: () {
                               place((row_start + offset >= 0 && row_start + offset < cells.length ? cells[row_start + offset] : null));
                             },

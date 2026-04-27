@@ -237,8 +237,14 @@ export function generateStyleValueResolvers(themeColors: Record<string, string> 
       .map(([name, color]) => `    case '${name}': return ${color};`)
       .join('\n'),
   ].filter(s => s).join('\n');
+  // Skip the default `card → Theme.cardColor` case when the user overrides
+  // `card` via `theme: color: card:`, otherwise the override is dead-coded
+  // behind the default and backgrounds silently render the M3 default
+  // surface colour. Surfaced 2026-04-27 by BMI: `card: "#1D1E33"` was
+  // dropped on the floor; gender card invisible against scaffold.
+  const cardOverridden = 'card' in themeColors;
   const backgroundCases = [
-    `    case 'card': return Theme.of(context).cardColor;`,
+    cardOverridden ? '' : `    case 'card': return Theme.of(context).cardColor;`,
     themeCases,
     Object.entries(COLOR_MAP)
       .filter(([name]) => !(name in themeColors))

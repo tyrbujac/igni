@@ -48,6 +48,16 @@ export class CodeGenerator {
   private ctx: ScreenContext = newScreenContext();
   private functionParams: string[] = [];
   private declaredLocals: Set<string> = new Set();
+  // v0.16.x: emit-payload params are typed `dynamic` at the closure boundary
+  // (`void Function(dynamic)?`), so any `int_field = int_field + d` inside a
+  // parent's `on X(d):` body fails Dart's static analysis (`int + dynamic →
+  // num`, `int = num` rejected). Track the names of payload params currently
+  // in scope so the Assignment generator can post-wrap with `.toInt()` for
+  // int-typed targets. Surfaced by the BMI hand-translation (2026-04-27); the
+  // v0.16.0 fixtures only exercised String/object payloads, missing the
+  // int-delta-stepper shape.
+  private dynamicParamsInScope: Set<string> = new Set();
+  private sharedVarTypes: Record<string, string> = {};
 
   private indent(depth: number): string {
     return '  '.repeat(depth);
@@ -268,6 +278,7 @@ export class CodeGenerator {
   private genSharedState(vars: VariableDecl[]): string {
     const fields = vars.map(v => {
       const dartType = inferType(v.value, v.typeHint);
+      this.sharedVarTypes[v.name] = dartType;
       const dartValue = this.exprToDart(v.value);
       return this.withMarker(v, `shared:${v.name}`, `  ${dartType} ${v.name} = ${dartValue};`);
     }).join('\n');
@@ -2313,7 +2324,10 @@ export class CodeGenerator {
         // Parent's chosen name binds the closure parameter (Shape A — explicit naming).
         // The child still passes the value via cb?.call(arg); the parent's parameter receives it.
         const sig = parentHasParam ? `(${ev.parameter})` : `()`;
+        const paramName = parentHasParam && ev.parameter && ev.parameter !== '_' ? ev.parameter : null;
+        if (paramName) this.dynamicParamsInScope.add(paramName);
         const body = this.genCallbackBody(ev.action, depth + 1);
+        if (paramName) this.dynamicParamsInScope.delete(paramName);
         namedArgs.push(`${cbName}: ${sig} {\n${body}${ind}  }`);
       }
     }
@@ -2500,19 +2514,55 @@ export class CodeGenerator {
     );
   }
 
+  // True if `expr` references any of `names` anywhere in its sub-tree.
+  // Used to detect when an emit-payload param flows into an int-typed
+  // assignment RHS so the codegen can post-wrap with `.toInt()`.
+  private exprReferencesAny(expr: Expr, names: Set<string>): boolean {
+    if (names.size === 0) return false;
+    if (expr.type === 'Ident') return names.has(expr.name);
+    if (expr.type === 'BinaryExpr') return this.exprReferencesAny(expr.left, names) || this.exprReferencesAny(expr.right, names);
+    if (expr.type === 'UnaryExpr') return this.exprReferencesAny(expr.operand, names);
+    if (expr.type === 'EqualityExpr') return this.exprReferencesAny(expr.left, names) || this.exprReferencesAny(expr.right, names);
+    if (expr.type === 'IsExpr') return this.exprReferencesAny(expr.target, names);
+    if (expr.type === 'InExpr') return this.exprReferencesAny(expr.value, names) || this.exprReferencesAny(expr.list, names);
+    if (expr.type === 'FieldAccess') return this.exprReferencesAny(expr.object, names);
+    if (expr.type === 'IndexAccess') return this.exprReferencesAny(expr.object, names) || this.exprReferencesAny(expr.index, names);
+    if (expr.type === 'FunctionCall') return expr.args.some(a => this.exprReferencesAny(a, names));
+    if (expr.type === 'ListLit') return expr.elements.some(e => this.exprReferencesAny(e, names));
+    if (expr.type === 'ObjectLit') return expr.properties.some(p => this.exprReferencesAny(p.value, names));
+    if (expr.type === 'ObjectUpdate') return this.exprReferencesAny(expr.target, names) || expr.updates.some(u => this.exprReferencesAny(u.value, names));
+    return false;
+  }
+
+  // Wrap RHS expression in `.toInt()` if the assignment target is int-typed
+  // AND the RHS references an in-scope dynamic-payload param. Dart's static
+  // type system rejects `int = (int + dynamic)` because `int + dynamic`
+  // resolves to `num`. The wrap forces conversion at the closure boundary
+  // without narrowing the param type (which the spec leaves unconstrained:
+  // `emit X v` accepts any positional value).
+  private maybeWrapDynPayloadInt(targetType: string | undefined, rhsDart: string, value: Expr): string {
+    if (targetType !== 'int') return rhsDart;
+    if (!this.exprReferencesAny(value, this.dynamicParamsInScope)) return rhsDart;
+    return `(${rhsDart}).toInt()`;
+  }
+
   private genStmt(s: Statement, depth: number): string {
     const ind = this.indent(depth);
     let code = '';
     switch (s.type) {
       case 'Assignment': {
         if (s.target.startsWith('shared.')) {
-          code = `${ind}shared.update(() {\n${ind}  ${s.target} = ${this.exprToDart(s.value)};\n${ind}});\n`;
+          const sharedField = s.target.slice('shared.'.length);
+          const sharedFieldType = this.sharedVarTypes[sharedField];
+          const rhs = this.maybeWrapDynPayloadInt(sharedFieldType, this.exprToDart(s.value), s.value);
+          code = `${ind}shared.update(() {\n${ind}  ${s.target} = ${rhs};\n${ind}});\n`;
           break;
         }
         const isStateVar = this.ctx.stateVars.includes(s.target);
         if (isStateVar) {
           this.checkIntDivideAssignment(s.target, s.value);
-          code = `${ind}setState(() {\n${ind}  ${s.target} = ${this.exprToDart(s.value)};\n${ind}});\n`;
+          const rhs = this.maybeWrapDynPayloadInt(this.ctx.stateVarTypes[s.target], this.exprToDart(s.value), s.value);
+          code = `${ind}setState(() {\n${ind}  ${s.target} = ${rhs};\n${ind}});\n`;
           if (this.ctx.boundInputVars.includes(s.target)) {
             code += `${ind}_${s.target}Controller.text = ${s.target};\n`;
           }
@@ -2634,6 +2684,20 @@ export class CodeGenerator {
     }
     const dartExpr = this.exprToDart(action.value);
 
+    if (action.target.startsWith('shared.')) {
+      // `on tap: shared.X = ...` must wrap in shared.update() so the
+      // ChangeNotifier fires and the app-root ListenableBuilder rebuilds.
+      // Without this the assignment happens but no widget sees it. v0.14.1
+      // patched the `bind:` path; this is the symmetric `on tap:` patch
+      // (surfaced 2026-04-27 by BMI's tappable GenderCard not switching).
+      let code = `${ind}onPressed: () {\n`;
+      code += `${ind}  shared.update(() {\n`;
+      code += `${ind}    ${action.target} = ${dartExpr};\n`;
+      code += `${ind}  });\n`;
+      code += `${ind}},\n`;
+      return code;
+    }
+
     if (this.ctx.stateVars.includes(action.target)) {
       let code = `${ind}onPressed: () {\n`;
       code += `${ind}  setState(() {\n`;
@@ -2680,6 +2744,14 @@ export class CodeGenerator {
     }
 
     const dartExpr = this.exprToDart(action.value);
+    if (action.target.startsWith('shared.')) {
+      // Same patch as genOnPressed — `on change: shared.X = ...` needs
+      // shared.update() to fire notifyListeners.
+      let code = `${ind}shared.update(() {\n`;
+      code += `${ind}  ${action.target} = ${dartExpr};\n`;
+      code += `${ind}});\n`;
+      return code;
+    }
     if (this.ctx.stateVars.includes(action.target)) {
       let code = `${ind}setState(() {\n`;
       code += `${ind}  ${action.target} = ${dartExpr};\n`;
@@ -2695,6 +2767,13 @@ export class CodeGenerator {
     if (!tapEvent && !touchEvent) return code;
     const ind = this.indent(depth);
     const props: string[] = [];
+    // HitTestBehavior.opaque so the whole bounds of the wrapped widget catch
+    // taps, regardless of children. Default (deferToChild) silently misses
+    // taps on layout regions where children don't claim the hit — e.g. a
+    // tappable card whose Container uses `decoration:` (no explicit `color:`
+    // prop) doesn't propagate hits to GestureDetector. Surfaced 2026-04-27 by
+    // BMI's GenderCard: tapping FEMALE didn't switch from MALE.
+    props.push(`${ind}  behavior: HitTestBehavior.opaque,\n`);
     if (tapEvent) {
       props.push(this.genOnPressed(tapEvent, depth + 1).replace('onPressed', 'onTap'));
     }

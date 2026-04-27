@@ -1,0 +1,12 @@
+component Stepper(value):
+  layout horizontal, gap: small, align: center:
+    button "-", shape: circle, on tap: emit step (-1)
+    label value
+    button "+", shape: circle, on tap: emit step 1
+
+screen Counter:
+  count = 0
+
+  layout vertical, gap: medium, padding: large, align: center:
+    label "Count: " + count, style: heading
+    Stepper count, on step(d): count = count + d

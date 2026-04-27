@@ -130,6 +130,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
             ] else ...[
               for (final contact in visible()) ...[
                 GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (context) => ContactDetailScreen(contact: contact)));
                   },
