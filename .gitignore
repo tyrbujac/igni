@@ -35,6 +35,10 @@ desktop.ini
 node_modules/
 transpiler/test_app/
 transpiler/test_apps/
+
+# Generated Flutter scaffold dirs (any `.igni/` directory at any depth — created
+# by `igni run` next to the user's app.igni; always regenerated, never committed).
+.igni/
 transpiler/dist/
 
 # Private docs
