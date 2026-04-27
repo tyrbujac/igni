@@ -100,8 +100,14 @@ function computeFacts(): Facts {
   const oldest = canonical[0].name;
 
   // Scan recursively so subfolder demos (e.g. examples/pomodonut/) count.
-  const exampleCount = readdirSync(join(REPO, 'transpiler/examples'), { recursive: true })
-    .filter((f): f is string => typeof f === 'string' && f.endsWith('.igni')).length;
+  // isFile filter rejects scaffold directories named `.igni/` that `igni run`
+  // creates inside example subfolders (bmi/.igni/, pomodonut/.igni/) — those
+  // are gitignored locally but inflate the count when sync-docs runs against a
+  // working tree that has them. CI's clean checkout doesn't see them; aligning
+  // local behaviour to CI behaviour by filtering to files only.
+  const examplesRoot = join(REPO, 'transpiler/examples');
+  const exampleCount = readdirSync(examplesRoot, { recursive: true })
+    .filter((f): f is string => typeof f === 'string' && f.endsWith('.igni') && statSync(join(examplesRoot, f)).isFile()).length;
 
   let negativeCount = 0;
   try {
