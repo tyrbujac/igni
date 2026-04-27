@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "v0.18 testing infrastructure design critique",
+  "prompt_slug": "v0-18-testing-infrastructure-design-critique",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.18.0-testing-design-review/prompts.md",
+  "spec_path": null,
+  "spec_tier": "none",
+  "spec_sha256": null,
+  "spec_words": 0,
+  "timestamp": "2026-04-27T17:42:48.337Z",
+  "duration_ms": 27351,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 3348,
+    "output_tokens": 1160,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.020616,
+  "transpile": null
+}
