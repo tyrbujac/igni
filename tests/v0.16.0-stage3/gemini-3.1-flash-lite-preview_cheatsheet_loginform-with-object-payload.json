@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-flash-lite-preview",
+  "model_id": "gemini-3.1-flash-lite-preview",
+  "prompt_name": "LoginForm with object payload",
+  "prompt_slug": "loginform-with-object-payload",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.16.0-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.16.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "4f8904b74b15b7e3d027e5ab66e472151bb07be9135340d52686624291fee2f5",
+  "spec_words": 4135,
+  "timestamp": "2026-04-27T09:36:02.587Z",
+  "duration_ms": 1529,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 7832,
+    "output_tokens": 311,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.0024245,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": false,
+    "error": "Error: Expected variable name, got \"\\n\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-0p4YYo/app.igni:16 |     LoginForm on submit(data):\n                                                                                   |                               ^\n\n  Error: Unexpected token \"\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-0p4YYo/app.igni:17 |       result = authenticate(data.email, data.password)\n                                                                                   |       ^\n\n  Error: Unexpected token \"navigate\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-0p4YYo/app.igni:19 |         navigate to Home\n                                                                                   |                 ^\n\n  Error: Expected \"screen\", got \"else\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/igni-grade-0p4YYo/app.igni:20 |       else:\n                                                                                   |           ^",
+    "error_category": "model_error",
+    "igni_lines": 28
+  }
+}

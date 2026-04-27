@@ -1,0 +1,619 @@
+# Igni v0.15.2 — Cheat Sheet
+
+UI-first language. Reads like a design spec, compiles to Flutter. No imports, no classes, no boilerplate.
+
+## Hello World
+
+```igni
+screen Hello:
+  label "Hello, World!"
+```
+
+That's a complete app. One screen, one label.
+
+## A Complete App
+
+A 17-line Todo, every line load-bearing, exercising the most common Igni primitives in one piece. Read top-to-bottom before drilling into the per-feature sections below.
+
+```igni
+screen Todo:                                       # screen — top-level
+  items = []                                       # variable; empty list
+  draft = ""                                       # variable; empty string
+
+  layout vertical, gap: medium, padding: large:    # layout — vertical stack
+    label "Todo", style: heading                   # label with style token
+    input bind: draft, placeholder: "New task"     # input with two-way bind
+    button "Add", on tap: add()                    # button → screen function
+    if items is empty:                             # conditional rendering
+      label "No tasks yet"
+    else:
+      each item in items:                          # list iteration
+        label item.text                            # field access on object
+
+  add():                                           # screen-internal function
+    items = items + [{text: draft}]                # list append + object literal
+    draft = ""                                     # state reassign → re-renders
+```
+
+Lexical reactivity does the heavy lifting: reassigning `items` or `draft` inside `add()` re-runs the screen body, which re-renders the layout. There is no `setState`, no controllers, no observable wrappers. Same model holds whether state is local (this example), shared across screens (`shared:` block), or async (`fetch()` / `locate()`).
+
+## Reacting to users
+
+State is plain variables. Conditionals are statements. The connective tissue is one rule: **a screen re-evaluates from the top whenever any variable it references is reassigned.** No `setState`, no observable wrappers, no signals — just assignment. Same rule applies whether the variable is local (declared in the screen body), shared (declared in a top-level `shared:` block), or async (the result of a `fetch()` or `locate()`).
+
+**Why doesn't state reset?** Top-level assignments (`count = 0`) run *once*, when the screen first opens — think "starts at", not "resets to". Re-evaluation re-runs the rendering part (layouts, labels, conditionals) with the variable's current value, not its initial one. The `= 0` line doesn't fire again until you leave the screen and come back.
+
+**Derived state needs a function, not a top-level `=`.** Because top-level assignments run once, `derived = base * 2` *captures* `base`'s initial value — it does not track changes to `base`. To compute a value that follows reactive state, define a function: `total(): return count * price`. Calls inside the rendering part (`label total()`) re-evaluate whenever any state read inside the function is reassigned. Reactivity follows references through function calls.
+
+**Reach is transitive — and only fires when something reads.** A layout that calls a function that reads `tick` re-renders when `tick` changes, the same as if the layout read `tick` directly. The corollary: reassigning a variable that *nothing* in the layout reads (directly or transitively) is a no-op for the UI by design. If you want an `every` block to drive UI updates, ensure the layout (directly or via a function call) reads the variable being updated.
+
+**Variables.**
+
+```igni
+name = "Tyr"                       # String
+count = 0                          # int
+price = 9.99                       # decimal
+active = true                      # bool
+status_color = green               # colour value
+card_bg = card                     # background-only surface value
+items = []                         # List
+items: [Product] = []              # List with type hint
+fields = {name: "Tyr", age: 24}    # Object (Map)
+weather = null                     # null
+```
+
+Arithmetic: `+`, `-`, `*`, `/` (standard precedence, parentheses for grouping).
+String concatenation: `"Hello, " + name`. No string interpolation.
+Field access: `obj.field`.
+List indexing: `items[0]`, `items[index]`. Zero-based. Returns `null` on out-of-bounds. Chained access on null **propagates null** (no crash): `questions[bad_index].text` evaluates to null. Canonical pattern: gate at the conditional (`if i < length(items): label items[i].text`), not defensive `if x is not null:` chains at every access.
+
+**Conditionals.**
+
+```igni
+if condition:
+  ...
+else if other:
+  ...
+else:
+  ...
+```
+
+Statements, not expressions. For conditional values: assign default, then override.
+
+```igni
+result = default_value
+if condition:
+  result = alternative
+```
+
+This also works for styling values:
+
+```igni
+bg = card
+if selected:
+  bg = brand
+layout vertical, background: bg:
+  label "Selected", color: white
+```
+
+**Boolean logic.**
+
+`not`, `and`, `or` — not symbols.
+
+`is` checks equality: `name is "Tyr"`, `count is 0`, `weather is null`. Negate: `is not`.
+
+**Structural for primitives, reference for objects and lists.** `"a" is "a"` is true; `1 is 1` is true. But `{name: "a"} is {name: "a"}` is **false** — they're separately-built objects. Same for lists. For field-based matching, use `find(items, item => item.id is target.id)`.
+
+Special forms: `is empty`, `is not empty`, `is loading`, `is error`, `is null`, `is not null`.
+List membership: `is in`, `is not in`.
+Comparison: `>`, `<`, `>=`, `<=` for numeric ordering.
+
+Conditionals require explicit boolean values. No truthiness.
+
+## Running It
+
+```bash
+igni run              # runs app.igni (default entry point)
+igni run hello.igni   # runs a specific file
+```
+
+`app.igni` is the default entry point for multi-file projects. For single-file experiments, name the file whatever you want and pass it to `igni run`. Save a `.igni` file to hot reload.
+
+```text
+my-app/
+  app.igni          # entry point (default)
+  images/           # local images (referenced by name)
+  audio/            # audio files (referenced by name)
+```
+
+## Screens
+
+```igni
+screen Home:
+  count = 0
+
+  layout vertical, padding: large:
+    label count, style: heading
+    button "Add", on tap: increment()
+
+  increment():
+    count = count + 1
+
+screen Profile(user):
+  layout vertical, padding: large:
+    label user.name, style: heading
+
+screen Dicee, title: "Dicee", background: red:
+  layout horizontal, align: center:
+    image "dice1.png", size: 120
+```
+
+Full page. **Variables, layouts, and functions all live inside the screen body** — never at file level. Screen bodies stack vertically by default. Optional properties after name: `title:` adds an app bar, `background:` sets colour or image.
+
+## Showing things
+
+| Primitive  | Example                                       |
+|------------|-----------------------------------------------|
+| `label`    | `label "Hello", style: heading`               |
+| `image`    | `image "photo.png", size: 48, round: true`    |
+| `icon`     | `icon "play", size: large, color: brand`      |
+| `badge`    | `badge "Online", color: green`                |
+| `spinner`  | `spinner`                                     |
+| `divider`  | `divider`                                     |
+
+Labels support `align: center` for centred text. Images: local filename → `images/` folder, URL starting with `http` → network.
+
+## Getting input
+
+User input comes from a small set of primitives, each connected to state via `bind:` and capable of firing events. Every input-capable primitive has the same three building blocks: a primitive name (what it looks like), a `bind:` target (where its current value lives), and event handlers (what fires on user action). Read the primitives table first, then the binding rule, then the events.
+
+| Primitive  | Example                                       |
+|------------|-----------------------------------------------|
+| `button`   | `button "Save", color: brand, on tap: save()` |
+| `input`    | `input bind: email, placeholder: "Email"`     |
+| `toggle`   | `toggle bind: dark_mode, label: "Dark mode"`  |
+| `checkbox` | `checkbox bind: agreed, label: "I agree"`     |
+| `slider`   | `slider bind: volume, min: 0, max: 100`       |
+| `dropdown` | `dropdown bind: country, options: countries`  |
+
+**Circular buttons** — `shape: circle` for compact +/- steppers and icon-style controls (defaults to rounded rectangle):
+
+```igni
+button "-", shape: circle, color: subtle, on tap: weight = weight - 1
+```
+
+**Data binding.** `bind:` connects a primitive to a variable. Two-way, automatic — every keystroke for `input`, every flip for `toggle`/`checkbox`, every drag for `slider`, every selection for `dropdown` reassigns the bound variable. The reactivity rule (see *Reacting to users*) re-renders the screen each time, so live filtering, conditional rendering, and dependent inputs all "just work."
+
+**Binding to shared state.** `slider`, `toggle`, `checkbox`, and `dropdown` accept `shared.X` directly. The reassignment auto-wraps in `shared.update()` so other screens watching that field re-render. Use this for settings screens that mutate `shared:` state without local-var-plus-`on change:` boilerplate.
+
+```igni
+input bind: email, placeholder: "Email"
+toggle bind: dark_mode
+slider bind: shared.volume, min: 0, max: 100        # shared.X works on
+toggle bind: shared.sound_on, label: "Sound"        # slider/toggle/checkbox/dropdown
+```
+
+> **`input` is the exception.** Igni's `input` backs onto a Flutter `TextEditingController` that needs a stable local identifier — `input bind: shared.X` is rejected at parse time. Bridge via a local variable and `on change:`:
+> ```igni
+> draft = shared.title
+> input bind: draft, on change: shared.title = draft
+> ```
+
+**Events.** All input primitives (and any layout / component) accept `on tap:` and `on touch:`. Primitives with `bind:` additionally accept `on change:` for side effects when the bound value changes.
+
+```igni
+on tap: save()                     # fires on release (confirmed action)
+on tap: count = count + 1          # inline assignment
+on tap: navigate to Detail item    # navigation
+on touch: play("note1.wav")        # fires on contact (instant response)
+```
+
+`on tap:` for buttons, navigation, list items. `on touch:` for instruments, games — when latency matters.
+
+**`on change:` fires when a *user-driven* primitive change reassigns a bound variable.** For side effects — updating a dependent variable, validating input. Attaches to any primitive with `bind:`. The bound variable is already updated when the handler fires. `dropdown`/`toggle`/`checkbox`/`slider` fire once per selection; `input` fires on every keystroke.
+
+Programmatic reassignment (a Reset button, an `every` block, another function) re-renders but does NOT fire `on change:` — the handler is for user input only.
+
+```igni
+dropdown bind: country, options: countries, on change: update_region()
+input bind: email, placeholder: "Email", on change: validate(email)
+```
+
+**Events go on the same line, not as indented children.** Multiple events can coexist: `layout vertical, on tap: select(), on touch: play("click.wav"):`.
+
+## Arranging things
+
+`layout vertical` → Column. `layout horizontal` → Row.
+
+Properties: `gap`, `padding`, `align` (start/center/end), `spread: true`, `background`, `max_width`, `rounded`, `fill: true`.
+
+**`fill: true`** expands a layout to fill remaining space in its parent. Layout-only — primitives don't support it. Multiple `fill: true` siblings split space equally. Empty layouts may omit the trailing colon.
+
+```igni
+layout vertical:
+  label "Header"
+  layout vertical, fill: true, align: center:
+    label "Centered in remaining space"
+```
+
+**`max_width:`** caps a layout at one of three tokens: `phone` (480px) / `tablet` (768px) / `desktop` (1200px). Omitting it is uncapped. Tokens only — `max_width: 540` is invalid. The cap includes padding/background. Composes with `fill: true`: capped siblings freeze at their cap; uncapped `fill: true` siblings split the remaining space.
+
+```igni
+# Centered card, capped at 480px
+layout vertical, align: center, max_width: phone, padding: medium, background: card, rounded: medium:
+  label "MiCard", style: heading
+  label "+44 123 456 7890"
+```
+
+```igni
+# Two siblings sharing a row: left capped at tablet (768px), right takes remaining space
+layout horizontal, gap: medium:
+  layout vertical, fill: true, max_width: tablet:
+    label "Article body, capped at 768px even on a wide window"
+  layout vertical, fill: true:
+    label "Sidebar, takes whatever's left"
+```
+
+**Bottom-anchored CTA.** Put `fill: true` on every content section above the button. Sections share vertical space; the un-filled button sits at the bottom:
+
+```igni
+layout vertical, padding: large:
+  layout vertical, fill: true:    # content
+  layout vertical, fill: true:    # more content
+  button "Save", color: brand     # anchors to bottom
+```
+
+### Background images
+
+`background:` accepts colour names (unquoted) or image filenames (quoted strings):
+
+```igni
+layout vertical, background: red:              # colour
+layout vertical, background: "sunset.jpg":     # image from images/
+screen Destini, background: "background.png":  # full-screen image
+```
+
+Starts with `http` → network image. Otherwise → local file from `images/`. Content renders on top.
+
+## Lists
+
+```igni
+# query
+match = find(items, target)                   # identity find → item or null
+match = find(items, item => item.id is x)     # predicate find → item or null
+n = length(items)                             # count of items
+qty = count(items, target)                    # whole-value match only
+crit = length(filter(alerts, a => a.level is "critical"))   # field-based: compose length + filter
+
+# transform
+names = map(items, item => item.name)         # transform each → list
+done = filter(items, item => item.done)       # predicate filter → list
+by_name = sorted(items, item => item.name)    # sort ascending by key → list
+rev = reversed(items)                         # reverse → list
+
+# mutation (returns new list — assign back)
+items = items + [new_item]                    # append
+items = without(items, target)                # remove (all matches)
+items = replace(items, old, new)              # swap (all matches)
+```
+
+`without` removes every element equal to `target`; `replace` swaps every match. In the common case (`target` is a loop variable from `each`), only one element matches by reference, so multiplicity rarely surfaces — but for a list of primitives, `replace([1, 2, 1], 1, 99)` returns `[99, 2, 99]`.
+
+Iteration: `each item in items:` followed by indented block.
+
+**Updating one field on an item:**
+
+```igni
+toggle(target):
+  items = replace(items, target, {target with done: not target.done})
+```
+
+`{BASE with KEY: VALUE, ...}` builds a new object with all of BASE's fields plus the overrides. BASE is a variable or dot-access chain (`target`, `item.profile`, `shared.cart`); function calls and indexing at the base are rejected. Multiple overrides are comma-separated: `{item with title: "x", done: true}`. Shallow only — nest explicitly for deep updates. `with` is a reserved keyword. Braces required; no bare-infix form.
+
+> **Rule:** List elements cannot be mutated in place. Updates flow through reassignment of the whole list — `replace`, `without`, or the `each` rebuild loop.
+
+## Functions
+
+```igni
+greet(name):
+  return "hello " + name
+
+total_price():
+  total = 0
+  each item in items:
+    total = total + item.price
+  return total
+```
+
+Defined inside screens/components. Close over surrounding state. No `def`/`func`/`fn` keyword. `each`, `if/else`, and `return` all work inside function bodies.
+
+> **Rule:** Cross-screen function calls are NOT allowed. Functions defined in one screen are invisible to other screens connected by `navigate to`. For cross-screen state, use `shared:`.
+
+> **Rule:** Variables read outside a block must be declared at the top of the screen body. The accumulator pattern above (`total = 0` declared first, then mutated inside `each`) is the canonical shape — assigning a name first inside an `if` or `each` and reading it after is rejected with a "declare at the top of the screen body" hint.
+
+**Lambdas** — single-expression, one parameter — used only as arguments to list builtins:
+
+```igni
+item => item.done
+item => item.price * item.quantity
+```
+
+Not general-purpose; if you need a multi-line transformation, use a screen-internal function and call it from the lambda body or the surrounding code.
+
+## Async
+
+```igni
+user = fetch("/api/user")
+
+if user is loading:
+  spinner
+else if user is error:
+  label "Failed"
+else:
+  label user.name
+```
+
+Mutations: `fetch(url, method: "POST", body: {title: draft})`.
+
+**Reactive re-fetch.** A `fetch()` call re-runs whenever any variable in its arguments — URL, `method:`, `body:` — is reassigned. Same lexical-reactivity rule as the screen body. `user = fetch("/api/user/" + user_id)` automatically re-fetches when `user_id` changes; same for `locate()`-derived inputs.
+
+Don't concatenate an `input bind:` variable into a fetch URL — it re-fires per keystroke. Set a separate trigger variable from an `on tap:` handler and fetch from that instead.
+
+### Device location
+
+```igni
+here = locate()
+
+if here is loading:
+  spinner
+else if here is error:
+  label "Couldn't get location"
+else:
+  label round(here.latitude, 4) + ", " + round(here.longitude, 4)
+```
+
+`locate()` returns an async value with `.latitude` and `.longitude` (decimal-degree floats). Same `is loading` / `is error` shape as `fetch()`. One-shot read; first call triggers the platform permission prompt; denial collapses into `is error`.
+
+The fetch-URL rule above extends to `locate()` — don't concatenate `here.latitude` / `here.longitude` straight into a fetch URL. Capture coordinates via an `on tap:` trigger first, then fetch from that variable.
+
+## Recurrence
+
+A screen can run a block of code on a recurring schedule via `every <duration>:`. Body is the same shape as a function body — statements, `if`/`else`, assignments, function calls. Reassigning state inside the block triggers the lexical-reactivity rule and re-renders the screen.
+
+```igni
+screen Clock:
+  tick = now()
+
+  every 1s:
+    tick = now()
+
+  layout vertical, padding: large:
+    label tick, style: heading
+```
+
+**Lifecycle.** The block fires while the screen is mounted and visible. It pauses when the user navigates away and resumes on return. Missed ticks are NOT replayed — if the user navigates away for ten seconds, the block fires once on return, not ten times.
+
+**Wall-clock-correct timers.** For countdowns and elapsed-time UIs, capture timestamps with `now()` (integer seconds since epoch UTC) rather than decrementing a counter. The relative-decrement pattern (`remaining = remaining - 1`) loses elapsed seconds when the screen unmounts; the absolute-timestamp pattern reads correct wall-clock time on every tick:
+
+```igni
+screen Stopwatch:
+  start_time = now()
+  tick = now()
+
+  every 1s:
+    tick = now()
+
+  layout vertical, padding: large:
+    label tick - start_time, style: heading        # elapsed seconds
+```
+
+For pause/resume across navigation, accumulate elapsed-on-pause and add it to `tick - start_time` while running. See `transpiler/examples/pomodonut.igni` for the full Pomodoro shape.
+
+**Multiple blocks per screen.** A screen may declare multiple `every` blocks at different rates — for example, `every 1s:` for a countdown UI and `every 5s:` for an auto-save. Each block is independent.
+
+```igni
+screen NoteEditor:
+  draft = ""
+  last_saved = 0
+  saved_seconds_ago = 0
+
+  every 1s:
+    saved_seconds_ago = now() - last_saved
+
+  every 5s:
+    if draft is not empty and now() - last_saved > 5:
+      save(draft)
+      last_saved = now()
+
+  layout vertical:
+    input bind: draft
+    label saved_seconds_ago
+```
+
+**Durations.** v0.14 supports `every 1s:`, `every 5s:`, and `every 30s:`. Other tokens (`100ms`, `1m`, `2s`) and numeric durations (`every 2:`, `every 1.5:`) are rejected at parse time. Higher rates and additional tokens are planned for v0.15+.
+
+**Slow `fetch()` inside `every`.** If a fetch inside an `every` block takes longer than the tick interval, the next tick is **skipped** until the previous fetch completes. No queue, no concurrency, no abort. Periodic polling becomes "every interval, *or* however long the previous took, whichever is longer" — predictable, no resource drift.
+
+## Components
+
+```igni
+component Avatar(url, size):
+  image url, size: size, round: true
+```
+
+Invocation: `Avatar user.avatar, size: 80` (no parentheses).
+No-arg: `CartIcon` (name alone).
+
+> **Rule:** Arguments to screens and components are immutable. To edit a value passed in, declare a local variable inside the body.
+
+**Components re-evaluate with their parent.** A component's body re-runs whenever the parent screen re-evaluates — same lexical-reactivity rule. Components are not memoised by argument; passing the same value to a re-rendering parent doesn't skip the rebuild. If you need expensive work to run only when an arg changes, lift the work to a function on the parent and pass the result in.
+
+### Wrapper components
+
+```igni
+component Card(title):
+  layout vertical, padding: medium, background: card:
+    label title, style: heading.small
+    body
+```
+
+`body` renders exactly one widget. Caller passes a single top-level element. For multiple children, caller wraps in `layout vertical:` or `layout horizontal:`:
+
+```igni
+Card "Settings":
+  layout vertical, gap: small:
+    toggle bind: dark_mode
+    button "Logout", color: danger, on tap: logout()
+```
+
+### Component events
+
+```igni
+component Stepper(value):
+  layout horizontal, gap: medium, align: center:
+    button "-", shape: circle, on tap: emit decrement
+    label value
+    button "+", shape: circle, on tap: emit increment
+
+# parent
+Stepper weight, on increment: weight = weight + 1, on decrement: weight = weight - 1
+```
+
+`emit <name>` declares a custom event channel. Caller attaches with `on <name>:` — same vocabulary as `on tap:`. Action evaluates in parent scope.
+
+`emit` is **only valid as the action of an event handler** (`on tap:`, `on touch:`, `on change:`). Standalone `emit X` is a parse error. Reserved names: `tap`, `change`, `touch`.
+
+**Event data and handler parameters.** `emit X v` passes a single positional value. The parent's handler names the receiver in parens: `on selected(item): handle(item)`. The receiver name is the parent's choice — `item`, `value`, `text`, whatever reads naturally for the parent's body.
+
+```igni
+component SearchBar:
+  layout horizontal:
+    input bind: query, placeholder: "Search"
+    button "Go", on tap: emit submit query
+
+# parent
+SearchBar on submit(text): results = fetch("/search?q=" + text)
+```
+
+Pack multiple values into an object: `emit submit {email: e, name: n}` + `on submit(data): handle(data.email, data.name)`.
+
+**Mismatch is rejected.** Any inconsistency between the child's `emit` signature and the parent's handler signature is a static-validation error:
+- Child emits a value, parent uses bare `on X:` → rejected. To explicitly ignore the value, write `on X(_):` (`_` is the universal "explicit unused" convention).
+- Child emits no value, parent uses `on X(name):` or `on X(_):` → rejected.
+- A single component emitting the same event sometimes with a value and sometimes without → compile-time error.
+
+The `_` discard form keeps source readability: `on submit:` means "no payload exists"; `on submit(_):` means "payload exists, parent doesn't need it." Reserved events (`tap`, `change`, `touch`) stay payload-less — `on tap(coords):` is rejected.
+
+Optional: parent without `on <name>:` handler is fine — event no-ops.
+
+## Navigation
+
+```igni
+navigate to Profile user
+navigate back
+```
+
+## Shared State
+
+```igni
+shared:
+  cart = []
+```
+
+Access from any screen: `shared.cart`. Same reactivity rule. `shared.` prefix is the visible coupling marker. **Use `shared:` only when multiple screens need the same data. Single-screen state is local.**
+
+`shared:` blocks across multiple files **compose into a single namespace** — `auth.igni` declaring `shared: user` and `cart.igni` declaring `shared: items` makes both `shared.user` and `shared.items` available everywhere. **Same name in two files is a build-time error**, with both file locations in the message — same-name collisions are exactly the hidden-coupling failure mode the prefix was designed to prevent.
+
+## Styling
+
+`brand`, `subtle`, `danger`, `green`, `red`, `blue`, `white`, `black`, `yellow`, `orange`, `purple`, `teal`.
+
+Use directly with `color:` on primitives and `background:` on layouts and screens, or store them in variables first:
+
+```igni
+status_color = green
+if failed:
+  status_color = danger
+label "Status", color: status_color
+```
+
+`card` is a background-only token (themed surface colour): `background: card`. Like other tokens it can be stored in a variable — but the background-only restriction applies wherever it's used, so `color: card` is an error.
+
+Design tokens: `small` (8), `medium` (16), `large` (24).
+Text styles: `heading`, `heading.small`, `body`, `caption`.
+
+**Theme block — fonts and colours.** A top-level `theme:` block overrides built-in tokens project-wide (patches, not replaces — omitted keys keep defaults):
+
+```igni
+theme:
+  text:
+    heading: font: pacifico
+    body: font: source_sans
+  color:
+    brand: "#FF6B35"             # override built-in
+    primary_700: "#1D4ED8"       # user-defined token, used as color: primary_700
+    surface_elevated: "#F5F5F5"
+```
+
+Font bundle: `pacifico` (script), `inter` / `source_sans` (sans), `merriweather` / `lora` (serif), `fira_code` (mono). Per-label `font:` override is not available — typography is theme-level.
+
+`theme: color: <token>: "<hex>"` overrides a built-in or declares a new user-defined token. Custom token names match `[a-z][a-z0-9_]*` and cannot collide with Igni keywords, primitives, or other built-in tokens (full list in spec). Hex values are `"#RRGGBB"` only — shorthand `"#RGB"` is a parse error. Importing from Figma with nested groups: flatten with `_` (`brand/border/subtle` → `brand_border_subtle`).
+
+`card` is grandfathered as background-only — overriding it via `theme: color: card: "#X"` updates the surface but `card` stays foreground-rejected. User-defined tokens work in both `color:` and `background:` positions.
+
+> **Inline hex codes are rejected** outside `theme:`. `color: "#FF0000"` and `background: "#FFFFFF"` are parse-time errors — define a `theme: color:` token and use it by name. The all-tokens-go-through-theme rule keeps colour decisions traceable to one place.
+
+A bare `screen` has sensible defaults (padding, outlined input, intrinsic button width, neutral background). Explicit modifiers always win. See the full spec for the list.
+
+## Local Images and Audio
+
+Put files in `images/` or `audio/`, reference by name:
+
+```igni
+image "avatar.png", size: 80, round: true
+image "https://example.com/photo.jpg", size: 100
+play("note1.wav")
+```
+
+Starts with `http` → network image. Otherwise → local file. The toolchain handles asset registration.
+
+## Builtins
+
+**Strings:**
+
+```igni
+contains("Hello world", "world")   # true (case-insensitive)
+upper("critical")                  # "CRITICAL"
+lower("Hello")                     # "hello"
+```
+
+Store strings in their natural form; convert at the render site. No `capitalize` or `title_case`.
+
+**Utility:**
+
+```igni
+result = random(1, 6)              # random integer, min to max inclusive
+round(bmi, 1)                      # "21.5" — number to string, N decimals
+floor(s / 60)                      # 24 — largest integer ≤ x; pairs with `/` for time math
+play("sound.wav")                  # play audio from audio/ folder
+print(count)                       # log to browser console (F12)
+seconds = now()                    # integer seconds since 1970-01-01 UTC
+```
+
+`now()` is **non-reactive**. A bare `now()` reference does NOT cause re-evaluation — capturing `start = now()` runs once when the screen first opens, just like any other top-level assignment. To re-read the wall clock periodically, call `now()` from inside an `every <duration>:` block. Returns integer seconds — no sub-second precision, no timezone awareness, no monotonic-clock distinction.
+
+## Comments
+
+```igni
+# single-line comment
+count = 0  # inline comment
+```
+
+## Rules (reference)
+
+- Indentation-based scoping. Colons end any line that opens a block.
+- One way to do everything. No aliases, no shortcuts, no alternatives.
+- Types are inferred. Optional hints: `name: String = "Tyr"`, `items: [Item] = []`.
+- Max nesting depth: 4 levels (`layout`/`screen`/`component` blocks count; conditionals and loops don't). Custom components reset the counter.
+- UI primitives only render in screen or component bodies, never inside functions.
+- Arguments to screens and components are immutable.

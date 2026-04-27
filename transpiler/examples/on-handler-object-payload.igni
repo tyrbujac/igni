@@ -1,0 +1,14 @@
+screen Login:
+  status = ""
+
+  layout vertical, gap: medium, padding: large:
+    LoginForm "Sign in", on submit(creds): status = "Welcome " + creds.email
+    label status
+
+component LoginForm(button_text):
+  email = ""
+  password = ""
+  layout vertical, gap: medium:
+    input bind: email, placeholder: "Email"
+    input bind: password, placeholder: "Password"
+    button button_text, color: brand, on tap: emit submit {email: email, password: password}

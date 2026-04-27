@@ -1,0 +1,10 @@
+
+  Error: Reserved event "tap" is payload-less; remove the "(coords)" parameter. Reserved events: `tap`, `touch`, `change` — they don't carry data. Use `bind:` for value channels or define a custom event.
+
+    on-handler-param-on-reserved-event.igni:3 |     button "Tap me", on tap(coords): label coords
+                                              |                            ^
+
+  Error: Expected "screen", got ""
+
+    on-handler-param-on-reserved-event.igni:4 | 
+                                              | ^

@@ -1,0 +1,10 @@
+screen Search:
+  saved = ""
+  layout vertical:
+    QueryBar "Search", on submit: saved = "got it"
+
+component QueryBar(placeholder_text):
+  text = ""
+  layout horizontal:
+    input bind: text, placeholder: placeholder_text
+    button "Go", on tap: emit submit text

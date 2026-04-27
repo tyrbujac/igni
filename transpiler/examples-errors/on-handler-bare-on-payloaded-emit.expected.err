@@ -1,0 +1,7 @@
+
+  Error: event "submit" carries a value.
+  → name a parameter: on submit(name):
+  → discard explicitly: on submit(_):
+
+    on-handler-bare-on-payloaded-emit.igni:4 |     QueryBar "Search", on submit: saved = "got it"
+                                             |                          ^

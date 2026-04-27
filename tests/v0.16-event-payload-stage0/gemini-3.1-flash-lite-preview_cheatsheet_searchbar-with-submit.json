@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-flash-lite-preview",
+  "model_id": "gemini-3.1-flash-lite-preview",
+  "prompt_name": "SearchBar with submit",
+  "prompt_slug": "searchbar-with-submit",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.16-event-payload-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.16-event-payload-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "fe59aa3f035a34b5edffec8fdfa39b33f01f4c7646356b191b2707301fa2035e",
+  "spec_words": 4091,
+  "timestamp": "2026-04-27T09:09:01.460Z",
+  "duration_ms": 2454,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 7708,
+    "output_tokens": 471,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.0026335,
+  "transpile": null
+}

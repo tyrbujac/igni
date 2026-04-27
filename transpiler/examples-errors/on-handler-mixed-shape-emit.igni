@@ -1,0 +1,9 @@
+screen Demo:
+  hits = 0
+  layout vertical:
+    Conflicted "Demo", on foo: hits = hits + 1
+
+component Conflicted(title):
+  layout vertical:
+    button "A", on tap: emit foo
+    button "B", on tap: emit foo "with value"

@@ -1,0 +1,10 @@
+screen Demo:
+  count = 0
+
+  layout vertical, gap: medium, padding: large:
+    AlertButton "Alert", on fire(_): count = count + 1
+    label count
+
+component AlertButton(button_text):
+  layout horizontal:
+    button button_text, on tap: emit fire "ignored payload"

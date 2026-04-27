@@ -1,0 +1,13 @@
+screen Modal:
+  is_open = true
+
+  layout vertical, gap: medium, padding: large:
+    if is_open:
+      label "I'm a modal"
+      CloseIcon "✕", on close: is_open = false
+    else:
+      label "Modal closed"
+
+component CloseIcon(icon_text):
+  layout horizontal:
+    button icon_text, shape: circle, on tap: emit close

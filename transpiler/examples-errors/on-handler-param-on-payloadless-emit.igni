@@ -1,0 +1,8 @@
+screen Demo:
+  message = ""
+  layout vertical:
+    CloseIcon "✕", on close(reason): message = reason
+
+component CloseIcon(icon_text):
+  layout horizontal:
+    button icon_text, on tap: emit close

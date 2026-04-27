@@ -158,7 +158,12 @@ function buildSourceFiles(files: string[]): SourceFileInfo[] {
       startLine: nextStartLine,
       endLine: nextStartLine + lineCount - 1,
     };
-    nextStartLine = info.endLine + 3;
+    // `combinedSource` joins files with `\n\n` (two newlines = one blank line
+    // between files). The next file's content therefore starts at endLine + 2,
+    // not + 3. The off-by-one bug caused multi-file error messages to attribute
+    // errors to the wrong file (e.g. duplicate-theme error pointing at
+    // shopping.igni:55 instead of the actual theme-declaring file).
+    nextStartLine = info.endLine + 2;
     return info;
   });
 }

@@ -1,0 +1,3 @@
+screen Demo:
+  layout vertical:
+    button "Tap me", on tap(coords): label coords

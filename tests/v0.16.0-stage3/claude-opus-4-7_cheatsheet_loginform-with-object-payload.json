@@ -1,0 +1,32 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "LoginForm with object payload",
+  "prompt_slug": "loginform-with-object-payload",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.16.0-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.16.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "4f8904b74b15b7e3d027e5ab66e472151bb07be9135340d52686624291fee2f5",
+  "spec_words": 4135,
+  "timestamp": "2026-04-27T09:33:22.418Z",
+  "duration_ms": 8646,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 306,
+    "output_tokens": 442,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 10438,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.017799,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "error_category": null,
+    "igni_lines": 26
+  }
+}

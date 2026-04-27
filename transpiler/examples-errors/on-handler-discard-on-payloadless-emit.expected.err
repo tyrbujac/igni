@@ -1,0 +1,5 @@
+
+  Error: event "close" is payload-less; remove the "(_)" parameter. Component `CloseIcon` declares `emit close` with no value.
+
+    on-handler-discard-on-payloadless-emit.igni:4 |     CloseIcon "✕", on close(_): closed_count = closed_count + 1
+                                                  |                      ^

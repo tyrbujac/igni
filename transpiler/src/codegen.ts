@@ -2291,8 +2291,28 @@ export class CodeGenerator {
       for (const ev of customEvents) {
         const cbName = this.emitCallbackName(ev.event);
         const decl = compEmits.find(e => e.event === ev.event);
-        const paramName = decl?.argName ?? null;
-        const sig = paramName ? `(${paramName})` : `()`;
+        const childHasPayload = !!(decl && decl.argName);
+        const parentHasParam = !!ev.parameter;
+
+        // v0.16 static validation: parent handler signature must match child's emit signature.
+        if (childHasPayload && !parentHasParam) {
+          throw new TranspileError(
+            `event "${ev.event}" carries a value.\n  → name a parameter: on ${ev.event}(name):\n  → discard explicitly: on ${ev.event}(_):`,
+            ev.loc?.line ?? 1,
+            ev.loc?.column ?? 1
+          );
+        }
+        if (!childHasPayload && parentHasParam) {
+          throw new TranspileError(
+            `event "${ev.event}" is payload-less; remove the "(${ev.parameter})" parameter. Component \`${node.name}\` declares \`emit ${ev.event}\` with no value.`,
+            ev.loc?.line ?? 1,
+            ev.loc?.column ?? 1
+          );
+        }
+
+        // Parent's chosen name binds the closure parameter (Shape A — explicit naming).
+        // The child still passes the value via cb?.call(arg); the parent's parameter receives it.
+        const sig = parentHasParam ? `(${ev.parameter})` : `()`;
         const body = this.genCallbackBody(ev.action, depth + 1);
         namedArgs.push(`${cbName}: ${sig} {\n${body}${ind}  }`);
       }

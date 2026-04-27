@@ -1,0 +1,13 @@
+screen Search:
+  results = []
+
+  layout vertical, gap: medium, padding: large:
+    QueryBar "Search", on submit(query): results = [{title: "Result for: " + query}]
+    each item in results:
+      label item.title
+
+component QueryBar(placeholder_text):
+  text = ""
+  layout horizontal, gap: small:
+    input bind: text, placeholder: placeholder_text
+    button "Go", on tap: emit submit text

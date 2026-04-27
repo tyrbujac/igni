@@ -1,0 +1,30 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-flash-lite-preview",
+  "model_id": "gemini-3.1-flash-lite-preview",
+  "prompt_name": "Notes list with delete",
+  "prompt_slug": "notes-list-with-delete",
+  "prompt_index": 3,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.16.0-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.16.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "4f8904b74b15b7e3d027e5ab66e472151bb07be9135340d52686624291fee2f5",
+  "spec_words": 4135,
+  "timestamp": "2026-04-27T09:36:05.229Z",
+  "duration_ms": 1970,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 7821,
+    "output_tokens": 289,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.00238875,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "error_category": null,
+    "igni_lines": 12
+  }
+}

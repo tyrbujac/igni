@@ -1,0 +1,5 @@
+
+  Error: event "close" is payload-less; remove the "(reason)" parameter. Component `CloseIcon` declares `emit close` with no value.
+
+    on-handler-param-on-payloadless-emit.igni:4 |     CloseIcon "✕", on close(reason): message = reason
+                                                |                      ^

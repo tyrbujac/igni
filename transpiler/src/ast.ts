@@ -103,6 +103,13 @@ export interface Property extends NodeBase {
 
 export interface EventHandler extends NodeBase {
   event: string;
+  /**
+   * Optional parameter name from the parent's handler signature: `on X(name):` → `parameter = "name"`.
+   * `null`/`undefined` = bare `on X:` (no parameter). `"_"` = explicit-discard `on X(_):`.
+   * Per v0.16.0: when the child emits a value, parent must either name a parameter or discard with `_`;
+   * static validation rejects mismatch (bare-on-payloaded, parameterised-on-payloadless).
+   */
+  parameter?: string | null;
   action: Statement;
 }
 

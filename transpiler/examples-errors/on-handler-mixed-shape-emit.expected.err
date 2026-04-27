@@ -1,0 +1,5 @@
+
+  Error: Event "foo" emits both with and without an argument. Pick one shape.
+
+    on-handler-mixed-shape-emit.igni:9 |     button "B", on tap: emit foo "with value"
+                                       |                             ^

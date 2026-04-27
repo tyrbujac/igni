@@ -781,16 +781,22 @@ export class Parser {
     const start = this.current();
     this.consume(TokenType.Component, 'Expected "component"');
     const name = this.consume(TokenType.Identifier, 'Expected component name').value;
-    this.consume(TokenType.LParen, 'Expected "("');
+    // v0.16: parens optional for no-param components — `component Status:` is
+    // legal alongside `component Avatar(url, size):`. Models reach for the
+    // paren-less form naturally for components without arguments; requiring
+    // empty parens (`component Foo():`) was ceremony Igni didn't need.
     const params: string[] = [];
-    if (!this.check(TokenType.RParen)) {
-      params.push(this.consume(TokenType.Identifier, 'Expected parameter name').value);
-      while (this.check(TokenType.Comma)) {
-        this.advance();
+    if (this.check(TokenType.LParen)) {
+      this.advance();
+      if (!this.check(TokenType.RParen)) {
         params.push(this.consume(TokenType.Identifier, 'Expected parameter name').value);
+        while (this.check(TokenType.Comma)) {
+          this.advance();
+          params.push(this.consume(TokenType.Identifier, 'Expected parameter name').value);
+        }
       }
+      this.consume(TokenType.RParen, 'Expected ")"');
     }
-    this.consume(TokenType.RParen, 'Expected ")"');
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
     this.consume(TokenType.Indent, 'Expected indent', this.indentHint(`component ${name}(...):`));
@@ -826,12 +832,24 @@ export class Parser {
     const properties: Property[] = [];
     const events: EventHandler[] = [];
 
-    // First positional arg
-    if (!this.check(TokenType.Newline) && !this.check(TokenType.Comma)) {
+    // First positional arg (skip if next is `on` event-handler, `,` or end-of-invocation tokens).
+    if (
+      !this.check(TokenType.Newline) &&
+      !this.check(TokenType.Comma) &&
+      !this.check(TokenType.On) &&
+      !this.check(TokenType.Colon)
+    ) {
       args.push(this.parseExpr());
     }
 
-    // Rest: positional args, named props, or events.
+    // v0.16: when no positional was given, an event handler can directly follow the component
+    // name with no comma — e.g. `SearchBar on submit(text): ...`. With a positional, the comma
+    // before subsequent attrs is still required (`Stepper value, on increment(amount): ...`).
+    if (args.length === 0 && this.check(TokenType.On)) {
+      events.push(this.parseEventHandler());
+    }
+
+    // Rest: comma-separated positional args, named props, or events.
     // Disambiguation: `identifier:` followed by a value is a named arg
     // (`value: weight`), but `identifier:` followed immediately by a newline
     // is a positional arg (`weight`) plus the body-opening colon — so the
@@ -953,10 +971,25 @@ export class Parser {
   private parseEventHandler(): EventHandler {
     const start = this.current();
     this.consume(TokenType.On, 'Expected "on"');
-    const event = this.consumeEventName('Expected event name').value;
+    const eventTok = this.consumeEventName('Expected event name');
+    const event = eventTok.value;
+
+    // v0.16: optional `(name)` or `(_)` after event name names the receiver of an emitted payload.
+    // Reserved events (`tap`, `change`, `touch`) are payload-less and reject the parens form here at parse time.
+    let parameter: string | null = null;
+    if (this.check(TokenType.LParen)) {
+      if (event === 'tap' || event === 'touch' || event === 'change') {
+        this.error(`Reserved event "${event}" is payload-less; remove the "(${this.peek(1)?.value ?? '...'})" parameter. Reserved events: \`tap\`, \`touch\`, \`change\` — they don't carry data. Use \`bind:\` for value channels or define a custom event.`);
+      }
+      this.consume(TokenType.LParen, 'Expected "("');
+      const paramTok = this.consume(TokenType.Identifier, 'Expected parameter name or "_"');
+      parameter = paramTok.value;
+      this.consume(TokenType.RParen, 'Expected ")"');
+    }
+
     this.consume(TokenType.Colon, 'Expected ":"');
     const action = this.parseStatement();
-    return { event, action, loc: this.loc(start) };
+    return { event, parameter, action, loc: this.loc(start) };
   }
 
   // Accept either an Identifier or a UI-primitive keyword as an event name.

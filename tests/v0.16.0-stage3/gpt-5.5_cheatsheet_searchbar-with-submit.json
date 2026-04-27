@@ -1,0 +1,30 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.5",
+  "model_id": "gpt-5.5-2026-04-23",
+  "prompt_name": "SearchBar with submit",
+  "prompt_slug": "searchbar-with-submit",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.16.0-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.16.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "4f8904b74b15b7e3d027e5ab66e472151bb07be9135340d52686624291fee2f5",
+  "spec_words": 4135,
+  "timestamp": "2026-04-27T09:34:15.579Z",
+  "duration_ms": 38515,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 7331,
+    "output_tokens": 2332,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.106615,
+  "transpile": {
+    "attempted": true,
+    "extracted_code": true,
+    "passed": true,
+    "error": null,
+    "error_category": null,
+    "igni_lines": 25
+  }
+}
