@@ -74,4 +74,4 @@ For docs-only iterations (e.g., v0.14.2 cheatsheet pin pass), the threshold is l
 
 Designing new syntax. Running panels. Writing design notes. Deciding skip-Stage-2. Interpreting cold-test results. Updating ROADMAP Stream 3 status. Drafting Stage 0/2/3 prompts.
 
-When this skill does NOT apply: cookbook entries (different audience), transpiler-only fixes (no spec change), version-bump mechanics (sync-docs covers), CHANGELOG entries (prose convention only).
+When this skill does NOT apply: cookbook entries (different audience), transpiler-only fixes (no spec change), version-bump mechanics (use the `version-bump` skill), trap-journal walks (use the `trap-journal` skill), CHANGELOG entries (covered by `version-bump`).

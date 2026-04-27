@@ -39,7 +39,15 @@ If a proposal violates one of these, it's wrong by definition — push back inst
 
 - **Tyr is the sole decision-maker.** Propose changes, present tradeoffs, wait for confirmation. Never edit the spec on his behalf without explicit approval.
 - **Follow the spec-iteration cycle in [`docs/cycle.md`](docs/cycle.md)** — 9 stages (design → review → ship → Stage 3 → critique → synthesis → patch) with named commands and human checkpoints. v0.13's ship (`docs/private/91`) is the canonical example. Don't reinvent the cycle per session.
+- **Skill index for cycle-adjacent work:** `spec-cycle` (design + Stage 0/2/3 panels), `trap-journal` (post-`igni run` walks), `version-bump` (shipping a new spec version), `figma-translation` (Path C hand-translation), `stage-2-review` (panel critique synthesis). Each loads on description-match; `.claude/skills/<name>/SKILL.md` for details.
 - **After every `igni run`, walk the trap journal** (`docs/cycle.md` §Trap journal). Every surprise — transpiler bug, layout collapse, Igni-source pattern that fought you, misleading error, surprising workaround — gets routed to ROADMAP, cookbook, saved memory, or a design note depending on its shape. Skipping this means the next session relearns the same trap. The Connect Four exercise's empty-layout-collapse + wrap-height-bug were caught only because the journal ran; both are now in the cookbook.
+- **When a trap surfaces *during* a session, draft and propose immediately — don't wait for end-of-session.** Same trap definition as the post-`igni run` walk: bugs, misleading errors, source patterns that fight the obvious shape, methodology surprises. Don't auto-append; the routing decision is the dissertation contribution per `docs/private/104`. Propose format is fixed:
+  ```
+  trap detected — confirm/edit/reject?
+
+  `<YYYY-MM-DD>` | `<category>` | <description> | → <route>
+  ```
+  One-word reply approves; edited row revises; "skip" rejects. See `.claude/skills/trap-journal/SKILL.md` for the heuristic and the "what's NOT a trap" exclusions.
 - **For exploratory questions, give 2-3 sentences and the main tradeoff** — not an essay. Tyr will ask for depth if he wants it.
 - **For structural changes, use the plan-then-execute pattern**: explore, propose a plan, get approval, then write. Plan mode is appropriate for non-trivial spec edits.
 - **Never delete or overwrite a snapshot version.** Preserve them as historical artifacts in `spec/archive/`.
