@@ -9,7 +9,7 @@ FAIL=0
 FAILURES=()
 
 # Positive suite — transpile must succeed and output must match expected Dart.
-# Scan top-level + subdirs (e.g. examples/pomodonut/pomodonut.igni — runnable
+# Scan top-level + subdirs (e.g. examples/pomodonut/app.igni — runnable
 # demos that need their own folder for clean `igni run` without multi-file
 # auto-discovery noise).
 for f in "$SCRIPT_DIR"/examples/*.igni "$SCRIPT_DIR"/examples/*/*.igni; do

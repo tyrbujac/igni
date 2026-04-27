@@ -164,8 +164,8 @@ function regenerateGallery(repoPath: string, exampleCount: number): boolean {
     }
   }
 
-  // Scan recursively so subfolder demos (e.g. examples/pomodonut/pomodonut.igni) appear.
-  // The relative path (e.g. "pomodonut/pomodonut") is preserved as the entry name
+  // Scan recursively so subfolder demos (e.g. examples/pomodonut/app.igni) appear.
+  // The relative path (e.g. "pomodonut/app") is preserved as the entry name
   // so the gallery's link points at the correct file.
   const files = (readdirSync(examplesDir, { recursive: true }) as string[])
     .filter(f => typeof f === 'string' && f.endsWith('.igni'))
