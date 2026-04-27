@@ -1,0 +1,23 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.5",
+  "model_id": "gpt-5.5-2026-04-23",
+  "prompt_name": "Mocked async profile screen with reactive re-fetch",
+  "prompt_slug": "mocked-async-profile-screen-with-reactive-re-fetch",
+  "prompt_index": 3,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.18.0-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.18.0-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "df2022d563e4d9aaff63ebee6d95f562d9581896ae26ce070a4758ca5da79a20",
+  "spec_words": 5786,
+  "timestamp": "2026-04-27T18:58:34.972Z",
+  "duration_ms": 10457,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 10170,
+    "output_tokens": 774,
+    "cache_read_tokens": 8960
+  },
+  "cost_usd": 0.07855,
+  "transpile": null
+}

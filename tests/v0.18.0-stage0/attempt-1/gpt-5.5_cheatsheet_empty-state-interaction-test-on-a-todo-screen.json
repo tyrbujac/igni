@@ -1,0 +1,23 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.5",
+  "model_id": "gpt-5.5-2026-04-23",
+  "prompt_name": "Empty state + interaction test on a Todo screen",
+  "prompt_slug": "empty-state-interaction-test-on-a-todo-screen",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.18.0-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.18.0-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "cbf162ced334f4634a67361d97e0ed8a5861f65c1b8aceb4fe954b7e18d0c13a",
+  "spec_words": 5588,
+  "timestamp": "2026-04-27T18:46:00.274Z",
+  "duration_ms": 13272,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 9845,
+    "output_tokens": 847,
+    "cache_read_tokens": 8960
+  },
+  "cost_usd": 0.079115,
+  "transpile": null
+}

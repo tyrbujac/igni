@@ -1,0 +1,25 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Empty state + interaction test on a Todo screen",
+  "prompt_slug": "empty-state-interaction-test-on-a-todo-screen",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.18.0-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.18.0-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "df2022d563e4d9aaff63ebee6d95f562d9581896ae26ce070a4758ca5da79a20",
+  "spec_words": 5786,
+  "timestamp": "2026-04-27T18:59:33.493Z",
+  "duration_ms": 8537,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 6,
+    "output_tokens": 548,
+    "cache_creation_tokens": 309,
+    "cache_read_tokens": 14616,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.02296925,
+  "transpile": null
+}

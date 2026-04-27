@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Pure-function unit test on a screen-internal function",
+  "prompt_slug": "pure-function-unit-test-on-a-screen-internal-function",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.18.0-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.18.0-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "cbf162ced334f4634a67361d97e0ed8a5861f65c1b8aceb4fe954b7e18d0c13a",
+  "spec_words": 5588,
+  "timestamp": "2026-04-27T18:46:05.702Z",
+  "duration_ms": 23335,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 10464,
+    "output_tokens": 249,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.023916,
+  "transpile": null
+}

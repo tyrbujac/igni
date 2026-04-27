@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Mocked async profile screen with reactive re-fetch",
+  "prompt_slug": "mocked-async-profile-screen-with-reactive-re-fetch",
+  "prompt_index": 3,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.18.0-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.18.0-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "cbf162ced334f4634a67361d97e0ed8a5861f65c1b8aceb4fe954b7e18d0c13a",
+  "spec_words": 5588,
+  "timestamp": "2026-04-27T18:46:42.154Z",
+  "duration_ms": 20889,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 10496,
+    "output_tokens": 522,
+    "cache_read_tokens": 8174
+  },
+  "cost_usd": 0.028890799999999998,
+  "transpile": null
+}
