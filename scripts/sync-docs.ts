@@ -99,8 +99,9 @@ function computeFacts(): Facts {
   const secondNewest = canonical.length >= 2 ? canonical[canonical.length - 2].name : null;
   const oldest = canonical[0].name;
 
-  const exampleCount = readdirSync(join(REPO, 'transpiler/examples'))
-    .filter(f => f.endsWith('.igni')).length;
+  // Scan recursively so subfolder demos (e.g. examples/pomodonut/) count.
+  const exampleCount = readdirSync(join(REPO, 'transpiler/examples'), { recursive: true })
+    .filter((f): f is string => typeof f === 'string' && f.endsWith('.igni')).length;
 
   let negativeCount = 0;
   try {
@@ -163,8 +164,11 @@ function regenerateGallery(repoPath: string, exampleCount: number): boolean {
     }
   }
 
-  const files = readdirSync(examplesDir)
-    .filter(f => f.endsWith('.igni'))
+  // Scan recursively so subfolder demos (e.g. examples/pomodonut/pomodonut.igni) appear.
+  // The relative path (e.g. "pomodonut/pomodonut") is preserved as the entry name
+  // so the gallery's link points at the correct file.
+  const files = (readdirSync(examplesDir, { recursive: true }) as string[])
+    .filter(f => typeof f === 'string' && f.endsWith('.igni'))
     .map(f => f.replace(/\.igni$/, ''))
     .sort();
 

@@ -133,7 +133,7 @@ _Examples without a description entry in README.md._
 | [`on-handler-discard`](on-handler-discard.igni) | 8 | 56 | 7.0× |
 | [`on-handler-named`](on-handler-named.igni) | 11 | 75 | 6.8× |
 | [`on-handler-object-payload`](on-handler-object-payload.igni) | 12 | 90 | 7.5× |
-| [`pomodonut`](pomodonut.igni) | 84 | 340 | 4.0× |
+| [`pomodonut/pomodonut`](pomodonut/pomodonut.igni) | 84 | 340 | 4.0× |
 | [`theme-color`](theme-color.igni) | 9 | 42 | 4.7× |
 | [`theme-font`](theme-font.igni) | 9 | 40 | 4.4× |
 | [`theme-font-partial`](theme-font-partial.igni) | 7 | 39 | 5.6× |

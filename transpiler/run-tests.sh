@@ -9,9 +9,13 @@ FAIL=0
 FAILURES=()
 
 # Positive suite — transpile must succeed and output must match expected Dart.
-for f in "$SCRIPT_DIR"/examples/*.igni; do
+# Scan top-level + subdirs (e.g. examples/pomodonut/pomodonut.igni — runnable
+# demos that need their own folder for clean `igni run` without multi-file
+# auto-discovery noise).
+for f in "$SCRIPT_DIR"/examples/*.igni "$SCRIPT_DIR"/examples/*/*.igni; do
+  [ -f "$f" ] || continue
   name=$(basename "$f" .igni)
-  expected="$SCRIPT_DIR/examples/$name.expected.dart"
+  expected="${f%.igni}.expected.dart"
   if [ ! -f "$expected" ]; then
     continue
   fi

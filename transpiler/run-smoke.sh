@@ -58,7 +58,7 @@ FAIL=0
 TOTAL=0
 FAILURES=()
 
-for f in "$EXAMPLES"/*.igni; do
+for f in "$EXAMPLES"/*.igni "$EXAMPLES"/*/*.igni; do
   [ -f "$f" ] || continue
   name=$(basename "$f" .igni)
   TOTAL=$((TOTAL + 1))
