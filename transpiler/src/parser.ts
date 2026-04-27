@@ -118,8 +118,12 @@ export class Parser {
       );
     }
     const verb = this.current().value;
+    // `mock` blocks set up state BEFORE rendering — mocks must be in place
+    // when the screen mounts so the initial fetch hits them. Everything else
+    // requires a prior render to have any visible effect (event-sims need a
+    // tree to act on; expect needs widgets/state to assert against).
     const requiresRender = (verbName: string) =>
-      ['tap', 'change', 'submit', 'toggle', 'slide', 'expect', 'mock'].includes(verbName);
+      ['tap', 'change', 'submit', 'toggle', 'slide', 'expect'].includes(verbName);
     if (requiresRender(verb) && !renderSeen) {
       this.error(
         `\`${verb}\` requires a prior \`render <Screen>\` in the same test body — add \`render <Screen>\` before this line. ` +

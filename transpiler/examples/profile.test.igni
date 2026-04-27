@@ -1,0 +1,36 @@
+screen Profile:
+  refresh = 0
+  user = fetch("/api/user/me?refresh=" + refresh)
+
+  layout vertical, padding: large, gap: medium:
+    if user is loading:
+      spinner
+    else if user is error:
+      label "Couldn't load — try again"
+    else:
+      label user.name, style: heading
+      label user.email, style: caption
+    button "Refresh", on tap: refresh = refresh + 1
+
+test "shows offline state when fetch fails":
+  mock fetch:
+    "/api/user/me?refresh=0": error "network timeout"
+  render Profile
+  expect seen "Couldn't load — try again"
+
+test "shows user name and email on success":
+  mock fetch:
+    "/api/user/me?refresh=0": {name: "Ada Lovelace", email: "ada@example.com"}
+  render Profile
+  expect seen "Ada Lovelace"
+  expect seen "ada@example.com"
+
+test "tapping Refresh triggers a new fetch":
+  mock fetch:
+    "/api/user/me?refresh=0": {name: "Ada Lovelace", email: "ada@example.com"}
+    "/api/user/me?refresh=1": {name: "Grace Hopper", email: "grace@example.com"}
+  render Profile
+  expect requested("/api/user/me?refresh=0")
+  tap "Refresh"
+  expect requested("/api/user/me?refresh=1")
+  expect request_count("/api/user/me?refresh=1") is 1

@@ -112,6 +112,7 @@ function printUsage(): void {
   console.log('  igni new macos        Same, targeting macOS desktop');
   console.log('  igni new my-app       Create my-app/, scaffold app.igni inside, and run it');
   console.log('  igni new my-app ios   Same, targeting iOS simulator');
+  console.log('  igni test             Run all *.test.igni files via flutter test');
   console.log('');
   console.log('  Note: ios/android/macos/web are reserved as target keywords for `igni new`.');
   console.log('        To name an app one of these, use --name "iOS App".');
@@ -119,7 +120,7 @@ function printUsage(): void {
 
 // --- Find .igni files ---
 
-function findIgniFiles(): string[] {
+function findIgniFiles(testMode: boolean = false): string[] {
   const entries = readdirSync(cwd);
   const files = entries.filter(f => {
     if (!f.endsWith('.igni') || f.startsWith('.')) return false;
@@ -128,6 +129,20 @@ function findIgniFiles(): string[] {
   if (files.length === 0) {
     console.error('No .igni files found in current directory.');
     process.exit(1);
+  }
+
+  if (testMode) {
+    // `igni test` doesn't need a single entry point — every file is bundled
+    // and the runner discovers `test "name":` blocks. The test files contain
+    // their own screens (or sit alongside production-screen files), and the
+    // codegen happily compiles whichever order they appear in.
+    const testFiles = files.filter(f => f.endsWith('.test.igni'));
+    if (testFiles.length === 0) {
+      console.error('No `*.test.igni` files found in current directory.');
+      process.exit(1);
+    }
+    const rest = files.filter(f => !testFiles.includes(f)).sort();
+    return [...rest, ...testFiles.sort()];
   }
 
   // Determine entry point
@@ -209,15 +224,15 @@ type TranspileOutcome =
   | { ok: true; result: TranspileResult }
   | { ok: false; errorText: string };
 
-function transpile(): TranspileOutcome {
-  const files = findIgniFiles();
+function transpile(testMode: boolean = false): TranspileOutcome {
+  const files = findIgniFiles(testMode);
   const sourceFiles = buildSourceFiles(files);
   const combined = combinedSource(sourceFiles);
 
   try {
     const tokens = new Lexer(combined).tokenize();
     const ast = new Parser(tokens).parse();
-    const generated = new CodeGenerator().generateWithSourceMap(ast);
+    const generated = new CodeGenerator().generateWithSourceMap(ast, testMode);
     return { ok: true, result: { dart: generated.dart, lineMap: generated.lineMap, sourceFiles, program: ast } };
   } catch (err: any) {
     let errorText = '';
@@ -235,6 +250,13 @@ function transpile(): TranspileOutcome {
 
 function writeOutput(dart: string): void {
   const outPath = join(igniDir, 'lib', 'main.dart');
+  writeFileSync(outPath, dart);
+}
+
+function writeTestOutput(dart: string): void {
+  const testDir = join(igniDir, 'test');
+  if (!existsSync(testDir)) mkdirSync(testDir, { recursive: true });
+  const outPath = join(testDir, 'igni_test.dart');
   writeFileSync(outPath, dart);
 }
 
@@ -1568,6 +1590,47 @@ async function build(buildTgt: BuildTarget, explicitName: string | undefined): P
   }
 }
 
+// `igni test` discovers `*.test.igni` siblings, transpiles them along with
+// their screens into a single Dart file, and runs `flutter test` in `.igni/`.
+// Per `docs/private/112_v018_testing_infrastructure.md` Q-locked decisions:
+// `test "name":` blocks live in sibling `*.test.igni` files; the codegen
+// auto-detects test mode from `program.tests.length > 0`.
+function runTests(): void {
+  const outcome = transpile(true);
+  if (!outcome.ok) {
+    console.error('Fix the error above, then run igni test again.');
+    process.exit(1);
+  }
+  const result = outcome.result;
+  if (result.program.tests.length === 0) {
+    console.error('No `test "name":` blocks found. Add a `*.test.igni` file with at least one test.');
+    process.exit(1);
+  }
+
+  ensureFlutterProject('web');
+  // Test mode generates a void main() { testWidgets(...) } file, not a
+  // production runApp entry. Place it in test/ where flutter test discovers
+  // it; lib/main.dart is left untouched so `igni run` keeps working in the
+  // same .igni/ scaffold.
+  ensureDependencies(result.dart);
+  writeTestOutput(result.dart);
+
+  // Make sure lib/main.dart exists (Flutter's pubspec assumes it). Use a
+  // minimal stub if no production code has been generated yet.
+  const libMain = join(igniDir, 'lib', 'main.dart');
+  if (!existsSync(libMain)) {
+    mkdirSync(join(igniDir, 'lib'), { recursive: true });
+    writeFileSync(libMain, "import 'package:flutter/material.dart';\nvoid main() => runApp(const MaterialApp(home: Scaffold(body: Center(child: Text('igni test')))));\n");
+  }
+
+  console.log(`Running ${result.program.tests.length} test${result.program.tests.length === 1 ? '' : 's'}...`);
+  const flutter = spawnSync('flutter', ['test'], {
+    cwd: igniDir,
+    stdio: 'inherit',
+  });
+  process.exit(flutter.status ?? 1);
+}
+
 if (command === 'run') {
   if (deviceFlag && (target === 'web' || target === 'macos')) {
     console.error('--device is only valid with `igni run ios` or `igni run android`.');
@@ -1587,6 +1650,8 @@ if (command === 'run') {
     process.exit(1);
   }
   scaffoldThenRun(commandArg, target, webMode, deviceFlag, nameFlag);
+} else if (command === 'test') {
+  runTests();
 } else {
   printUsage();
   process.exit(1);

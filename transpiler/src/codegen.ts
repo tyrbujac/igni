@@ -81,6 +81,10 @@ export class CodeGenerator {
   private fetchVars: { name: string; url: string; urlExpr: Expr; method?: string; body?: string; reactive: boolean; kind?: 'fetch' | 'locate' }[] = [];
 
   private hasShared = false;
+  // v0.18: when generating a *.test.igni file, fetch codegen routes through
+  // `_igniHttpGet` (the test-scope wrapper) instead of `http.get(...)` so
+  // `mock fetch:` blocks can intercept calls.
+  private testMode = false;
   private hasFetch = false;
   private needsIconLookup = false;
   private needsStyleResolvers = false;
@@ -103,8 +107,8 @@ export class CodeGenerator {
     return this.build(program, false, program.tests.length > 0).dart;
   }
 
-  generateWithSourceMap(program: Program): GeneratedOutput {
-    return this.build(program, true);
+  generateWithSourceMap(program: Program, testMode: boolean = false): GeneratedOutput {
+    return this.build(program, true, testMode);
   }
 
   // v0.18 testing infrastructure — Stage 1.5 framework-spike scope.
@@ -120,6 +124,7 @@ export class CodeGenerator {
 
   private build(program: Program, emitLineMarkers: boolean, testMode: boolean = false): GeneratedOutput {
     this.emitLineMarkers = emitLineMarkers;
+    this.testMode = testMode;
     this.allScreens = program.screens;
     this.allComponents = program.components;
     this.hasShared = program.shared.length > 0;
@@ -228,12 +233,30 @@ export class CodeGenerator {
     if (testMode) {
       // v0.18 spike: emit `void main() { testWidgets(...); ... }` instead of
       // `runApp(...)`. Each `test "name":` block becomes a `testWidgets` call.
-      // Spike scope: render → pumpWidget(MaterialApp(home: <Name>Screen()));
-      // expect seen "<string>" → expect(find.text("<string>"), findsOneWidget).
-      // Wider statement support (mocking, event-sims, additional assertions)
-      // ships in the full v0.18 implementation post-Stage-0.
       if (this.hasShared) {
         code += this.genSharedState(program.shared) + '\n';
+      }
+      // Test-scope fetch interception: every `fetch()` call in test mode
+      // routes through `_igniHttpGet`. The `mock fetch:` block populates
+      // `_igniMockFetch`; without a mock, the wrapper throws so accidental
+      // real network calls don't pass tests silently. `_igniRequests` backs
+      // the `requested(<url>)` and `request_count(<url>)` builtins.
+      if (this.hasFetch) {
+        code += `Map<String, dynamic>? _igniMockFetch;\n`;
+        code += `final List<String> _igniRequests = [];\n\n`;
+        code += `Future<http.Response> _igniHttpGet(String url) async {\n`;
+        code += `  _igniRequests.add(url);\n`;
+        code += `  final mock = _igniMockFetch;\n`;
+        code += `  if (mock == null) {\n`;
+        code += `    throw Exception('No mock fetch set for url \${url}; add a mock fetch: block to the test body.');\n`;
+        code += `  }\n`;
+        code += `  if (!mock.containsKey(url)) {\n`;
+        code += `    throw Exception('No mock entry for \${url}; add it to the test mock fetch: block.');\n`;
+        code += `  }\n`;
+        code += `  final entry = mock[url];\n`;
+        code += `  if (entry is Exception) throw entry;\n`;
+        code += `  return http.Response(jsonEncode(entry), 200);\n`;
+        code += `}\n\n`;
       }
       code += 'void main() {\n';
       for (const test of program.tests) {
@@ -443,7 +466,12 @@ export class CodeGenerator {
       : httpMethod === 'post' ? 'post'
       : 'get';
 
-    if (fv.body && dartMethod !== 'get') {
+    if (this.testMode) {
+      // v0.18: route every fetch through the test-scope wrapper so `mock
+      // fetch:` blocks can intercept. v0.18 only mocks GET; non-GET methods
+      // still hit the wrapper (which throws if no mock is set).
+      code += `      final response = await _igniHttpGet(${fv.url});\n`;
+    } else if (fv.body && dartMethod !== 'get') {
       code += `      final response = await http.${dartMethod}(\n`;
       code += `        Uri.parse(${fv.url}),\n`;
       code += `        headers: {'Content-Type': 'application/json'},\n`;
@@ -601,10 +629,21 @@ export class CodeGenerator {
     // so the underscore-prefixed state class is in scope.
     let renderedScreen: string | null = null;
     let body = '';
+    // Reset shared mock + request log between tests so cross-test state
+    // doesn't leak. Cheap and explicit beats a tearDown() helper.
+    if (this.hasFetch) {
+      body += `    _igniMockFetch = null;\n`;
+      body += `    _igniRequests.clear();\n`;
+    }
     for (const stmt of test.body) {
       if (stmt.type === 'RenderStmt') {
         renderedScreen = stmt.screenName;
         body += this.genRenderStmt(stmt, igniTheme);
+        continue;
+      }
+      // Mock blocks set up state before render and don't need a renderedScreen.
+      if (stmt.type === 'MockFetchBlock' || stmt.type === 'MockEveryBlock') {
+        body += this.genTestStmt(stmt, renderedScreen ?? '');
         continue;
       }
       if (!renderedScreen) {
@@ -694,12 +733,32 @@ export class CodeGenerator {
       return this.genExpectStmt(stmt, renderedScreen);
     }
     if (stmt.type === 'MockFetchBlock') {
-      // Deferred to mock-infrastructure phase. Emit a clear runtime error so
-      // tests using `mock fetch:` don't silently no-op during dev.
-      return `    fail('mock fetch: not yet wired (v0.18 mock infrastructure pending)');\n`;
+      // Build a Map<String, dynamic> from the entries, then assign to
+      // `_igniMockFetch`. Reactive re-fires hit the same map fresh per call.
+      const lines: string[] = [];
+      lines.push('    _igniMockFetch = {');
+      for (const e of stmt.entries) {
+        const escUrl = JSON.stringify(e.url);
+        if (e.response.kind === 'error') {
+          lines.push(`      ${escUrl}: Exception(${JSON.stringify(e.response.message)}),`);
+        } else {
+          lines.push(`      ${escUrl}: ${this.exprToDart(e.response.value)},`);
+        }
+      }
+      lines.push('    };');
+      return lines.join('\n') + '\n';
     }
     if (stmt.type === 'MockEveryBlock') {
-      return `    fail('mock every: not yet wired (v0.18 mock infrastructure pending)');\n`;
+      // Each `advance <duration>` jumps the test clock forward. WidgetTester's
+      // `pump(<duration>)` advances the FakeAsync timer; for tests that need
+      // multi-tick timer firing, FakeAsync.elapse pumps each `every` block's
+      // periodic timer.
+      const lines: string[] = [];
+      for (const adv of stmt.advances) {
+        lines.push(`    await tester.pump(const Duration(milliseconds: ${adv.milliseconds}));`);
+        lines.push(`    await tester.pump();`);
+      }
+      return lines.join('\n') + '\n';
     }
     throw new Error(`Unknown test statement type: ${(stmt as { type: string }).type}`);
   }
@@ -798,9 +857,13 @@ export class CodeGenerator {
             const idName = (e.args[0] as Ident).name;
             return `${stateAccess}.${idName}`;
           }
-          if (e.name === 'requested' || e.name === 'request_count') {
-            // Mock infrastructure pending.
-            return `false /* ${e.name}() needs mock infrastructure */`;
+          if (e.name === 'requested') {
+            if (e.args.length !== 1) throw new Error('requested() expects one URL argument');
+            return `_igniRequests.contains(${walk(e.args[0])})`;
+          }
+          if (e.name === 'request_count') {
+            if (e.args.length !== 1) throw new Error('request_count() expects one URL argument');
+            return `_igniRequests.where((u) => u == ${walk(e.args[0])}).length`;
           }
           // Screen-internal function call: `total_with_tax(100, 0.2)` →
           // `(state).total_with_tax(100, 0.2)`. Per Q13: `render` puts
