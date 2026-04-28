@@ -17,10 +17,10 @@ igni/
 ├── assets/                    # logo (igni.svg, igni-dark-mode.svg, PNGs)
 ├── spec/
 │   ├── README.md
-│   ├── <!-- SYNC:version -->v0.19.0<!-- /SYNC:version -->.md             # current canonical spec
-│   ├── <!-- SYNC:version -->v0.19.0<!-- /SYNC:version -->-cheatsheet.md  # current cheatsheet (learning order)
-│   ├── <!-- SYNC:version -->v0.19.0<!-- /SYNC:version -->-micro.md       # current micro reference (~700 words)
-│   └── archive/               # historical snapshots <!-- SYNC:historical-range-files -->v0.2.md → v0.18.0.md<!-- /SYNC:historical-range-files -->
+│   ├── <!-- SYNC:version -->v0.19.1<!-- /SYNC:version -->.md             # current canonical spec
+│   ├── <!-- SYNC:version -->v0.19.1<!-- /SYNC:version -->-cheatsheet.md  # current cheatsheet (learning order)
+│   ├── <!-- SYNC:version -->v0.19.1<!-- /SYNC:version -->-micro.md       # current micro reference (~700 words)
+│   └── archive/               # historical snapshots <!-- SYNC:historical-range-files -->v0.2.md → v0.19.0.md<!-- /SYNC:historical-range-files -->
 ├── tests/                     # cold-LLM test infrastructure
 │   ├── README.md              # test methodology
 │   └── v<spec_version>/       # prompts + results per spec round

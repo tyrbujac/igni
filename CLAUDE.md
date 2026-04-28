@@ -4,7 +4,7 @@ Guidance for Claude and other AI assistants working on the Igni language project
 
 **Positioning.** *Designs that translate, not redesign.* A UI language whose primitives match Figma's auto-layout vocabulary; the canonical user is a designer-engineer + LLM pair authoring Igni from Figma source. The AI-assisted-creator framing is the parent category; this is its concrete instance. See `docs/private/97_figma_to_igni_workflow.md` for Path C scope and v0.15 expansion plan.
 
-**Status: transpiler stage.** The TypeScript-to-Dart transpiler covers most of the <!-- SYNC:version -->v0.19.0<!-- /SYNC:version --> spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter. *Originally named Rocket (v0.2–v0.3.1), renamed to Igni at v0.3.2.*
+**Status: transpiler stage.** The TypeScript-to-Dart transpiler covers most of the <!-- SYNC:version -->v0.19.1<!-- /SYNC:version --> spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter. *Originally named Rocket (v0.2–v0.3.1), renamed to Igni at v0.3.2.*
 
 ## Igni at a glance
 
@@ -87,17 +87,22 @@ When adding a new task, place it in the tier matching its actual horizon — not
 
 ## Tracked open questions (v0.7+ backlog)
 
-Items deferred that will be designed once enough test data accumulates:
+Items deferred that will be designed once enough test data accumulates. Each entry names the signal that would justify promotion. Items in ROADMAP Stream 3 / Ideas are not duplicated here.
 
-- **Optimistic updates with rollback** — needs background requests + post-navigation error surfacing.
-- **Forms and validation** — multi-field, cross-field, async validators.
-- **Animations and transitions.**
-- **Routing patterns** beyond simple navigation: deep links, query params, modal stacks, back-stack management.
-- **Theming and dark mode propagation.**
-- **Package / module system** for sharing components across projects.
-- **Doc-comment syntax** for components and screens.
-- **Scroll behaviour** (e.g. scroll-to-bottom on chat append).
-- **Named slots** for wrapper components (multiple `body` regions per wrapper) — deferred because single slot covers 90% of cases.
-- **Submit modifier on inputs** — currently the trigger-variable pattern handles this.
+- **Optimistic updates with rollback** — needs background requests + post-navigation error surfacing. Deferred until a real-app surface produces both shapes (current trap-journal has none).
+- **Forms and validation** (multi-field, cross-field, async validators) — partial coverage via Stream 3's "Error inspection + handling beyond async" entry. Deferred until a real-app form surfaces the multi-field + async-validation shape together.
+- **Routing patterns** beyond simple navigation: deep links, query params, modal stacks, back-stack management. Deferred until a second real-app needs more than the current `navigate to`/`navigate back` primitives.
+- **Package / module system** for sharing components *across projects* (distinct from Stream 3's "Cross-screen utility modules" which is intra-project). Deferred until a second Igni project surfaces the same shared-components need.
+- **Doc-comment syntax** for components and screens. Deferred until cold-test or human-test convergence on the need (no signal yet).
+- **Scroll behaviour** (e.g. scroll-to-bottom on chat append). Deferred until a second real-app surface beyond chat-append (currently single-surface).
+- **Init-vs-render phase visual blur** (logged 2026-04-28 from v0.19.1 chat-mode review, GPT-5.3 1/4) — top-level assignments run once but render-body interleaves visually; "is `count = 0` part of init or part of render?" is currently inference-only. Deferred until cold-test convergence on the confusion (1/4 chat-mode is below promotion threshold; GPT proposed a hypothetical `state:` block as a future fix). Methodology-grade observation; revisit if a second model independently raises it.
 
-The current and authoritative list lives at the bottom of `spec/archive/v0.10.0.md`.
+Closed:
+- ~~**Animations and transitions**~~ — shipped v0.19.0 (`transition: fade/slide` + `spring(value)`).
+
+Promoted to ROADMAP Stream 3 (active candidates):
+- ~~Theming and dark mode propagation~~ — see Stream 3 "Dark-mode propagation" entry (v0.20+ candidate, surfaced via Gemini-3-flash zero-shot Pomodoro).
+- ~~Named slots for wrapper components~~ — see ROADMAP Ideas (signal-strong only).
+- ~~Submit modifier on inputs~~ — see ROADMAP Ideas (signal-strong only).
+
+The current and authoritative list lives at the bottom of `spec/archive/v0.10.0.md` plus this CLAUDE.md section for active tracking.

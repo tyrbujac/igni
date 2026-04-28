@@ -27,6 +27,34 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.19.1 — 2026-04-28
+*Docs-only iteration on top of v0.19.0. Cheatsheet pruned ~440 words via the per-minor-version chat-mode review pattern; CLAUDE.md tracked-open-questions cleaned up; trap-journal aggregate snapshot refreshed.*
+
+Cycle path: chat-mode 4-cell cheatsheet review (`tests/v0.19.1-cheatsheet-review/`, $0, ~30 min wallclock — Gemini Flash + GPT 5.3 + Gemini 3.1 Pro + Opus 4.7) → Explore-agent spec/cheatsheet/micro drift audit (clean, no third synthesis-to-cheatsheet drift instance found) → manual prune. No transpiler change, no spec-vs-cheatsheet drift, no syntax change.
+
+### Changed
+
+- **Cheatsheet (`spec/v0.19.1-cheatsheet.md`) pruned ~440 words** (6982 → 6541; first hard prune since v0.11.5). Tier B (chat-mode 2/4 convergence): `border:` Selected-state pattern compressed (~150 words saved); `every`-on-revisit semantics pinned ("next tick is scheduled `<duration>` from the resume moment, not from the original schedule, not immediately"; top-level captures don't re-fire on revisit); `spring()` is a read-only animated mirror, not state — reassignment errors; equality reference-vs-structural promoted to a bolded callout in §Boolean logic with the `without(items, {id: 42})` worked-fail pinned. Tier C (chat-mode 1/4 specific): lexical-reactivity restatements deduped (canonical statement in §Reacting; back-references in §Async, §Components, §Recurrence); `mock fetch:` URL keys match resolved-string literally; `value_of()` on unset input returns the bound variable's initial value; `seen "string"` matches within a single primitive's text content (not across siblings); `transition: fade` reordering inside `each` is a no-op visually; `max_width: + fill: true` axis clarified along the parent layout's main axis; transitive-reach concrete example pinned (`every` with no readers = no-op for UI); branch-shape clarification under `transition:` (multi-child branches auto-wrap in Column-min); defensive `freeze_time:` recommendation for any test that renders a screen reading `now()`; component-events density compressed; snapshot subsection condensed; "What X doesn't do" enumerations + Figma `_`-flatten + version-tagged callouts trimmed throughout.
+- **Spec (`spec/v0.19.1.md`)** — `every`-block §Lifecycle paragraph extended with the resume-moment-rescheduling rule + top-level-no-refire clarification. Otherwise identical to v0.19.0 plus the new delta paragraph.
+- **`CLAUDE.md` tracked-open-questions list aggressive cleanup** (10 → 7 items). Closed `Animations and transitions` (shipped v0.19.0). Promoted `Theming and dark mode propagation` to ROADMAP Stream 3 (v0.20+ candidate; surfaced 2026-04-27 by Gemini-3-flash zero-shot Pomodoro reaching for runtime-derived `theme:`). Removed `Named slots` and `Submit modifier` (already in ROADMAP Ideas). Added `Init-vs-render phase visual blur` (chat-mode 1/4 GPT raise; methodology-grade observation, deferred until cold-test convergence). Each remaining item has an explicit deferred-until signal note.
+- **Trap-journal aggregate snapshot refreshed (2026-04-28).** New 55-entry snapshot supersedes 2026-04-26's; 2026-04-26 snapshot preserved as historical record. Category deltas: methodology 4→15 (+11, dominant signal — cycle now reflecting on itself more), runtime 4→7 (+3 from BMI hand-translation), codegen 1→4 (+3 same source), doc-drift 2→4 (+2, both synthesis-to-cheatsheet drift instances confirming trap class), tooling 3→5 (+2), parser 2→3 (+1), spec-design 0→1 (**first instance**: dark-mode reach surfaced by Gemini-3-flash zero-shot). Dissertation-flavoured framing per Tyr lock #4: the previous snapshot's "spec has been getting it right" line no longer holds; "frontier LLMs miss bugs that non-technical users find" thesis extended to "fixtures convergent across panels miss canonical user shapes that real apps surface in minutes" (mum-tester + BMI hand-translation = two-of-two pattern).
+- **`docs/tutorial.md`** — version stamp updated from "Targets Igni v0.15.1" to "Targets Igni v0.19.1 (syntax verified against current spec — covers basic primitives only; advanced features like component events, animation, and testing are not yet in this tutorial)".
+- **`spec/v0.19.0`** archived; `spec/v0.19.1.{md,-cheatsheet.md,-micro.md}` shipped.
+
+### Methodology
+
+- **Per-minor-version chat-mode cheatsheet review pattern continues.** Fourth precedent (v0.14.1, v0.15.0, v0.17.0, v0.19.1). $0 cost; ~30 min wallclock. The drift audit established that this read-the-whole-document instrument complements rather than overlaps with Stage 2/3 panels (which probe specific design changes against specific cheatsheet sections). Cheatsheet word-count delta direction inverted (v0.14.2 ship grew the cheatsheet +149 words; v0.19.1 cuts -441 words) — first contraction since v0.11.5 (2026-04-26 → 2026-04-28).
+- **Drift audit clean — no third synthesis-to-cheatsheet drift instance.** Explore-agent cross-referenced Appendix B + spec body + cheatsheet + micro. The two known drift instances from the v0.19 cycle (`width: spring(...)` not in language; unquoted ISO timestamps that don't lex) were already patched same-session in v0.19.0; the audit confirmed no third instance. The trap class is now a 2-of-2 confirmed pattern; tooling response (`scripts/lint-spec-trio.ts`) logged as a Stream 2 follow-up — not bundled with v0.19.1 to preserve docs-only purity.
+
+### Test count / spec ship
+
+- `npm test` 124/124 green (no transpiler change).
+- `npm run smoke` 80/80 green.
+- `spec/v0.19.0` archived; `spec/v0.19.1` shipped.
+- SYNC markers regenerated.
+
+---
+
 ## v0.19.0 — 2026-04-28
 *Animation primitives + snapshot testing. Three new layout/builtin/test-scope surfaces, all token-only or declarative; cheatsheet patches all held under post-implementation cold-test panel.*
 

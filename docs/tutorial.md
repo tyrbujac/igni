@@ -1,6 +1,6 @@
 # Learn Igni
 
-> Tutorial v2.12 · targets Igni v0.15.1
+> Tutorial v2.12 · targets Igni v0.19.1 (syntax verified against current spec — covers basic primitives only; advanced features like component events, animation, and testing are not yet in this tutorial)
 
 > **Work in progress** — feedback welcome. An intermediate tutorial covering lists, navigation, and async data is planned.
 
