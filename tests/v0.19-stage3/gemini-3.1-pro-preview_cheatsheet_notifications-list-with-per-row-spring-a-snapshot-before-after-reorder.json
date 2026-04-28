@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Notifications list with per-row spring + a snapshot before/after reorder",
+  "prompt_slug": "notifications-list-with-per-row-spring-a-snapshot-before-after-reorder",
+  "prompt_index": 3,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.19-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.19-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "604f8e734093d1eef6a6ac18a48e3736511fa7ebd2ec5e6c9fd65ea099bce367",
+  "spec_words": 6985,
+  "timestamp": "2026-04-28T10:51:37.359Z",
+  "duration_ms": 22214,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 13256,
+    "output_tokens": 549,
+    "cache_read_tokens": 12267
+  },
+  "cost_usd": 0.0355534,
+  "transpile": null
+}

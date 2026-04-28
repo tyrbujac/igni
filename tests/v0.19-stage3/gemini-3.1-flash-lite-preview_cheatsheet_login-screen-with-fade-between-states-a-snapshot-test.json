@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-flash-lite-preview",
+  "model_id": "gemini-3.1-flash-lite-preview",
+  "prompt_name": "Login screen with fade-between-states + a snapshot test",
+  "prompt_slug": "login-screen-with-fade-between-states-a-snapshot-test",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.19-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.19-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "604f8e734093d1eef6a6ac18a48e3736511fa7ebd2ec5e6c9fd65ea099bce367",
+  "spec_words": 6985,
+  "timestamp": "2026-04-28T10:49:30.322Z",
+  "duration_ms": 2819,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 13196,
+    "output_tokens": 589,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.0041825,
+  "transpile": null
+}

@@ -1,0 +1,25 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "StepCounter with spring-animated display + a settle-after-advance test",
+  "prompt_slug": "stepcounter-with-spring-animated-display-a-settle-after-advance-test",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.19-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.19-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "604f8e734093d1eef6a6ac18a48e3736511fa7ebd2ec5e6c9fd65ea099bce367",
+  "spec_words": 6985,
+  "timestamp": "2026-04-28T10:49:49.747Z",
+  "duration_ms": 13150,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 563,
+    "output_tokens": 821,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 17854,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.032267,
+  "transpile": null
+}
