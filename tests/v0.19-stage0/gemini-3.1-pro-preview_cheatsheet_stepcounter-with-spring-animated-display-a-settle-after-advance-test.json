@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "StepCounter with spring-animated display + a settle-after-advance test",
+  "prompt_slug": "stepcounter-with-spring-animated-display-a-settle-after-advance-test",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.19-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.19-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "c04a823178d50ebc8d5e6a2c01657dc0dcbb23ab191d032016bb856db1b112c5",
+  "spec_words": 6747,
+  "timestamp": "2026-04-28T08:34:52.209Z",
+  "duration_ms": 164944,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 12933,
+    "output_tokens": 614,
+    "cache_read_tokens": 12267
+  },
+  "cost_usd": 0.0356874,
+  "transpile": null
+}

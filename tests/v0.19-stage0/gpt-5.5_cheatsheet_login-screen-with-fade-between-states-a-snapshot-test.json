@@ -1,0 +1,23 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.5",
+  "model_id": "gpt-5.5-2026-04-23",
+  "prompt_name": "Login screen with fade-between-states + a snapshot test",
+  "prompt_slug": "login-screen-with-fade-between-states-a-snapshot-test",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.19-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.19-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "c04a823178d50ebc8d5e6a2c01657dc0dcbb23ab191d032016bb856db1b112c5",
+  "spec_words": 6747,
+  "timestamp": "2026-04-28T08:30:46.975Z",
+  "duration_ms": 47128,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 11938,
+    "output_tokens": 2387,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.1313,
+  "transpile": null
+}

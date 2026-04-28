@@ -1,0 +1,23 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.5",
+  "model_id": "gpt-5.5-2026-04-23",
+  "prompt_name": "v0.19 animation + snapshot design critique",
+  "prompt_slug": "v0-19-animation-snapshot-design-critique",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.19-design-review/prompts.md",
+  "spec_path": null,
+  "spec_tier": "none",
+  "spec_sha256": null,
+  "spec_words": 0,
+  "timestamp": "2026-04-28T07:54:09.516Z",
+  "duration_ms": 95760,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 4116,
+    "output_tokens": 4105,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.14373,
+  "transpile": null
+}

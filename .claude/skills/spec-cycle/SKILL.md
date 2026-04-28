@@ -12,7 +12,7 @@ Nine named stages, each with human checkpoints:
 1. **Identify signal** — cold-test or panel review surfaced a gap (4/4 or 3/4 convergence). Logged in ROADMAP Stream 3.
 2. **Stage 1 — design draft** — `docs/private/<n>_<name>.md` with proposed shape, alternatives rejected, open questions, recommended path. Tyr decides; iterate.
 3. **Stage 2 — design review (panel critique)** — 3-frontier-model panel critiques the design note via `tests/runner/cold-test.ts --no-spec --no-grade`. 5-question framework; synthesise convergence (3/3 = patch, 2/3 = consider, 1/3 = log). **Skippable** when shape is well-precedented and signal is structural (per v0.14.1 precedent — see §When to skip Stage 2 below).
-4. **Stage 0 — cheatsheet draft cold-test** — 3 frontier models × 3 prompts against `cheatsheet-draft.md`. Pre-registered ship-bar (typically 3/3 or 4/4 P1+P2). Soft-fail = patch teaching, re-run; hard-fail = reopen design.
+4. **Stage 0 — cheatsheet draft cold-test** — 3 frontier models × 3 prompts against `cheatsheet-draft.md`. Pre-registered ship-bar (typically 3/3 or 4/4 P1+P2). Soft-fail = patch teaching, re-run; hard-fail = reopen design. *(See §Stage 0 → Implementation handoff below for the teaching-gap discipline.)*
 5. **Implementation** — fork spec/cheatsheet/micro to next version; parser + codegen + fixtures + `npm test`; archive prior version. CHANGELOG entry.
 6. **Stage 3 — ship validation** — 4-model panel (frontier + flash-lite noise tier) × same prompts against shipped cheatsheet. Confirms cheatsheet teaches the new feature post-implementation.
 7. **Critique / Synthesis** — `tests/v<X>-stage3/README.md` documents adoption rates, methodology traps, cumulative cost.
@@ -27,6 +27,16 @@ Lock these in the design note BEFORE running panels. Mid-run revisions invalidat
 - **Stage 3:** 4/4 on P1+P2; 3/4 on P3.
 
 If a prompt produces unexpected adoption that suggests the prompt itself is unclear, log it as a trap-journal item (`docs/private/trap-journal.md`) — don't edit the prompt.
+
+## Stage 0 → Implementation handoff
+
+**Fix Stage 0 teaching gaps before implementation. Don't ship known teaching ambiguities and patch later.**
+
+A Stage 0 strong-pass means the panel reached canonical adoption — but a strong-pass can still surface teaching gaps (cheatsheet contradictions, under-determined rules, examples that contradict the table). Patch those in the cheatsheet draft before implementation begins. The spec/cheatsheet/micro archive together at implementation time (the version-bump skill's stage-9 convention); ambiguities not caught in the draft ship as canonical and are far harder to fix later.
+
+The discipline is: first read of the cheatsheet is when teaching either lands or fails. Panel divergence on a non-load-bearing axis (e.g. assertion-form choice, defensive-mock wrapping) is signal that *something is unclear*, even if every cell still produces canonical syntax. Pin the rule, don't defer.
+
+Precedent: v0.19 Stage 0 (2026-04-28) surfaced a `value_of()` table-vs-example contradiction during a 9/9 strong-pass — table restricted to inputs, example used a screen variable. Panel split 2/3 (`value_of`) vs 1/3 (`seen`); both valid against the example, but the rule was unclear. Patched in cheatsheet draft same session, before implementation.
 
 ## When to skip Stage 2
 
