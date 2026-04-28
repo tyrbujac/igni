@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SharedState extends ChangeNotifier {
-  List<dynamic> notes = [{'title': 'Welcome to Boojy Notes', 'blocks': [{'type': 'heading', 'content': 'Welcome to Boojy Notes', 'checked': false}, {'type': 'text', 'content': 'A minimal notes app built in Igni for app 2 v1.0 criterion 4 #3.', 'checked': false}, {'type': 'bullet', 'content': 'Tap a note title to view it', 'checked': false}, {'type': 'bullet', 'content': 'Use the buttons below to add blocks', 'checked': false}, {'type': 'checkbox', 'content': 'Tap to toggle me', 'checked': false}]}, {'title': 'Second note', 'blocks': [{'type': 'heading', 'content': 'A simpler note', 'checked': false}, {'type': 'text', 'content': 'Just one block of text below the heading.', 'checked': false}]}, {'title': 'Third note', 'blocks': [{'type': 'text', 'content': 'Even simpler. Just text.', 'checked': false}]}];
+  List<dynamic> notes = [{'title': 'Welcome to Boojy Notes', 'blocks': [{'type': 'heading', 'content': 'Getting started', 'checked': false}, {'type': 'text', 'content': 'A minimal notes app built in Igni for app 2 v1.0 criterion 4 #3.', 'checked': false}, {'type': 'bullet', 'content': 'Tap a note title to view it', 'checked': false}, {'type': 'bullet', 'content': 'Use the buttons below to add blocks', 'checked': false}, {'type': 'checkbox', 'content': 'Tap to toggle me', 'checked': false}]}, {'title': 'Second note', 'blocks': [{'type': 'heading', 'content': 'A simpler note', 'checked': false}, {'type': 'text', 'content': 'Just one block of text below the heading.', 'checked': false}]}, {'title': 'Third note', 'blocks': [{'type': 'text', 'content': 'Even simpler. Just text.', 'checked': false}]}];
   var selected_note = null;
   int font_size = 15;
 

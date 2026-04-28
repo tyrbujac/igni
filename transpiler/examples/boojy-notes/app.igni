@@ -1,7 +1,7 @@
 shared:
   notes = [
     {title: "Welcome to Boojy Notes", blocks: [
-      {type: "heading", content: "Welcome to Boojy Notes", checked: false},
+      {type: "heading", content: "Getting started", checked: false},
       {type: "text", content: "A minimal notes app built in Igni for app 2 v1.0 criterion 4 #3.", checked: false},
       {type: "bullet", content: "Tap a note title to view it", checked: false},
       {type: "bullet", content: "Use the buttons below to add blocks", checked: false},
