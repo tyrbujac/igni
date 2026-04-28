@@ -866,7 +866,7 @@ test "stopwatch elapsed reaches 60 seconds":
 
 `advance` is sequenced like any other test-body statement — it advances time at the body-position where it appears. Place `advance` after `render` + initial event-sims so the timer being advanced actually exists.
 
-**Snapshot.** `snapshot "<name>"` captures the current rendered tree as a deterministic text representation, stored as a golden file. Re-running the test compares against the stored file; if the tree differs, the test fails until you re-approve via `igni test --update-snapshots`.
+**Snapshot.** `snapshot "<name>"` captures the current rendered tree as a deterministic text representation, stored as a golden file. Re-running the test compares against the stored file; if the tree differs, the test fails with a diff until you re-approve via `igni test --update-snapshots`.
 
 ```igni
 test "Dashboard renders the user's name":
@@ -874,9 +874,13 @@ test "Dashboard renders the user's name":
   snapshot "dashboard_default"
 ```
 
-The text-tree captures node identity, branch/list structure, component names, bound layout properties (e.g. `padding`, `gap`, `width`), and `transition:` / `spring()` state where applicable. Visible strings alone aren't enough — a layout with the right text but wrong padding or wrong transition would slip through; the serializer captures the chrome too.
+**Goldens directory.** Snapshot goldens live at `__snapshots__/` in your project root, with one file per (test-name, snapshot-name) pair. Filename pattern is `<test-name-slug>__<snap-name-slug>.txt` — slugs are the test/snapshot names lower-cased with non-alphanumeric runs replaced by underscores. Commit goldens to git alongside your `.test.igni` files; reviewers see snapshot diffs in PRs the same way they see source diffs.
 
-**Snapshot of a `spring()`'d value.** Snapshots capture the spring's **target value**, not whatever intermediate frame the animation happens to be on. This is by construction: snapshots are for *structural* regressions, not visual-frame regressions. Frame-by-frame visual regression is image golden-files — a v0.20+ candidate; not v0.19.
+**First run vs subsequent runs.** First run (or any run where the golden doesn't yet exist) writes the golden to disk and passes. Subsequent runs read the golden, serialize the current tree, and `expect` them equal. To intentionally update a golden after a code change, run `igni test --update-snapshots` — every snapshot in the bundle gets re-written.
+
+**What the text-tree captures.** Node identity, branch/list structure, component names, bound layout properties (`padding`, `gap`, `align`, `background`, `rounded`, etc.), and `transition:` / `spring()` state where applicable. Visible strings alone aren't enough — a layout with the right text but wrong padding or wrong transition slips through string-only checks; the serializer captures the chrome too.
+
+**Snapshot of a `spring()`'d value.** Snapshots capture the spring's **target value**, not whatever intermediate frame the animation happens to be on. This is **deterministic by construction** — the serializer reads `Tween.end` directly from the rendered `TweenAnimationBuilder`, so you don't need `await tester.pumpAndSettle()` before the snapshot to get a stable target. Frame-by-frame visual regression is image golden-files — a v0.20+ candidate; not v0.19.
 
 **Mocking — `now()`.** Use `mock now:` (ambient for the test body) or `freeze_time:` (a block extent) to fix `now()` to a known timestamp. `now()`-derived UI without one of these produces non-deterministic snapshots:
 

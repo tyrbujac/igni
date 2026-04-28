@@ -95,6 +95,14 @@ export class CodeGenerator {
   // genRenderStmt calls can reuse it without threading the parameter through
   // genTestStmt.
   private cachedIgniTheme = '';
+  // v0.19 Session 3: gates emission of `import 'dart:io';` and the
+  // `_igniSerializeTree` helper. Set during AST scan when any test body
+  // contains a SnapshotStmt (including inside FreezeTimeBlock bodies).
+  private needsSnapshot = false;
+  // v0.19 Session 3: slug of the currently-emitting test block, computed in
+  // genTestBlock from test.name. Used by SnapshotStmt codegen to derive the
+  // golden file path.
+  private cachedTestSlug = '';
   private needsIconLookup = false;
   private needsStyleResolvers = false;
   // v0.17.0: emitted when a `border:` width on a layout uses a non-literal
@@ -196,9 +204,21 @@ export class CodeGenerator {
     // v0.14: any `every` block on any screen pulls in dart:async for Timer.
     const hasEvery = program.screens.some(s => s.body.some(i => i.type === 'Every'));
 
+    // v0.19 Session 3: detect snapshot usage so we can gate the dart:io
+    // import + the _igniSerializeTree helper. Recursively walk test bodies
+    // (incl. FreezeTimeBlock bodies which may contain snapshot calls).
+    if (testMode) {
+      this.needsSnapshot = program.tests.some(t => this.testBodyHasSnapshot(t.body));
+    } else {
+      this.needsSnapshot = false;
+    }
+
     let code = `import 'package:flutter/material.dart';\n`;
     if (testMode) {
       code += `import 'package:flutter_test/flutter_test.dart';\n`;
+      if (this.needsSnapshot) {
+        code += `import 'dart:io';\n`;
+      }
     }
     if (this.hasFetch) {
       code += `import 'package:http/http.dart' as http;\n`;
@@ -275,6 +295,17 @@ export class CodeGenerator {
       // Q4b: `mock every: advance` bumps this forward when set, so a frozen
       // clock and the every-block scheduler advance together.
       code += `int? _igniMockedNow;\n\n`;
+      // v0.19 Session 3: snapshot text-tree serializer. Walks the rendered
+      // widget tree from MaterialApp's home and emits a deterministic Igni-
+      // flavoured sexpr representation. Q5-serializer scope: captures node
+      // identity + branch/list structure + bound layout properties + spring
+      // target + transition active-branch. Q4c: spring target read from the
+      // TweenAnimationBuilder's Tween.end (deterministic-by-construction;
+      // doesn't require pumpAndSettle). Unknown widgets fall back to their
+      // runtimeType name — diff-noisy but doesn't crash.
+      if (this.needsSnapshot) {
+        code += this.generateSnapshotSerializer();
+      }
       code += 'void main() {\n';
       for (const test of program.tests) {
         code += this.genTestBlock(test, igniTheme);
@@ -637,12 +668,173 @@ export class CodeGenerator {
   // parsed `test "name":` AST node. Per doc 112, body statements include
   // render, event-sims (tap/change/submit/toggle), and assertions including
   // predicate forms (seen/on) and general boolean expressions over screen
+  // v0.19 Session 3: recursively check a test body for SnapshotStmt usage.
+  // Walks into FreezeTimeBlock bodies; mock blocks don't contain test stmts.
+  private testBodyHasSnapshot(body: TestStatement[]): boolean {
+    for (const stmt of body) {
+      if (stmt.type === 'SnapshotStmt') return true;
+      if (stmt.type === 'FreezeTimeBlock' && this.testBodyHasSnapshot(stmt.body)) return true;
+    }
+    return false;
+  }
+
+  // v0.19 Session 3: emit the _igniSerializeTree Dart helper as a string
+  // template. Per doc 113 §Methodology note + Stage 2 lock, captures node
+  // identity, branch/list structure, bound layout properties, transition
+  // active-branch, and spring target value (Q4c deterministic-by-construction
+  // via Tween.end, not the in-flight interpolated frame).
+  private generateSnapshotSerializer(): string {
+    return [
+      `String _igniSerializeTree(WidgetTester tester) {`,
+      `  final apps = find.byType(MaterialApp).evaluate().toList();`,
+      `  if (apps.isEmpty) return '(empty)';`,
+      `  Element? home;`,
+      `  apps.first.visitChildElements((e) { home ??= e; });`,
+      `  if (home == null) return '(empty)';`,
+      `  final buf = StringBuffer();`,
+      `  _igniSerializeNode(home!, buf, 0);`,
+      `  return buf.toString().trimRight();`,
+      `}`,
+      ``,
+      `void _igniSerializeNode(Element element, StringBuffer buf, int depth) {`,
+      `  final w = element.widget;`,
+      `  final indent = '  ' * depth;`,
+      `  // Outer-shell unwrap: Igni's emit chain is Scaffold > SafeArea >`,
+      `  // SingleChildScrollView > Padding > (Center >) Column. Pass-through.`,
+      `  if (w is Scaffold || w is SafeArea || w is SingleChildScrollView ||`,
+      `      w is ListenableBuilder || w is KeyedSubtree) {`,
+      `    element.visitChildElements((c) => _igniSerializeNode(c, buf, depth));`,
+      `    return;`,
+      `  }`,
+      `  // Padding > [Center >] Column/Row → fold padding (+ align=center) into the layout.`,
+      `  if (w is Padding) {`,
+      `    final pad = w.padding;`,
+      `    final padN = pad is EdgeInsets ? pad.left.toInt() : 0;`,
+      `    Element? inner;`,
+      `    element.visitChildElements((e) { inner ??= e; });`,
+      `    final iw = inner?.widget;`,
+      `    if (iw is Center) {`,
+      `      Element? innerInner;`,
+      `      inner!.visitChildElements((e) { innerInner ??= e; });`,
+      `      final iiw = innerInner?.widget;`,
+      `      if (iiw is Column || iiw is Row) {`,
+      `        final dir = iiw is Column ? 'vertical' : 'horizontal';`,
+      `        buf.writeln('\${indent}(layout \${dir} padding=\${padN} align=center');`,
+      `        innerInner!.visitChildElements((c) => _igniSerializeNode(c, buf, depth + 1));`,
+      `        buf.writeln('\${indent})');`,
+      `        return;`,
+      `      }`,
+      `    }`,
+      `    if (iw is Column || iw is Row) {`,
+      `      final dir = iw is Column ? 'vertical' : 'horizontal';`,
+      `      buf.writeln('\${indent}(layout \${dir} padding=\${padN}');`,
+      `      inner!.visitChildElements((c) => _igniSerializeNode(c, buf, depth + 1));`,
+      `      buf.writeln('\${indent})');`,
+      `      return;`,
+      `    }`,
+      `    // Plain padding wrap.`,
+      `    buf.writeln('\${indent}(padding \${padN}');`,
+      `    element.visitChildElements((c) => _igniSerializeNode(c, buf, depth + 1));`,
+      `    buf.writeln('\${indent})');`,
+      `    return;`,
+      `  }`,
+      `  // Standalone Column/Row (no Padding wrapper).`,
+      `  if (w is Column || w is Row) {`,
+      `    final dir = w is Column ? 'vertical' : 'horizontal';`,
+      `    buf.writeln('\${indent}(layout \${dir}');`,
+      `    element.visitChildElements((c) => _igniSerializeNode(c, buf, depth + 1));`,
+      `    buf.writeln('\${indent})');`,
+      `    return;`,
+      `  }`,
+      `  // Center standalone (not folded by Padding case).`,
+      `  if (w is Center) {`,
+      `    buf.writeln('\${indent}(center');`,
+      `    element.visitChildElements((c) => _igniSerializeNode(c, buf, depth + 1));`,
+      `    buf.writeln('\${indent})');`,
+      `    return;`,
+      `  }`,
+      `  // Container — fold decoration tokens.`,
+      `  if (w is Container) {`,
+      `    final dec = w.decoration;`,
+      `    final props = <String>[];`,
+      `    if (dec is BoxDecoration) {`,
+      `      if (dec.color != null) {`,
+      `        final v = dec.color!.value.toRadixString(16).padLeft(8, '0').substring(2);`,
+      `        props.add('background=#\${v}');`,
+      `      }`,
+      `      if (dec.borderRadius is BorderRadius) {`,
+      `        final br = dec.borderRadius as BorderRadius;`,
+      `        if (br.topLeft.x > 0) props.add('rounded=\${br.topLeft.x.toInt()}');`,
+      `      }`,
+      `      if (dec.border != null) props.add('border=true');`,
+      `    }`,
+      `    final ps = props.isEmpty ? '' : ' \${props.join(' ')}';`,
+      `    buf.writeln('\${indent}(container\${ps}');`,
+      `    element.visitChildElements((c) => _igniSerializeNode(c, buf, depth + 1));`,
+      `    buf.writeln('\${indent})');`,
+      `    return;`,
+      `  }`,
+      `  // Text → label.`,
+      `  if (w is Text) {`,
+      `    final text = (w.data ?? '').replaceAll('\\\\', '\\\\\\\\').replaceAll('"', '\\\\"');`,
+      `    final styled = w.style != null ? ' style=themed' : '';`,
+      `    buf.writeln('\${indent}(label "\${text}"\${styled})');`,
+      `    return;`,
+      `  }`,
+      `  // ElevatedButton → button.`,
+      `  if (w is ElevatedButton) {`,
+      `    var label = '';`,
+      `    final c = w.child;`,
+      `    if (c is Text) label = c.data ?? '';`,
+      `    label = label.replaceAll('\\\\', '\\\\\\\\').replaceAll('"', '\\\\"');`,
+      `    buf.writeln('\${indent}(button "\${label}")');`,
+      `    return;`,
+      `  }`,
+      `  // SizedBox spacers — skip (Igni emits between layout children to`,
+      `  // realise gap:; the structural shape is captured by the parent layout).`,
+      `  if (w is SizedBox) return;`,
+      `  // TweenAnimationBuilder<double> → spring (Q4c target capture).`,
+      `  if (w is TweenAnimationBuilder<double>) {`,
+      `    final end = w.tween.end ?? 0.0;`,
+      `    buf.writeln('\${indent}(spring target=\${end})');`,
+      `    return;`,
+      `  }`,
+      `  // AnimatedSwitcher → transition with active-branch identity (Q4d).`,
+      `  if (w is AnimatedSwitcher) {`,
+      `    String branch = '?';`,
+      `    Element? child;`,
+      `    element.visitChildElements((e) { child ??= e; });`,
+      `    if (child != null && child!.widget is KeyedSubtree) {`,
+      `      final ks = child!.widget as KeyedSubtree;`,
+      `      if (ks.key is ValueKey) branch = (ks.key as ValueKey).value.toString();`,
+      `    }`,
+      `    buf.writeln('\${indent}(transition active-branch=\${branch}');`,
+      `    if (child != null) {`,
+      `      child!.visitChildElements((c) => _igniSerializeNode(c, buf, depth + 1));`,
+      `    }`,
+      `    buf.writeln('\${indent})');`,
+      `    return;`,
+      `  }`,
+      `  // Spinner.`,
+      `  if (w is CircularProgressIndicator) { buf.writeln('\${indent}(spinner)'); return; }`,
+      `  // Fallback — unknown widget type. Diff-noisy but doesn't crash.`,
+      `  buf.writeln('\${indent}(\${w.runtimeType})');`,
+      `  element.visitChildElements((c) => _igniSerializeNode(c, buf, depth + 1));`,
+      `}`,
+      ``,
+    ].join('\n');
+  }
+
   // state. Mock blocks (`mock fetch:`, `mock every:`) are also handled here.
   private genTestBlock(test: TestBlock, igniTheme: string): string {
     // Cache the theme string on `this` so genTestStmt's nested freeze_time:
     // body emission can call genRenderStmt without threading the parameter
     // through every call site.
     this.cachedIgniTheme = igniTheme;
+    // v0.19 Session 3: cache a slug of the test name for SnapshotStmt to
+    // build the golden file path. Slug rule: lowercase, replace each
+    // non-alphanumeric run with a single underscore, trim leading/trailing.
+    this.cachedTestSlug = test.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
     const escName = JSON.stringify(test.name);
     // Track which screen we last rendered so state-var access can cast to its
     // private state class (`_<Name>ScreenState`). Tests live in the same Dart
@@ -837,13 +1029,31 @@ export class CodeGenerator {
       return lines.join('\n') + '\n';
     }
     if (stmt.type === 'SnapshotStmt') {
-      // v0.19 Session 2: parser/AST/codegen scaffolding only. The actual
-      // text-tree serializer (Q5-serializer scope) lands in Session 3.
-      // For now, emit a comment marker — the test compiles and runs without
-      // an assertion. Session 3 replaces this with the deterministic
-      // text-tree golden-file comparison.
-      const escName = JSON.stringify(stmt.name);
-      return `    // snapshot ${escName} — Session 2 stub; Session 3 lands the text-tree serializer.\n`;
+      // v0.19 Session 3: real codegen. Serialize the rendered widget tree
+      // via _igniSerializeTree, then either compare against a stored golden
+      // (default) or write the new value (when IGNI_UPDATE_SNAPSHOTS=1 env
+      // var is set, or when the golden file doesn't yet exist on disk).
+      // Path: ../__snapshots__/<test-slug>__<snap-name>.txt — relative to
+      // the cwd `flutter test` runs in (the .igni/ scaffold dir for user
+      // projects), so the goldens live in the user's project root.
+      const snapSlug = stmt.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      const escSnapName = JSON.stringify(stmt.name);
+      const goldenPath = `../__snapshots__/${this.cachedTestSlug}__${snapSlug}.txt`;
+      const escGoldenPath = JSON.stringify(goldenPath);
+      const lines: string[] = [];
+      lines.push(`    // snapshot ${escSnapName}`);
+      lines.push(`    {`);
+      lines.push(`      final _igniSnapTree = _igniSerializeTree(tester);`);
+      lines.push(`      final _igniSnapFile = File(${escGoldenPath});`);
+      lines.push(`      final _igniShouldUpdate = Platform.environment['IGNI_UPDATE_SNAPSHOTS'] == '1';`);
+      lines.push(`      if (_igniShouldUpdate || !_igniSnapFile.existsSync()) {`);
+      lines.push(`        _igniSnapFile.parent.createSync(recursive: true);`);
+      lines.push(`        _igniSnapFile.writeAsStringSync(_igniSnapTree);`);
+      lines.push(`      } else {`);
+      lines.push(`        expect(_igniSnapTree, equals(_igniSnapFile.readAsStringSync()));`);
+      lines.push(`      }`);
+      lines.push(`    }`);
+      return lines.join('\n') + '\n';
     }
     throw new Error(`Unknown test statement type: ${(stmt as { type: string }).type}`);
   }

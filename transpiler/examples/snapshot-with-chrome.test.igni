@@ -1,0 +1,9 @@
+screen Nested:
+  layout vertical, padding: large:
+    layout vertical, padding: medium, gap: small:
+      label "Inner 1", style: heading
+      label "Inner 2"
+
+test "nested layout chrome captured":
+  render Nested
+  snapshot "nested_loaded"

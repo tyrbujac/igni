@@ -141,14 +141,14 @@ void _igniSerializeNode(Element element, StringBuffer buf, int depth) {
   element.visitChildElements((c) => _igniSerializeNode(c, buf, depth + 1));
 }
 void main() {
-  testWidgets("greeting renders snapshot", (tester) async {
+  testWidgets("nested layout chrome captured", (tester) async {
     _igniMockedNow = null;
-    await tester.pumpWidget(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 17, height: 1.5))), home: GreetingScreen()));
+    await tester.pumpWidget(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 17, height: 1.5))), home: NestedScreen()));
     await tester.pump();
-    // snapshot "greeting_loaded"
+    // snapshot "nested_loaded"
     {
       final _igniSnapTree = _igniSerializeTree(tester);
-      final _igniSnapFile = File("../__snapshots__/greeting_renders_snapshot__greeting_loaded.txt");
+      final _igniSnapFile = File("../__snapshots__/nested_layout_chrome_captured__nested_loaded.txt");
       final _igniShouldUpdate = Platform.environment['IGNI_UPDATE_SNAPSHOTS'] == '1';
       if (_igniShouldUpdate || !_igniSnapFile.existsSync()) {
         _igniSnapFile.parent.createSync(recursive: true);
@@ -160,16 +160,14 @@ void main() {
   });
 }
 
-class GreetingScreen extends StatefulWidget {
-  const GreetingScreen({super.key});
+class NestedScreen extends StatefulWidget {
+  const NestedScreen({super.key});
 
   @override
-  State<GreetingScreen> createState() => _GreetingScreenState();
+  State<NestedScreen> createState() => _NestedScreenState();
 }
 
-class _GreetingScreenState extends State<GreetingScreen> {
-  String name = 'Tyr';
-
+class _NestedScreenState extends State<NestedScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -179,9 +177,20 @@ class _GreetingScreenState extends State<GreetingScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Text(
-              'Hello, '.toString() + (((name) as dynamic)?.toString() ?? ''),
-              style: Theme.of(context).textTheme.headlineLarge!,
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Text(
+                    'Inner 1',
+                    style: Theme.of(context).textTheme.headlineLarge!,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Inner 2',
+                  ),
+                ],
+              ),
             ),
           ],
         ),

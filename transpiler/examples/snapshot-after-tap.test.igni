@@ -1,0 +1,11 @@
+screen Counter:
+  count = 0
+
+  layout vertical, padding: large, gap: medium, align: center:
+    label count, style: heading
+    button "Add", on tap: count = count + 1
+
+test "counter increments on tap":
+  render Counter
+  tap "Add"
+  snapshot "counter_after_tap"

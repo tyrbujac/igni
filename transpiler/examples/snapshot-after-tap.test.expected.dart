@@ -141,14 +141,16 @@ void _igniSerializeNode(Element element, StringBuffer buf, int depth) {
   element.visitChildElements((c) => _igniSerializeNode(c, buf, depth + 1));
 }
 void main() {
-  testWidgets("greeting renders snapshot", (tester) async {
+  testWidgets("counter increments on tap", (tester) async {
     _igniMockedNow = null;
-    await tester.pumpWidget(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 17, height: 1.5))), home: GreetingScreen()));
+    await tester.pumpWidget(MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1555)), scaffoldBackgroundColor: const Color(0xFFFAFAFA), textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 17, height: 1.5))), home: CounterScreen()));
     await tester.pump();
-    // snapshot "greeting_loaded"
+    await tester.tap(find.text("Add"));
+    await tester.pumpAndSettle();
+    // snapshot "counter_after_tap"
     {
       final _igniSnapTree = _igniSerializeTree(tester);
-      final _igniSnapFile = File("../__snapshots__/greeting_renders_snapshot__greeting_loaded.txt");
+      final _igniSnapFile = File("../__snapshots__/counter_increments_on_tap__counter_after_tap.txt");
       final _igniShouldUpdate = Platform.environment['IGNI_UPDATE_SNAPSHOTS'] == '1';
       if (_igniShouldUpdate || !_igniSnapFile.existsSync()) {
         _igniSnapFile.parent.createSync(recursive: true);
@@ -160,15 +162,15 @@ void main() {
   });
 }
 
-class GreetingScreen extends StatefulWidget {
-  const GreetingScreen({super.key});
+class CounterScreen extends StatefulWidget {
+  const CounterScreen({super.key});
 
   @override
-  State<GreetingScreen> createState() => _GreetingScreenState();
+  State<CounterScreen> createState() => _CounterScreenState();
 }
 
-class _GreetingScreenState extends State<GreetingScreen> {
-  String name = 'Tyr';
+class _CounterScreenState extends State<CounterScreen> {
+  int count = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -177,13 +179,26 @@ class _GreetingScreenState extends State<GreetingScreen> {
         child: SingleChildScrollView(
           child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Text(
-              'Hello, '.toString() + (((name) as dynamic)?.toString() ?? ''),
-              style: Theme.of(context).textTheme.headlineLarge!,
-            ),
-          ],
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$count',
+                style: Theme.of(context).textTheme.headlineLarge!,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                onPressed: () {
+                  setState(() {
+                    count = count + 1;
+                  });
+                },
+                child: const Text('Add'),
+              ),
+            ],
+          ),
         ),
       ),
         ),

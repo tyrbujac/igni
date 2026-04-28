@@ -30,14 +30,20 @@ function isTargetKeyword(s: string | undefined): s is Target {
   return s === 'web' || s === 'ios' || s === 'android' || s === 'macos';
 }
 
-const { command, target, webMode, buildTarget, commandArg, deviceFlag, nameFlag } = (() => {
+const { command, target, webMode, buildTarget, commandArg, deviceFlag, nameFlag, updateSnapshots } = (() => {
   const raw = process.argv.slice(2);
   const clean: string[] = [];
   let device: string | undefined;
   let name: string | undefined;
+  let updateSnaps = false;
   for (let i = 0; i < raw.length; i++) {
     if (raw[i] === '--device') { device = raw[i + 1]; i++; continue; }
     if (raw[i] === '--name') { name = raw[i + 1]; i++; continue; }
+    // v0.19 — `igni test --update-snapshots` re-approves goldens after an
+    // intentional source change. Sets IGNI_UPDATE_SNAPSHOTS=1 in the
+    // flutter test env so the SnapshotStmt codegen writes new values
+    // instead of comparing.
+    if (raw[i] === '--update-snapshots') { updateSnaps = true; continue; }
     clean.push(raw[i]);
   }
   const cmd = clean[0];
@@ -71,7 +77,7 @@ const { command, target, webMode, buildTarget, commandArg, deviceFlag, nameFlag 
       if (isTargetKeyword(second)) tgt = second;
     }
   }
-  return { command: cmd, target: tgt, webMode: wMode, buildTarget: buildTgt, commandArg: arg, deviceFlag: device, nameFlag: name };
+  return { command: cmd, target: tgt, webMode: wMode, buildTarget: buildTgt, commandArg: arg, deviceFlag: device, nameFlag: name, updateSnapshots: updateSnaps };
 })();
 
 const cwd = process.cwd();
@@ -113,6 +119,7 @@ function printUsage(): void {
   console.log('  igni new my-app       Create my-app/, scaffold app.igni inside, and run it');
   console.log('  igni new my-app ios   Same, targeting iOS simulator');
   console.log('  igni test             Run all *.test.igni files via flutter test');
+  console.log('  igni test --update-snapshots   Re-approve snapshot goldens after an intentional change');
   console.log('');
   console.log('  Note: ios/android/macos/web are reserved as target keywords for `igni new`.');
   console.log('        To name an app one of these, use --name "iOS App".');
@@ -1595,7 +1602,7 @@ async function build(buildTgt: BuildTarget, explicitName: string | undefined): P
 // Per `docs/private/112_v018_testing_infrastructure.md` Q-locked decisions:
 // `test "name":` blocks live in sibling `*.test.igni` files; the codegen
 // auto-detects test mode from `program.tests.length > 0`.
-function runTests(): void {
+function runTests(updateSnapshots = false): void {
   const outcome = transpile(true);
   if (!outcome.ok) {
     console.error('Fix the error above, then run igni test again.');
@@ -1623,10 +1630,18 @@ function runTests(): void {
     writeFileSync(libMain, "import 'package:flutter/material.dart';\nvoid main() => runApp(const MaterialApp(home: Scaffold(body: Center(child: Text('igni test')))));\n");
   }
 
-  console.log(`Running ${result.program.tests.length} test${result.program.tests.length === 1 ? '' : 's'}...`);
+  console.log(`Running ${result.program.tests.length} test${result.program.tests.length === 1 ? '' : 's'}...${updateSnapshots ? ' (updating snapshots)' : ''}`);
   const flutter = spawnSync('flutter', ['test'], {
     cwd: igniDir,
     stdio: 'inherit',
+    env: {
+      ...process.env,
+      // v0.19 — when --update-snapshots is set, the SnapshotStmt codegen
+      // writes new golden values instead of comparing. Without it, missing
+      // goldens still get written on first run; existing goldens are
+      // compared and any mismatch fails the test.
+      ...(updateSnapshots ? { IGNI_UPDATE_SNAPSHOTS: '1' } : {}),
+    },
   });
   process.exit(flutter.status ?? 1);
 }
@@ -1651,7 +1666,7 @@ if (command === 'run') {
   }
   scaffoldThenRun(commandArg, target, webMode, deviceFlag, nameFlag);
 } else if (command === 'test') {
-  runTests();
+  runTests(updateSnapshots);
 } else {
   printUsage();
   process.exit(1);
