@@ -1,0 +1,10 @@
+screen Clock:
+  current = now()
+
+  layout vertical, padding: large:
+    label "Now: " + current
+
+test "mock now: fixes timestamp deterministically":
+  mock now: "2026-04-28T12:00:00Z"
+  render Clock
+  expect seen "Now:"

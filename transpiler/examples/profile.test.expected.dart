@@ -20,10 +20,13 @@ Future<http.Response> _igniHttpGet(String url) async {
   return http.Response(jsonEncode(entry), 200);
 }
 
+int? _igniMockedNow;
+
 void main() {
   testWidgets("shows offline state when fetch fails", (tester) async {
     _igniMockFetch = null;
     _igniRequests.clear();
+    _igniMockedNow = null;
     _igniMockFetch = {
       "/api/user/me?refresh=0": Exception("network timeout"),
     };
@@ -34,6 +37,7 @@ void main() {
   testWidgets("shows user name and email on success", (tester) async {
     _igniMockFetch = null;
     _igniRequests.clear();
+    _igniMockedNow = null;
     _igniMockFetch = {
       "/api/user/me?refresh=0": {'name': 'Ada Lovelace', 'email': 'ada@example.com'},
     };
@@ -45,6 +49,7 @@ void main() {
   testWidgets("tapping Refresh triggers a new fetch", (tester) async {
     _igniMockFetch = null;
     _igniRequests.clear();
+    _igniMockedNow = null;
     _igniMockFetch = {
       "/api/user/me?refresh=0": {'name': 'Ada Lovelace', 'email': 'ada@example.com'},
       "/api/user/me?refresh=1": {'name': 'Grace Hopper', 'email': 'grace@example.com'},

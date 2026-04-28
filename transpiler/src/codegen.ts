@@ -91,6 +91,10 @@ export class CodeGenerator {
   // `mock fetch:` blocks can intercept calls.
   private testMode = false;
   private hasFetch = false;
+  // v0.19: cached theme arg from genTestBlock so freeze_time:'s nested
+  // genRenderStmt calls can reuse it without threading the parameter through
+  // genTestStmt.
+  private cachedIgniTheme = '';
   private needsIconLookup = false;
   private needsStyleResolvers = false;
   // v0.17.0: emitted when a `border:` width on a layout uses a non-literal
@@ -265,6 +269,12 @@ export class CodeGenerator {
         code += `  return http.Response(jsonEncode(entry), 200);\n`;
         code += `}\n\n`;
       }
+      // v0.19: `mock now:` and `freeze_time:` set this test-scope global to
+      // a fixed seconds-since-epoch value. `now()` codegen reads from here
+      // first when in test mode. Reset to null between tests in genTestBlock.
+      // Q4b: `mock every: advance` bumps this forward when set, so a frozen
+      // clock and the every-block scheduler advance together.
+      code += `int? _igniMockedNow;\n\n`;
       code += 'void main() {\n';
       for (const test of program.tests) {
         code += this.genTestBlock(test, igniTheme);
@@ -629,6 +639,10 @@ export class CodeGenerator {
   // predicate forms (seen/on) and general boolean expressions over screen
   // state. Mock blocks (`mock fetch:`, `mock every:`) are also handled here.
   private genTestBlock(test: TestBlock, igniTheme: string): string {
+    // Cache the theme string on `this` so genTestStmt's nested freeze_time:
+    // body emission can call genRenderStmt without threading the parameter
+    // through every call site.
+    this.cachedIgniTheme = igniTheme;
     const escName = JSON.stringify(test.name);
     // Track which screen we last rendered so state-var access can cast to its
     // private state class (`_<Name>ScreenState`). Tests live in the same Dart
@@ -642,6 +656,8 @@ export class CodeGenerator {
       body += `    _igniMockFetch = null;\n`;
       body += `    _igniRequests.clear();\n`;
     }
+    // v0.19: reset the mocked-now timestamp between tests too.
+    body += `    _igniMockedNow = null;\n`;
     for (const stmt of test.body) {
       if (stmt.type === 'RenderStmt') {
         renderedScreen = stmt.screenName;
@@ -649,8 +665,24 @@ export class CodeGenerator {
         continue;
       }
       // Mock blocks set up state before render and don't need a renderedScreen.
-      if (stmt.type === 'MockFetchBlock' || stmt.type === 'MockEveryBlock') {
+      // v0.19: MockNowStmt + FreezeTimeBlock join the same no-render-required
+      // category. FreezeTimeBlock's *body* may contain renders; codegen for
+      // FreezeTimeBlock handles inner-scope render tracking.
+      if (
+        stmt.type === 'MockFetchBlock' ||
+        stmt.type === 'MockEveryBlock' ||
+        stmt.type === 'MockNowStmt' ||
+        stmt.type === 'FreezeTimeBlock'
+      ) {
         body += this.genTestStmt(stmt, renderedScreen ?? '');
+        // If a FreezeTimeBlock body contains a render, propagate that screen
+        // to subsequent outer-scope statements. (The freeze block doesn't
+        // unmount — Flutter's tree stays whatever was last rendered.)
+        if (stmt.type === 'FreezeTimeBlock') {
+          for (const inner of stmt.body) {
+            if (inner.type === 'RenderStmt') renderedScreen = inner.screenName;
+          }
+        }
         continue;
       }
       if (!renderedScreen) {
@@ -760,12 +792,58 @@ export class CodeGenerator {
       // `pump(<duration>)` advances the FakeAsync timer; for tests that need
       // multi-tick timer firing, FakeAsync.elapse pumps each `every` block's
       // periodic timer.
+      // v0.19 Q4b: when `_igniMockedNow` is set (via `mock now:` or
+      // `freeze_time:`), advance also moves the frozen `now()` value forward
+      // by the same amount, so both clocks advance together. Sub-second
+      // advances bump now() by zero whole seconds (integer division), which
+      // preserves now()'s integer-seconds semantics.
       const lines: string[] = [];
       for (const adv of stmt.advances) {
         lines.push(`    await tester.pump(const Duration(milliseconds: ${adv.milliseconds}));`);
+        lines.push(`    if (_igniMockedNow != null) _igniMockedNow = _igniMockedNow! + (${adv.milliseconds} ~/ 1000);`);
         lines.push(`    await tester.pump();`);
       }
       return lines.join('\n') + '\n';
+    }
+    if (stmt.type === 'MockNowStmt') {
+      // v0.19 — ambient-scope `mock now: "<iso>"`. Sets the test-scope
+      // override for `now()` to the parsed timestamp's seconds-since-epoch.
+      // Applies for the rest of the test body (or enclosing freeze block).
+      const escIso = JSON.stringify(stmt.iso8601);
+      return `    _igniMockedNow = DateTime.parse(${escIso}).toUtc().millisecondsSinceEpoch ~/ 1000;\n`;
+    }
+    if (stmt.type === 'FreezeTimeBlock') {
+      // v0.19 — block-form `freeze_time: "<iso>":`. Saves the previous
+      // `_igniMockedNow`, sets it to the frozen timestamp, runs the body,
+      // then restores. Q6 lock: block-extent — freeze ends at dedent.
+      // Inner renders update an inner renderedScreen so subsequent body
+      // statements (snapshot, expect, event-sims) bind to the right state.
+      const escIso = JSON.stringify(stmt.iso8601);
+      const lines: string[] = [];
+      let innerRenderedScreen = renderedScreen;
+      lines.push(`    {`);
+      lines.push(`      final _prevMockedNow = _igniMockedNow;`);
+      lines.push(`      _igniMockedNow = DateTime.parse(${escIso}).toUtc().millisecondsSinceEpoch ~/ 1000;`);
+      for (const inner of stmt.body) {
+        if (inner.type === 'RenderStmt') {
+          innerRenderedScreen = inner.screenName;
+          lines.push(this.genRenderStmt(inner, this.cachedIgniTheme).trimEnd());
+        } else {
+          lines.push(this.genTestStmt(inner, innerRenderedScreen).trimEnd());
+        }
+      }
+      lines.push(`      _igniMockedNow = _prevMockedNow;`);
+      lines.push(`    }`);
+      return lines.join('\n') + '\n';
+    }
+    if (stmt.type === 'SnapshotStmt') {
+      // v0.19 Session 2: parser/AST/codegen scaffolding only. The actual
+      // text-tree serializer (Q5-serializer scope) lands in Session 3.
+      // For now, emit a comment marker — the test compiles and runs without
+      // an assertion. Session 3 replaces this with the deterministic
+      // text-tree golden-file comparison.
+      const escName = JSON.stringify(stmt.name);
+      return `    // snapshot ${escName} — Session 2 stub; Session 3 lands the text-tree serializer.\n`;
     }
     throw new Error(`Unknown test statement type: ${(stmt as { type: string }).type}`);
   }
@@ -3771,6 +3849,11 @@ export class CodeGenerator {
       // v0.14: integer seconds since 1970-01-01 UTC. Non-reactive — bare
       // calls are evaluated at the moment of the call, no caching, no
       // reactivity hookup. Captured timestamps live in regular state vars.
+      // v0.19: in test mode, `now()` reads from `_igniMockedNow` first if set
+      // by `mock now:` or `freeze_time:`. Falls back to wall clock otherwise.
+      if (this.testMode) {
+        return `(_igniMockedNow ?? (DateTime.now().millisecondsSinceEpoch ~/ 1000))`;
+      }
       return `(DateTime.now().millisecondsSinceEpoch ~/ 1000)`;
     }
     if (call.name === 'spring' && args.length === 1) {

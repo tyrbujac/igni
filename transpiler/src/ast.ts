@@ -388,7 +388,10 @@ export type TestStatement =
   | ToggleStmt
   | SlideStmt
   | MockFetchBlock
-  | MockEveryBlock;
+  | MockEveryBlock
+  | SnapshotStmt
+  | MockNowStmt
+  | FreezeTimeBlock;
 
 export interface RenderStmt extends NodeBase {
   type: 'RenderStmt';
@@ -461,4 +464,37 @@ export type MockFetchResponse =
 export interface MockEveryBlock extends NodeBase {
   type: 'MockEveryBlock';
   advances: { milliseconds: number }[];
+}
+
+// v0.19 — `snapshot "<name>"` test-scope verb. Captures the current rendered
+// tree as a deterministic text representation, stored as a golden file. Q3
+// lock: text-tree only; image/golden deferred to v0.20+.
+// Q4c lock: snapshots capture the spring's target value, not intermediate
+// frames (deterministic-by-construction). Q5-serializer: text-tree includes
+// node identity + branch/list structure + component names + bound layout
+// properties + transition/spring state — Session 2 ships a minimal
+// visible-strings-only stub; Session 3 graduates to the full Q5 scope.
+export interface SnapshotStmt extends NodeBase {
+  type: 'SnapshotStmt';
+  name: string;
+}
+
+// v0.19 — `mock now: <iso8601>` ambient-scope test-scope statement. Sets
+// the test-scope override for `now()` to a fixed timestamp (Q4 + Q6
+// scoping: ambient — applies for the rest of the test body or enclosing
+// mock block).
+export interface MockNowStmt extends NodeBase {
+  type: 'MockNowStmt';
+  iso8601: string;
+}
+
+// v0.19 — `freeze_time: <iso8601>:` block-form test-scope statement
+// (Q6 lock: unambiguous block-extent; `:` opens an indented body, freeze
+// ends at dedent). Q4b: `mock every: advance` inside a freeze advances
+// both the every-block scheduler and the frozen `now()` value forward
+// together — both clocks move with one consistent mental model.
+export interface FreezeTimeBlock extends NodeBase {
+  type: 'FreezeTimeBlock';
+  iso8601: string;
+  body: TestStatement[];
 }

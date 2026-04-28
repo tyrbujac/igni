@@ -1,0 +1,9 @@
+screen Greeting:
+  name = "Tyr"
+
+  layout vertical, padding: large:
+    label "Hello, " + name, style: heading
+
+test "greeting renders snapshot":
+  render Greeting
+  snapshot "greeting_loaded"

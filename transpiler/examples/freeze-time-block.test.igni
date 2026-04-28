@@ -1,0 +1,16 @@
+screen Stopwatch:
+  start = now()
+  tick = now()
+
+  every 1s:
+    tick = now()
+
+  layout vertical, padding: large:
+    label "Elapsed: " + (tick - start) + "s"
+
+test "freeze_time block keeps now() stable; advance moves both clocks":
+  freeze_time: "2026-04-28T12:00:00Z"
+    render Stopwatch
+    mock every:
+      advance 1s
+    expect seen "Elapsed:"

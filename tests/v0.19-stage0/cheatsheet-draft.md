@@ -882,7 +882,7 @@ The text-tree captures node identity, branch/list structure, component names, bo
 
 ```igni
 test "Feed renders relative timestamps":
-  mock now: 2026-04-28T12:00:00Z
+  mock now: "2026-04-28T12:00:00Z"
   mock fetch:
     "/api/feed": [{ts: "2026-04-28T11:00:00Z", text: "Hello"}]
   render Feed
@@ -891,7 +891,7 @@ test "Feed renders relative timestamps":
 
 ```igni
 test "StepCounter snapshot is stable":
-  freeze_time: 2026-04-28T12:00:00Z
+  freeze_time: "2026-04-28T12:00:00Z"
     render StepCounter
     snapshot "step_counter_initial"
 ```
@@ -902,7 +902,7 @@ test "StepCounter snapshot is stable":
 
 ```igni
 test "spring counter reaches target after 1 second":
-  freeze_time: 2026-04-28T12:00:00Z
+  freeze_time: "2026-04-28T12:00:00Z"
     render StepCounter
     tap "Add 100"
     mock every:

@@ -13,6 +13,7 @@ import {
   TestBlock, TestStatement, RenderStmt, ExpectStmt,
   TapStmt, ChangeStmt, SubmitStmt, ToggleStmt, SlideStmt,
   MockFetchBlock, MockEveryBlock, MockFetchResponse,
+  SnapshotStmt, MockNowStmt, FreezeTimeBlock,
   SeenPredicate, OnPredicate,
 } from './ast.js';
 
@@ -114,16 +115,17 @@ export class Parser {
     const start = this.current();
     if (!this.check(TokenType.Identifier)) {
       this.error(
-        `Expected a test statement — \`render\`, \`tap\`, \`change\`, \`submit\`, \`toggle\`, \`slide\`, \`expect\`, or \`mock\`. Got "${this.current().value}".`,
+        `Expected a test statement — \`render\`, \`tap\`, \`change\`, \`submit\`, \`toggle\`, \`slide\`, \`expect\`, \`snapshot\`, \`freeze_time\`, or \`mock\`. Got "${this.current().value}".`,
       );
     }
     const verb = this.current().value;
-    // `mock` blocks set up state BEFORE rendering — mocks must be in place
-    // when the screen mounts so the initial fetch hits them. Everything else
-    // requires a prior render to have any visible effect (event-sims need a
-    // tree to act on; expect needs widgets/state to assert against).
+    // `mock` blocks (incl. `mock now:`) set up state BEFORE rendering — mocks
+    // must be in place when the screen mounts so the initial fetch hits them.
+    // `freeze_time:` similarly wraps render context. Everything else requires
+    // a prior render: event-sims need a tree to act on; expect/snapshot need
+    // widgets/state to assert against.
     const requiresRender = (verbName: string) =>
-      ['tap', 'change', 'submit', 'toggle', 'slide', 'expect'].includes(verbName);
+      ['tap', 'change', 'submit', 'toggle', 'slide', 'expect', 'snapshot'].includes(verbName);
     if (requiresRender(verb) && !renderSeen) {
       this.error(
         `\`${verb}\` requires a prior \`render <Screen>\` in the same test body — add \`render <Screen>\` before this line. ` +
@@ -177,9 +179,52 @@ export class Parser {
     if (verb === 'mock') {
       return this.parseMockBlock(start);
     }
+    if (verb === 'snapshot') {
+      this.advance();
+      const nameTok = this.consume(TokenType.String, 'Expected snapshot name as a string literal — e.g. `snapshot "login_loaded"`');
+      this.consume(TokenType.Newline, 'Expected newline');
+      return { type: 'SnapshotStmt', name: nameTok.value, loc: this.loc(start) };
+    }
+    if (verb === 'freeze_time') {
+      return this.parseFreezeTimeBlock(start, renderSeen);
+    }
     this.error(
-      `Unknown test statement verb "${verb}". Valid verbs: \`render\`, \`tap\`, \`change\`, \`submit\`, \`toggle\`, \`slide\`, \`expect\`, \`mock\`.`,
+      `Unknown test statement verb "${verb}". Valid verbs: \`render\`, \`tap\`, \`change\`, \`submit\`, \`toggle\`, \`slide\`, \`expect\`, \`snapshot\`, \`freeze_time\`, \`mock\`.`,
     );
+  }
+
+  // v0.19 — `freeze_time: "<iso8601>":` block-form. The `:` separates the
+  // keyword from its timestamp value; the indented body that follows opens
+  // the block extent. now() is frozen for everything inside the body; on
+  // dedent the freeze ends. Q4b lock: `mock every: advance` inside the body
+  // advances both clocks together (codegen-side concern; parser preserves
+  // body shape).
+  private parseFreezeTimeBlock(start: Token, outerRenderSeen: boolean): FreezeTimeBlock {
+    this.advance(); // consume `freeze_time`
+    this.consume(TokenType.Colon, 'Expected ":" after `freeze_time`');
+    const isoTok = this.consume(TokenType.String, 'Expected ISO 8601 timestamp string — e.g. `freeze_time: "2026-04-28T12:00:00Z"`');
+    this.consume(TokenType.Newline, 'Expected newline');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint('freeze_time:'));
+    const body: TestStatement[] = [];
+    let renderSeen = outerRenderSeen;
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      const posBefore = this.pos;
+      try {
+        const stmt = this.parseTestStatement(renderSeen);
+        if (stmt.type === 'RenderStmt') renderSeen = true;
+        body.push(stmt);
+      } catch (e) {
+        if (e instanceof TranspileError) {
+          this.errors.push(e);
+          this.synchronizeLine();
+        } else {
+          throw e;
+        }
+      }
+      this.assertProgress(posBefore);
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent');
+    return { type: 'FreezeTimeBlock', iso8601: isoTok.value, body, loc: this.loc(start) };
   }
 
   private parseRenderStmt(start: Token): RenderStmt {
@@ -238,16 +283,23 @@ export class Parser {
     return { type: 'ExpectStmt', expr, loc: this.loc(start) };
   }
 
-  private parseMockBlock(start: Token): MockFetchBlock | MockEveryBlock {
+  private parseMockBlock(start: Token): MockFetchBlock | MockEveryBlock | MockNowStmt {
     this.advance(); // consume `mock`
-    if (!this.check(TokenType.Identifier)) {
-      this.error('Expected `mock fetch:` or `mock every:` after `mock`.');
-    }
+    // `every` is a keyword token (TokenType.Every), not Identifier — accept
+    // by string value rather than type. `fetch` and `now` are bare
+    // Identifiers. Reject anything else by value.
     const kindTok = this.advance();
-    if (kindTok.value !== 'fetch' && kindTok.value !== 'every') {
-      this.error(`Unknown mock target "${kindTok.value}". v0.18 supports \`mock fetch:\` and \`mock every:\` only.`);
+    if (kindTok.value !== 'fetch' && kindTok.value !== 'every' && kindTok.value !== 'now') {
+      this.error(`Expected \`mock fetch:\`, \`mock every:\`, or \`mock now:\` after \`mock\`. Got "${kindTok.value || '<end of line>'}".`);
     }
     this.consume(TokenType.Colon, 'Expected ":"');
+    // v0.19 — `mock now:` is single-statement form (ambient-scope, Q6 lock).
+    // No indented body; just a string-literal timestamp on the same line.
+    if (kindTok.value === 'now') {
+      const isoTok = this.consume(TokenType.String, 'Expected ISO 8601 timestamp string — e.g. `mock now: "2026-04-28T12:00:00Z"`');
+      this.consume(TokenType.Newline, 'Expected newline');
+      return { type: 'MockNowStmt', iso8601: isoTok.value, loc: this.loc(start) };
+    }
     this.consume(TokenType.Newline, 'Expected newline');
     this.consume(TokenType.Indent, 'Expected indent', this.indentHint(`mock ${kindTok.value}:`));
     if (kindTok.value === 'fetch') {
