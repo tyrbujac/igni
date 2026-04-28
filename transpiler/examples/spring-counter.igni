@@ -1,0 +1,7 @@
+screen StepCounter:
+  target = 0
+  displayed = spring(target)
+
+  layout vertical, gap: medium, padding: large, align: center:
+    label displayed, style: heading
+    button "Add 100", on tap: target = target + 100

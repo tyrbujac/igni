@@ -1,0 +1,11 @@
+screen Login:
+  refresh = 0
+  user = fetch("/api/user/me?r=" + refresh)
+
+  layout vertical, padding: large, gap: medium, transition: fade:
+    if user is loading:
+      spinner
+    else if user is error:
+      label "Couldn't load — try again"
+    else:
+      label user.name, style: heading

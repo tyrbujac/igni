@@ -1,0 +1,10 @@
+screen Toolbar:
+  expanded = false
+
+  layout vertical, padding: medium, gap: medium:
+    layout vertical, transition: slide:
+      if expanded:
+        label "Tools open", style: heading
+      else:
+        label "Click to expand"
+    button "Toggle", on tap: expanded = not expanded

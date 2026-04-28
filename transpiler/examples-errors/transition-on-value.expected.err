@@ -1,0 +1,5 @@
+
+  Error: Use `spring(value)` for changing values; `transition:` only animates child replacement. A layout with `transition:` must have exactly one child that is an `if`/`else` block or an `each` loop. For per-row or value-by-value animation, use `spring(value)` consumed by `label`.
+
+    transition-on-value.igni:4 |   layout vertical, transition: fade:
+                               |         ^

@@ -1,0 +1,12 @@
+screen Notifications:
+  notifications = [
+    {id: 1, message: "Welcome to Igni", recency: 0.95},
+    {id: 2, message: "Build finished", recency: 0.7},
+    {id: 3, message: "Reminder: standup at 10am", recency: 0.3}
+  ]
+
+  layout vertical, padding: large, gap: medium:
+    each item in notifications:
+      layout horizontal, gap: small:
+        label item.message
+        label spring(item.recency * 100)

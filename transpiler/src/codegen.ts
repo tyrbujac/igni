@@ -40,10 +40,15 @@ interface ScreenContext {
   boundInputVars: string[];
   screenParams: readonly string[];
   isComponent: boolean;
+  // v0.19: maps `displayed = spring(target)` alias names to their target
+  // argument expression. Aliases don't emit state fields; reads substitute
+  // the target value. `label <alias>` and `label spring(...)` both lower to
+  // TweenAnimationBuilder<double>.
+  springAliases: Record<string, Expr>;
 }
 
 function newScreenContext(): ScreenContext {
-  return { stateVars: [], stateVarTypes: {}, boundInputVars: [], screenParams: [], isComponent: false };
+  return { stateVars: [], stateVarTypes: {}, boundInputVars: [], screenParams: [], isComponent: false, springAliases: {} };
 }
 
 export class CodeGenerator {
@@ -140,6 +145,8 @@ export class CodeGenerator {
     this.validateSharedPrefix(program);
     this.validateCountLambda(program);
     this.validateButtons(program);
+    this.validateTransition(program);
+    this.validateSpringTypes(program);
 
     // No screens → emit a friendly placeholder app so `igni run` stays alive
     // while the user types their first screen. Parser produces an empty
@@ -898,7 +905,21 @@ export class CodeGenerator {
   }
 
   private genScreen(screen: Screen): string {
-    this.ctx = { stateVars: [], stateVarTypes: {}, boundInputVars: [], screenParams: screen.params, isComponent: false };
+    this.ctx = { stateVars: [], stateVarTypes: {}, boundInputVars: [], screenParams: screen.params, isComponent: false, springAliases: {} };
+    // v0.19: collect spring-aliased variables (`x = spring(target)`). These
+    // don't get emitted as state fields; reads of `x` substitute to `target`,
+    // and `label x` (or any consumer that supports spring) lowers to a
+    // TweenAnimationBuilder. Pre-pass before the main body walk.
+    for (const item of screen.body) {
+      if (
+        item.type === 'VariableDecl' &&
+        item.value.type === 'FunctionCall' &&
+        item.value.name === 'spring' &&
+        item.value.args.length === 1
+      ) {
+        this.ctx.springAliases[item.name] = item.value.args[0];
+      }
+    }
     const stateDecls: string[] = [];
     const uiNodes: UINode[] = [];
     const funcDefs: FunctionDef[] = [];
@@ -963,6 +984,8 @@ export class CodeGenerator {
         if (buildLocalVars.has(decl.name)) continue;
         // fetch calls become stream/future state, handled separately — skip.
         if (decl.value.type === 'FunctionCall' && decl.value.name === 'fetch') continue;
+        // v0.19 spring aliases don't get emitted at all; reads substitute to the target.
+        if (this.ctx.springAliases[decl.name]) continue;
         if (this.exprRefsAny(decl.value, allDeclNames)) {
           buildLocalVars.add(decl.name);
           changedDerived = true;
@@ -973,6 +996,12 @@ export class CodeGenerator {
     let inBuildLocals = false;
     for (const item of screen.body) {
       if (item.type === 'VariableDecl') {
+        // v0.19: spring-aliased vars don't emit fields. Reads of the alias
+        // name substitute to the spring's target argument; consumption by
+        // `label` lowers to TweenAnimationBuilder<double>.
+        if (this.ctx.springAliases[item.name]) {
+          continue;
+        }
         // Detect fetch variables
         if (item.value.type === 'FunctionCall' && item.value.name === 'fetch') {
           const url = item.value.args[0];
@@ -1398,14 +1427,27 @@ export class CodeGenerator {
       ? { dim: gapDimension as 'width' | 'height', px: gapSize }
       : undefined;
     const childLines: string[] = [];
-    for (let i = 0; i < node.children.length; i++) {
-      const child = node.children[i];
-      if (child.type === 'Comment') {
-        childLines.push(this.genUINode(child, colDepth + 2, isRow));
-      } else {
-        childLines.push(`${this.genUINode(child, colDepth + 2, isRow, parentGap)},`);
-        if (gapSize !== null && i < node.children.length - 1 && node.children[i + 1].type !== 'Comment') {
-          childLines.push(`${ind}    const SizedBox(${gapDimension}: ${gapSize}),`);
+    // v0.19: `transition: <token>` wraps the layout's single conditional /
+    // each child in AnimatedSwitcher. Validator enforces single-IfNode-or-
+    // EachNode shape; codegen here builds the wrapped Widget directly,
+    // bypassing the standard children-loop spread emission.
+    const transitionProp = findProp(node.properties, 'transition');
+    if (transitionProp) {
+      const onlyChild = node.children.find(c => c.type === 'If' || c.type === 'Each');
+      if (onlyChild && (onlyChild.type === 'If' || onlyChild.type === 'Each')) {
+        const tokenName = resolveIdentName(transitionProp.value) ?? 'fade';
+        childLines.push(`${this.genTransitionWrap(onlyChild, tokenName, colDepth + 2)},`);
+      }
+    } else {
+      for (let i = 0; i < node.children.length; i++) {
+        const child = node.children[i];
+        if (child.type === 'Comment') {
+          childLines.push(this.genUINode(child, colDepth + 2, isRow));
+        } else {
+          childLines.push(`${this.genUINode(child, colDepth + 2, isRow, parentGap)},`);
+          if (gapSize !== null && i < node.children.length - 1 && node.children[i + 1].type !== 'Comment') {
+            childLines.push(`${ind}    const SizedBox(${gapDimension}: ${gapSize}),`);
+          }
         }
       }
     }
@@ -1540,6 +1582,14 @@ export class CodeGenerator {
     const styleProp = findProp(node.properties, 'style');
     const colorProp = findProp(node.properties, 'color');
 
+    // v0.19: spring detection — if the label's value is a spring(target) call
+    // (direct use-site) or an Ident referencing a spring-aliased variable
+    // (declaration-site), wrap a Text in TweenAnimationBuilder<double>.
+    const springTarget = this.detectSpringTarget(node.value);
+    if (springTarget) {
+      return this.genSpringLabel(node, springTarget, depth);
+    }
+
     const displayStr = this.exprToDisplayStr(node.value);
 
     const alignProp = findProp(node.properties, 'align');
@@ -1568,6 +1618,180 @@ export class CodeGenerator {
       const onTap = this.genOnPressed(tapEvent, depth + 1);
       code = `${ind}GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${ind}  child: ${code.trimStart()},\n${ind})`;
     }
+    return code;
+  }
+
+  // v0.19: detect spring consumption at a label's value position. Returns the
+  // spring's target argument expression (post-alias resolution) or null. Spring
+  // can appear two ways:
+  //   - Use-site: `label spring(target)` — FunctionCall with name 'spring'.
+  //   - Declaration-site: `displayed = spring(target)` followed by
+  //     `label displayed` — Ident matching a name in ctx.springAliases.
+  // Both lower to TweenAnimationBuilder<double> via genSpringLabel.
+  private detectSpringTarget(expr: Expr): Expr | null {
+    if (expr.type === 'FunctionCall' && expr.name === 'spring' && expr.args.length === 1) {
+      return expr.args[0];
+    }
+    if (expr.type === 'Ident' && this.ctx.springAliases[expr.name]) {
+      return this.ctx.springAliases[expr.name];
+    }
+    return null;
+  }
+
+  // v0.19 spring codegen — TweenAnimationBuilder<double> wrapping a Text.
+  // System-default 400ms (matches SwiftUI .spring()); easeOutCubic curve as a
+  // light approximation of spring physics without a SpringSimulation
+  // controller. Duration collapses to zero under OS reduced-motion (Q2-a11y).
+  // Tween's `begin` starts at 0; TweenAnimationBuilder remembers the previous
+  // `end` across rebuilds so subsequent target changes animate from the prior
+  // settled value, not from 0 every time.
+  private genSpringLabel(node: LabelNode, target: Expr, depth: number): string {
+    const ind = this.indent(depth);
+    const styleProp = findProp(node.properties, 'style');
+    const colorProp = findProp(node.properties, 'color');
+    const targetDart = this.exprToDart(target);
+
+    let styleClause = '';
+    if (styleProp || colorProp) {
+      const styleBase = styleProp ? resolveStyle(styleProp.value) : null;
+      const colorStr = colorProp ? this.genColorValue(colorProp.value) : null;
+      if (styleBase && colorStr) {
+        styleClause = `, style: ${styleBase}.copyWith(color: ${colorStr})`;
+      } else if (styleBase) {
+        styleClause = `, style: ${styleBase}`;
+      } else if (colorStr) {
+        styleClause = `, style: TextStyle(color: ${colorStr})`;
+      }
+    }
+
+    let code = `${ind}TweenAnimationBuilder<double>(\n`;
+    code += `${ind}  tween: Tween<double>(begin: 0.0, end: (${targetDart}).toDouble()),\n`;
+    code += `${ind}  duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 400),\n`;
+    code += `${ind}  curve: Curves.easeOutCubic,\n`;
+    code += `${ind}  builder: (context, value, _) => Text(value.toStringAsFixed(0)${styleClause}),\n`;
+    code += `${ind})`;
+
+    const tapEvent = node.events.find(e => e.event === 'tap');
+    if (tapEvent) {
+      const onTap = this.genOnPressed(tapEvent, depth + 1);
+      code = `${ind}GestureDetector(\n${onTap.replace('onPressed', 'onTap')}${ind}  child: ${code.trimStart()},\n${ind})`;
+    }
+    return code;
+  }
+
+  // v0.19 transition: codegen — wraps a layout's IfNode/EachNode child in
+  // AnimatedSwitcher with branch/list-identity keys. The standard genIf/genEach
+  // emit list-spread syntax (`...[children]`) suitable for splatting into a
+  // parent Column's children list. AnimatedSwitcher needs a single Widget
+  // child, so this helper rebuilds the conditional/each as a single-Widget
+  // expression with KeyedSubtree wrappers per branch (Q4d: keys represent
+  // branch/item identity, not child type or text).
+  private genTransitionWrap(child: IfNode | EachNode, token: string, depth: number): string {
+    const ind = this.indent(depth);
+    const switcherInd = this.indent(depth + 1);
+    let switcherChild: string;
+
+    if (child.type === 'If') {
+      switcherChild = this.genTransitionIfChild(child, depth + 1);
+    } else {
+      // EachNode — wrap iteration in a Column with a list-length-keyed
+      // KeyedSubtree. Add/remove fires the swap; reorder doesn't change the
+      // length so it doesn't fire (documented v0.19 limitation per the
+      // cheatsheet's "adds/removes items" promise).
+      switcherChild = this.genTransitionEachChild(child, depth + 1);
+    }
+
+    let code = `${ind}AnimatedSwitcher(\n`;
+    code += `${switcherInd}duration: const Duration(milliseconds: 300),\n`;
+    if (token === 'slide') {
+      // Slide-from-right default; future tokens (slide_left, slide_up) would
+      // parameterize this. v0.19 ships horizontal-from-right only.
+      code += `${switcherInd}transitionBuilder: (Widget child, Animation<double> animation) => SlideTransition(\n`;
+      code += `${switcherInd}  position: Tween<Offset>(begin: const Offset(1.0, 0.0), end: Offset.zero).animate(animation),\n`;
+      code += `${switcherInd}  child: child,\n`;
+      code += `${switcherInd}),\n`;
+    }
+    code += `${switcherInd}child: ${switcherChild.trimStart()},\n`;
+    code += `${ind})`;
+    return code;
+  }
+
+  private genTransitionIfChild(node: IfNode, depth: number): string {
+    const ind = this.indent(depth);
+    const filterUI = (items: (UINode | VariableDecl)[]) => items.filter((c): c is UINode => c.type !== 'VariableDecl');
+    // Build a chained ternary: cond1 ? branch0 : cond2 ? branch1 : ... : elseBranch.
+    // Each branch wraps its body in a single Widget (SizedBox.shrink for empty,
+    // direct child for one, Column for many) inside a KeyedSubtree with a
+    // stable per-branch key.
+    const buildBranch = (children: UINode[], branchKey: string): string => {
+      const filtered = children.filter((c): c is UINode => c.type !== 'Comment');
+      if (filtered.length === 0) {
+        return `KeyedSubtree(key: const ValueKey('${branchKey}'), child: const SizedBox.shrink())`;
+      }
+      if (filtered.length === 1) {
+        const inner = this.genUINode(filtered[0], depth + 2).trimStart();
+        return `KeyedSubtree(key: const ValueKey('${branchKey}'), child: ${inner})`;
+      }
+      const innerInd = this.indent(depth + 2);
+      const lines = filtered.map(c => this.genUINode(c, depth + 3) + ',').join('\n');
+      const col = `Column(\n${innerInd}  mainAxisSize: MainAxisSize.min,\n${innerInd}  children: [\n${lines}\n${innerInd}  ],\n${innerInd})`;
+      return `KeyedSubtree(key: const ValueKey('${branchKey}'), child: ${col})`;
+    };
+
+    const cond0 = this.exprToDart(node.condition);
+    let result = buildBranch(filterUI(node.then), 'branch-0');
+
+    let branchIdx = 1;
+    const elseIfPieces: string[] = [];
+    for (const branch of node.elseIfs) {
+      const econd = this.exprToDart(branch.condition);
+      const ebranch = buildBranch(filterUI(branch.body), `branch-${branchIdx}`);
+      elseIfPieces.push(`${econd} ? ${ebranch}`);
+      branchIdx++;
+    }
+
+    let elseBranch: string;
+    if (node.else_) {
+      elseBranch = buildBranch(filterUI(node.else_), `branch-${branchIdx}`);
+    } else {
+      elseBranch = `KeyedSubtree(key: const ValueKey('branch-${branchIdx}'), child: const SizedBox.shrink())`;
+    }
+
+    // Compose: cond0 ? result : <elseIfs chained> : elseBranch
+    let chain = elseBranch;
+    for (let i = elseIfPieces.length - 1; i >= 0; i--) {
+      chain = `${elseIfPieces[i]} : ${chain}`;
+    }
+    return `${cond0} ? ${result} : ${chain}`;
+  }
+
+  private genTransitionEachChild(node: EachNode, depth: number): string {
+    const ind = this.indent(depth);
+    const innerInd = this.indent(depth + 1);
+    const listExpr = this.exprToDart(node.list);
+    // Per-row content as a single Widget inside the iteration. Multiple
+    // children per row → wrap in a per-row Column.
+    let rowWidget: string;
+    if (node.children.length === 1) {
+      rowWidget = this.genUINode(node.children[0], depth + 3).trimStart();
+    } else {
+      const rowInd = this.indent(depth + 3);
+      const lines = node.children.map(c => this.genUINode(c, depth + 4) + ',').join('\n');
+      rowWidget = `Column(\n${rowInd}  mainAxisSize: MainAxisSize.min,\n${rowInd}  children: [\n${lines}\n${rowInd}  ],\n${rowInd})`;
+    }
+    // KeyedSubtree by list length so add/remove fires AnimatedSwitcher.
+    // Reorder (same length, different order) doesn't fire — documented
+    // v0.19 limitation matching the cheatsheet's "adds/removes items"
+    // promise. Reorder animation is a v0.20+ candidate.
+    let code = `KeyedSubtree(\n`;
+    code += `${innerInd}key: ValueKey(${listExpr}.length),\n`;
+    code += `${innerInd}child: Column(\n`;
+    code += `${innerInd}  mainAxisSize: MainAxisSize.min,\n`;
+    code += `${innerInd}  children: [\n`;
+    code += `${innerInd}    for (final ${node.variable} in ${listExpr}) ${rowWidget},\n`;
+    code += `${innerInd}  ],\n`;
+    code += `${innerInd}),\n`;
+    code += `${ind})`;
     return code;
   }
 
@@ -2572,6 +2796,168 @@ export class CodeGenerator {
     }
   }
 
+  // v0.19 — `transition: <token>` only applies to layouts whose immediate
+  // child set changes through `if`/`else if`/`else` swap or `each` add/remove.
+  // Token-only (Q5): `fade` and `slide` are the entire vocabulary; per-call
+  // duration arguments (`transition: fade 200ms`) are rejected. Cross-pointing
+  // error message (Q3-tighten): misuse on a value-changing layout points at
+  // `spring(value)` as the right primitive.
+  private validateTransition(program: Program): void {
+    const TRANSITION_TOKENS = new Set(['fade', 'slide']);
+    const walkUI = (nodes: UINode[]): void => {
+      for (const n of nodes) {
+        if (n.type === 'Layout') {
+          const transitionProp = findProp(n.properties, 'transition');
+          if (transitionProp) {
+            // Token validation — must be `Ident('fade')` or `Ident('slide')`.
+            if (transitionProp.value.type !== 'Ident' || !TRANSITION_TOKENS.has(transitionProp.value.name)) {
+              throw new TranspileError(
+                '`transition:` takes one of two layout-swap tokens — `fade` or `slide`. ' +
+                'Per-call duration arguments (`transition: fade 200ms`) and other tokens are rejected; ' +
+                'the surface is intentionally narrow per the v0.17 width-token discipline.',
+                transitionProp.value.loc?.line ?? n.loc?.line ?? 1,
+                transitionProp.value.loc?.column ?? n.loc?.column ?? 1,
+              );
+            }
+            // Child-shape validation — exactly one IfNode or EachNode child.
+            // Comments are allowed as siblings (they don't render).
+            const renderableChildren = n.children.filter(c => c.type !== 'Comment');
+            if (renderableChildren.length !== 1 || (renderableChildren[0].type !== 'If' && renderableChildren[0].type !== 'Each')) {
+              throw new TranspileError(
+                'Use `spring(value)` for changing values; `transition:` only animates child replacement. ' +
+                'A layout with `transition:` must have exactly one child that is an `if`/`else` block ' +
+                'or an `each` loop. For per-row or value-by-value animation, use `spring(value)` consumed by `label`.',
+                n.loc?.line ?? 1, n.loc?.column ?? 1,
+              );
+            }
+          }
+          walkUI(n.children);
+        } else if (n.type === 'If') {
+          const branch = (items: (UINode | VariableDecl)[]) => {
+            for (const item of items) {
+              if (item.type !== 'VariableDecl') walkUI([item]);
+            }
+          };
+          branch(n.then);
+          for (const ei of n.elseIfs) branch(ei.body);
+          if (n.else_) branch(n.else_);
+        } else if (n.type === 'Each') {
+          walkUI(n.children);
+        } else if (n.type === 'ComponentInvocation') {
+          walkUI(n.children);
+        }
+      }
+    };
+
+    for (const screen of program.screens) {
+      const uiNodes = screen.body.filter(
+        (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef' && i.type !== 'Every'
+      );
+      walkUI(uiNodes);
+    }
+    for (const comp of program.components) {
+      const uiNodes = comp.body.filter((i): i is UINode => i.type !== 'VariableDecl');
+      walkUI(uiNodes);
+    }
+  }
+
+  // v0.19 — `spring(value)` accepts a single numeric argument. Reject string
+  // literals, list/object literals, and known non-numeric idents (style-value
+  // names like `red`/`brand`). The error points at `transition:` as the right
+  // primitive for non-interpolatable changes (Q3-tighten symmetric).
+  private validateSpringTypes(program: Program): void {
+    const checkExpr = (e: Expr): void => {
+      if (e.type === 'FunctionCall' && e.name === 'spring') {
+        if (e.args.length !== 1) {
+          throw new TranspileError(
+            '`spring()` takes exactly one numeric argument — got ' + e.args.length + '. ' +
+            'Use `spring(target_value)` to animate a value smoothly toward `target_value`.',
+            e.loc?.line ?? 1, e.loc?.column ?? 1,
+          );
+        }
+        const arg = e.args[0];
+        // Reject obvious non-numerics. Idents and binary-exprs are accepted —
+        // their numeric-ness can't be statically proven without full type
+        // inference, and over-rejecting blocks legitimate cases like
+        // `spring(item.recency * 100)`.
+        if (arg.type === 'StringLit') {
+          throw new TranspileError(
+            'Use `transition: fade` on a conditional render instead. ' +
+            '`spring()` only animates numeric values; got a string literal.',
+            e.loc?.line ?? 1, e.loc?.column ?? 1,
+          );
+        }
+        if (arg.type === 'ListLit' || arg.type === 'ObjectLit' || arg.type === 'ObjectUpdate') {
+          throw new TranspileError(
+            'Use `transition: fade` on a conditional render instead. ' +
+            '`spring()` only animates numeric values; lists and objects are not interpolatable.',
+            e.loc?.line ?? 1, e.loc?.column ?? 1,
+          );
+        }
+      }
+      // Recurse into composite expressions.
+      if (e.type === 'BinaryExpr') { checkExpr(e.left); checkExpr(e.right); }
+      if (e.type === 'UnaryExpr') { checkExpr(e.operand); }
+      if (e.type === 'IsExpr') { checkExpr(e.target); }
+      if (e.type === 'EqualityExpr') { checkExpr(e.left); checkExpr(e.right); }
+      if (e.type === 'InExpr') { checkExpr(e.target); checkExpr(e.list); }
+      if (e.type === 'LambdaExpr') { checkExpr(e.body); }
+      if (e.type === 'FunctionCall') {
+        for (const a of e.args) checkExpr(a);
+        if (e.namedArgs) for (const na of e.namedArgs) checkExpr(na.value);
+      }
+      if (e.type === 'ListLit') { for (const item of e.elements) checkExpr(item); }
+      if (e.type === 'ObjectLit') { for (const entry of e.entries) checkExpr(entry.value); }
+      if (e.type === 'ObjectUpdate') {
+        checkExpr(e.base);
+        for (const update of e.updates) checkExpr(update.value);
+      }
+      if (e.type === 'FieldAccess') { checkExpr(e.object); }
+      if (e.type === 'IndexAccess') { checkExpr(e.object); checkExpr(e.index); }
+    };
+    const checkUI = (nodes: UINode[]): void => {
+      for (const n of nodes) {
+        if (n.type === 'Label') checkExpr(n.value);
+        if (n.type === 'Button' && n.text) checkExpr(n.text);
+        for (const p of ('properties' in n ? n.properties : [])) checkExpr(p.value);
+        if (n.type === 'Layout') checkUI(n.children);
+        if (n.type === 'If') {
+          for (const item of n.then) if (item.type !== 'VariableDecl') checkUI([item]);
+          for (const ei of n.elseIfs) for (const item of ei.body) if (item.type !== 'VariableDecl') checkUI([item]);
+          if (n.else_) for (const item of n.else_) if (item.type !== 'VariableDecl') checkUI([item]);
+        }
+        if (n.type === 'Each') { checkExpr(n.list); checkUI(n.children); }
+        if (n.type === 'ComponentInvocation') checkUI(n.children);
+      }
+    };
+    const checkStmts = (stmts: Statement[]): void => {
+      for (const s of stmts) {
+        if (s.type === 'Assignment') checkExpr(s.value);
+        if (s.type === 'IfStmt') { checkExpr(s.condition); checkStmts(s.then); if (s.else_) checkStmts(s.else_); }
+        if (s.type === 'EachStmt') { checkExpr(s.list); checkStmts(s.body); }
+        if (s.type === 'FunctionCall') for (const a of s.args) checkExpr(a);
+      }
+    };
+    for (const screen of program.screens) {
+      const uiNodes = screen.body.filter(
+        (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef' && i.type !== 'Every'
+      );
+      checkUI(uiNodes);
+      for (const item of screen.body) {
+        if (item.type === 'VariableDecl') checkExpr(item.value);
+        if (item.type === 'FunctionDef') checkStmts(item.body);
+        if (item.type === 'Every') checkStmts(item.body);
+      }
+    }
+    for (const comp of program.components) {
+      const uiNodes = comp.body.filter((i): i is UINode => i.type !== 'VariableDecl');
+      checkUI(uiNodes);
+      for (const item of comp.body) {
+        if (item.type === 'VariableDecl') checkExpr(item.value);
+      }
+    }
+  }
+
   // Walk a UI body collecting (event, argName?) pairs from every `emit` action
   // inside an event handler. Multiple emits of the same event must agree on
   // their argument shape — different arg names is a TranspileError.
@@ -3208,6 +3594,13 @@ export class CodeGenerator {
       case 'NumberLit': return `${expr.value}`;
       case 'StringLit': return `'${expr.value.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\$/g, '\\$')}'`;
       case 'Ident':
+        // v0.19: spring-aliased variable reads substitute to the spring's target.
+        // Non-label consumers (conditions, arithmetic) see the logical value,
+        // not the animated frame; label consumers are detected pre-substitution
+        // in genLabel and emit TweenAnimationBuilder.
+        if (this.ctx.springAliases[expr.name]) {
+          return this.exprToDart(this.ctx.springAliases[expr.name]);
+        }
         if (this.declaredLocals.has(expr.name)) return expr.name;
         if (this.functionParams.includes(expr.name)) return expr.name;
         if (this.ctx.stateVars.includes(expr.name)) return expr.name;
@@ -3379,6 +3772,14 @@ export class CodeGenerator {
       // calls are evaluated at the moment of the call, no caching, no
       // reactivity hookup. Captured timestamps live in regular state vars.
       return `(DateTime.now().millisecondsSinceEpoch ~/ 1000)`;
+    }
+    if (call.name === 'spring' && args.length === 1) {
+      // v0.19: spring(value) consumed by `label` is intercepted in genLabel
+      // and lowered to TweenAnimationBuilder<double>. Reaching this fallback
+      // means the spring is at a non-label position (condition, arithmetic,
+      // layout property, etc.) — the validator rejects those, but for any
+      // path that reaches here we degrade to the target value (no animation).
+      return args[0];
     }
     if (call.name === 'locate') {
       // `locate()` is screen-body only — handled in the VariableDecl path

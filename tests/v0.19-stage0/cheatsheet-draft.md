@@ -725,11 +725,14 @@ screen StepCounter:
 each item in notifications:
   layout horizontal, gap: small:
     label item.message
-    layout horizontal, width: spring(item.recency * 200), background: blue
-    # spring tracks item.recency; reordering keeps each row's animation state.
+    label spring(item.recency * 100)
+    # spring tracks item.recency per row;
+    # reorder keeps each row's animation state attached to its own item.
 ```
 
 Iterate over the items, not their indices, when per-row springs matter — `each i in 0..notifications.length:` would bind the spring to the index, and reordering would animate wrong values.
+
+**`spring()` consumers in v0.19.** The canonical consumer is `label`. `spring()` lowers to a `TweenAnimationBuilder` that wraps the rendered text. Animating layout *dimensions* (e.g. `width: spring(...)`, `height: spring(...)`) is a v0.20+ candidate — Igni's layout-property surface is still token-only per the v0.17 max-width discipline, and adding numeric layout properties is a separate design cycle. For v0.19, animate values that flow into labels.
 
 ### What `transition:` and `spring()` don't do
 

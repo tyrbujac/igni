@@ -1,0 +1,3 @@
+screen Bad:
+  layout vertical:
+    label spring("hello")

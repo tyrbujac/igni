@@ -1,0 +1,8 @@
+screen Bad:
+  flag = false
+
+  layout vertical, transition: spin:
+    if flag:
+      label "On"
+    else:
+      label "Off"

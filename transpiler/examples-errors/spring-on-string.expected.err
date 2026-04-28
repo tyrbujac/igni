@@ -1,0 +1,5 @@
+
+  Error: Use `transition: fade` on a conditional render instead. `spring()` only animates numeric values; got a string literal.
+
+    spring-on-string.igni:3 |     label spring("hello")
+                            |                 ^

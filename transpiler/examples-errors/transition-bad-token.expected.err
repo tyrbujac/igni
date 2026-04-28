@@ -1,0 +1,5 @@
+
+  Error: `transition:` takes one of two layout-swap tokens — `fade` or `slide`. Per-call duration arguments (`transition: fade 200ms`) and other tokens are rejected; the surface is intentionally narrow per the v0.17 width-token discipline.
+
+    transition-bad-token.igni:4 |   layout vertical, transition: spin:
+                                |                                    ^
