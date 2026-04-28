@@ -5,7 +5,7 @@ shared:
       {type: "text", content: "A minimal notes app built in Igni for app 2 v1.0 criterion 4 #3.", checked: false},
       {type: "bullet", content: "Tap a note title to view it", checked: false},
       {type: "bullet", content: "Use the buttons below to add blocks", checked: false},
-      {type: "checkbox", content: "Notes vanish on refresh — that's by design", checked: false}
+      {type: "checkbox", content: "Tap to toggle me", checked: false}
     ]},
     {title: "Second note", blocks: [
       {type: "heading", content: "A simpler note", checked: false},
@@ -18,12 +18,17 @@ shared:
   selected_note = null
   font_size = 15
 
+theme:
+  color:
+    brand: "#80CBC4"
+    card: "#1D1E33"
+    subtle: "#37474F"
+
 screen Files, title: "Notes":
-  layout vertical, padding: large, gap: medium:
-    label "Notes", style: heading
+  layout vertical, padding: large, gap: medium, fill: true, background: black:
     each note in shared.notes:
-      layout horizontal, padding: small, on tap: open(note):
-        label note.title
+      layout horizontal, padding: medium, background: card, rounded: medium, on tap: open(note):
+        label note.title, color: white
     button "+ New Note", color: brand, on tap: add_note()
     button "Settings", color: subtle, on tap: navigate to Settings
 
@@ -38,28 +43,28 @@ screen Files, title: "Notes":
     navigate to Note
 
 screen Note, title: "Note":
-  layout vertical, padding: large, gap: medium:
+  layout vertical, padding: large, gap: medium, fill: true, background: black:
     button "← Back", color: subtle, on tap: navigate back
     if shared.selected_note is null:
-      label "No note selected"
+      label "No note selected", color: white
     else:
-      label shared.selected_note.title, style: heading
+      label shared.selected_note.title, style: heading, color: white
       each block in shared.selected_note.blocks:
         if block.type is "heading":
-          label block.content, style: heading
+          label block.content, style: heading, color: white
         else if block.type is "text":
-          label block.content
+          label block.content, color: white
         else if block.type is "bullet":
           layout horizontal, gap: small:
-            label "•"
-            label block.content
+            label "•", color: brand
+            label block.content, color: white
         else if block.type is "checkbox":
-          layout horizontal, gap: small:
+          layout horizontal, gap: small, on tap: toggle_check(block):
             if block.checked:
-              label "[x]"
+              label "[x]", color: brand
             else:
-              label "[ ]"
-            label block.content
+              label "[ ]", color: subtle
+            label block.content, color: white
       layout horizontal, gap: small:
         button "+ H", color: subtle, on tap: add_block("heading")
         button "+ T", color: subtle, on tap: add_block("text")
@@ -73,14 +78,21 @@ screen Note, title: "Note":
     shared.notes = replace(shared.notes, current, updated)
     shared.selected_note = updated
 
+  toggle_check(b):
+    current = shared.selected_note
+    flipped = {b with checked: not b.checked}
+    new_blocks = replace(current.blocks, b, flipped)
+    updated = {current with blocks: new_blocks}
+    shared.notes = replace(shared.notes, current, updated)
+    shared.selected_note = updated
+
 screen Settings, title: "Settings":
-  layout vertical, padding: large, gap: medium:
+  layout vertical, padding: large, gap: medium, fill: true, background: black:
     button "← Back", color: subtle, on tap: navigate back
-    label "Settings", style: heading
-    label "Font size", style: body
+    label "Font size", style: body, color: white
     layout horizontal, gap: medium, align: center:
       slider bind: shared.font_size, min: 10, max: 24
-      label shared.font_size
-    label "About", style: body
-    label "Boojy Notes — Igni MVP build"
-    label "Built with Igni v0.19.1"
+      label shared.font_size, color: white
+    label "About", style: body, color: white
+    label "Boojy Notes — Igni MVP build", color: white
+    label "Built with Igni v0.19.1", color: white
