@@ -43,33 +43,29 @@ screen Files, title: "Notes":
     navigate to Note
 
 screen Note, title: "Note":
+  title_draft = ""
+  if shared.selected_note is not null:
+    title_draft = shared.selected_note.title
+
   layout vertical, padding: large, gap: medium, fill: true, background: black:
     button "← Back", color: subtle, on tap: navigate back
     if shared.selected_note is null:
       label "No note selected", color: white
     else:
-      label shared.selected_note.title, style: heading, color: white
+      input bind: title_draft, style: heading, color: white, on change: update_title(title_draft)
       each block in shared.selected_note.blocks:
-        if block.type is "heading":
-          label block.content, style: heading, color: white
-        else if block.type is "text":
-          label block.content, color: white
-        else if block.type is "bullet":
-          layout horizontal, gap: small:
-            label "•", color: brand
-            label block.content, color: white
-        else if block.type is "checkbox":
-          layout horizontal, gap: small, on tap: toggle_check(block):
-            if block.checked:
-              label "[x]", color: brand
-            else:
-              label "[ ]", color: subtle
-            label block.content, color: white
+        Block block, on edit(content): update_block(block, content), on toggle: toggle_check(block), on remove: remove_block(block)
       layout horizontal, gap: small:
         button "+ H", color: subtle, on tap: add_block("heading")
         button "+ T", color: subtle, on tap: add_block("text")
         button "+ B", color: subtle, on tap: add_block("bullet")
         button "+ C", color: subtle, on tap: add_block("checkbox")
+
+  update_title(t):
+    current = shared.selected_note
+    updated = {current with title: t}
+    shared.notes = replace(shared.notes, current, updated)
+    shared.selected_note = updated
 
   add_block(t):
     current = shared.selected_note
@@ -85,6 +81,39 @@ screen Note, title: "Note":
     updated = {current with blocks: new_blocks}
     shared.notes = replace(shared.notes, current, updated)
     shared.selected_note = updated
+
+  update_block(b, content):
+    current = shared.selected_note
+    updated_block = {b with content: content}
+    new_blocks = replace(current.blocks, b, updated_block)
+    updated = {current with blocks: new_blocks}
+    shared.notes = replace(shared.notes, current, updated)
+    shared.selected_note = updated
+
+  remove_block(b):
+    current = shared.selected_note
+    new_blocks = without(current.blocks, b)
+    updated = {current with blocks: new_blocks}
+    shared.notes = replace(shared.notes, current, updated)
+    shared.selected_note = updated
+
+component Block(block):
+  draft = block.content
+  layout horizontal, gap: small:
+    if block.type is "heading":
+      input bind: draft, style: heading, color: white, on change: emit edit(draft)
+    else if block.type is "text":
+      input bind: draft, color: white, on change: emit edit(draft)
+    else if block.type is "bullet":
+      label "•", color: brand
+      input bind: draft, color: white, on change: emit edit(draft)
+    else if block.type is "checkbox":
+      if block.checked:
+        label "[x]", color: brand, on tap: emit toggle
+      else:
+        label "[ ]", color: subtle, on tap: emit toggle
+      input bind: draft, color: white, on change: emit edit(draft)
+    button "×", color: subtle, on tap: emit remove
 
 screen Settings, title: "Settings":
   layout vertical, padding: large, gap: medium, fill: true, background: black:
