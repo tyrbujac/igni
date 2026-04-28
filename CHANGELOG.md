@@ -27,6 +27,46 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.19.0 — 2026-04-28
+*Animation primitives + snapshot testing. Three new layout/builtin/test-scope surfaces, all token-only or declarative; cheatsheet patches all held under post-implementation cold-test panel.*
+
+Cycle path: Stage 1 design (`docs/private/113`) → Stage 2 panel (`tests/v0.19-design-review/`, $0.27, **3/3 HOLD on all five locks** — Trigger A on Q2 spring-vs-duration did NOT fire) → Stage 0 cold-test (`tests/v0.19-stage0/`, $0.63, **9/9 strong-pass**) → 3-session implementation (`feat(v0.19): animation primitives` `aa9fb92` → `feat(v0.19): test-scope verbs` `25f5366` → `feat(v0.19): snapshot serializer` `239127e`; Trigger B 3-session cap NOT fired) → Stage 3 ship-validation (`tests/v0.19-stage3/`, $0.65, **12/12 cells canonical**, 4-frontier-model panel including flash-lite noise tier, all three mid-cycle cheatsheet patches held). Cumulative cycle cost: **$1.55**.
+
+### Added
+
+- **`transition: fade` / `transition: slide`** — layout modifier on conditional renders. Token-only (system-default duration; no per-call argument). Codegen wraps Flutter's `AnimatedSwitcher` keyed by branch identity (Q4d) so third-state assignments interrupt and restart toward the new branch. Compiler rejects `transition:` on layouts whose immediate child set doesn't change, with a cross-pointing error message: *"Use `spring(value)` for changing values; `transition:` only animates child replacement."*
+- **`spring(value)`** — declarative value-animation builtin. Codegen wraps `TweenAnimationBuilder<double>` driven by a spring-curve. Consumed by `label` (v0.19 scope; layout-dimension animation deferred to v0.20+ per Q1 split + the `width: spring(...)` synthesis-to-cheatsheet drift logged 2026-04-28). OS reduced-motion collapses spring duration to zero (Q2-a11y patch). Per-row spring inside `each` is keyed by row identity, not list index (Q4a). Compiler rejects non-interpolatable types with the symmetric error: *"Use `transition: fade` on a conditional render instead."*
+- **`snapshot "<name>"`** — test-scope verb capturing a deterministic text-tree representation of the rendered widget tree. Goldens live at `__snapshots__/<test-slug>__<snap-slug>.txt`; first run writes, subsequent runs compare. **`igni test --update-snapshots`** re-approves intentional changes. Q4c lock: snapshot captures the spring's *target* value (read from `Tween.end`), not whatever intermediate frame — deterministic-by-construction, no `pumpAndSettle()` required. Serializer captures node identity + branch/list structure + bound layout properties + transition / spring state (Q5-serializer scope).
+- **`mock now: "<iso>"`** (ambient-scope) and **`freeze_time: "<iso>":`** (block-scope) — time-mock primitives for `now()`-derived UI in tests. `freeze_time:` block-extent is unambiguous (Q6 scoping lock). `mock every: advance` advances both the every-block scheduler and the frozen `now()` value forward together (Q4b two-clock lock).
+
+### Changed
+
+- **`value_of(<binding>)`** — widened from "input/toggle/slider's `bind:` value only" to "any test-scope-visible binding". Resolves a Stage 0-surfaced cheatsheet ambiguity (table-vs-example contradiction, panel split 2/3 vs 1/3). For a `spring()`-bound binding, returns the target value per Q4c.
+- **`spec/v0.18.0.md`** + cheatsheet + micro archived to `spec/archive/`. New `spec/v0.19.0.{md,-cheatsheet.md,-micro.md}` shipped.
+- **SYNC markers** regenerated across CLAUDE.md, README.md, ARCHITECTURE.md, GALLERY.md (version v0.18.0 → v0.19.0; total tests 118 → 124).
+
+### Methodology
+
+- **Trigger B did not fire.** Doc 113's pre-registered watch ("if implementing the animation runtime + snapshot infrastructure exceeds 3 sessions, ship v0.19.0 animation-only and split snapshot to v0.19.1") was active across the entire implementation phase. Sessions 1+2+3 each landed within their own focused session; the snapshot serializer (the largest framework subsystem of v0.19) shipped in Session 3 without overrunning. Cycle stayed in budget.
+- **Q4c reversal validated empirically.** The snapshot-captures-target-value lock (Tyr's reversal at Stage 2 against panel 2/3 lean toward current-rendered-frame; the **third instance** of the principled-architectural-over-ergonomic-majority pattern catalogued in `docs/private/114`) held under Stage 3 panel: multiple cells explicitly cited "snapshot captures `Tween.end` / target value, no settle required" — the deterministic-by-construction framing landed verbatim across frontier and flash-lite tiers.
+- **Synthesis-to-cheatsheet drift trap class.** v0.19 surfaced *two* instances of cheatsheet promises that exceeded language reality: (1) `width: spring(item.recency * 200)` on horizontal layouts (no numeric `width:` exists; Stage 0 panel propagated the shape because the cheatsheet promised it); (2) unquoted ISO timestamps `freeze_time: 2026-04-28T12:00:00Z` (the dash-separated parts don't lex). Both surfaced during implementation (Sessions 1 and 2 respectively), patched in the cheatsheet draft pre-Stage-3, validated as held at Stage 3. New trap class catalogued in `docs/private/trap-journal.md`; methodology improvement candidate (cheatsheet-vs-language linter) logged for Stream 2.
+- **Pre-bump Stage 3 pattern.** Stage 3 ran against the cheatsheet draft (pre-bump) rather than the shipped cheatsheet. Reason: v0.19 already accumulated two synthesis-to-cheatsheet drift traps mid-implementation; pre-bump validation gives one more pass before the spec freezes. Strong-pass at Stage 3 means no v0.19.1 docs iteration is queued from this cycle's findings.
+- **Spec-cycle skill update — Stage 0 → Implementation handoff.** New rule added: *"Fix Stage 0 teaching gaps before implementation; don't ship known teaching ambiguities and patch later."* Codified per the `value_of()` + `width: spring()` precedents. First read of the cheatsheet is when teaching either lands or fails.
+
+### Patches deferred (not blocking ship; ROADMAP Stream 3)
+
+- **Branch-shape clarification under `transition:`.** Stage 3 surfaced a 2/4 minor: gemini-pro + flash-lite used flat-sibling branches inside `else if:` / `else:` under `transition: fade`; opus + gpt wrapped in inner layouts. Both shapes survive codegen (multi-child branches auto-wrap in Column-min during AnimatedSwitcher emission); cheatsheet doesn't explicitly endorse either. Logged for v0.19.1 docs iteration if real-app friction surfaces.
+- **Defensive `freeze_time:` recommendation on tests not directly asserting timestamp UI.** Stage 3 surfaced a 1/4 minor: gemini-pro skipped the wrap on a Test 1 that only asserted `value_of(displayed_steps)`. Test passes; the wrap is defensive-best-practice. Logged for v0.19.1 docs iteration.
+
+### Test count / spec ship
+
+- `npm test` 124/124 green (was 118 → 124; added 13 v0.19 fixtures: 4 transition+spring positives + 3 transition/spring negatives in Session 1; 3 mock-now/freeze-time/snapshot positives in Session 2; 3 snapshot real-codegen positives in Session 3 + regenerated profile.test/spike-counter.test/todo.test for the `_igniMockedNow` global).
+- `npm run smoke` 80/80 pass `flutter analyze --no-pub`.
+- `spec/v0.18.0` archived; `spec/v0.19.0` shipped.
+- SYNC markers regenerated across CLAUDE.md, README.md, ARCHITECTURE.md, GALLERY.md.
+
+---
+
 ## v0.18.0 — 2026-04-27
 
 Testing infrastructure. Tests live in sibling `*.test.igni` files, `igni test` discovers them and runs `flutter test` on the bundled output. The surface was locked across a full design cycle: Stage 1 design note (`docs/private/112_v018_testing_infrastructure.md`), Stage 2 panel critique (`tests/v0.18-testing-design-review/`) — Trigger A fired (3/3 panel cells voted to split snapshot to v0.19; applied immediately), Stage 0 cold-test (`tests/v0.18.0-stage0/`) — soft-fail attempt 1 (3-way divergence on the function-test access path), patch + re-run attempt 2 strong-pass with 3/3 canonical on every prompt × every model.
