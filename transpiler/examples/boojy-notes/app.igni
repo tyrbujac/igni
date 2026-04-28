@@ -32,9 +32,9 @@ screen Files, title: "Notes":
     navigate to Note
 
   add_note():
-    new = {title: "Untitled", blocks: [{type: "text", content: "", checked: false}]}
-    shared.notes = shared.notes + [new]
-    shared.selected_note = new
+    note = {title: "Untitled", blocks: [{type: "text", content: "", checked: false}]}
+    shared.notes = shared.notes + [note]
+    shared.selected_note = note
     navigate to Note
 
 screen Note, title: "Note":

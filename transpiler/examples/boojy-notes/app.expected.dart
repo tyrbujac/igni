@@ -36,12 +36,12 @@ class _FilesScreenState extends State<FilesScreen> {
   }
 
   void add_note() {
-    dynamic new = {'title': 'Untitled', 'blocks': [{'type': 'text', 'content': '', 'checked': false}]};
+    dynamic note = {'title': 'Untitled', 'blocks': [{'type': 'text', 'content': '', 'checked': false}]};
     shared.update(() {
-      shared.notes = shared.notes + [new];
+      shared.notes = shared.notes + [note];
     });
     shared.update(() {
-      shared.selected_note = new;
+      shared.selected_note = note;
     });
     Navigator.push(context, MaterialPageRoute(builder: (context) => NoteScreen()));
   }
