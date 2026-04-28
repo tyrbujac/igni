@@ -35,7 +35,7 @@ class ShopScreen extends StatefulWidget {
 }
 
 class _ShopScreenState extends State<ShopScreen> {
-  List<dynamic> items = [{'name': 'Apples', 'price': 3}, {'name': 'Bread', 'price': 2}];
+  List<dynamic> items = <dynamic>[{'name': 'Apples', 'price': 3}, {'name': 'Bread', 'price': 2}];
 
   @override
   Widget build(BuildContext context) {

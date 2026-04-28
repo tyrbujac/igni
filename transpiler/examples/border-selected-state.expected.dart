@@ -12,7 +12,7 @@ class BorderSelectedStateScreen extends StatefulWidget {
 }
 
 class _BorderSelectedStateScreenState extends State<BorderSelectedStateScreen> {
-  List<dynamic> methods = [{'name': 'Credit Card'}, {'name': 'PayPal'}, {'name': 'Bank Transfer'}];
+  List<dynamic> methods = <dynamic>[{'name': 'Credit Card'}, {'name': 'PayPal'}, {'name': 'Bank Transfer'}];
 
   dynamic width_for(dynamic method) {
     if (method == selected) {

@@ -12,7 +12,7 @@ class ContactsScreen extends StatefulWidget {
 }
 
 class _ContactsScreenState extends State<ContactsScreen> {
-  List<dynamic> contacts = [{'name': 'Charlie', 'active': true}, {'name': 'Alice', 'active': true}, {'name': 'Bob', 'active': false}];
+  List<dynamic> contacts = <dynamic>[{'name': 'Charlie', 'active': true}, {'name': 'Alice', 'active': true}, {'name': 'Bob', 'active': false}];
 
   @override
   Widget build(BuildContext context) {

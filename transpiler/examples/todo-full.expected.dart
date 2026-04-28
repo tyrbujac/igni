@@ -12,7 +12,7 @@ class TodoScreen extends StatefulWidget {
 }
 
 class _TodoScreenState extends State<TodoScreen> {
-  List<dynamic> items = [];
+  List<dynamic> items = <dynamic>[];
   String draft = '';
   late final TextEditingController _draftController;
 
@@ -30,7 +30,7 @@ class _TodoScreenState extends State<TodoScreen> {
 
   void add() {
     setState(() {
-      items = items + [{'text': draft}];
+      items = items + <dynamic>[{'text': draft}];
     });
     setState(() {
       draft = '';

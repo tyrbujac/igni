@@ -12,7 +12,7 @@ class DerivedCountsScreen extends StatefulWidget {
 }
 
 class _DerivedCountsScreenState extends State<DerivedCountsScreen> {
-  List<dynamic> items = [{'level': 'critical', 'name': 'A'}, {'level': 'warning', 'name': 'B'}, {'level': 'critical', 'name': 'C'}, {'level': 'info', 'name': 'D'}];
+  List<dynamic> items = <dynamic>[{'level': 'critical', 'name': 'A'}, {'level': 'warning', 'name': 'B'}, {'level': 'critical', 'name': 'C'}, {'level': 'info', 'name': 'D'}];
 
   @override
   Widget build(BuildContext context) {

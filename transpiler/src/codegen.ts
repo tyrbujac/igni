@@ -1358,6 +1358,19 @@ export class CodeGenerator {
 
     this.collectBoundInputs(uiNodes);
 
+    for (const bound of this.ctx.boundInputVars) {
+      if (buildLocalVars.has(bound)) {
+        const decl = allDecls.find(d => d.name === bound);
+        const loc = decl?.loc ?? { line: 1, column: 1 };
+        throw new TranspileError(
+          `\`${bound}\` is bound by an \`input\` but also conditionally reassigned in this screen — input controllers need a stable State field, so the bound variable must be initialised unconditionally at screen body level. Move the conditional logic into a function or pre-compute the initial value, then use \`on change:\` to write back.`,
+          loc.line,
+          loc.column,
+        );
+      }
+    }
+
+
     const name = screen.name;
     const hasParams = screen.params.length > 0;
     const hasState = stateDecls.length > 0;
@@ -1502,7 +1515,25 @@ export class CodeGenerator {
     const titleProp = findProp(screen.properties, 'title');
     const screenBgProp = findProp(screen.properties, 'background');
     const hasImageBg = screenBgProp ? isImageBackground(screenBgProp.value) : false;
-    const scaffoldBg = (screenBgProp && !hasImageBg) ? this.genBackgroundValue(screenBgProp.value) : '';
+    let scaffoldBg = (screenBgProp && !hasImageBg) ? this.genBackgroundValue(screenBgProp.value) : '';
+
+    // Bug 6 (doc 116 #5): when the root layout declares both `fill: true` and
+    // `background:`, the user expects the background to extend to scaffold
+    // edges (and through the AppBar in dark mode). The Scaffold body wraps in
+    // SafeArea + SingleChildScrollView, so a Container painted by the inner
+    // layout sizes to its child and leaves scaffoldBackgroundColor visible
+    // around it. Hoist the layout background up to scaffoldBg + AppBar bg so
+    // the whole viewport renders the chosen colour. Skip when the screen
+    // already has its own `background:` (user expressed two distinct intents).
+    if (!scaffoldBg && !hasImageBg && uiNodes.length === 1 && uiNodes[0].type === 'Layout') {
+      const root = uiNodes[0];
+      const rootFill = findProp(root.properties, 'fill');
+      const isFillTrue = rootFill && rootFill.value.type === 'Ident' && rootFill.value.name === 'true';
+      const rootBg = findProp(root.properties, 'background');
+      if (isFillTrue && rootBg && !isImageBackground(rootBg.value)) {
+        scaffoldBg = this.genBackgroundValue(rootBg.value);
+      }
+    }
 
     stateClass += `  @override\n  Widget build(BuildContext context) {\n`;
     if (buildLocals.length > 0) {
@@ -1639,6 +1670,7 @@ export class CodeGenerator {
       }
     }
   }
+
 
   private genStateVar(decl: VariableDecl): string {
     const dartType = inferType(decl.value, decl.typeHint);
@@ -3959,8 +3991,8 @@ export class CodeGenerator {
       case 'InExpr':
         return `${expr.negated ? '!' : ''}${this.exprToDart(expr.list)}.contains(${this.exprToDart(expr.target)})`;
       case 'ListLit':
-        if (expr.elements.length === 0) return '[]';
-        return `[${expr.elements.map(e => this.exprToDart(e)).join(', ')}]`;
+        if (expr.elements.length === 0) return '<dynamic>[]';
+        return `<dynamic>[${expr.elements.map(e => this.exprToDart(e)).join(', ')}]`;
       case 'ObjectLit':
         return `{${expr.entries.map(e => `'${e.key}': ${this.exprToDart(e.value)}`).join(', ')}}`;
       case 'ObjectUpdate': {

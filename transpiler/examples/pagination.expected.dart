@@ -12,7 +12,7 @@ class FeedScreen extends StatefulWidget {
 }
 
 class _FeedScreenState extends State<FeedScreen> {
-  List<dynamic> posts = [{'title': 'Hello world'}, {'title': 'Second post'}, {'title': 'Third post'}];
+  List<dynamic> posts = <dynamic>[{'title': 'Hello world'}, {'title': 'Second post'}, {'title': 'Third post'}];
 
   @override
   Widget build(BuildContext context) {

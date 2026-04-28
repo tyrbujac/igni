@@ -1,0 +1,5 @@
+
+  Error: `new` is reserved by Dart and cannot be used as an Igni name. Rename it (e.g. `new_item` or `is_new`).
+
+    dart-reserved-keyword.igni:2 |   new = 0
+                                 |   ^

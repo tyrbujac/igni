@@ -12,7 +12,7 @@ class TicTacToeScreen extends StatefulWidget {
 }
 
 class _TicTacToeScreenState extends State<TicTacToeScreen> {
-  List<dynamic> cells = [{'id': 0, 'mark': ''}, {'id': 1, 'mark': ''}, {'id': 2, 'mark': ''}, {'id': 3, 'mark': ''}, {'id': 4, 'mark': ''}, {'id': 5, 'mark': ''}, {'id': 6, 'mark': ''}, {'id': 7, 'mark': ''}, {'id': 8, 'mark': ''}];
+  List<dynamic> cells = <dynamic>[{'id': 0, 'mark': ''}, {'id': 1, 'mark': ''}, {'id': 2, 'mark': ''}, {'id': 3, 'mark': ''}, {'id': 4, 'mark': ''}, {'id': 5, 'mark': ''}, {'id': 6, 'mark': ''}, {'id': 7, 'mark': ''}, {'id': 8, 'mark': ''}];
   String player = 'X';
   String winner = '';
 
@@ -39,7 +39,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
   }
 
   dynamic check() {
-    dynamic lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+    dynamic lines = <dynamic>[<dynamic>[0, 1, 2], <dynamic>[3, 4, 5], <dynamic>[6, 7, 8], <dynamic>[0, 3, 6], <dynamic>[1, 4, 7], <dynamic>[2, 5, 8], <dynamic>[0, 4, 8], <dynamic>[2, 4, 6]];
     dynamic result = '';
     for (final line in lines) {
       dynamic a = ((0 >= 0 && 0 < line.length ? line[0] : null) >= 0 && (0 >= 0 && 0 < line.length ? line[0] : null) < cells.length ? cells[(0 >= 0 && 0 < line.length ? line[0] : null)] : null)['mark'];
@@ -65,7 +65,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
 
   void reset() {
     setState(() {
-      cells = [{'id': 0, 'mark': ''}, {'id': 1, 'mark': ''}, {'id': 2, 'mark': ''}, {'id': 3, 'mark': ''}, {'id': 4, 'mark': ''}, {'id': 5, 'mark': ''}, {'id': 6, 'mark': ''}, {'id': 7, 'mark': ''}, {'id': 8, 'mark': ''}];
+      cells = <dynamic>[{'id': 0, 'mark': ''}, {'id': 1, 'mark': ''}, {'id': 2, 'mark': ''}, {'id': 3, 'mark': ''}, {'id': 4, 'mark': ''}, {'id': 5, 'mark': ''}, {'id': 6, 'mark': ''}, {'id': 7, 'mark': ''}, {'id': 8, 'mark': ''}];
     });
     setState(() {
       player = 'X';
@@ -111,10 +111,10 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
               const SizedBox(height: 16),
               Column(
                 children: [
-                  for (final (_i, row_start) in [0, 3, 6].indexed) ...[
+                  for (final (_i, row_start) in <dynamic>[0, 3, 6].indexed) ...[
                     Row(
                       children: [
-                        for (final (_i, offset) in [0, 1, 2].indexed) ...[
+                        for (final (_i, offset) in <dynamic>[0, 1, 2].indexed) ...[
                           Expanded(
                             child:                           GestureDetector(
                             behavior: HitTestBehavior.opaque,
@@ -140,11 +140,11 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
                           ),
                           ),
                           ),
-                          if (_i < [0, 1, 2].length - 1) const SizedBox(width: 8),
+                          if (_i < <dynamic>[0, 1, 2].length - 1) const SizedBox(width: 8),
                         ],
                       ],
                     ),
-                    if (_i < [0, 3, 6].length - 1) const SizedBox(height: 8),
+                    if (_i < <dynamic>[0, 3, 6].length - 1) const SizedBox(height: 8),
                   ],
                 ],
               ),

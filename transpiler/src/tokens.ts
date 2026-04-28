@@ -77,6 +77,13 @@ export interface Token {
   column: number;
 }
 
+export const DART_RESERVED: ReadonlySet<string> = new Set([
+  'assert', 'break', 'case', 'catch', 'class', 'const', 'continue',
+  'default', 'do', 'enum', 'extends', 'final', 'finally', 'for',
+  'new', 'rethrow', 'super', 'switch', 'this', 'throw', 'try',
+  'var', 'void', 'while',
+]);
+
 export const KEYWORDS: Record<string, TokenType> = {
   screen: TokenType.Screen,
   layout: TokenType.Layout,

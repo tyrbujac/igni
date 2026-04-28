@@ -916,16 +916,22 @@ export class Parser {
       value.object.name === 'shared'
     ) {
       if (primitive === 'input') {
-        this.error(
+        const loc = value.loc ?? this.current();
+        throw new TranspileError(
           'input bind: doesn\'t accept `shared.X` directly — input needs a stable local variable for its text controller. Use a local var bridged via on change::\n\n' +
           '    draft = shared.title\n' +
-          '    input bind: draft, on change: shared.title = draft'
+          '    input bind: draft, on change: shared.title = draft',
+          loc.line,
+          loc.column,
         );
       }
       return `shared.${value.field}`;
     }
-    this.error(
-      `${primitive} bind: must be a simple variable name or \`shared.X\`. Field access on objects (e.g. \`obj.field\`) inside an \`each\` block is not yet supported — use the canonical reassignment pattern with \`replace()\`.`
+    const loc = value.loc ?? this.current();
+    throw new TranspileError(
+      `${primitive} bind: must be a simple variable name or \`shared.X\`. Field access on objects (e.g. \`obj.field\`) is not yet supported — use the canonical reassignment pattern with \`replace()\`.`,
+      loc.line,
+      loc.column,
     );
   }
 
@@ -1337,7 +1343,7 @@ export class Parser {
       this.error(`"${event}" is a built-in event name, choose a different name for your custom event`);
     }
     let arg: Expr | null = null;
-    if (!this.check(TokenType.Newline) && !this.check(TokenType.Comma) && !this.check(TokenType.RParen) && !this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+    if (!this.check(TokenType.Newline) && !this.check(TokenType.Comma) && !this.check(TokenType.RParen) && !this.check(TokenType.Dedent) && !this.check(TokenType.EOF) && !this.check(TokenType.Colon)) {
       arg = this.parseExpr();
     }
     return { type: 'EmitStmt', event, arg, loc: this.loc(start) };
@@ -1781,7 +1787,7 @@ export class Parser {
   // if it includes index access, or 'no' if no `with` is present at the
   // base-end position.
   private detectObjectUpdate(): 'valid' | 'invalid-call' | 'invalid-index' | 'no' {
-    if (!this.check(TokenType.Identifier)) return 'no';
+    if (!this.check(TokenType.Identifier) && !this.check(TokenType.Shared)) return 'no';
     let i = 1;
     let sawCall = false;
     let sawIndex = false;
@@ -1828,8 +1834,9 @@ export class Parser {
   }
 
   private parseObjectUpdateBody(start: Token): ObjectUpdate {
-    const identTok = this.consume(TokenType.Identifier, 'Expected base identifier');
-    let base: Ident | FieldAccess = { type: 'Ident', name: identTok.value, loc: this.loc(identTok) };
+    const baseTok = this.check(TokenType.Shared) ? this.advance() : this.consume(TokenType.Identifier, 'Expected base identifier');
+    const baseName = baseTok.type === TokenType.Shared ? 'shared' : baseTok.value;
+    let base: Ident | FieldAccess = { type: 'Ident', name: baseName, loc: this.loc(baseTok) };
     while (this.check(TokenType.Dot)) {
       const dotTok = this.advance();
       const field = this.consume(TokenType.Identifier, 'Expected field name').value;

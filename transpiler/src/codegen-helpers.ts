@@ -224,9 +224,9 @@ export function resolveBackground(expr: Expr, themeColors?: Record<string, strin
     );
   }
   if (expr.type === 'Ident') {
+    if (themeColors && expr.name in themeColors) return hexToDartColor(themeColors[expr.name]);
     if (expr.name === 'card') return 'Theme.of(context).cardColor';
     if (expr.name === 'overlay') return 'Colors.black54';
-    if (themeColors && expr.name in themeColors) return hexToDartColor(themeColors[expr.name]);
     if (expr.name in COLOR_MAP) return COLOR_MAP[expr.name];
   }
   return 'Theme.of(context).cardColor';

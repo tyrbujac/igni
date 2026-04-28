@@ -1,0 +1,7 @@
+theme:
+  color:
+    card: "#1D1E33"
+
+screen Home:
+  layout vertical, fill: true, padding: medium, background: card:
+    label "Override stays applied"

@@ -56,11 +56,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int users = 1240;
   String revenue = '\$14,200';
   int orders = 84;
-  List<dynamic> activities = [{'text': 'New user registered', 'time': '2m ago'}, {'text': 'Order #4421 shipped', 'time': '15m ago'}, {'text': 'Revenue goal reached', 'time': '1h ago'}];
+  List<dynamic> activities = <dynamic>[{'text': 'New user registered', 'time': '2m ago'}, {'text': 'Order #4421 shipped', 'time': '15m ago'}, {'text': 'Revenue goal reached', 'time': '1h ago'}];
 
   void refresh() {
     setState(() {
-      activities = [{'text': 'Data refreshed', 'time': 'just now'}] + activities;
+      activities = <dynamic>[{'text': 'Data refreshed', 'time': 'just now'}] + activities;
     });
   }
 

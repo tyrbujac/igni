@@ -1,0 +1,7 @@
+screen Notes:
+  notes = [{title: "First", blocks: [{type: "text", body: "hi"}]}]
+  current = notes[0]
+
+  layout vertical, padding: medium, gap: medium:
+    label current.title
+    button "Add", on tap: current = {current with blocks: current.blocks + [{type: "text", body: "new"}]}

@@ -78,7 +78,7 @@ class HeightCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(color: const Color(0xFFEEEEEE), borderRadius: BorderRadius.circular(16)),
       child: Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -133,7 +133,7 @@ class ValueCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(color: const Color(0xFFEEEEEE), borderRadius: BorderRadius.circular(16)),
       child: Padding(
       padding: const EdgeInsets.all(16),
       child: Center(

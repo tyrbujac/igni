@@ -1,0 +1,7 @@
+shared:
+  cart = {name: "Widget"}
+
+screen Catalog:
+  layout vertical:
+    label shared.cart.name
+    button "Update", on tap: shared.cart = {shared.cart with name: "Gizmo"}

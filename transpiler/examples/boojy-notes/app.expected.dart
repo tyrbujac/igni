@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SharedState extends ChangeNotifier {
-  List<dynamic> notes = [{'title': 'Welcome to Boojy Notes', 'blocks': [{'type': 'heading', 'content': 'Getting started', 'checked': false}, {'type': 'text', 'content': 'A minimal notes app built in Igni for app 2 v1.0 criterion 4 #3.', 'checked': false}, {'type': 'bullet', 'content': 'Tap a note title to view it', 'checked': false}, {'type': 'bullet', 'content': 'Use the buttons below to add blocks', 'checked': false}, {'type': 'checkbox', 'content': 'Tap to toggle me', 'checked': false}]}, {'title': 'Second note', 'blocks': [{'type': 'heading', 'content': 'A simpler note', 'checked': false}, {'type': 'text', 'content': 'Just one block of text below the heading.', 'checked': false}]}, {'title': 'Third note', 'blocks': [{'type': 'text', 'content': 'Even simpler. Just text.', 'checked': false}]}];
+  List<dynamic> notes = <dynamic>[{'title': 'Welcome to Boojy Notes', 'blocks': <dynamic>[{'type': 'heading', 'content': 'Getting started', 'checked': false}, {'type': 'text', 'content': 'A minimal notes app built in Igni for app 2 v1.0 criterion 4 #3.', 'checked': false}, {'type': 'bullet', 'content': 'Tap a note title to view it', 'checked': false}, {'type': 'bullet', 'content': 'Use the buttons below to add blocks', 'checked': false}, {'type': 'checkbox', 'content': 'Tap to toggle me', 'checked': false}]}, {'title': 'Second note', 'blocks': <dynamic>[{'type': 'heading', 'content': 'A simpler note', 'checked': false}, {'type': 'text', 'content': 'Just one block of text below the heading.', 'checked': false}]}, {'title': 'Third note', 'blocks': <dynamic>[{'type': 'text', 'content': 'Even simpler. Just text.', 'checked': false}]}];
   var selected_note = null;
   int font_size = 15;
 
@@ -36,9 +36,9 @@ class _FilesScreenState extends State<FilesScreen> {
   }
 
   void add_note() {
-    dynamic note = {'title': 'Untitled', 'blocks': [{'type': 'text', 'content': '', 'checked': false}]};
+    dynamic note = {'title': 'Untitled', 'blocks': <dynamic>[{'type': 'text', 'content': '', 'checked': false}]};
     shared.update(() {
-      shared.notes = shared.notes + [note];
+      shared.notes = shared.notes + <dynamic>[note];
     });
     shared.update(() {
       shared.selected_note = note;
@@ -49,7 +49,8 @@ class _FilesScreenState extends State<FilesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Notes')),
+      appBar: AppBar(title: Text('Notes'), backgroundColor: Colors.black, foregroundColor: Colors.white),
+      backgroundColor: Colors.black,
       body: Container(
         decoration: BoxDecoration(color: Colors.black),
         child: Padding(
@@ -64,7 +65,7 @@ class _FilesScreenState extends State<FilesScreen> {
                   open(note);
                 },
                 child: Container(
-                decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
+                decoration: BoxDecoration(color: const Color(0xFF1D1E33), borderRadius: BorderRadius.circular(16)),
                 child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -115,7 +116,7 @@ class _NoteScreenState extends State<NoteScreen> {
   void add_block(dynamic t) {
     dynamic current = shared.selected_note;
     dynamic new_block = {'type': t, 'content': '', 'checked': false};
-    dynamic updated = {...current, 'blocks': current['blocks'] + [new_block]};
+    dynamic updated = {...current, 'blocks': current['blocks'] + <dynamic>[new_block]};
     shared.update(() {
       shared.notes = shared.notes.map((e) => e == current ? updated : e).toList();
     });
@@ -152,7 +153,8 @@ class _NoteScreenState extends State<NoteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Note')),
+      appBar: AppBar(title: Text('Note'), backgroundColor: Colors.black, foregroundColor: Colors.white),
+      backgroundColor: Colors.black,
       body: Container(
         decoration: BoxDecoration(color: Colors.black),
         child: Padding(
@@ -331,7 +333,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Settings')),
+      appBar: AppBar(title: Text('Settings'), backgroundColor: Colors.black, foregroundColor: Colors.white),
+      backgroundColor: Colors.black,
       body: Container(
         decoration: BoxDecoration(color: Colors.black),
         child: Padding(

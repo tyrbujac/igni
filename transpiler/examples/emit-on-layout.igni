@@ -1,0 +1,11 @@
+screen Search:
+  results = []
+
+  layout vertical, gap: medium, padding: large:
+    QueryBar
+    each item in results:
+      label item
+
+component QueryBar:
+  layout horizontal, gap: small, on tap: emit submit:
+    label "Tap row to submit"

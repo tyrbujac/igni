@@ -4,5 +4,5 @@
     draft = shared.title
     input bind: draft, on change: shared.title = draft
 
-    bind-input-shared.igni:7 | 
-                             | ^
+    bind-input-shared.igni:6 |     input bind: shared.title, placeholder: "Title"
+                             |                       ^

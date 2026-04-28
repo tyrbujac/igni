@@ -1,0 +1,10 @@
+shared:
+  selected_note = {title: "Hello"}
+
+screen NoteEdit:
+  title_draft = ""
+  if shared.selected_note is not null:
+    title_draft = shared.selected_note.title
+
+  layout vertical, padding: medium:
+    input bind: title_draft, on change: shared.selected_note = {shared.selected_note with title: title_draft}

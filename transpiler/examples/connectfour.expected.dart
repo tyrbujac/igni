@@ -12,13 +12,13 @@ class ConnectFourScreen extends StatefulWidget {
 }
 
 class _ConnectFourScreenState extends State<ConnectFourScreen> {
-  List<dynamic> cells = [{'id': 0, 'mark': ''}, {'id': 1, 'mark': ''}, {'id': 2, 'mark': ''}, {'id': 3, 'mark': ''}, {'id': 4, 'mark': ''}, {'id': 5, 'mark': ''}, {'id': 6, 'mark': ''}, {'id': 7, 'mark': ''}, {'id': 8, 'mark': ''}, {'id': 9, 'mark': ''}, {'id': 10, 'mark': ''}, {'id': 11, 'mark': ''}, {'id': 12, 'mark': ''}, {'id': 13, 'mark': ''}, {'id': 14, 'mark': ''}, {'id': 15, 'mark': ''}, {'id': 16, 'mark': ''}, {'id': 17, 'mark': ''}, {'id': 18, 'mark': ''}, {'id': 19, 'mark': ''}, {'id': 20, 'mark': ''}, {'id': 21, 'mark': ''}, {'id': 22, 'mark': ''}, {'id': 23, 'mark': ''}, {'id': 24, 'mark': ''}, {'id': 25, 'mark': ''}, {'id': 26, 'mark': ''}, {'id': 27, 'mark': ''}, {'id': 28, 'mark': ''}, {'id': 29, 'mark': ''}, {'id': 30, 'mark': ''}, {'id': 31, 'mark': ''}, {'id': 32, 'mark': ''}, {'id': 33, 'mark': ''}, {'id': 34, 'mark': ''}, {'id': 35, 'mark': ''}, {'id': 36, 'mark': ''}, {'id': 37, 'mark': ''}, {'id': 38, 'mark': ''}, {'id': 39, 'mark': ''}, {'id': 40, 'mark': ''}, {'id': 41, 'mark': ''}];
+  List<dynamic> cells = <dynamic>[{'id': 0, 'mark': ''}, {'id': 1, 'mark': ''}, {'id': 2, 'mark': ''}, {'id': 3, 'mark': ''}, {'id': 4, 'mark': ''}, {'id': 5, 'mark': ''}, {'id': 6, 'mark': ''}, {'id': 7, 'mark': ''}, {'id': 8, 'mark': ''}, {'id': 9, 'mark': ''}, {'id': 10, 'mark': ''}, {'id': 11, 'mark': ''}, {'id': 12, 'mark': ''}, {'id': 13, 'mark': ''}, {'id': 14, 'mark': ''}, {'id': 15, 'mark': ''}, {'id': 16, 'mark': ''}, {'id': 17, 'mark': ''}, {'id': 18, 'mark': ''}, {'id': 19, 'mark': ''}, {'id': 20, 'mark': ''}, {'id': 21, 'mark': ''}, {'id': 22, 'mark': ''}, {'id': 23, 'mark': ''}, {'id': 24, 'mark': ''}, {'id': 25, 'mark': ''}, {'id': 26, 'mark': ''}, {'id': 27, 'mark': ''}, {'id': 28, 'mark': ''}, {'id': 29, 'mark': ''}, {'id': 30, 'mark': ''}, {'id': 31, 'mark': ''}, {'id': 32, 'mark': ''}, {'id': 33, 'mark': ''}, {'id': 34, 'mark': ''}, {'id': 35, 'mark': ''}, {'id': 36, 'mark': ''}, {'id': 37, 'mark': ''}, {'id': 38, 'mark': ''}, {'id': 39, 'mark': ''}, {'id': 40, 'mark': ''}, {'id': 41, 'mark': ''}];
   String player = 'red';
   String winner = '';
 
   void drop(dynamic col) {
     if (winner.isEmpty) {
-      dynamic target_row = [5, 4, 3, 2, 1, 0].cast<dynamic>().firstWhere((r) => (r * 7 + col >= 0 && r * 7 + col < cells.length ? cells[r * 7 + col] : null)['mark'].isEmpty, orElse: () => null);
+      dynamic target_row = <dynamic>[5, 4, 3, 2, 1, 0].cast<dynamic>().firstWhere((r) => (r * 7 + col >= 0 && r * 7 + col < cells.length ? cells[r * 7 + col] : null)['mark'].isEmpty, orElse: () => null);
       if (target_row != null) {
         dynamic target = (target_row * 7 + col >= 0 && target_row * 7 + col < cells.length ? cells[target_row * 7 + col] : null);
         setState(() {
@@ -55,32 +55,32 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
 
   dynamic check_winner() {
     dynamic result = '';
-    for (final r in [0, 1, 2, 3, 4, 5]) {
-      for (final c in [0, 1, 2, 3]) {
+    for (final r in <dynamic>[0, 1, 2, 3, 4, 5]) {
+      for (final c in <dynamic>[0, 1, 2, 3]) {
         dynamic hit = four_in_a_row(r, c, 0, 1);
         if (hit.isNotEmpty) {
           result = hit;
         }
       }
     }
-    for (final c in [0, 1, 2, 3, 4, 5, 6]) {
-      for (final r in [0, 1, 2]) {
+    for (final c in <dynamic>[0, 1, 2, 3, 4, 5, 6]) {
+      for (final r in <dynamic>[0, 1, 2]) {
         dynamic hit = four_in_a_row(r, c, 1, 0);
         if (hit.isNotEmpty) {
           result = hit;
         }
       }
     }
-    for (final r in [0, 1, 2]) {
-      for (final c in [0, 1, 2, 3]) {
+    for (final r in <dynamic>[0, 1, 2]) {
+      for (final c in <dynamic>[0, 1, 2, 3]) {
         dynamic hit = four_in_a_row(r, c, 1, 1);
         if (hit.isNotEmpty) {
           result = hit;
         }
       }
     }
-    for (final r in [3, 4, 5]) {
-      for (final c in [0, 1, 2, 3]) {
+    for (final r in <dynamic>[3, 4, 5]) {
+      for (final c in <dynamic>[0, 1, 2, 3]) {
         dynamic hit = four_in_a_row(r, c, -1, 1);
         if (hit.isNotEmpty) {
           result = hit;
@@ -98,7 +98,7 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
 
   void reset() {
     setState(() {
-      cells = [{'id': 0, 'mark': ''}, {'id': 1, 'mark': ''}, {'id': 2, 'mark': ''}, {'id': 3, 'mark': ''}, {'id': 4, 'mark': ''}, {'id': 5, 'mark': ''}, {'id': 6, 'mark': ''}, {'id': 7, 'mark': ''}, {'id': 8, 'mark': ''}, {'id': 9, 'mark': ''}, {'id': 10, 'mark': ''}, {'id': 11, 'mark': ''}, {'id': 12, 'mark': ''}, {'id': 13, 'mark': ''}, {'id': 14, 'mark': ''}, {'id': 15, 'mark': ''}, {'id': 16, 'mark': ''}, {'id': 17, 'mark': ''}, {'id': 18, 'mark': ''}, {'id': 19, 'mark': ''}, {'id': 20, 'mark': ''}, {'id': 21, 'mark': ''}, {'id': 22, 'mark': ''}, {'id': 23, 'mark': ''}, {'id': 24, 'mark': ''}, {'id': 25, 'mark': ''}, {'id': 26, 'mark': ''}, {'id': 27, 'mark': ''}, {'id': 28, 'mark': ''}, {'id': 29, 'mark': ''}, {'id': 30, 'mark': ''}, {'id': 31, 'mark': ''}, {'id': 32, 'mark': ''}, {'id': 33, 'mark': ''}, {'id': 34, 'mark': ''}, {'id': 35, 'mark': ''}, {'id': 36, 'mark': ''}, {'id': 37, 'mark': ''}, {'id': 38, 'mark': ''}, {'id': 39, 'mark': ''}, {'id': 40, 'mark': ''}, {'id': 41, 'mark': ''}];
+      cells = <dynamic>[{'id': 0, 'mark': ''}, {'id': 1, 'mark': ''}, {'id': 2, 'mark': ''}, {'id': 3, 'mark': ''}, {'id': 4, 'mark': ''}, {'id': 5, 'mark': ''}, {'id': 6, 'mark': ''}, {'id': 7, 'mark': ''}, {'id': 8, 'mark': ''}, {'id': 9, 'mark': ''}, {'id': 10, 'mark': ''}, {'id': 11, 'mark': ''}, {'id': 12, 'mark': ''}, {'id': 13, 'mark': ''}, {'id': 14, 'mark': ''}, {'id': 15, 'mark': ''}, {'id': 16, 'mark': ''}, {'id': 17, 'mark': ''}, {'id': 18, 'mark': ''}, {'id': 19, 'mark': ''}, {'id': 20, 'mark': ''}, {'id': 21, 'mark': ''}, {'id': 22, 'mark': ''}, {'id': 23, 'mark': ''}, {'id': 24, 'mark': ''}, {'id': 25, 'mark': ''}, {'id': 26, 'mark': ''}, {'id': 27, 'mark': ''}, {'id': 28, 'mark': ''}, {'id': 29, 'mark': ''}, {'id': 30, 'mark': ''}, {'id': 31, 'mark': ''}, {'id': 32, 'mark': ''}, {'id': 33, 'mark': ''}, {'id': 34, 'mark': ''}, {'id': 35, 'mark': ''}, {'id': 36, 'mark': ''}, {'id': 37, 'mark': ''}, {'id': 38, 'mark': ''}, {'id': 39, 'mark': ''}, {'id': 40, 'mark': ''}, {'id': 41, 'mark': ''}];
     });
     setState(() {
       player = 'red';
@@ -154,7 +154,7 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  for (final (_i, col) in [0, 1, 2, 3, 4, 5, 6].indexed) ...[
+                  for (final (_i, col) in <dynamic>[0, 1, 2, 3, 4, 5, 6].indexed) ...[
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                       onPressed: () {
@@ -162,17 +162,17 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
                       },
                       child: const Text('↓'),
                     ),
-                    if (_i < [0, 1, 2, 3, 4, 5, 6].length - 1) const SizedBox(width: 8),
+                    if (_i < <dynamic>[0, 1, 2, 3, 4, 5, 6].length - 1) const SizedBox(width: 8),
                   ],
                 ],
               ),
               const SizedBox(height: 16),
               Column(
                 children: [
-                  for (final (_i, r) in [0, 1, 2, 3, 4, 5].indexed) ...[
+                  for (final (_i, r) in <dynamic>[0, 1, 2, 3, 4, 5].indexed) ...[
                     Row(
                       children: [
-                        for (final (_i, c) in [0, 1, 2, 3, 4, 5, 6].indexed) ...[
+                        for (final (_i, c) in <dynamic>[0, 1, 2, 3, 4, 5, 6].indexed) ...[
                           Expanded(
                             child: Container(
                             decoration: BoxDecoration(color: _igniBackgroundValue(context, color_for((r * 7 + c >= 0 && r * 7 + c < cells.length ? cells[r * 7 + c] : null)['mark'])), borderRadius: BorderRadius.circular(24)),
@@ -192,11 +192,11 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
                           ),
                           ),
                           ),
-                          if (_i < [0, 1, 2, 3, 4, 5, 6].length - 1) const SizedBox(width: 8),
+                          if (_i < <dynamic>[0, 1, 2, 3, 4, 5, 6].length - 1) const SizedBox(width: 8),
                         ],
                       ],
                     ),
-                    if (_i < [0, 1, 2, 3, 4, 5].length - 1) const SizedBox(height: 8),
+                    if (_i < <dynamic>[0, 1, 2, 3, 4, 5].length - 1) const SizedBox(height: 8),
                   ],
                 ],
               ),

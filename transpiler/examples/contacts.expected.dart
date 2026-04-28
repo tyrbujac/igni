@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SharedState extends ChangeNotifier {
-  List<dynamic> contacts = [{'name': 'Alice', 'phone': '555-0101', 'favourite': false}, {'name': 'Bob', 'phone': '555-0102', 'favourite': true}, {'name': 'Charlie', 'phone': '555-0103', 'favourite': false}, {'name': 'Diana', 'phone': '555-0104', 'favourite': true}, {'name': 'Eve', 'phone': '555-0105', 'favourite': false}];
+  List<dynamic> contacts = <dynamic>[{'name': 'Alice', 'phone': '555-0101', 'favourite': false}, {'name': 'Bob', 'phone': '555-0102', 'favourite': true}, {'name': 'Charlie', 'phone': '555-0103', 'favourite': false}, {'name': 'Diana', 'phone': '555-0104', 'favourite': true}, {'name': 'Eve', 'phone': '555-0105', 'favourite': false}];
 
   void update(void Function() fn) {
     fn();

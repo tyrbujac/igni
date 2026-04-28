@@ -15,8 +15,8 @@ class _DemoScreenState extends State<DemoScreen> {
   int volume = 50;
   bool agreed = false;
   String selected = 'Option A';
-  List<dynamic> options = ['Option A', 'Option B', 'Option C'];
-  List<dynamic> favorites = ['Alice', 'Charlie'];
+  List<dynamic> options = <dynamic>['Option A', 'Option B', 'Option C'];
+  List<dynamic> favorites = <dynamic>['Alice', 'Charlie'];
   bool chosen = true;
 
   @override

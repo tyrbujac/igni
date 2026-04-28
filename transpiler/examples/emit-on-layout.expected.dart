@@ -5,39 +5,23 @@ void main() {
 }
 
 class QueryBar extends StatelessWidget {
-  final dynamic placeholder_text;
-  final void Function(dynamic)? onSubmit;
-  const QueryBar({super.key, required this.placeholder_text, this.onSubmit});
+  final void Function()? onSubmit;
+  const QueryBar({super.key, this.onSubmit});
 
   @override
   Widget build(BuildContext context) {
-    final dynamic text = '';
-    return Row(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        onSubmit?.call();
+      },
+      child: Row(
       children: [
-        Expanded(
-          child: TextField(
-          key: const ValueKey("text"),
-          controller: _textController,
-          onChanged: (value) {
-            setState(() {
-              text = value;
-            });
-          },
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
-            hintText: '$placeholder_text',
-          ),
-        ),
-        ),
-        const SizedBox(width: 8),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-          onPressed: () {
-            onSubmit?.call(text);
-          },
-          child: const Text('Go'),
+        Text(
+          'Tap row to submit',
         ),
       ],
+    ),
     );
   }
 }
@@ -61,15 +45,11 @@ class _SearchScreenState extends State<SearchScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            QueryBar(placeholder_text: 'Search', onSubmit: (query) {
-              setState(() {
-                results = <dynamic>[{'title': 'Result for: '.toString() + (((query) as dynamic)?.toString() ?? '')}];
-              });
-              }),
+            QueryBar(),
             const SizedBox(height: 16),
             for (final (_i, item) in results.indexed) ...[
               Text(
-                (((item['title']) as dynamic)?.toString() ?? ''),
+                '$item',
               ),
               if (_i < results.length - 1) const SizedBox(height: 16),
             ],

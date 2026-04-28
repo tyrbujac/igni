@@ -12,7 +12,7 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  List<dynamic> items = [{'name': 'Shoes', 'price': 50}, {'name': 'Hat', 'price': 15}, {'name': 'Shirt', 'price': 30}];
+  List<dynamic> items = <dynamic>[{'name': 'Shoes', 'price': 50}, {'name': 'Hat', 'price': 15}, {'name': 'Shirt', 'price': 30}];
 
   dynamic total() {
     dynamic sum = 0;

@@ -28,11 +28,11 @@ class _GapEachScreenState extends State<GapEachScreen> {
             const SizedBox(height: 16),
             Column(
               children: [
-                for (final (_i, n) in [1, 2, 3].indexed) ...[
+                for (final (_i, n) in <dynamic>[1, 2, 3].indexed) ...[
                   Text(
                     '$n',
                   ),
-                  if (_i < [1, 2, 3].length - 1) const SizedBox(height: 16),
+                  if (_i < <dynamic>[1, 2, 3].length - 1) const SizedBox(height: 16),
                 ],
               ],
             ),
@@ -44,11 +44,11 @@ class _GapEachScreenState extends State<GapEachScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                for (final (_i, m) in [1, 2, 3].indexed) ...[
+                for (final (_i, m) in <dynamic>[1, 2, 3].indexed) ...[
                   Text(
                     '$m',
                   ),
-                  if (_i < [1, 2, 3].length - 1) const SizedBox(width: 8),
+                  if (_i < <dynamic>[1, 2, 3].length - 1) const SizedBox(width: 8),
                 ],
               ],
             ),
@@ -60,11 +60,11 @@ class _GapEachScreenState extends State<GapEachScreen> {
             const SizedBox(height: 16),
             Column(
               children: [
-                for (final (_i, x) in [7, 7, 7].indexed) ...[
+                for (final (_i, x) in <dynamic>[7, 7, 7].indexed) ...[
                   Text(
                     '$x',
                   ),
-                  if (_i < [7, 7, 7].length - 1) const SizedBox(height: 8),
+                  if (_i < <dynamic>[7, 7, 7].length - 1) const SizedBox(height: 8),
                 ],
               ],
             ),

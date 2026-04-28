@@ -1,0 +1,5 @@
+
+  Error: `title_draft` is bound by an `input` but also conditionally reassigned in this screen — input controllers need a stable State field, so the bound variable must be initialised unconditionally at screen body level. Move the conditional logic into a function or pre-compute the initial value, then use `on change:` to write back.
+
+    input-bind-conditional-reassign.igni:5 |   title_draft = ""
+                                           |              ^

@@ -1,5 +1,10 @@
+import { createHash } from 'crypto';
 import OpenAI from 'openai';
 import type { Provider, CallParams, ProviderResult } from './types.js';
+
+function specCacheKey(spec: string): string {
+  return 'igni-spec-' + createHash('sha256').update(spec).digest('hex').slice(0, 16);
+}
 
 export class OpenAIProvider implements Provider {
   readonly name = 'openai' as const;
@@ -20,6 +25,7 @@ export class OpenAIProvider implements Provider {
       messages: [{ role: 'user', content: userContent }],
     };
     if (params.effort) request.reasoning_effort = params.effort;
+    if (params.spec) request.prompt_cache_key = specCacheKey(params.spec);
     const response = await this.client.chat.completions.create(request);
     const duration_ms = Date.now() - started;
 

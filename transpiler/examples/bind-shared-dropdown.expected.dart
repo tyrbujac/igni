@@ -26,7 +26,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<dynamic> regions = ['EU', 'US', 'Asia'];
+  List<dynamic> regions = <dynamic>['EU', 'US', 'Asia'];
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +66,7 @@ class PickerScreen extends StatefulWidget {
 }
 
 class _PickerScreenState extends State<PickerScreen> {
-  List<dynamic> options = ['EU', 'US', 'Asia'];
+  List<dynamic> options = <dynamic>['EU', 'US', 'Asia'];
 
   @override
   Widget build(BuildContext context) {

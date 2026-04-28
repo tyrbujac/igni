@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SharedState extends ChangeNotifier {
-  List<dynamic> cart = [];
+  List<dynamic> cart = <dynamic>[];
 
   void update(void Function() fn) {
     fn();
@@ -26,7 +26,7 @@ class ProductListScreen extends StatefulWidget {
 }
 
 class _ProductListScreenState extends State<ProductListScreen> {
-  List<dynamic> products = [{'id': 1, 'name': 'Laptop', 'price': 1200}, {'id': 2, 'name': 'Headphones', 'price': 150}, {'id': 3, 'name': 'Mechanical Keyboard', 'price': 100}];
+  List<dynamic> products = <dynamic>[{'id': 1, 'name': 'Laptop', 'price': 1200}, {'id': 2, 'name': 'Headphones', 'price': 150}, {'id': 3, 'name': 'Mechanical Keyboard', 'price': 100}];
 
   void add_to_cart(dynamic product) {
     dynamic existing = shared.cart.cast<dynamic>().firstWhere((item) => item['id'] == product['id'], orElse: () => null);
@@ -37,7 +37,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
     } else {
       dynamic new_item = {'id': product['id'], 'name': product['name'], 'price': product['price'], 'quantity': 1};
       shared.update(() {
-        shared.cart = shared.cart + [new_item];
+        shared.cart = shared.cart + <dynamic>[new_item];
       });
     }
   }

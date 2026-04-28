@@ -1,4 +1,4 @@
-import { Token, TokenType, KEYWORDS } from './tokens.js';
+import { Token, TokenType, KEYWORDS, DART_RESERVED } from './tokens.js';
 import { TranspileError } from './errors.js';
 
 export class Lexer {
@@ -301,6 +301,13 @@ export class Lexer {
     }
     const value = this.source.slice(start, this.pos);
     const type = KEYWORDS[value] ?? TokenType.Identifier;
+    if (type === TokenType.Identifier && DART_RESERVED.has(value)) {
+      throw new TranspileError(
+        `\`${value}\` is reserved by Dart and cannot be used as an Igni name. Rename it (e.g. \`${value}_item\` or \`is_${value}\`).`,
+        this.line,
+        this.col - value.length,
+      );
+    }
     this.emit(type, value);
   }
 

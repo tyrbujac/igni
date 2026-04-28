@@ -12,7 +12,7 @@ class NoteListScreen extends StatefulWidget {
 }
 
 class _NoteListScreenState extends State<NoteListScreen> {
-  List<dynamic> notes = [{'title': 'First note', 'body': 'Hello world'}, {'title': 'Second note', 'body': 'Goodbye'}];
+  List<dynamic> notes = <dynamic>[{'title': 'First note', 'body': 'Hello world'}, {'title': 'Second note', 'body': 'Goodbye'}];
 
   @override
   Widget build(BuildContext context) {

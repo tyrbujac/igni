@@ -12,7 +12,7 @@ class ObjectUpdateDemoScreen extends StatefulWidget {
 }
 
 class _ObjectUpdateDemoScreenState extends State<ObjectUpdateDemoScreen> {
-  List<dynamic> items = [{'text': 'Buy milk', 'done': false}, {'text': 'Walk dog', 'done': true}];
+  List<dynamic> items = <dynamic>[{'text': 'Buy milk', 'done': false}, {'text': 'Walk dog', 'done': true}];
   var user = {'name': 'Tyr', 'profile': {'age': 24, 'city': 'Liverpool'}};
 
   void flip(dynamic target) {

@@ -17,7 +17,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool notifications = true;
   int volume = 50;
   bool agreed = false;
-  List<dynamic> countries = ['UK', 'US', 'France', 'Germany'];
+  List<dynamic> countries = <dynamic>['UK', 'US', 'France', 'Germany'];
   late final TextEditingController _cityController;
 
   @override

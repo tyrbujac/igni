@@ -1,0 +1,5 @@
+screen Foo:
+  new = 0
+
+  layout vertical:
+    label new

@@ -12,7 +12,7 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  List<dynamic> notifications = [{'id': 1, 'message': 'Welcome to Igni', 'recency': 0.95}, {'id': 2, 'message': 'Build finished', 'recency': 0.7}, {'id': 3, 'message': 'Reminder: standup at 10am', 'recency': 0.3}];
+  List<dynamic> notifications = <dynamic>[{'id': 1, 'message': 'Welcome to Igni', 'recency': 0.95}, {'id': 2, 'message': 'Build finished', 'recency': 0.7}, {'id': 3, 'message': 'Reminder: standup at 10am', 'recency': 0.3}];
 
   @override
   Widget build(BuildContext context) {

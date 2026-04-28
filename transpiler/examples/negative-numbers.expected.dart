@@ -13,7 +13,7 @@ class NegativeNumbersScreen extends StatefulWidget {
 
 class _NegativeNumbersScreenState extends State<NegativeNumbersScreen> {
   int temperature = -5;
-  List<dynamic> offsets = [-3, -2, -1, 0, 1, 2, 3];
+  List<dynamic> offsets = <dynamic>[-3, -2, -1, 0, 1, 2, 3];
   double scale = -1.5;
 
   @override

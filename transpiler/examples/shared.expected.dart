@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SharedState extends ChangeNotifier {
-  List<dynamic> notes = [{'title': 'First note'}, {'title': 'Second note'}];
+  List<dynamic> notes = <dynamic>[{'title': 'First note'}, {'title': 'Second note'}];
 
   void update(void Function() fn) {
     fn();
