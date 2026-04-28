@@ -20,125 +20,6 @@ void main() {
   ));
 }
 
-class Block extends StatelessWidget {
-  final dynamic block;
-  final void Function(dynamic)? onEdit;
-  final void Function()? onToggle;
-  final void Function()? onRemove;
-  const Block({super.key, required this.block, this.onEdit, this.onToggle, this.onRemove});
-
-  @override
-  Widget build(BuildContext context) {
-    final dynamic draft = block['content'];
-    return Row(
-      children: [
-        if (block['type'] == 'heading') ...[
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 320),
-            child: TextField(
-            key: const ValueKey("draft"),
-            controller: _draftController,
-            onChanged: (value) {
-              setState(() {
-                draft = value;
-              });
-              onEdit?.call(draft);
-            },
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-            ),
-          ),
-          ),
-        ] else if (block['type'] == 'text') ...[
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 320),
-            child: TextField(
-            key: const ValueKey("draft"),
-            controller: _draftController,
-            onChanged: (value) {
-              setState(() {
-                draft = value;
-              });
-              onEdit?.call(draft);
-            },
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-            ),
-          ),
-          ),
-        ] else if (block['type'] == 'bullet') ...[
-          Text(
-            '•',
-            style: TextStyle(color: const Color(0xFF80CBC4)),
-          ),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 320),
-            child: TextField(
-            key: const ValueKey("draft"),
-            controller: _draftController,
-            onChanged: (value) {
-              setState(() {
-                draft = value;
-              });
-              onEdit?.call(draft);
-            },
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-            ),
-          ),
-          ),
-        ] else if (block['type'] == 'checkbox') ...[
-          if (block['checked']) ...[
-            GestureDetector(
-              onTap: () {
-                onToggle?.call();
-              },
-              child: Text(
-              '[x]',
-              style: TextStyle(color: const Color(0xFF80CBC4)),
-            ),
-            ),
-          ] else ...[
-            GestureDetector(
-              onTap: () {
-                onToggle?.call();
-              },
-              child: Text(
-              '[ ]',
-              style: TextStyle(color: const Color(0xFF37474F)),
-            ),
-            ),
-          ],
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 320),
-            child: TextField(
-            key: const ValueKey("draft"),
-            controller: _draftController,
-            onChanged: (value) {
-              setState(() {
-                draft = value;
-              });
-              onEdit?.call(draft);
-            },
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-            ),
-          ),
-          ),
-        ],
-        const SizedBox(width: 8),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF37474F), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-          onPressed: () {
-            onRemove?.call();
-          },
-          child: const Text('×'),
-        ),
-      ],
-    );
-  }
-}
-
 class FilesScreen extends StatefulWidget {
   const FilesScreen({super.key});
 
@@ -231,17 +112,6 @@ class NoteScreen extends StatefulWidget {
 }
 
 class _NoteScreenState extends State<NoteScreen> {
-  void update_title(dynamic t) {
-    dynamic current = shared.selected_note;
-    dynamic updated = {...current, 'title': t};
-    shared.update(() {
-      shared.notes = shared.notes.map((e) => e == current ? updated : e).toList();
-    });
-    shared.update(() {
-      shared.selected_note = updated;
-    });
-  }
-
   void add_block(dynamic t) {
     dynamic current = shared.selected_note;
     dynamic new_block = {'type': t, 'content': '', 'checked': false};
@@ -267,19 +137,6 @@ class _NoteScreenState extends State<NoteScreen> {
     });
   }
 
-  void update_block(dynamic b, dynamic content) {
-    dynamic current = shared.selected_note;
-    dynamic updated_block = {...b, 'content': content};
-    dynamic new_blocks = current['blocks'].map((e) => e == b ? updated_block : e).toList();
-    dynamic updated = {...current, 'blocks': new_blocks};
-    shared.update(() {
-      shared.notes = shared.notes.map((e) => e == current ? updated : e).toList();
-    });
-    shared.update(() {
-      shared.selected_note = updated;
-    });
-  }
-
   void remove_block(dynamic b) {
     dynamic current = shared.selected_note;
     dynamic new_blocks = current['blocks'].where((e) => e != b).toList();
@@ -294,10 +151,6 @@ class _NoteScreenState extends State<NoteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var title_draft = '';
-    if (shared.selected_note != null) {
-      title_draft = shared.selected_note['title'];
-    }
     return Scaffold(
       appBar: AppBar(title: Text('Note')),
       body: Container(
@@ -321,30 +174,107 @@ class _NoteScreenState extends State<NoteScreen> {
                 style: TextStyle(color: Colors.white),
               ),
             ] else ...[
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 320),
-                child: TextField(
-                key: const ValueKey("title_draft"),
-                controller: _title_draftController,
-                onChanged: (value) {
-                  setState(() {
-                    title_draft = value;
-                  });
-                  update_title(title_draft);
-                },
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                ),
-              ),
+              Text(
+                (((shared.selected_note['title']) as dynamic)?.toString() ?? ''),
+                style: Theme.of(context).textTheme.headlineLarge!.copyWith(color: Colors.white),
               ),
               for (final block in shared.selected_note['blocks']) ...[
-                Block(block: block, onEdit: (content) {
-                  update_block(block, content);
-                  }, onToggle: () {
-                  toggle_check(block);
-                  }, onRemove: () {
-                  remove_block(block);
-                  }),
+                if (block['type'] == 'heading') ...[
+                  Row(
+                    children: [
+                      Text(
+                        (((block['content']) as dynamic)?.toString() ?? ''),
+                        style: Theme.of(context).textTheme.headlineLarge!.copyWith(color: Colors.white),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF37474F), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                        onPressed: () {
+                          remove_block(block);
+                        },
+                        child: const Text('×'),
+                      ),
+                    ],
+                  ),
+                ] else if (block['type'] == 'text') ...[
+                  Row(
+                    children: [
+                      Text(
+                        (((block['content']) as dynamic)?.toString() ?? ''),
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF37474F), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                        onPressed: () {
+                          remove_block(block);
+                        },
+                        child: const Text('×'),
+                      ),
+                    ],
+                  ),
+                ] else if (block['type'] == 'bullet') ...[
+                  Row(
+                    children: [
+                      Text(
+                        '•',
+                        style: TextStyle(color: const Color(0xFF80CBC4)),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        (((block['content']) as dynamic)?.toString() ?? ''),
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF37474F), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                        onPressed: () {
+                          remove_block(block);
+                        },
+                        child: const Text('×'),
+                      ),
+                    ],
+                  ),
+                ] else if (block['type'] == 'checkbox') ...[
+                  Row(
+                    children: [
+                      if (block['checked']) ...[
+                        GestureDetector(
+                          onTap: () {
+                            toggle_check(block);
+                          },
+                          child: Text(
+                          '[x]',
+                          style: TextStyle(color: const Color(0xFF80CBC4)),
+                        ),
+                        ),
+                      ] else ...[
+                        GestureDetector(
+                          onTap: () {
+                            toggle_check(block);
+                          },
+                          child: Text(
+                          '[ ]',
+                          style: TextStyle(color: const Color(0xFF37474F)),
+                        ),
+                        ),
+                      ],
+                      const SizedBox(width: 8),
+                      Text(
+                        (((block['content']) as dynamic)?.toString() ?? ''),
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF37474F), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                        onPressed: () {
+                          remove_block(block);
+                        },
+                        child: const Text('×'),
+                      ),
+                    ],
+                  ),
+                ],
               ],
               Row(
                 children: [
