@@ -1,0 +1,25 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Igni Studio strategic critique",
+  "prompt_slug": "igni-studio-strategic-critique",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/igni-studio-strategy/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.19.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "8a36ee25ee92a0bacd346c0b084539034b68759d8cec40905f1e41434340adf4",
+  "spec_words": 6541,
+  "timestamp": "2026-04-28T14:15:00.877Z",
+  "duration_ms": 91650,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 1752,
+    "output_tokens": 4741,
+    "cache_creation_tokens": 16799,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.23227875,
+  "transpile": null
+}

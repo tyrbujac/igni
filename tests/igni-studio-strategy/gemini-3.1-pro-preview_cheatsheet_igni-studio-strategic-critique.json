@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Igni Studio strategic critique",
+  "prompt_slug": "igni-studio-strategic-critique",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/igni-studio-strategy/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.19.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "8a36ee25ee92a0bacd346c0b084539034b68759d8cec40905f1e41434340adf4",
+  "spec_words": 6541,
+  "timestamp": "2026-04-28T14:19:11.388Z",
+  "duration_ms": 126477,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 13307,
+    "output_tokens": 1558,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.04531,
+  "transpile": null
+}
