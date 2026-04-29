@@ -731,3 +731,40 @@ The line number tells you *where*; the message tells you *what*; the **Hint** (w
 - **Used `=` when you meant `is`** — `=` puts something in a box; `is` asks if two things match.
 
 Fix the line the error points at, save again, and the app comes back.
+
+---
+
+## Appendix: Coming from Figma
+
+Igni is positioned as a UI language whose primitives match Figma's auto-layout vocabulary. The slogan is *"designs that translate, not redesign"* — if you've designed a screen in Figma, you should be able to write it in Igni without redrawing the structure. This appendix walks through what maps directly and what Igni deliberately doesn't translate.
+
+### What translates directly
+
+| In Figma | In Igni |
+|---|---|
+| Auto-layout frame, vertical | `layout vertical:` |
+| Auto-layout frame, horizontal | `layout horizontal:` |
+| Frame `gap` between items | `gap: small` / `medium` / `large` (or `gap: spacing/N` for specific sizes) |
+| Frame `padding` | `padding: small` / `medium` / `large` (or `padding: spacing/N`) |
+| Frame `align` (start / center / end) | `align: start` / `center` / `end` |
+| Color variables (named tokens) | `theme: color: <name>: "#hex"` |
+| Spacing variables | `theme: spacing:` (or use built-in `small`/`medium`/`large` + numeric `spacing/1`–`spacing/8`) |
+| Typography styles (closed set) | `theme: typography:` with `style: heading` / `heading.small` / `body` / `caption` |
+| Corner radius (uniform) | `rounded: small` / `medium` / `large` / `full` |
+| Stroke (uniform) | `border: thin` / `medium` / `thick` |
+| Components | `component Name:` blocks |
+| Component instance overrides | Component arguments |
+| Light/dark variants ("modes") | `theme:` + `theme dark:` pair, switched by `shared.theme_mode` |
+
+### What Igni deliberately doesn't translate
+
+These are principled exclusions, not missing features. Each one would break a load-bearing invariant of the language (flow layout, closed-set vocabularies, source-visible behaviour) for a benefit that's typically decorative-and-substitutable.
+
+- **Drawing primitives, custom paths, vector shapes.** Igni has no canvas model. Use SVG icon assets via `icon` if you need vector marks; flow layout for everything else.
+- **Absolute positioning** (`x: 100, y: 200`). Breaks flow layout. The closest Igni alternative — composition-based overlays via `layout stack:` — is on the roadmap; until then, structure with auto-layout.
+- **Per-side strokes / per-corner radii.** Igni's `border:` and `rounded:` apply uniformly. Asymmetric chrome is typically expressible via background + strategic gaps.
+- **Free typography** (any font, any size, any weight). Igni whitelists six fonts and four size tokens. The whitelist is intentional: a closed-set vocabulary is what makes Igni source LLM-learnable.
+- **Gradients and blur effects.** Decorative-and-substitutable. Solid `theme: color:` brand expression typically carries the same intent without the spec-budget cost.
+- **Constraints / pinning** (Figma's "pin to right edge"). Flow-layout primitives (`align:`, `gap:`, `padding:`) cover the canonical use cases. Pinning is coordinate-relative; Igni is flow-relative.
+
+Some Figma features sit on the roadmap as candidates pending real-app or cold-test signal — `hover:` for web/desktop apps, `layout stack:` for badges/FAB/modals, `wrap:` for tag lists. They're not in the language yet, and may or may not land depending on whether actual app pressure surfaces a clear need. The spec is a budget, not a backlog.
