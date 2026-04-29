@@ -1,0 +1,68 @@
+{
+  "label with style": {
+    "prefix": "label",
+    "body": ["label \"$1\", style: ${2|heading,heading.small,body,caption|}"],
+    "description": "Label with style token — pick from heading | heading.small | body | caption"
+  },
+  "screen": {
+    "prefix": "screen",
+    "body": ["screen ${1:Name}:", "  $0"],
+    "description": "Screen scaffold"
+  },
+  "component": {
+    "prefix": "component",
+    "body": ["component ${1:Name}:", "  $0"],
+    "description": "Component scaffold"
+  },
+  "layout vertical": {
+    "prefix": "lvert",
+    "body": ["layout vertical, gap: ${1|small,medium,large|}, padding: ${2|small,medium,large|}:", "  $0"],
+    "description": "Vertical layout (gap + padding dropdowns)"
+  },
+  "layout horizontal": {
+    "prefix": "lhoriz",
+    "body": ["layout horizontal, gap: ${1|small,medium,large|}, align: ${2|center,start,end|}:", "  $0"],
+    "description": "Horizontal layout (gap + align dropdowns)"
+  },
+  "each": {
+    "prefix": "each",
+    "body": ["each ${1:item} in ${2:list}:", "  $0"],
+    "description": "Rebuild loop over a list"
+  },
+  "every": {
+    "prefix": "every",
+    "body": ["every ${1|1s,5s,30s|}:", "  $0"],
+    "description": "Recurring timer block (1s | 5s | 30s)"
+  },
+  "theme block": {
+    "prefix": "theme",
+    "body": [
+      "theme:",
+      "  color:",
+      "    primary: \"#$1\"",
+      "  typography:",
+      "    body: font: ${2|inter,source_sans,merriweather,lora,fira_code,pacifico|}"
+    ],
+    "description": "Theme scaffold with color + typography"
+  },
+  "if-else": {
+    "prefix": "ifelse",
+    "body": ["if ${1:condition}:", "  $2", "else:", "  $0"],
+    "description": "Conditional branch"
+  },
+  "button on tap": {
+    "prefix": "button",
+    "body": ["button \"$1\", on tap: $0"],
+    "description": "Button with tap handler"
+  },
+  "input bind": {
+    "prefix": "input",
+    "body": ["input bind: $1, placeholder: \"$2\""],
+    "description": "Input with two-way binding"
+  },
+  "fetch": {
+    "prefix": "fetch",
+    "body": ["${1:result} = fetch(\"$2\")"],
+    "description": "Reactive HTTP fetch"
+  }
+}

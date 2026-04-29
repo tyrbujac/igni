@@ -27,6 +27,12 @@
         "scopeName": "source.igni",
         "path": "./syntaxes/igni.tmLanguage.json"
       }
+    ],
+    "snippets": [
+      {
+        "language": "igni",
+        "path": "./snippets/igni.json"
+      }
     ]
   }
 }
