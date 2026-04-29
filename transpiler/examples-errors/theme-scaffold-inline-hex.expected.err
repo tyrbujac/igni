@@ -1,0 +1,10 @@
+
+  Error: Inline hex codes are not supported in `theme: scaffold:` properties. Define a `theme: color:` token (e.g. `my_chrome: "#FFFFFF"`) and reference it by name here.
+
+    theme-scaffold-inline-hex.igni:3 |     background: "#FFFFFF"
+                                     |                          ^
+
+  Error: Expected "screen", got ""
+
+    theme-scaffold-inline-hex.igni:5 | screen Home:
+                                     | ^

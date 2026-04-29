@@ -1,0 +1,34 @@
+theme:
+  color:
+    brand: "#80CBC4"
+    surface: "#FFFFFF"
+    text: "#0D0D14"
+  scaffold:
+    background: surface
+  appbar:
+    background: surface
+    foreground: text
+
+theme dark:
+  color:
+    surface: "#0D0D14"
+    text: "#F5F5F5"
+  scaffold:
+    background: surface
+  appbar:
+    background: surface
+    foreground: text
+
+shared:
+  theme_mode = "light"
+
+screen Home, title: "Toggle":
+  toggle_theme():
+    if shared.theme_mode is "dark":
+      shared.theme_mode = "light"
+    else:
+      shared.theme_mode = "dark"
+
+  layout vertical, padding: large, gap: medium:
+    label "Tap to flip the theme.", color: text
+    button "Toggle theme", color: brand, on tap: toggle_theme()

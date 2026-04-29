@@ -347,10 +347,25 @@ export interface ThemeColorToken extends NodeBase {
   hex: string;
 }
 
+// v0.20.0: structural-chrome sub-block. background/foreground are token
+// references (Ident nodes resolving to colour tokens); inline hex rejected.
+export interface ThemeChromeToken extends NodeBase {
+  type: 'ThemeChromeToken';
+  property: 'background' | 'foreground';
+  ref: string;  // colour-token name (e.g. "surface" or "text")
+}
+
 export interface ThemeBlock extends NodeBase {
   type: 'ThemeBlock';
+  // v0.20.0: variant qualifier — false (default) for `theme:`, true for `theme dark:`.
+  // The parser produces 0-2 ThemeBlock entries per program; codegen merges them.
+  dark: boolean;
   text: ThemeTextToken[];
   color: ThemeColorToken[];
+  // v0.20.0: structural sub-blocks (scaffold:, appbar:). Empty arrays = sub-block
+  // not declared. Each accepts background:; appbar: also accepts foreground:.
+  scaffold: ThemeChromeToken[];
+  appbar: ThemeChromeToken[];
 }
 
 export interface Program extends NodeBase {
@@ -358,7 +373,8 @@ export interface Program extends NodeBase {
   screens: Screen[];
   components: ComponentDef[];
   shared: VariableDecl[];
-  theme?: ThemeBlock;
+  theme?: ThemeBlock;       // light variant (the default `theme:` block)
+  themeDark?: ThemeBlock;   // v0.20: dark variant (the `theme dark:` block)
   tests: TestBlock[];
 }
 

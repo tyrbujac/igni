@@ -1,0 +1,6 @@
+theme:
+  scaffold:
+    background: "#FFFFFF"
+
+screen Home:
+  label "hi"

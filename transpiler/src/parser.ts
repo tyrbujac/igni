@@ -9,7 +9,7 @@ import {
   IconNode, ImageNode, SliderNode, CheckboxNode, DropdownNode, BadgeNode,
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
   ListLit, ObjectLit, ObjectUpdate, FieldAccess, IndexAccess,
-  ThemeBlock, ThemeTextToken, ThemeTextTokenName, ThemeColorToken,
+  ThemeBlock, ThemeTextToken, ThemeTextTokenName, ThemeColorToken, ThemeChromeToken,
   TestBlock, TestStatement, RenderStmt, ExpectStmt,
   TapStmt, ChangeStmt, SubmitStmt, ToggleStmt, SlideStmt,
   MockFetchBlock, MockEveryBlock, MockFetchResponse,
@@ -39,6 +39,7 @@ export class Parser {
     const shared: VariableDecl[] = [];
     const tests: TestBlock[] = [];
     let theme: ThemeBlock | undefined;
+    let themeDark: ThemeBlock | undefined;
     while (!this.check(TokenType.EOF)) {
       const posBefore = this.pos;
       try {
@@ -48,13 +49,24 @@ export class Parser {
           shared.push(...this.parseSharedBlock());
         } else if (this.check(TokenType.Theme)) {
           const next = this.parseThemeBlock();
-          if (theme) {
-            this.errors.push(new TranspileError(
-              'Duplicate `theme:` block — only one theme block is allowed per program.',
-              next.loc!.line, next.loc!.column,
-            ));
+          if (next.dark) {
+            if (themeDark) {
+              this.errors.push(new TranspileError(
+                'Duplicate `theme dark:` block — only one dark-variant theme block is allowed per program.',
+                next.loc!.line, next.loc!.column,
+              ));
+            } else {
+              themeDark = next;
+            }
           } else {
-            theme = next;
+            if (theme) {
+              this.errors.push(new TranspileError(
+                'Duplicate `theme:` block — only one (light) theme block is allowed per program.',
+                next.loc!.line, next.loc!.column,
+              ));
+            } else {
+              theme = next;
+            }
           }
         } else if (this.check(TokenType.Test)) {
           tests.push(this.parseTestBlock());
@@ -74,7 +86,7 @@ export class Parser {
     if (this.errors.length > 0) {
       throw new AggregateTranspileError(this.errors);
     }
-    return { type: 'Program', screens, components, shared, theme, tests, loc: this.loc(start) };
+    return { type: 'Program', screens, components, shared, theme, themeDark, tests, loc: this.loc(start) };
   }
 
   // v0.18 testing infrastructure. Per `docs/private/112_v018_testing_infrastructure.md`.
@@ -447,11 +459,21 @@ export class Parser {
   private parseThemeBlock(): ThemeBlock {
     const start = this.current();
     this.consume(TokenType.Theme, 'Expected "theme"');
+    // v0.20.0: optional `dark` qualifier — `theme dark:`. Lex'd as Identifier
+    // here (not a reserved keyword); position-disambiguated immediately after
+    // `theme` and before `:`.
+    let dark = false;
+    if (this.check(TokenType.Identifier) && this.current().value === 'dark') {
+      this.advance();
+      dark = true;
+    }
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent', this.indentHint('theme:'));
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint(dark ? 'theme dark:' : 'theme:'));
     let text: ThemeTextToken[] | undefined;
     let color: ThemeColorToken[] | undefined;
+    let scaffold: ThemeChromeToken[] | undefined;
+    let appbar: ThemeChromeToken[] | undefined;
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       const posBefore = this.pos;
       try {
@@ -466,13 +488,19 @@ export class Parser {
         } else if (subName === 'color') {
           if (color !== undefined) this.error('Duplicate `color:` sub-block in theme');
           color = this.parseThemeColorSubBlock();
+        } else if (subName === 'scaffold') {
+          if (scaffold !== undefined) this.error('Duplicate `scaffold:` sub-block in theme');
+          scaffold = this.parseThemeChromeSubBlock('scaffold', ['background']);
+        } else if (subName === 'appbar') {
+          if (appbar !== undefined) this.error('Duplicate `appbar:` sub-block in theme');
+          appbar = this.parseThemeChromeSubBlock('appbar', ['background', 'foreground']);
         } else if (subName === 'spacing') {
           this.error(
             `theme \`spacing:\` sub-block is planned for v0.15.1 — not yet live. ` +
-            `Currently supported: \`text:\` (v0.12.1+), \`color:\` (v0.15.0+).`
+            `Currently supported: \`text:\` (v0.12.1+), \`color:\` (v0.15.0+), \`scaffold:\` / \`appbar:\` (v0.20+).`
           );
         } else {
-          this.error(`Unknown theme sub-block "${subName}" — supported: \`text:\`, \`color:\`.`);
+          this.error(`Unknown theme sub-block "${subName}" — supported: \`text:\`, \`color:\`, \`scaffold:\`, \`appbar:\`.`);
         }
       } catch (e) {
         if (e instanceof TranspileError) {
@@ -485,7 +513,71 @@ export class Parser {
       this.assertProgress(posBefore);
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
-    return { type: 'ThemeBlock', text: text ?? [], color: color ?? [], loc: this.loc(start) };
+    return {
+      type: 'ThemeBlock',
+      dark,
+      text: text ?? [],
+      color: color ?? [],
+      scaffold: scaffold ?? [],
+      appbar: appbar ?? [],
+      loc: this.loc(start),
+    };
+  }
+
+  // v0.20.0: parses `scaffold:` or `appbar:` sub-blocks. Each accepts
+  // property: token-reference lines. Inline hex is rejected (same rule
+  // as `theme: color:`'s hex-only-via-tokens). `scaffold:` accepts
+  // `background:`; `appbar:` accepts `background:` + `foreground:`.
+  private parseThemeChromeSubBlock(
+    blockName: string,
+    allowedProps: ReadonlyArray<'background' | 'foreground'>,
+  ): ThemeChromeToken[] {
+    this.consume(TokenType.Identifier, `Expected "${blockName}"`);
+    this.consume(TokenType.Colon, `Expected ":" after "${blockName}"`);
+    this.consume(TokenType.Newline, 'Expected newline');
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint(`theme: ${blockName}:`));
+    const tokens: ThemeChromeToken[] = [];
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      const propTok = this.current();
+      if (propTok.type !== TokenType.Identifier) {
+        this.error(`Expected property name in \`theme: ${blockName}:\` block, got "${propTok.value}"`);
+      }
+      const propName = propTok.value;
+      if (!(allowedProps as ReadonlyArray<string>).includes(propName)) {
+        this.error(
+          `Unknown property "${propName}" in \`theme: ${blockName}:\` block. ` +
+          `Supported: ${allowedProps.map(p => `\`${p}:\``).join(', ')}.`
+        );
+      }
+      if (tokens.find(t => t.property === propName)) {
+        this.error(`Duplicate "${propName}:" in \`theme: ${blockName}:\` block`);
+      }
+      this.advance();
+      this.consume(TokenType.Colon, `Expected ":" after "${propName}"`);
+      // Value must be a token reference (Identifier — colour-token name).
+      // Inline hex strings rejected — use a `theme: color:` token.
+      const valTok = this.current();
+      if (valTok.type === TokenType.String) {
+        this.error(
+          `Inline hex codes are not supported in \`theme: ${blockName}:\` properties. ` +
+          `Define a \`theme: color:\` token (e.g. \`my_chrome: "${valTok.value}"\`) and reference it by name here.`
+        );
+      }
+      if (valTok.type !== TokenType.Identifier) {
+        this.error(`Expected colour-token name (identifier) for \`${propName}:\`, got "${valTok.value}"`);
+      }
+      const ref = valTok.value;
+      this.advance();
+      this.consume(TokenType.Newline, 'Expected newline');
+      tokens.push({
+        type: 'ThemeChromeToken',
+        property: propName as 'background' | 'foreground',
+        ref,
+        loc: this.loc(propTok),
+      });
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent');
+    return tokens;
   }
 
   // Recovery inside theme/text sub-blocks: advance past the current line, then

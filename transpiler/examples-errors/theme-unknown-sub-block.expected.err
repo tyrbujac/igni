@@ -1,5 +1,5 @@
 
-  Error: theme `spacing:` sub-block is planned for v0.15.1 — not yet live. Currently supported: `text:` (v0.12.1+), `color:` (v0.15.0+).
+  Error: theme `spacing:` sub-block is planned for v0.15.1 — not yet live. Currently supported: `text:` (v0.12.1+), `color:` (v0.15.0+), `scaffold:` / `appbar:` (v0.20+).
 
     theme-unknown-sub-block.igni:2 |   spacing:
                                    |          ^

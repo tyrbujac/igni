@@ -1,0 +1,22 @@
+theme:
+  color:
+    brand: "#80CBC4"
+    accent: "#FF6B35"
+    surface: "#FFFFFF"
+    text: "#0D0D14"
+  scaffold:
+    background: surface
+
+theme dark:
+  color:
+    surface: "#0D0D14"
+    text: "#F5F5F5"
+    # `brand` and `accent` not redeclared — auto-fall-back to light values
+  scaffold:
+    background: surface
+
+screen Home:
+  layout vertical, padding: large, gap: medium:
+    label "Brand stays #80CBC4 in both modes (auto-fall-back)", color: brand
+    label "Accent stays #FF6B35 in both modes (auto-fall-back)", color: accent
+    label "Text flips between light and dark", color: text

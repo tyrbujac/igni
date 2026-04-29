@@ -1,0 +1,30 @@
+theme:
+  color:
+    brand: "#80CBC4"
+    surface: "#FFFFFF"
+    text: "#0D0D14"
+  scaffold:
+    background: surface
+  appbar:
+    background: surface
+    foreground: text
+
+theme dark:
+  color:
+    surface: "#0D0D14"
+    text: "#F5F5F5"
+  scaffold:
+    background: surface
+  appbar:
+    background: surface
+    foreground: text
+
+shared:
+  theme_mode = "system"
+
+screen Home, title: "Hello":
+  layout vertical, padding: large, gap: medium:
+    label "Theme-aware app", style: heading, color: text
+    label "This text flips with the active variant.", color: text
+    layout vertical, padding: medium, background: surface, rounded: medium:
+      label "Surface card"

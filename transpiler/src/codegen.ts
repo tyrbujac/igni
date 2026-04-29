@@ -15,7 +15,7 @@ import {
   generateIconLookupHelper, isDarkBackgroundExpr, generateStyleValueResolvers,
   BORDER_WIDTH_TOKENS, isBorderWidthTokenName, resolveBorderWidthToken, generateBorderWidthResolver,
   isColorTokenName, isStyleValueName, isStyleValueExpr,
-  resolveFontToken,
+  resolveFontToken, hexToDartColor,
 } from './codegen-helpers.js';
 import { TranspileError } from './errors.js';
 
@@ -114,6 +114,16 @@ export class CodeGenerator {
   // Populated from program.theme.color at build start; consulted by
   // resolveColor / resolveBackground / _igniColorValue runtime resolver.
   private themeColors: Record<string, string> = {};
+  // v0.20.0: theme dark: color: tokens. Auto-fall-back applied at build start
+  // (light-variant values copied for missing dark tokens). Null when no
+  // theme dark: block exists; non-null implies dual-theme MaterialApp emission.
+  private themeDarkColors: Record<string, string> | null = null;
+  // v0.20.0: theme: scaffold: / theme: appbar: chrome sub-blocks (token
+  // references resolved at MaterialApp emission).
+  private themeScaffold: { background?: string } = {};
+  private themeAppbar: { background?: string; foreground?: string } = {};
+  private themeDarkScaffold: { background?: string } = {};
+  private themeDarkAppbar: { background?: string; foreground?: string } = {};
 
   generate(program: Program): string {
     // v0.18 spike: auto-detect test mode when the program contains `test "name":`
@@ -147,9 +157,34 @@ export class CodeGenerator {
     this.hasShared = program.shared.length > 0;
     // v0.15.0: load theme.color overrides + user-defined tokens.
     this.themeColors = {};
+    this.themeScaffold = {};
+    this.themeAppbar = {};
+    this.themeDarkColors = null;
+    this.themeDarkScaffold = {};
+    this.themeDarkAppbar = {};
     if (program.theme) {
       for (const t of program.theme.color) {
         this.themeColors[t.name] = t.hex;
+      }
+      for (const t of program.theme.scaffold) {
+        this.themeScaffold[t.property] = t.ref;
+      }
+      for (const t of program.theme.appbar) {
+        this.themeAppbar[t.property] = t.ref;
+      }
+    }
+    // v0.20.0: theme dark: variant. Auto-fall-back applied at build start —
+    // dark map starts as a copy of light, then dark declarations override.
+    if (program.themeDark) {
+      this.themeDarkColors = { ...this.themeColors };
+      for (const t of program.themeDark.color) {
+        this.themeDarkColors[t.name] = t.hex;
+      }
+      for (const t of program.themeDark.scaffold) {
+        this.themeDarkScaffold[t.property] = t.ref;
+      }
+      for (const t of program.themeDark.appbar) {
+        this.themeDarkAppbar[t.property] = t.ref;
       }
     }
     this.validateEmitPlacement(program);
@@ -250,17 +285,71 @@ export class CodeGenerator {
     // wrap does not — inline children use the state's context, which is
     // above the wrap).
     const anyDarkScreen = program.screens.some(s => this.screenHasDarkBackground(s));
-    const brightness = anyDarkScreen ? ', brightness: Brightness.dark' : '';
-    // Dark-screen apps keep Material's dark surface; light-screen apps get an
-    // explicit neutral off-white so the pink-seeded surface doesn't tint the
-    // viewport. Brand colour stays as ColorScheme.primary for ElevatedButton.
-    const scaffoldBg = anyDarkScreen ? '' : ', scaffoldBackgroundColor: const Color(0xFFFAFAFA)';
+    const hasThemeDark = this.themeDarkColors !== null;
     const textTheme = this.buildTextTheme(program.theme);
     // v0.15.0: theme: color: brand: "#X" overrides the MaterialApp seed.
     const seedHex = this.themeColors['brand']
       ? `0xFF${this.themeColors['brand'].slice(1).toUpperCase().padStart(6, '0')}`
       : '0xFFEB1555';
-    const igniTheme = `theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(${seedHex})${brightness})${scaffoldBg}, textTheme: ${textTheme})`;
+    const darkSeedHex = hasThemeDark && this.themeDarkColors!['brand']
+      ? `0xFF${this.themeDarkColors!['brand'].slice(1).toUpperCase().padStart(6, '0')}`
+      : seedHex; // fall back to light seed (brand often unchanged across variants)
+
+    // v0.20.0: build a ThemeData string for either variant. variant === 'dark'
+    // pulls scaffold/appbar overrides from themeDarkScaffold/themeDarkAppbar
+    // (with auto-fall-back: empty dark sub-block inherits light values).
+    const buildThemeData = (variant: 'light' | 'dark'): string => {
+      const isDark = variant === 'dark';
+      const brightness = isDark ? ', brightness: Brightness.dark' : '';
+      const seed = isDark ? darkSeedHex : seedHex;
+      // Scaffold background: explicit override > Material default > legacy off-white (light only)
+      const scaffoldRef = isDark
+        ? (this.themeDarkScaffold.background ?? this.themeScaffold.background)
+        : this.themeScaffold.background;
+      let scaffoldBg = '';
+      if (scaffoldRef) {
+        const refLight = this.themeColors[scaffoldRef];
+        const refDark = this.themeDarkColors?.[scaffoldRef];
+        const hex = isDark ? (refDark ?? refLight) : refLight;
+        if (hex) scaffoldBg = `, scaffoldBackgroundColor: ${hexToDartColor(hex)}`;
+      } else if (!isDark && !anyDarkScreen) {
+        // Legacy v0.19 default: light apps without scaffold override get the off-white.
+        scaffoldBg = ', scaffoldBackgroundColor: const Color(0xFFFAFAFA)';
+      }
+      // AppBar theme: explicit override > none.
+      const appbarRef = isDark
+        ? { background: this.themeDarkAppbar.background ?? this.themeAppbar.background, foreground: this.themeDarkAppbar.foreground ?? this.themeAppbar.foreground }
+        : this.themeAppbar;
+      let appBarTheme = '';
+      if (appbarRef.background || appbarRef.foreground) {
+        const parts: string[] = [];
+        if (appbarRef.background) {
+          const refLight = this.themeColors[appbarRef.background];
+          const refDark = this.themeDarkColors?.[appbarRef.background];
+          const hex = isDark ? (refDark ?? refLight) : refLight;
+          if (hex) parts.push(`backgroundColor: ${hexToDartColor(hex)}`);
+        }
+        if (appbarRef.foreground) {
+          const refLight = this.themeColors[appbarRef.foreground];
+          const refDark = this.themeDarkColors?.[appbarRef.foreground];
+          const hex = isDark ? (refDark ?? refLight) : refLight;
+          if (hex) parts.push(`foregroundColor: ${hexToDartColor(hex)}`);
+        }
+        if (parts.length) appBarTheme = `, appBarTheme: AppBarTheme(${parts.join(', ')})`;
+      }
+      return `ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(${seed})${brightness})${scaffoldBg}, textTheme: ${textTheme}${appBarTheme})`;
+    };
+
+    const lightThemeData = buildThemeData('light');
+    const darkThemeData = hasThemeDark ? buildThemeData('dark') : null;
+    // Test mode keeps `igniTheme` shape unchanged (single theme, no themeMode).
+    const igniTheme = `theme: ${anyDarkScreen && !hasThemeDark
+      ? buildThemeData('dark')  // legacy: any-dark-screen flips the WHOLE app to dark Material
+      : lightThemeData}`;
+    // v0.20.0: when theme dark: exists, emit dual-theme MaterialApp.
+    const dualThemeArgs = hasThemeDark
+      ? `theme: ${lightThemeData}, darkTheme: ${darkThemeData}, themeMode: _resolveThemeMode(${this.hasShared ? 'shared.theme_mode' : '"system"'})`
+      : igniTheme;
     if (testMode) {
       // v0.18 spike: emit `void main() { testWidgets(...); ... }` instead of
       // `runApp(...)`. Each `test "name":` block becomes a `testWidgets` call.
@@ -313,9 +402,15 @@ export class CodeGenerator {
       code += '}\n';
     } else if (this.hasShared) {
       code += this.genSharedState(program.shared) + '\n';
-      code += `void main() {\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, ${igniTheme}, home: ${firstName}Screen()),\n  ));\n}\n`;
+      if (hasThemeDark) {
+        code += `\nThemeMode _resolveThemeMode(dynamic mode) {\n  if (mode == 'light') return ThemeMode.light;\n  if (mode == 'dark') return ThemeMode.dark;\n  return ThemeMode.system;\n}\n\n`;
+      }
+      code += `void main() {\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, ${dualThemeArgs}, home: ${firstName}Screen()),\n  ));\n}\n`;
     } else {
-      code += `void main() {\n  runApp(MaterialApp(debugShowCheckedModeBanner: false, ${igniTheme}, home: ${firstName}Screen()));\n}\n`;
+      if (hasThemeDark) {
+        code += `\nThemeMode _resolveThemeMode(dynamic mode) {\n  if (mode == 'light') return ThemeMode.light;\n  if (mode == 'dark') return ThemeMode.dark;\n  return ThemeMode.system;\n}\n\n`;
+      }
+      code += `void main() {\n  runApp(MaterialApp(debugShowCheckedModeBanner: false, ${dualThemeArgs}, home: ${firstName}Screen()));\n}\n`;
     }
 
     for (const comp of program.components) {
@@ -333,7 +428,7 @@ export class CodeGenerator {
       code += '\n' + generateBorderWidthResolver() + '\n';
     }
     if (this.needsStyleResolvers) {
-      code += '\n' + generateStyleValueResolvers(this.themeColors) + '\n';
+      code += '\n' + generateStyleValueResolvers(this.themeColors, this.themeDarkColors) + '\n';
     }
 
     if (!emitLineMarkers) {
@@ -578,10 +673,10 @@ export class CodeGenerator {
     }
     // v0.15.0: user-defined theme tokens are valid Idents in colour positions.
     if (expr.type === 'Ident' && expr.name in this.themeColors) {
-      return resolveColor(expr, this.themeColors);
+      return resolveColor(expr, this.themeColors, this.themeDarkColors ?? undefined);
     }
     if (this.isBuiltinStyleValue(expr) && expr.type === 'Ident' && isColorTokenName(expr.name)) {
-      return resolveColor(expr, this.themeColors);
+      return resolveColor(expr, this.themeColors, this.themeDarkColors ?? undefined);
     }
     this.needsStyleResolvers = true;
     return `_igniColorValue(context, ${this.exprToDart(expr)})`;
@@ -602,10 +697,10 @@ export class CodeGenerator {
     }
     // v0.15.0: user-defined theme tokens are valid Idents in background positions.
     if (expr.type === 'Ident' && expr.name in this.themeColors) {
-      return resolveBackground(expr, this.themeColors);
+      return resolveBackground(expr, this.themeColors, this.themeDarkColors ?? undefined);
     }
     if (this.isBuiltinStyleValue(expr)) {
-      return resolveBackground(expr, this.themeColors);
+      return resolveBackground(expr, this.themeColors, this.themeDarkColors ?? undefined);
     }
     this.needsStyleResolvers = true;
     return `_igniBackgroundValue(context, ${this.exprToDart(expr)})`;

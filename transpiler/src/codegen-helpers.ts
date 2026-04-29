@@ -222,7 +222,26 @@ export function isDarkBackgroundExpr(expr: Expr | undefined): boolean {
   return DARK_BACKGROUND_NAMES.has(expr.name);
 }
 
-export function resolveBackground(expr: Expr, themeColors?: Record<string, string>): string {
+// v0.20.0: when themeDarkColors is provided AND the user-defined token has a
+// distinct dark value, emit a runtime-conditional. Otherwise emit the inline
+// hex (compile-time substitution as in v0.15+).
+function variantAwareTokenEmission(
+  name: string,
+  lightHex: string,
+  themeDarkColors?: Record<string, string>,
+): string {
+  const darkHex = themeDarkColors?.[name];
+  if (darkHex && darkHex !== lightHex) {
+    return `(Theme.of(context).brightness == Brightness.dark ? ${hexToDartColor(darkHex)} : ${hexToDartColor(lightHex)})`;
+  }
+  return hexToDartColor(lightHex);
+}
+
+export function resolveBackground(
+  expr: Expr,
+  themeColors?: Record<string, string>,
+  themeDarkColors?: Record<string, string>,
+): string {
   // v0.15.0: inline hex codes outside theme: blocks are rejected. (Image-string
   // backgrounds — e.g. `background: "sunset.jpg"` — are still valid; only `#`-
   // prefixed strings are treated as inline-hex attempts.)
@@ -237,7 +256,9 @@ export function resolveBackground(expr: Expr, themeColors?: Record<string, strin
     );
   }
   if (expr.type === 'Ident') {
-    if (themeColors && expr.name in themeColors) return hexToDartColor(themeColors[expr.name]);
+    if (themeColors && expr.name in themeColors) {
+      return variantAwareTokenEmission(expr.name, themeColors[expr.name], themeDarkColors);
+    }
     if (expr.name === 'card') return 'Theme.of(context).cardColor';
     if (expr.name === 'overlay') return 'Colors.black54';
     if (expr.name in COLOR_MAP) return COLOR_MAP[expr.name];
@@ -252,7 +273,11 @@ export function hexToDartColor(hex: string): string {
   return `const Color(0xFF${h.toUpperCase()})`;
 }
 
-export function resolveColor(expr: Expr, themeColors?: Record<string, string>): string {
+export function resolveColor(
+  expr: Expr,
+  themeColors?: Record<string, string>,
+  themeDarkColors?: Record<string, string>,
+): string {
   // v0.15.0: inline hex codes outside theme: blocks are rejected.
   if (expr.type === 'StringLit' && expr.value.startsWith('#')) {
     const loc = expr.loc;
@@ -267,7 +292,7 @@ export function resolveColor(expr: Expr, themeColors?: Record<string, string>): 
   }
   if (expr.type === 'Ident') {
     if (themeColors && expr.name in themeColors) {
-      return hexToDartColor(themeColors[expr.name]);
+      return variantAwareTokenEmission(expr.name, themeColors[expr.name], themeDarkColors);
     }
     if (expr.name in COLOR_MAP) {
       return COLOR_MAP[expr.name];
@@ -276,12 +301,28 @@ export function resolveColor(expr: Expr, themeColors?: Record<string, string>): 
   return 'Colors.grey';
 }
 
-export function generateStyleValueResolvers(themeColors: Record<string, string> = {}): string {
+export function generateStyleValueResolvers(
+  themeColors: Record<string, string> = {},
+  themeDarkColors: Record<string, string> | null = null,
+): string {
   // v0.15.0: theme.color overrides built-in token resolution; user-defined
   // tokens add new cases. Iterate themeColors *first* and skip those names
   // when emitting COLOR_MAP cases, so overrides win without duplicate cases.
+  //
+  // v0.20.0: when `themeDarkColors` is non-null, emit variant-aware cases
+  // for tokens whose value differs between light and dark. The check uses
+  // `Theme.of(context).brightness == Brightness.dark` (set by MaterialApp's
+  // active themeMode). Tokens missing from `themeDarkColors` fall back to
+  // the light variant value (auto-fall-back rule applied at codegen time).
+  const themeCase = (name: string, lightHex: string): string => {
+    const darkHex = themeDarkColors?.[name];
+    if (darkHex && darkHex !== lightHex) {
+      return `    case '${name}': return Theme.of(context).brightness == Brightness.dark ? ${hexToDartColor(darkHex)} : ${hexToDartColor(lightHex)};`;
+    }
+    return `    case '${name}': return ${hexToDartColor(lightHex)};`;
+  };
   const themeCases = Object.entries(themeColors)
-    .map(([name, hex]) => `    case '${name}': return ${hexToDartColor(hex)};`)
+    .map(([name, hex]) => themeCase(name, hex))
     .join('\n');
   const colorCases = [
     themeCases,
