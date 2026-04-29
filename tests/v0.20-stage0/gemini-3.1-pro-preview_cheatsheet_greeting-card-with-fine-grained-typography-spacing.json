@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Greeting card with fine-grained typography spacing",
+  "prompt_slug": "greeting-card-with-fine-grained-typography-spacing",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.20-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.20-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "33b69bd25aa4f8e414023b386aa64b8d7f70a0d9d7fcdbf3c673d4a4b95d95b8",
+  "spec_words": 7140,
+  "timestamp": "2026-04-29T10:18:31.200Z",
+  "duration_ms": 40014,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 13647,
+    "output_tokens": 723,
+    "cache_read_tokens": 12268
+  },
+  "cost_usd": 0.038423599999999995,
+  "transpile": null
+}

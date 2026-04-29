@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Settings screen with light/dark theme toggle",
+  "prompt_slug": "settings-screen-with-light-dark-theme-toggle",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.20-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.20-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "33b69bd25aa4f8e414023b386aa64b8d7f70a0d9d7fcdbf3c673d4a4b95d95b8",
+  "spec_words": 7140,
+  "timestamp": "2026-04-29T10:17:51.184Z",
+  "duration_ms": 43406,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 13715,
+    "output_tokens": 873,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.037906,
+  "transpile": null
+}

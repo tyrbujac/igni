@@ -1,0 +1,25 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Greeting card with fine-grained typography spacing",
+  "prompt_slug": "greeting-card-with-fine-grained-typography-spacing",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.20-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.20-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "33b69bd25aa4f8e414023b386aa64b8d7f70a0d9d7fcdbf3c673d4a4b95d95b8",
+  "spec_words": 7140,
+  "timestamp": "2026-04-29T10:14:23.623Z",
+  "duration_ms": 24257,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 355,
+    "output_tokens": 1799,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 18588,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.056044,
+  "transpile": null
+}

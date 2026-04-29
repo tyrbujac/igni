@@ -593,7 +593,7 @@ Two equivalent surfaces — pick whichever reads cleanly in context:
 - **Word tokens (semantic shortcuts)** — `small` (8 px), `medium` (16 px), `large` (24 px).
 - **Numeric scale** — `spacing/1` (4 px), `spacing/2` (8 px), `spacing/3` (12 px), `spacing/4` (16 px), `spacing/5` (20 px), `spacing/6` (24 px), `spacing/8` (32 px). Multiply N by 4 to get pixels.
 
-`small` = `spacing/2`. `medium` = `spacing/4`. `large` = `spacing/6`. Cheatsheet teaches numeric for fine-grained Figma translation; word tokens for semantic shorthand. Same effect either way.
+`small` = `spacing/2`. `medium` = `spacing/4`. `large` = `spacing/6`. Same effect either way. Empirical heuristic for which to reach for: **numeric `spacing/N` for specific pixel values** (especially 12 / 20 / 4 / 32 px which lack word-token aliases — common when translating from a Figma spec); **word tokens for semantic shorthand** (e.g. "medium gap between cards in a list," where the exact pixel value is incidental).
 
 Used by `gap:`, `padding:`, `rounded:`, and `size:` properties. Numeric `gap: 12` is **not** valid — token-only discipline preserved.
 
@@ -633,6 +633,8 @@ Font bundle: `pacifico` (script), `inter` / `source_sans` (sans), `merriweather`
 `theme: color: <token>: "<hex>"` overrides a built-in or declares a new user-defined token. Custom token names match `[a-z][a-z0-9_]*` and cannot collide with Igni keywords, primitives, or other built-in tokens. Hex values are `"#RRGGBB"` only — shorthand `"#RGB"` is a parse error.
 
 **Structural sub-blocks** (`theme: scaffold:` / `theme: appbar:`) hold framework-chrome defaults — what the app's window-frame looks like before any screen-level overrides. Their values reference colour tokens (defined in `theme: color:` above).
+
+> **Two `text:` surfaces.** `theme: text:` is the font sub-block (`theme: text: heading: font: pacifico`). `theme: color: text:` is the text-colour token (`theme: color: text: "#0D0D14"`, used by AppBar `foreground:` references and as a `color:` value on labels). They share the keyword `text` but live in different sub-blocks; the parser disambiguates by position. Use the colour token for label foregrounds and AppBar `foreground:`; use the font sub-block for typography-style overrides.
 
 `card` is grandfathered as background-only — overriding it via `theme: color: card: "#X"` updates the surface but `card` stays foreground-rejected. User-defined tokens work in both `color:` and `background:` positions.
 
@@ -680,6 +682,8 @@ When `"system"` is active, the variant follows `MediaQuery.platformBrightnessOf`
 > **Token references resolve through the active variant.** `border: thin, color: subtle` flips colour when `shared.theme_mode` flips. `background: card` (and any other theme-token reference) resolves through the same path. Any screen that references theme tokens implicitly depends on the active variant — reassigning `shared.theme_mode` triggers re-render of every screen reading theme tokens. The OS-appearance change is treated the same way.
 
 > **Theme switches are instant.** `transition: fade` does **not** apply to top-level theme switches — variants snap synchronously. To animate a theme switch, build it explicitly with existing primitives (e.g., conditional render with `transition: fade` on a screen-level `if shared.theme_mode is "dark":`). That's source-visible, not magic.
+>
+> The opt-in fade pattern works even when both branches render the same content — the fade fires on the conditional's branch-identity change (per v0.19's `transition:` branch-keying rule), not on inner-content differences. So `if shared.theme_mode is "dark": MyContent else: MyContent` inside `transition: fade` correctly fades on theme flip.
 
 Forward-compat: the same `shared.<X>_mode` pattern is reserved for v0.21 accessibility primitives (`shared.contrast_mode`, `shared.motion_mode`). Variant resolution routes through one shared mechanism so future modes don't reopen the design.
 

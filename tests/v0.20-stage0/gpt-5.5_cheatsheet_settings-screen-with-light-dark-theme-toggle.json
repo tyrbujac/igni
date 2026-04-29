@@ -1,0 +1,23 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.5",
+  "model_id": "gpt-5.5-2026-04-23",
+  "prompt_name": "Settings screen with light/dark theme toggle",
+  "prompt_slug": "settings-screen-with-light-dark-theme-toggle",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.20-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.20-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "33b69bd25aa4f8e414023b386aa64b8d7f70a0d9d7fcdbf3c673d4a4b95d95b8",
+  "spec_words": 7140,
+  "timestamp": "2026-04-29T10:15:32.542Z",
+  "duration_ms": 49075,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 12831,
+    "output_tokens": 3059,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.155925,
+  "transpile": null
+}
