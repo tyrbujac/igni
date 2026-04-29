@@ -27,8 +27,8 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
-## v0.20.0 — 2026-04-29 *(in progress — Workstream B implemented; Workstream A pending Session 6b)*
-*Dark-mode propagation + wider spacing tokens + cheatsheet-lint tooling.*
+## v0.20.0 — 2026-04-29
+*Dark-mode propagation (`theme dark:` variant pair + `shared.theme_mode` runtime selector + structural sub-blocks) + wider spacing tokens (`spacing/N` numeric scale) + `lint-spec-trio.ts` Stream 2 tooling. Shipped post-Stage-3 STRONG PASS (12/12 canonical, $0.72). Cumulative cycle cost $1.85 across Stage 2 + Stage 0 + Stage 3.*
 
 - **Workstream B — wider spacing tokens (this session, 6a).** `gap:` / `padding:` / `rounded:` / `size:` properties now accept a `spacing/N` numeric scale (`spacing/1` through `spacing/8`, mapping to 4/8/12/16/20/24/32 px). Existing `small` / `medium` / `large` word tokens stay valid as semantic aliases (`small` ↔ `spacing/2`, `medium` ↔ `spacing/4`, `large` ↔ `spacing/6`). Stage 0 cold-test 3/3 cells canonical (greeting card prompt; all three cells reached for numeric `spacing/N` over word tokens for fine-grained typography spacing). Implementation: `transpiler/src/codegen-helpers.ts` `DESIGN_TOKENS` widened; `transpiler/src/lexer.ts` `scanIdentifier` extended to tokenise `spacing/<digit>+` as one identifier token (special-case for the spacing-token namespace; other slashes stay as division). 2 new positive fixtures (`spacing-numeric.igni`, `spacing-word.igni`); 131 → 133 tests, 80/85 → 82/87 smoke, all green.
 
