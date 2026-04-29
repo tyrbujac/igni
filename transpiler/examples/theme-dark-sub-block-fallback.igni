@@ -1,0 +1,23 @@
+theme:
+  color:
+    brand: "#80CBC4"
+    surface: "#FFFFFF"
+    text: "#0D0D14"
+  scaffold:
+    background: surface
+  appbar:
+    background: surface
+    foreground: text
+
+theme dark:
+  color:
+    surface: "#0D0D14"
+    text: "#F5F5F5"
+    # No scaffold: or appbar: sub-blocks — they auto-fall-back to light's
+    # declarations (background: surface / foreground: text), and the surviving
+    # token references resolve through dark's color palette.
+
+screen Home, title: "Sub-block fall-back":
+  layout vertical, padding: large, gap: medium:
+    label "Scaffold uses dark surface in dark mode (sub-block auto-fall-back)", color: text
+    label "AppBar foreground uses dark text in dark mode", color: text

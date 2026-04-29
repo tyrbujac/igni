@@ -1,5 +1,5 @@
 theme:
-  text:
+  typography:
     heading: font: pacifico, size: 24
 
 screen Demo:

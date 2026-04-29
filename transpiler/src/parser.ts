@@ -470,7 +470,7 @@ export class Parser {
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
     this.consume(TokenType.Indent, 'Expected indent', this.indentHint(dark ? 'theme dark:' : 'theme:'));
-    let text: ThemeTextToken[] | undefined;
+    let typography: ThemeTextToken[] | undefined;
     let color: ThemeColorToken[] | undefined;
     let scaffold: ThemeChromeToken[] | undefined;
     let appbar: ThemeChromeToken[] | undefined;
@@ -482,9 +482,14 @@ export class Parser {
         if (sub.type !== TokenType.Identifier) {
           this.error(`Expected theme sub-block name, got "${subName}"`);
         }
-        if (subName === 'text') {
-          if (text !== undefined) this.error('Duplicate `text:` sub-block in theme');
-          text = this.parseThemeTextSubBlock();
+        if (subName === 'typography') {
+          if (typography !== undefined) this.error('Duplicate `typography:` sub-block in theme');
+          typography = this.parseThemeTypographySubBlock();
+        } else if (subName === 'text') {
+          this.error(
+            `theme sub-block \`text:\` was renamed to \`typography:\` in v0.20.1 ` +
+            `to disambiguate from the \`color: text:\` token. Use \`theme: typography: heading: font: …\`.`
+          );
         } else if (subName === 'color') {
           if (color !== undefined) this.error('Duplicate `color:` sub-block in theme');
           color = this.parseThemeColorSubBlock();
@@ -497,10 +502,10 @@ export class Parser {
         } else if (subName === 'spacing') {
           this.error(
             `theme \`spacing:\` sub-block is planned for v0.15.1 — not yet live. ` +
-            `Currently supported: \`text:\` (v0.12.1+), \`color:\` (v0.15.0+), \`scaffold:\` / \`appbar:\` (v0.20+).`
+            `Currently supported: \`typography:\` (v0.20.1+), \`color:\` (v0.15.0+), \`scaffold:\` / \`appbar:\` (v0.20+).`
           );
         } else {
-          this.error(`Unknown theme sub-block "${subName}" — supported: \`text:\`, \`color:\`, \`scaffold:\`, \`appbar:\`.`);
+          this.error(`Unknown theme sub-block "${subName}" — supported: \`typography:\`, \`color:\`, \`scaffold:\`, \`appbar:\`.`);
         }
       } catch (e) {
         if (e instanceof TranspileError) {
@@ -516,7 +521,7 @@ export class Parser {
     return {
       type: 'ThemeBlock',
       dark,
-      text: text ?? [],
+      typography: typography ?? [],
       color: color ?? [],
       scaffold: scaffold ?? [],
       appbar: appbar ?? [],
@@ -580,7 +585,7 @@ export class Parser {
     return tokens;
   }
 
-  // Recovery inside theme/text sub-blocks: advance past the current line, then
+  // Recovery inside theme/typography sub-blocks: advance past the current line, then
   // — if the line opened a nested block — skip that block's body too. Does not
   // cross the outer block's Dedent (structural boundary); synchronizeLine would
   // happily walk past it and corrupt the outer position.
@@ -605,11 +610,11 @@ export class Parser {
     }
   }
 
-  private parseThemeTextSubBlock(): ThemeTextToken[] {
-    this.consume(TokenType.Identifier, 'Expected "text"'); // already verified by caller
+  private parseThemeTypographySubBlock(): ThemeTextToken[] {
+    this.consume(TokenType.Identifier, 'Expected "typography"'); // already verified by caller
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent', this.indentHint('text:'));
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint('typography:'));
     const tokens: ThemeTextToken[] = [];
     const seen = new Set<string>();
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
@@ -617,23 +622,23 @@ export class Parser {
       try {
         const nameTok = this.current();
         if (nameTok.type !== TokenType.Identifier) {
-          this.error(`Expected theme text token name, got "${nameTok.value}"`);
+          this.error(`Expected typography token name, got "${nameTok.value}"`);
         }
         const name = nameTok.value;
         this.advance();
         if (this.check(TokenType.Dot)) {
           this.error(
-            `theme text token \`${name}.small\` is not a theme entry — \`heading.small\` is a size variant ` +
+            `typography token \`${name}.small\` is not a theme entry — \`heading.small\` is a size variant ` +
             `that inherits from \`heading\`. Only \`heading\`, \`body\`, \`caption\` belong in the theme.`
           );
         }
         if (!THEME_TEXT_TOKENS.has(name as ThemeTextTokenName)) {
           this.error(
-            `Unknown theme text token \`${name}\` — only \`heading\`, \`body\`, \`caption\` are supported.`
+            `Unknown typography token \`${name}\` — only \`heading\`, \`body\`, \`caption\` are supported.`
           );
         }
         if (seen.has(name)) {
-          this.error(`Duplicate theme text token \`${name}\`.`);
+          this.error(`Duplicate typography token \`${name}\`.`);
         }
         seen.add(name);
         this.consume(TokenType.Colon, 'Expected ":"');
@@ -651,7 +656,7 @@ export class Parser {
             const vLoc = p.value.loc ?? pLoc;
             if (p.value.type !== 'Ident') {
               throw new TranspileError(
-                `theme text \`${name}\`: font value must be a bare token (e.g. \`pacifico\`), not a string or expression.`,
+                `typography \`${name}\`: font value must be a bare token (e.g. \`pacifico\`), not a string or expression.`,
                 vLoc.line, vLoc.column,
               );
             }
@@ -665,12 +670,12 @@ export class Parser {
             font = fontName;
           } else if (p.name === 'size' || p.name === 'weight' || p.name === 'color') {
             throw new TranspileError(
-              `theme text \`${name}\`: \`${p.name}:\` is not live in v0.12.1 — only \`font:\` is supported.`,
+              `typography \`${name}\`: \`${p.name}:\` is not live in v0.12.1 — only \`font:\` is supported.`,
               pLoc.line, pLoc.column,
             );
           } else {
             throw new TranspileError(
-              `theme text \`${name}\`: unknown property \`${p.name}:\`. Only \`font:\` is supported in v0.12.1.`,
+              `typography \`${name}\`: unknown property \`${p.name}:\`. Only \`font:\` is supported in v0.12.1.`,
               pLoc.line, pLoc.column,
             );
           }

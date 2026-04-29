@@ -1,5 +1,5 @@
 theme:
-  text:
+  typography:
     heading: font: pacifico
     body: font: source_sans
     caption: font: source_sans

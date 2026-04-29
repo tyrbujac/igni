@@ -360,7 +360,7 @@ export interface ThemeBlock extends NodeBase {
   // v0.20.0: variant qualifier — false (default) for `theme:`, true for `theme dark:`.
   // The parser produces 0-2 ThemeBlock entries per program; codegen merges them.
   dark: boolean;
-  text: ThemeTextToken[];
+  typography: ThemeTextToken[];
   color: ThemeColorToken[];
   // v0.20.0: structural sub-blocks (scaffold:, appbar:). Empty arrays = sub-block
   // not declared. Each accepts background:; appbar: also accepts foreground:.

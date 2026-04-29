@@ -455,11 +455,11 @@ export class CodeGenerator {
   // (offline-first, no runtime CDN fetch — see docs/private/87).
   private buildTextTheme(theme?: ThemeBlock): string {
     const baseBodyMedium = 'bodyMedium: TextStyle(fontSize: 17, height: 1.5)';
-    if (!theme || !theme.text.some(t => t.font)) {
+    if (!theme || !theme.typography.some(t => t.font)) {
       return `const TextTheme(${baseBodyMedium})`;
     }
     const fontOf = (name: ThemeTextTokenName): string | undefined =>
-      theme.text.find(t => t.token === name)?.font;
+      theme.typography.find(t => t.token === name)?.font;
     const headingFont = fontOf('heading');
     const bodyFont = fontOf('body');
     const captionFont = fontOf('caption');

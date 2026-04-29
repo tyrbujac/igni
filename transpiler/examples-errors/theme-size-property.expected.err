@@ -1,5 +1,5 @@
 
-  Error: theme text `heading`: `size:` is not live in v0.12.1 — only `font:` is supported.
+  Error: typography `heading`: `size:` is not live in v0.12.1 — only `font:` is supported.
 
     theme-size-property.igni:3 |     heading: font: pacifico, size: 24
                                |                                  ^
