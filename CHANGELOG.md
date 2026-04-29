@@ -27,6 +27,19 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.20.0 — 2026-04-29 *(in progress — Workstream B implemented; Workstream A pending Session 6b)*
+*Dark-mode propagation + wider spacing tokens + cheatsheet-lint tooling.*
+
+- **Workstream B — wider spacing tokens (this session, 6a).** `gap:` / `padding:` / `rounded:` / `size:` properties now accept a `spacing/N` numeric scale (`spacing/1` through `spacing/8`, mapping to 4/8/12/16/20/24/32 px). Existing `small` / `medium` / `large` word tokens stay valid as semantic aliases (`small` ↔ `spacing/2`, `medium` ↔ `spacing/4`, `large` ↔ `spacing/6`). Stage 0 cold-test 3/3 cells canonical (greeting card prompt; all three cells reached for numeric `spacing/N` over word tokens for fine-grained typography spacing). Implementation: `transpiler/src/codegen-helpers.ts` `DESIGN_TOKENS` widened; `transpiler/src/lexer.ts` `scanIdentifier` extended to tokenise `spacing/<digit>+` as one identifier token (special-case for the spacing-token namespace; other slashes stay as division). 2 new positive fixtures (`spacing-numeric.igni`, `spacing-word.igni`); 131 → 133 tests, 80/85 → 82/87 smoke, all green.
+
+- **Workstream A — dark-mode propagation *(Session 6b — pending).*** Theme block widening for structural sub-blocks (`theme: scaffold:` + `theme: appbar:` + `theme: text:` colour-token), `theme dark:` sibling block for variant pair, `shared.theme_mode` string enum (`"system" | "light" | "dark"`) for runtime variant selection, auto-fall-back rule for missing dark tokens, active-variant token resolution scoped to theme tokens, instant-snap rule (no `transition:` on top-level theme), generic-selector forward-compat for v0.21 a11y. Stage 2 panel ran 2026-04-29 with 1H/1R/1F split on Q1; Tyr Reading A absorption — 6 patches reshape `(b)` into `(a) ∪ (b)` per `docs/private/118` synthesis section. Stage 0 cold-test 9/9 cells canonical with 3 cheatsheet patches applied. Implementation defers to Session 6b.
+
+- **Workstream C — `scripts/lint-spec-trio.ts` v1 (shipped Session 2, commit `037f685`).** Catches synthesis-to-cheatsheet drift at PR time by extracting ```igni fenced code blocks from the spec trio and running each through the canonical Lexer + Parser. Local-runnable via `npx tsx scripts/lint-spec-trio.ts`. Already in main; not new this session.
+
+**Cycle cost so far:** $0.30 (Stage 2) + $0.83 (Stage 0) = $1.13. Stage 3 (Session 7) ~$0.50 estimate; total v0.20 cycle ≈ $1.63.
+
+---
+
 ## v0.19.1 — 2026-04-28
 *Docs-only iteration on top of v0.19.0. Cheatsheet pruned ~440 words via the per-minor-version chat-mode review pattern; CLAUDE.md tracked-open-questions cleaned up; trap-journal aggregate snapshot refreshed.*
 

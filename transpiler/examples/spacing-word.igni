@@ -1,0 +1,6 @@
+screen Settings:
+  layout vertical, padding: large, gap: medium:
+    label "Settings", style: heading
+    layout vertical, padding: medium, gap: small, background: card, rounded: medium:
+      label "Display"
+      label "Choose your theme appearance"

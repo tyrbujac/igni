@@ -1,0 +1,6 @@
+screen Card:
+  layout vertical, padding: spacing/8, align: center:
+    layout vertical, padding: spacing/4, gap: spacing/3, background: card, rounded: spacing/4:
+      label "Greeting", style: heading
+      label "A short message that uses fine-grained spacing.", style: body
+      label "— With love", style: caption

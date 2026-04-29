@@ -2,9 +2,22 @@ import { Expr, Property } from './ast.js';
 import { TranspileError } from './errors.js';
 
 export const DESIGN_TOKENS: Record<string, number> = {
+  // Word tokens — semantic shortcuts (pre-v0.20)
   small: 8,
   medium: 16,
   large: 24,
+
+  // v0.20: numeric scale `spacing/N` — multiply N by 4 for pixels.
+  // small = spacing/2, medium = spacing/4, large = spacing/6.
+  // The slash is tokenised as part of the identifier by lexer.ts's
+  // scanIdentifier — see the spacing-token special-case there.
+  'spacing/1': 4,
+  'spacing/2': 8,
+  'spacing/3': 12,
+  'spacing/4': 16,
+  'spacing/5': 20,
+  'spacing/6': 24,
+  'spacing/8': 32,
 };
 
 export const MAX_WIDTH_TOKENS: Record<string, number> = {

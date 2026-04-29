@@ -299,7 +299,32 @@ export class Lexer {
       this.pos++;
       this.col++;
     }
-    const value = this.source.slice(start, this.pos);
+    let value = this.source.slice(start, this.pos);
+
+    // v0.20: spacing tokens `spacing/N` parse as one identifier token.
+    // Special-case in scanIdentifier so that `padding: spacing/3` lexes
+    // as Identifier("spacing/3"), not Identifier("spacing") + Slash + 3.
+    // The rule fires only when the identifier is exactly "spacing" and
+    // is immediately followed by `/<digit>+`. Other slashes (e.g.
+    // expression `a / b`) parse as the division operator unchanged.
+    if (
+      value === 'spacing' &&
+      this.pos < this.source.length &&
+      this.source[this.pos] === '/' &&
+      this.pos + 1 < this.source.length &&
+      this.isDigit(this.source[this.pos + 1])
+    ) {
+      this.pos++; // consume '/'
+      this.col++;
+      while (this.pos < this.source.length && this.isDigit(this.source[this.pos])) {
+        this.pos++;
+        this.col++;
+      }
+      value = this.source.slice(start, this.pos);
+      this.emit(TokenType.Identifier, value);
+      return;
+    }
+
     const type = KEYWORDS[value] ?? TokenType.Identifier;
     if (type === TokenType.Identifier && DART_RESERVED.has(value)) {
       throw new TranspileError(
