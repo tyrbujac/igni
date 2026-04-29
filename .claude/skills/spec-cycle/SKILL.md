@@ -19,6 +19,8 @@ Nine named stages, each with human checkpoints:
 8. **Patch** — Tier-A items from synthesis; Tier-B/C deferred to next docs-only iteration.
 9. **Roadmap update** — Stream 3 entry from "active candidate" → "shipped"; promote next candidate.
 
+**Stage 0 / Stage 2 / Stage 3 vocabulary.** Current practice (v0.15+ cycles) names the cheatsheet cold-test "Stage 0," the design-review panel "Stage 2," and the ship-validation panel "Stage 3." This vocabulary is dominant in trap-journal entries and design notes; `docs/cycle.md`'s 1-9 numbering (where stage 6 is what current practice calls "Stage 3") is documentation-of-record. The two systems coexist; reconciliation is deferred — revisit at the next ship retrospective if the friction surfaces.
+
 ## Pre-registered ship bars
 
 Lock these in the design note BEFORE running panels. Mid-run revisions invalidate the empirical signal.
@@ -79,6 +81,53 @@ For docs-only iterations (e.g., v0.14.2 cheatsheet pin pass), the threshold is l
 - **Wallclock:** sequential mode ~10–15 min per stage. Parallel mode (when shipped — `--parallel` flag) ~2–3 min per stage.
 - **Reproducibility:** sequential mode is canonical for ship-validation runs; parallel for iterative work. Cite which mode in synthesis docs.
 - **Automation principle (`docs/private/104`):** automate plumbing only. Synthesis (convergence-counting, patch decisions, "honest no" detection) stays human-mediated.
+
+## Cycle status convention
+
+Every design note opens with a single-line status header that gets updated each session:
+
+```markdown
+**Cycle status (updated <YYYY-MM-DD>):** <stage> — <one-line current state>. Next: <next stage>.
+Sessions to ship: <estimate>.
+```
+
+Reading the design note's first line tells you the stage. No separate state file required; the design note IS the canonical record. For multi-workstream cycles (v0.20 has three — A dark-mode, B spacing, C lint-spec-trio), each design note tracks its own state independently. ROADMAP "Next milestone" remains the cross-workstream sequencing summary.
+
+Example, v0.20 dark-mode design note at Session 2 open:
+```markdown
+**Cycle status (updated 2026-04-29):** Stage 1 design draft opened. Next: Stage 2 panel critique.
+Sessions to ship: ~5-6.
+```
+
+After Stage 2 lands:
+```markdown
+**Cycle status (updated 2026-05-06):** Stage 2 panel ran 3/3 HOLD on Q1, 2/3 REFINE on Q2-Q3 with patches inlined. Next: Stage 0 cheatsheet cold-test.
+Sessions to ship: ~3-4 remaining.
+```
+
+Closed cycles use a final state:
+```markdown
+**Cycle status:** Shipped 2026-04-28. Final.
+```
+
+The line gets edited at session-end as part of the closing checklist below. The "updated" date pins when the state was last touched; missing or weeks-old "updated" dates flag a stalled cycle worth a planning conversation.
+
+## Starting a session
+
+1. Read the current design note's Cycle status line (top of `docs/private/<n>_<name>.md`).
+2. Skim trap-journal entries since last session (`docs/private/trap-journal.md`).
+3. Check ROADMAP "Next milestone" for cross-workstream sequencing.
+4. Confirm working-tree clean: `git status --short`.
+5. Confirm baseline green: `npm test` (in `transpiler/`).
+
+If the design note doesn't exist yet, you're at Stage 1 — open it. If the latest Cycle status reads "Stage 1 done; Stage 2 next," you're at Stage 2. The status line is canonical; if you find it stale or contradicted by ROADMAP / trap-journal evidence, fix the status line before doing further work — the convention only pays off if it stays accurate.
+
+## Closing a session
+
+1. Update the design note's Cycle status line: new stage, date, next stage.
+2. Walk the trap journal if anything surprising surfaced (per `trap-journal` skill).
+3. Commit per session boundary — one focused commit per session-end is the precedent (e.g. commits `e42407d` cleanup pass, `0f9f3b3` scope lock, `afd1de8` methodology pre-draft).
+4. Update memory if the session produced load-bearing decisions (scope locks, methodology insights, real-app candidate selection).
 
 ## When this skill applies
 
