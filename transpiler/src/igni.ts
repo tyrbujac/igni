@@ -511,12 +511,14 @@ function applyWebBranding(displayName: string): void {
     html = html.replace(/<title>[^<]*<\/title>/, `<title>${titleText}</title>`);
   }
 
-  // Normalise the favicon link to point at favicon.png (the PNG is what
-  // syncAppIcon writes). A prior version of this code swapped the link to
-  // an SVG favicon; this un-swap keeps upgrading projects consistent.
+  // Inject favicon links: SVG primary (modern browsers render the Igni mark
+  // crisp at any tab/bookmark/Retina size) + PNG fallback (legacy browsers
+  // without SVG-favicon support land on the rasterised 32×32). Strip any
+  // existing icon link first so the result is idempotent across re-scaffolds.
+  html = html.replace(/<link rel="icon"[^>]*\/?>\s*/g, '');
   html = html.replace(
-    /<link rel="icon" type="image\/svg\+xml" href="favicon\.svg"\s*\/?>/,
-    '<link rel="icon" type="image/png" href="favicon.png">'
+    '</head>',
+    '  <link rel="icon" type="image/svg+xml" href="favicon.svg">\n  <link rel="icon" type="image/png" href="favicon.png" sizes="32x32">\n</head>'
   );
 
   writeFileSync(indexPath, html);
@@ -747,6 +749,19 @@ async function syncAppIcon(): Promise<void> {
     join(igniDir, 'web'),
     WEB_ICON_SIZES,
   );
+
+  // Copy the vector mark to web/ as favicon.svg so modern browsers render the
+  // Igni triangle crisp at any tab/bookmark size. The 32×32 favicon.png stays
+  // as legacy fallback for browsers without SVG-favicon support.
+  const igniSvg = join(__dirname, '..', '..', 'assets', 'igni.svg');
+  const webDir = join(igniDir, 'web');
+  if (existsSync(igniSvg) && existsSync(webDir)) {
+    try {
+      copyFileSync(igniSvg, join(webDir, 'favicon.svg'));
+    } catch (err: any) {
+      console.error(`Could not copy favicon.svg: ${err.message}.`);
+    }
+  }
 
   writeFileSync(stamp, currentStamp);
 }
