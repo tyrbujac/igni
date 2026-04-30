@@ -86,10 +86,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchUser() async {
     try {
-      final response = await _igniHttpGet('/api/user/me?refresh='.toString() + (((refresh) as dynamic)?.toString() ?? ''));
-      if (response.statusCode == 200) {
+      final _igni_response = await _igniHttpGet('/api/user/me?refresh='.toString() + (((refresh) as dynamic)?.toString() ?? ''));
+      if (_igni_response.statusCode == 200) {
         setState(() {
-          user = jsonDecode(response.body);
+          user = jsonDecode(_igni_response.body);
           _userLoading = false;
         });
       } else {

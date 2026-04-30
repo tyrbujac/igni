@@ -26,10 +26,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Future<void> _fetchUser() async {
     try {
-      final response = await http.get(Uri.parse('https://api.github.com/users/octocat'));
-      if (response.statusCode == 200) {
+      final _igni_response = await http.get(Uri.parse('https://api.github.com/users/octocat'));
+      if (_igni_response.statusCode == 200) {
         setState(() {
-          user = jsonDecode(response.body);
+          user = jsonDecode(_igni_response.body);
           _userLoading = false;
         });
       } else {

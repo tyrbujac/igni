@@ -1,0 +1,5 @@
+
+  Error: `image` is a UI-primitive keyword and cannot be used as an object-literal field key. Use a non-primitive name (e.g. `bg`, `picture`, `image_url`) for the field.
+
+    object-literal-primitive-key.igni:3 |     {id: 1, image: "card.jpg"}
+                                        |                  ^

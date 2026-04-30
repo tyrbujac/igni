@@ -37,10 +37,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<void> _fetchResults() async {
     try {
-      final response = await http.get(Uri.parse('/api/search?q='.toString() + (((active) as dynamic)?.toString() ?? '')));
-      if (response.statusCode == 200) {
+      final _igni_response = await http.get(Uri.parse('/api/search?q='.toString() + (((active) as dynamic)?.toString() ?? '')));
+      if (_igni_response.statusCode == 200) {
         setState(() {
-          results = jsonDecode(response.body);
+          results = jsonDecode(_igni_response.body);
           _resultsLoading = false;
         });
       } else {

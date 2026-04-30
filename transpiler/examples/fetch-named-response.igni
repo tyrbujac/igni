@@ -1,0 +1,10 @@
+screen Profile:
+  response = fetch("https://api.example.com/user")
+
+  layout vertical, padding: large:
+    if response is loading:
+      spinner
+    else if response is error:
+      label "Failed"
+    else:
+      label response.name

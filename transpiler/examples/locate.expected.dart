@@ -25,26 +25,26 @@ class _WhereScreenState extends State<WhereScreen> {
 
   Future<void> _locateHere() async {
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
+      bool _igni_serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!_igni_serviceEnabled) {
         setState(() { _hereError = true; _hereLoading = false; });
         return;
       }
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
+      LocationPermission _igni_permission = await Geolocator.checkPermission();
+      if (_igni_permission == LocationPermission.denied) {
+        _igni_permission = await Geolocator.requestPermission();
+        if (_igni_permission == LocationPermission.denied) {
           setState(() { _hereError = true; _hereLoading = false; });
           return;
         }
       }
-      if (permission == LocationPermission.deniedForever) {
+      if (_igni_permission == LocationPermission.deniedForever) {
         setState(() { _hereError = true; _hereLoading = false; });
         return;
       }
-      Position pos = await Geolocator.getCurrentPosition();
+      Position _igni_pos = await Geolocator.getCurrentPosition();
       setState(() {
-        here = {'latitude': pos.latitude, 'longitude': pos.longitude};
+        here = {'latitude': _igni_pos.latitude, 'longitude': _igni_pos.longitude};
         _hereLoading = false;
       });
     } catch (e) {

@@ -22,6 +22,27 @@ const FONT_TOKENS = new Set([
 ]);
 const THEME_TEXT_TOKENS: Set<ThemeTextTokenName> = new Set(['heading', 'body', 'caption']);
 
+// v0.20.3: primitive-keyword TokenType → human-readable name. Used by
+// expectObjectKey() to surface "X is a UI-primitive keyword" errors when
+// authors hit primitive-vs-field-key collisions in object literals.
+function primitiveNameForToken(type: TokenType): string | null {
+  switch (type) {
+    case TokenType.Label: return 'label';
+    case TokenType.Button: return 'button';
+    case TokenType.Input: return 'input';
+    case TokenType.Toggle: return 'toggle';
+    case TokenType.Spinner: return 'spinner';
+    case TokenType.Divider: return 'divider';
+    case TokenType.Icon: return 'icon';
+    case TokenType.Image: return 'image';
+    case TokenType.Slider: return 'slider';
+    case TokenType.Checkbox: return 'checkbox';
+    case TokenType.Dropdown: return 'dropdown';
+    case TokenType.Badge: return 'badge';
+    default: return null;
+  }
+}
+
 export class Parser {
   private tokens: Token[];
   private pos = 0;
@@ -1859,16 +1880,14 @@ export class Parser {
 
     const entries: { key: string; value: Expr }[] = [];
     if (!this.check(TokenType.RBrace)) {
-      if (this.check(TokenType.With)) return this.error('`with` is a reserved keyword and cannot be used as a field name.');
-      const key = this.consume(TokenType.Identifier, 'Expected key').value;
+      const key = this.expectObjectKey();
       this.consume(TokenType.Colon, 'Expected ":"');
       const value = this.parseExpr();
       entries.push({ key, value });
       while (this.check(TokenType.Comma)) {
         this.advance();
         if (this.check(TokenType.RBrace)) break;
-        if (this.check(TokenType.With)) return this.error('`with` is a reserved keyword and cannot be used as a field name.');
-        const k = this.consume(TokenType.Identifier, 'Expected key').value;
+        const k = this.expectObjectKey();
         this.consume(TokenType.Colon, 'Expected ":"');
         const v = this.parseExpr();
         entries.push({ key: k, value: v });
@@ -1876,6 +1895,29 @@ export class Parser {
     }
     this.consume(TokenType.RBrace, 'Expected "}"');
     return { type: 'ObjectLit', entries, loc: this.loc(start) };
+  }
+
+  // v0.20.3: object-literal field-key parsing with better error messages
+  // for primitive-name collisions. Pre-v0.20.3 the parser raised a generic
+  // "Expected key" when authors wrote `{image: "card.jpg"}` etc., because
+  // `image` lexes as TokenType.Image (a UI-primitive keyword) not
+  // TokenType.Identifier. This surfaced in card-sender app 3 build session
+  // 1 (2026-04-30; doc 127 sub-shape 1) — the parser error didn't name
+  // the collision, so authors had to discover the rule by experiment.
+  // The fix: detect primitive-keyword tokens at field-key position and
+  // emit a targeted hint suggesting non-primitive alternatives.
+  private expectObjectKey(): string {
+    if (this.check(TokenType.With)) {
+      return this.error('`with` is a reserved keyword and cannot be used as a field name.');
+    }
+    const cur = this.current();
+    const primitiveHint = primitiveNameForToken(cur.type);
+    if (primitiveHint !== null) {
+      return this.error(
+        `\`${primitiveHint}\` is a UI-primitive keyword and cannot be used as an object-literal field key. Use a non-primitive name (e.g. \`bg\`, \`picture\`, \`${primitiveHint}_url\`) for the field.`
+      );
+    }
+    return this.consume(TokenType.Identifier, 'Expected key').value;
   }
 
   // Scans forward from the current position (just after `{`) for the

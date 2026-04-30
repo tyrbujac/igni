@@ -1,0 +1,15 @@
+theme:
+  color:
+    card: "#FFFFFF"
+
+shared:
+  cards = [
+    {title: "Birthday"},
+    {title: "Thank you"}
+  ]
+
+screen Home:
+  layout vertical, padding: large, gap: small:
+    each card in shared.cards:
+      layout vertical, padding: small, background: card:
+        label card.title

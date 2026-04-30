@@ -27,14 +27,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   Future<void> _fetchResult() async {
     try {
-      final response = await http.post(
+      final _igni_response = await http.post(
         Uri.parse('/api/posts'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'title': title, 'published': true}),
       );
-      if (response.statusCode == 200) {
+      if (_igni_response.statusCode == 200) {
         setState(() {
-          result = jsonDecode(response.body);
+          result = jsonDecode(_igni_response.body);
           _resultLoading = false;
         });
       } else {

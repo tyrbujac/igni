@@ -28,10 +28,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _fetchUser() async {
     try {
-      final response = await http.get(Uri.parse('/api/user/me?r='.toString() + (((refresh) as dynamic)?.toString() ?? '')));
-      if (response.statusCode == 200) {
+      final _igni_response = await http.get(Uri.parse('/api/user/me?r='.toString() + (((refresh) as dynamic)?.toString() ?? '')));
+      if (_igni_response.statusCode == 200) {
         setState(() {
-          user = jsonDecode(response.body);
+          user = jsonDecode(_igni_response.body);
           _userLoading = false;
         });
       } else {

@@ -1,0 +1,15 @@
+shared:
+  show_form = false
+
+screen Form:
+  draft = ""
+
+  layout vertical, padding: large, gap: medium:
+    button "Toggle form", on tap: shared.show_form = not shared.show_form
+
+    if shared.show_form:
+      label "Enter text:"
+      input bind: draft, placeholder: "type here"
+      label draft
+    else:
+      label "Form hidden"

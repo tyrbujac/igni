@@ -1,0 +1,8 @@
+shared:
+  items = [
+    {id: 1, image: "card.jpg"}
+  ]
+
+screen Home:
+  layout vertical:
+    label "test"

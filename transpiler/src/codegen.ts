@@ -562,29 +562,34 @@ export class CodeGenerator {
   // as a Map<String, double> with `latitude`/`longitude` keys so the existing
   // FieldAccess codegen works without special-casing.
   private genLocateMethod(fv: { name: string }): string {
+    // v0.20.3: helper-var names mangled with `_igni_` prefix to avoid
+    // collisions with user-declared Igni variables. Same root-cause class
+    // as the fetch `response` collision (sub-shape 4 of doc 127); applied
+    // preventively here for the locate lowering's locals (serviceEnabled,
+    // permission, pos) before any real-app surfaces a collision.
     const methodName = `_locate${fv.name[0].toUpperCase() + fv.name.slice(1)}`;
     let code = `  Future<void> ${methodName}() async {\n`;
     code += `    try {\n`;
-    code += `      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();\n`;
-    code += `      if (!serviceEnabled) {\n`;
+    code += `      bool _igni_serviceEnabled = await Geolocator.isLocationServiceEnabled();\n`;
+    code += `      if (!_igni_serviceEnabled) {\n`;
     code += `        setState(() { _${fv.name}Error = true; _${fv.name}Loading = false; });\n`;
     code += `        return;\n`;
     code += `      }\n`;
-    code += `      LocationPermission permission = await Geolocator.checkPermission();\n`;
-    code += `      if (permission == LocationPermission.denied) {\n`;
-    code += `        permission = await Geolocator.requestPermission();\n`;
-    code += `        if (permission == LocationPermission.denied) {\n`;
+    code += `      LocationPermission _igni_permission = await Geolocator.checkPermission();\n`;
+    code += `      if (_igni_permission == LocationPermission.denied) {\n`;
+    code += `        _igni_permission = await Geolocator.requestPermission();\n`;
+    code += `        if (_igni_permission == LocationPermission.denied) {\n`;
     code += `          setState(() { _${fv.name}Error = true; _${fv.name}Loading = false; });\n`;
     code += `          return;\n`;
     code += `        }\n`;
     code += `      }\n`;
-    code += `      if (permission == LocationPermission.deniedForever) {\n`;
+    code += `      if (_igni_permission == LocationPermission.deniedForever) {\n`;
     code += `        setState(() { _${fv.name}Error = true; _${fv.name}Loading = false; });\n`;
     code += `        return;\n`;
     code += `      }\n`;
-    code += `      Position pos = await Geolocator.getCurrentPosition();\n`;
+    code += `      Position _igni_pos = await Geolocator.getCurrentPosition();\n`;
     code += `      setState(() {\n`;
-    code += `        ${fv.name} = {'latitude': pos.latitude, 'longitude': pos.longitude};\n`;
+    code += `        ${fv.name} = {'latitude': _igni_pos.latitude, 'longitude': _igni_pos.longitude};\n`;
     code += `        _${fv.name}Loading = false;\n`;
     code += `      });\n`;
     code += `    } catch (e) {\n`;
@@ -609,24 +614,32 @@ export class CodeGenerator {
       : httpMethod === 'post' ? 'post'
       : 'get';
 
+    // v0.20.3: helper-var name `response` mangled to `_igni_response` to
+    // avoid collision with user-declared Igni variables of the same name.
+    // E.g. `response = fetch(url, method: "POST", body: {...})` is the
+    // canonical fetch shape per cheatsheet §Async; pre-v0.20.3 codegen
+    // emitted `final response = await http.post(...)` here, which shadowed
+    // the user's `response` field and caused `Can't assign to final
+    // variable 'response'` at Flutter compile (card-sender app 3 build
+    // session 3, 2026-04-30; see docs/private/127).
     if (this.testMode) {
       // v0.18: route every fetch through the test-scope wrapper so `mock
       // fetch:` blocks can intercept. v0.18 only mocks GET; non-GET methods
       // still hit the wrapper (which throws if no mock is set).
-      code += `      final response = await _igniHttpGet(${fv.url});\n`;
+      code += `      final _igni_response = await _igniHttpGet(${fv.url});\n`;
     } else if (fv.body && dartMethod !== 'get') {
-      code += `      final response = await http.${dartMethod}(\n`;
+      code += `      final _igni_response = await http.${dartMethod}(\n`;
       code += `        Uri.parse(${fv.url}),\n`;
       code += `        headers: {'Content-Type': 'application/json'},\n`;
       code += `        body: jsonEncode(${fv.body}),\n`;
       code += `      );\n`;
     } else {
-      code += `      final response = await http.${dartMethod}(Uri.parse(${fv.url}));\n`;
+      code += `      final _igni_response = await http.${dartMethod}(Uri.parse(${fv.url}));\n`;
     }
 
-    code += `      if (response.statusCode == 200) {\n`;
+    code += `      if (_igni_response.statusCode == 200) {\n`;
     code += `        setState(() {\n`;
-    code += `          ${fv.name} = jsonDecode(response.body);\n`;
+    code += `          ${fv.name} = jsonDecode(_igni_response.body);\n`;
     code += `          _${fv.name}Loading = false;\n`;
     code += `        });\n`;
     code += `      } else {\n`;
@@ -1756,12 +1769,29 @@ export class CodeGenerator {
     return this.withMarker(node, 'if', code);
   }
 
-  private collectBoundInputs(nodes: UINode[]): void {
+  private collectBoundInputs(nodes: (UINode | VariableDecl)[]): void {
+    // Walk all UI containers — layouts, conditional branches, and each-bodies.
+    // The previous implementation walked only Layout.children, missing input
+    // bind: declarations nested inside if/else branches and each loops; this
+    // surfaced as TextEditingController-getter-undefined errors at Flutter
+    // compile when an input bind: lived inside a conditional render branch
+    // (card-sender app 3 build session 2, 2026-04-30; see docs/private/127).
     for (const node of nodes) {
-      if (node.type === 'Input') {
-        this.ctx.boundInputVars.push(node.bind);
-      } else if (node.type === 'Layout') {
-        this.collectBoundInputs(node.children);
+      if ((node as UINode).type === 'Input') {
+        this.ctx.boundInputVars.push((node as InputNode).bind);
+      } else if ((node as UINode).type === 'Layout') {
+        this.collectBoundInputs((node as Layout).children);
+      } else if ((node as UINode).type === 'If') {
+        const ifNode = node as IfNode;
+        this.collectBoundInputs(ifNode.then);
+        for (const branch of ifNode.elseIfs) {
+          this.collectBoundInputs(branch.body);
+        }
+        if (ifNode.else_) {
+          this.collectBoundInputs(ifNode.else_);
+        }
+      } else if ((node as UINode).type === 'Each') {
+        this.collectBoundInputs((node as EachNode).children);
       }
     }
   }
@@ -2184,6 +2214,9 @@ export class CodeGenerator {
     const ind = this.indent(depth);
     const innerInd = this.indent(depth + 1);
     const listExpr = this.exprToDart(node.list);
+    // v0.20.3: track each-loop variable as a declared local during child
+    // emission. Same lexical-scope discipline as genEach (doc 127 sub-shape 2).
+    return this.withLoopVar(node.variable, () => {
     // Per-row content as a single Widget inside the iteration. Multiple
     // children per row → wrap in a per-row Column.
     let rowWidget: string;
@@ -2208,6 +2241,7 @@ export class CodeGenerator {
     code += `${innerInd}),\n`;
     code += `${ind})`;
     return code;
+    });
   }
 
   private genButton(node: ButtonNode, depth: number, inRow = false): string {
@@ -2544,64 +2578,88 @@ export class CodeGenerator {
     const ind = this.indent(depth);
     const listExpr = this.exprToDart(node.list);
 
-    if (node.paginate !== undefined) {
-      // `paginate:` renders a scrollable, lazily-built list via ListView.builder
-      // wrapped in Expanded so it can claim remaining space inside its parent
-      // Column/Flex. v1 scope: page size is accepted as a hint; auto-load-more
-      // on scroll is not yet implemented (would require async integration).
-      const ind1 = this.indent(depth + 1);
-      const ind2 = this.indent(depth + 2);
-      const ind3 = this.indent(depth + 3);
+    // v0.20.3: track each-loop variable as a declared local during child
+    // emission so identifier-resolution at the Ident-emission site (line
+    // ~4053) finds the loop var BEFORE falling back to theme-token /
+    // style-value resolution. Pre-v0.20.3 codegen treated `card` (loop var)
+    // shadowed by `card` (theme token) as the theme token, emitting string
+    // literal `'card'` instead of the loop var name. Card-sender app 3
+    // build session 1 (2026-04-30; doc 127 sub-shape 2). The push/pop is
+    // wrapped in try/finally to restore declaredLocals even if codegen
+    // throws mid-emission.
+    return this.withLoopVar(node.variable, () => {
+      if (node.paginate !== undefined) {
+        // `paginate:` renders a scrollable, lazily-built list via ListView.builder
+        // wrapped in Expanded so it can claim remaining space inside its parent
+        // Column/Flex. v1 scope: page size is accepted as a hint; auto-load-more
+        // on scroll is not yet implemented (would require async integration).
+        const ind1 = this.indent(depth + 1);
+        const ind2 = this.indent(depth + 2);
+        const ind3 = this.indent(depth + 3);
 
-      let childCode: string;
-      if (node.children.length === 1) {
-        childCode = this.genUINode(node.children[0], depth + 3).trimStart();
-      } else {
-        const childLines = node.children
-          .map(c => this.genUINode(c, depth + 5) + ',')
-          .join('\n');
-        childCode =
-          `Column(\n` +
-          `${ind3}  mainAxisSize: MainAxisSize.min,\n` +
-          `${ind3}  children: [\n` +
-          `${childLines}\n` +
-          `${ind3}  ],\n` +
-          `${ind3})`;
+        let childCode: string;
+        if (node.children.length === 1) {
+          childCode = this.genUINode(node.children[0], depth + 3).trimStart();
+        } else {
+          const childLines = node.children
+            .map(c => this.genUINode(c, depth + 5) + ',')
+            .join('\n');
+          childCode =
+            `Column(\n` +
+            `${ind3}  mainAxisSize: MainAxisSize.min,\n` +
+            `${ind3}  children: [\n` +
+            `${childLines}\n` +
+            `${ind3}  ],\n` +
+            `${ind3})`;
+        }
+
+        return [
+          `${ind}Expanded(`,
+          `${ind1}child: ListView.builder(`,
+          `${ind2}itemCount: ${listExpr}.length,`,
+          `${ind2}itemBuilder: (context, index) {`,
+          `${ind3}final ${node.variable} = ${listExpr}[index];`,
+          `${ind3}return ${childCode};`,
+          `${ind2}},`,
+          `${ind1}),`,
+          `${ind})`,
+        ].join('\n');
       }
 
-      return [
-        `${ind}Expanded(`,
-        `${ind1}child: ListView.builder(`,
-        `${ind2}itemCount: ${listExpr}.length,`,
-        `${ind2}itemBuilder: (context, index) {`,
-        `${ind3}final ${node.variable} = ${listExpr}[index];`,
-        `${ind3}return ${childCode};`,
-        `${ind2}},`,
-        `${ind1}),`,
-        `${ind})`,
-      ].join('\n');
-    }
+      // When the parent layout has a `gap:`, emit a SizedBox spacer between
+      // iterations using the indexed-for form so duplicate elements in the list
+      // don't break the "is last" check (`x != xs.last` would mis-classify
+      // earlier duplicates of the last value).
+      if (parentGap) {
+        let code = `${ind}for (final (_i, ${node.variable}) in ${listExpr}.indexed) ...[`;
+        for (const child of node.children) {
+          code += '\n' + this.genUINode(child, depth + 1) + ',';
+        }
+        code += `\n${this.indent(depth + 1)}if (_i < ${listExpr}.length - 1) const SizedBox(${parentGap.dim}: ${parentGap.px}),`;
+        code += `\n${ind}]`;
+        return code;
+      }
 
-    // When the parent layout has a `gap:`, emit a SizedBox spacer between
-    // iterations using the indexed-for form so duplicate elements in the list
-    // don't break the "is last" check (`x != xs.last` would mis-classify
-    // earlier duplicates of the last value).
-    if (parentGap) {
-      let code = `${ind}for (final (_i, ${node.variable}) in ${listExpr}.indexed) ...[`;
+      let code = `${ind}for (final ${node.variable} in ${listExpr}) ...[`;
       for (const child of node.children) {
         code += '\n' + this.genUINode(child, depth + 1) + ',';
       }
-      code += `\n${this.indent(depth + 1)}if (_i < ${listExpr}.length - 1) const SizedBox(${parentGap.dim}: ${parentGap.px}),`;
       code += `\n${ind}]`;
       return code;
-    }
+    });
+  }
 
-    let code = `${ind}for (final ${node.variable} in ${listExpr}) ...[`;
-    for (const child of node.children) {
-      code += '\n' + this.genUINode(child, depth + 1) + ',';
+  // v0.20.3: scoped tracking of each-loop variables in declaredLocals.
+  // Push the loop var on entry; restore the prior set membership on exit
+  // (try/finally to survive exceptions). Used by genEach + genTransitionEachChild.
+  private withLoopVar<T>(name: string, fn: () => T): T {
+    const had = this.declaredLocals.has(name);
+    this.declaredLocals.add(name);
+    try {
+      return fn();
+    } finally {
+      if (!had) this.declaredLocals.delete(name);
     }
-    code += `\n${ind}]`;
-    return code;
   }
 
   private genComponentDef(comp: ComponentDef): string {
