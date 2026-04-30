@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Notes app with persisted draft + sync to remote",
+  "prompt_slug": "notes-app-with-persisted-draft-sync-to-remote",
+  "prompt_index": 3,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.21-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.21-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "547e670925d09480ed5f00b2301f9ef64090541cbfe2f106e9f9d3e1eed346e2",
+  "spec_words": 8026,
+  "timestamp": "2026-04-30T21:29:32.701Z",
+  "duration_ms": 73456,
+  "stop_reason": "MAX_TOKENS",
+  "usage": {
+    "input_tokens": 15147,
+    "output_tokens": 328,
+    "cache_read_tokens": 12270
+  },
+  "cost_usd": 0.036684,
+  "transpile": null
+}

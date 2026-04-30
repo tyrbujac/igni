@@ -1,0 +1,23 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.5",
+  "model_id": "gpt-5.5-2026-04-23",
+  "prompt_name": "Live-search with rapidly-changing dependency",
+  "prompt_slug": "live-search-with-rapidly-changing-dependency",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.21-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.21-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "547e670925d09480ed5f00b2301f9ef64090541cbfe2f106e9f9d3e1eed346e2",
+  "spec_words": 8026,
+  "timestamp": "2026-04-30T21:24:55.154Z",
+  "duration_ms": 76286,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 14181,
+    "output_tokens": 3879,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.187275,
+  "transpile": null
+}
