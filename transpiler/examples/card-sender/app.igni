@@ -179,7 +179,7 @@ screen History, title: "Sent history":
 screen Settings, title: "Settings":
   sender_draft = shared.sender_name
 
-  layout vertical, padding: spacing/6, gap: spacing/4, fill: true:
+  layout vertical, padding: spacing/6, gap: spacing/4, fill: true, align: center:
     button "← Back", color: subtle, on tap: navigate back
 
     label "Theme", style: title
