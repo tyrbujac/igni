@@ -2,7 +2,7 @@
 
 **Status (2026-04-30):** Scaffold only — pre-registered; not yet run. Stage 2 panel scheduled for **post-v0.21-ship strategic-planning gate window** per `docs/private/125_v022_hover.md` cycle ordering note (Tyr 2026-04-30). Gate-window run lets v0.22 cycle open with hover Stage 2 synthesis already complete; persistence is v0.21 PRIMARY and gets cycle bandwidth.
 
-**Cycle stage:** Stage 2 (design review panel critique). 3 frontier models × 1 prompt × 5 questions, prose critique. Skip Stage 2 was considered and rejected because Q1 (children-vs-property-overrides) is a load-bearing shape decision — a single panel run is cheap insurance against locking syntax under operator-side framing.
+**Cycle stage:** Stage 2 (design review panel critique). 3 frontier models × 1 prompt × 6 questions, prose critique. Skip Stage 2 was considered and rejected because Q1 (children-vs-property-overrides) is a load-bearing shape decision — a single panel run is cheap insurance against locking syntax under operator-side framing. Q3 added 2026-04-30 late session covering Q7 (scale-in-hover-whitelist α/β/γ) after Pomodonut Source 2 surfaced n=2 cross-source evidence.
 
 ## What this panel measures
 

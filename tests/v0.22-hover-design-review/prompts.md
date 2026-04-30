@@ -129,22 +129,42 @@ Treat panel responses as input to a Tyr decision, not the decision itself. Patch
 > Rules:
 >
 > - `hover:` is a sub-block of `layout`, not a modifier. Indented inside the layout it modifies.
-> - `hover:` only takes property-shaped children (`background:`, `border:`, `rounded:`, `cursor:`, `shadow:`). Children primitives (`label`, `button`, etc.) are not allowed inside `hover:` — use `is_hovered()` + `if` for hover-conditional content.
+> - `hover:` only takes property-shaped children (`background:`, `border:`, `rounded:`, `cursor:`, `shadow:`, `scale:`). Children primitives (`label`, `button`, etc.) are not allowed inside `hover:` — use `is_hovered()` + `if` for hover-conditional content.
 > - `cursor:` whitelist for v0.22: `pointer` only.
+> - `scale:` accepts numeric multiplier (e.g. `scale: 1.05`) for hover-only expansion feedback. Hover-scoped property; not a general layout primitive.
 > - `hover:` property-flips are instant-snap by default. Add `transition: fade` to smooth.
 > - Touch-only platforms: `hover:` is a no-op; `is_hovered()` returns `false`.
 > - `is_hovered()` reads the *innermost enclosing layout's* hover state by lexical scope.
 >
+> ### Real-app evidence (n=2 cross-source for hover; n=1 for scale-in-whitelist)
+>
+> Two distinct hover-shape cases catalogued:
+>
+> 1. **Gallery card lift** (v0.21 pre-cycle panel — `tests/v021-pre-cycle-evidence/` 2026-04-30). 4/4 P1 + 3/4 P3 reach. Surface: card grids where pointer-hover triggers `background:` shift + `shadow:` + `cursor: pointer`. Content-reveal sub-case (P3 preview-expansion) walled the property-only shape, motivating the `is_hovered()` builtin.
+> 2. **Pomodonut Work/Break toggle button** (real-app retrospective 2026-04-30). Pomodonut shipped without hover support; Tyr post-hoc identified the Work/Break button needed `cursor: pointer`, `scale: 1.05` (interactability feedback that the panel didn't probe), and `background:` shift. Distinct from the gallery surface — primary interaction target, not a content preview. **Source for Q7 scale-in-whitelist**.
+>
+> ### Q7 (added 2026-04-30 late session — scale in whitelist)
+>
+> Pomodonut button case (Source 2) needs scale-on-hover for interactability feedback. Three options:
+>
+> - **Option α (Tyr honest lean)** — Add `scale:` to hover whitelist only. `hover: scale: 1.05`. Hover-scoped only. Spec budget: 1 token-accepting property in one whitelist. Real-app evidence (Pomodonut button) supports it.
+> - **Option β** — Don't add scale; use rounded/padding workarounds. Authors compose existing tokens. Spec budget: zero. *Against:* doesn't actually express what the author wants; LLMs would reach for `scale:` first regardless.
+> - **Option γ** — Add `scale:` as general layout property (not just hover). Spec budget: largest. *Against:* general-`scale:` is a transform primitive; conflates with rotation (also a transform). v0.22 visual-primitive bundle defers stack/wrap/rotation to v0.22 cycle proper; opening transform-primitive-class design here pulls forward scope.
+>
+> Q7 lock pending Stage 2 panel pressure-test. Operator-side lean is α.
+>
 > ---DESIGN NOTE END---
 >
-> Now answer the five questions below. Be substantive — vague consensus-y replies fail the panel's purpose. If you think Shape B1 is right, say *why* in the language of Igni's principles, not generic "looks clean." If you think it's wrong, say *what specifically breaks* and *what should ship instead*.
+> Now answer the six questions below. Be substantive — vague consensus-y replies fail the panel's purpose. If you think Shape B1 is right, say *why* in the language of Igni's principles, not generic "looks clean." If you think it's wrong, say *what specifically breaks* and *what should ship instead*.
 >
 > **Q1 (anti-anchored — strongest case AGAINST Shape B1):** Make the strongest possible case AGAINST Shape B1. What does Shape B1 break, miss, or mis-handle that a different shape (A / B2 / C, or one not on the list) would handle better? Score B1 against Igni's "one way to do everything" + "no magic" principles in particular — does the property/conditional split honestly preserve those principles, or does the two-mechanism shape ("`hover:` for properties, `if is_hovered():` for conditionals") secretly violate "one way" by introducing a second conditional-render-on-state pathway alongside `if shared.X:`? Argue the principled case for one of the alternatives, not just the ergonomic case. Verdict: HOLD B1 / REFINE B1 / FLIP to A / FLIP to B2 / FLIP to C / FLIP to a fifth shape.
 >
-> **Q2 (sub-decision lock pressure-test):** Of the five sub-question locks (Q2 touch-always-false / Q3 cookbook-not-spec / Q4 cursor-pointer-only / Q5 no-nesting / Q6 instant-snap default), which (if any) are wrong? Be specific about *what* breaks at v1.0 horizon if the lock holds. Particular focus on: does Q4 (cursor-pointer-only) under-serve drag affordance, edit affordance, or accessibility cues? Does Q6 (instant-snap default) under-serve the most common "card lifts on hover" case where users *expect* smoothness?
+> **Q2 (sub-decision lock pressure-test, Q2-Q6 of design note):** Of the five Tyr-locked sub-questions (touch-always-false / cookbook-not-spec / cursor-pointer-only / no-nesting / instant-snap default), which (if any) are wrong? Be specific about *what* breaks at v1.0 horizon if the lock holds. Particular focus on: does cursor-pointer-only under-serve drag affordance, edit affordance, or accessibility cues? Does instant-snap default under-serve the most common "card lifts on hover" case where users *expect* smoothness?
 >
-> **Q3 (lexical-scope edge case):** Shape B1's "innermost enclosing layout wins" rule for `is_hovered()` resolution. What ambiguity surfaces under deep nesting (e.g. card inside list inside scroll inside screen)? Does Shape B2 (named binding) actually solve this, or just shift the ambiguity to "which name applies"? Worst-case author-confusion scenario you can construct.
+> **Q3 (Q7 scale-in-hover-whitelist α/β/γ pressure-test, anti-anchored on α):** Make the strongest possible case AGAINST Option α (the Tyr honest lean). Should `scale:` ship in v0.22 hover whitelist at all (vs Option β: don't ship, workaround), and if it ships, should it be hover-scoped (Option α) or a general layout property (Option γ — risks pulling forward transform-class design ahead of stack/wrap/rotation cycle)? Specifically address: (a) does the scale-as-feedback shape mix coordinate-system semantics (transform) with state-feedback semantics (hover) in a way that creates a third spec-class beyond "property override" and "child render"? (b) Pomodonut's button-feedback need is one real-app instance; if no other real-app surfaces this pattern in the v0.21→v0.22 window, does the n=1-for-scale evidence justify spec budget? (c) what's the cleanest shape for "the user expects this button to feel responsive on hover" — α, β, γ, or a fourth option?
 >
-> **Q4 (peer-language survey):** What do peer languages and frameworks do? CSS `:hover` (selector-based, descendant matching), SwiftUI `.onHover { isHovered in ... }` (per-modifier closure), Compose `Modifier.hoverable(interactionSource)` (event-source pattern), Framer Motion `whileHover={{ ... }}` (declarative-prop). Does any peer language solve hover in a way Igni's draft hasn't considered? What's the load-bearing pattern across the survey?
+> **Q4 (lexical-scope edge case):** Shape B1's "innermost enclosing layout wins" rule for `is_hovered()` resolution. What ambiguity surfaces under deep nesting (e.g. card inside list inside scroll inside screen)? Does Shape B2 (named binding) actually solve this, or just shift the ambiguity to "which name applies"? Worst-case author-confusion scenario you can construct.
 >
-> **Q5 (anti-anchoring vs principled-minority):** This panel is anti-anchored on Q1, but Igni has a documented principled-minority pattern (`docs/private/114`, four instances) where Tyr reverses panel consensus to preserve architectural principles. If 3/3 of you HOLD on B1, what would the principled-minority case for Tyr to reverse to (a different shape) look like? If you genuinely think B1 is right, predict the strongest minority objection that *should* exist; if you flipped on Q1, you've already made the case — say so.
+> **Q5 (peer-language survey):** What do peer languages and frameworks do? CSS `:hover` (selector-based, descendant matching), SwiftUI `.onHover { isHovered in ... }` (per-modifier closure), Compose `Modifier.hoverable(interactionSource)` (event-source pattern), Framer Motion `whileHover={{ ... }}` (declarative-prop). Does any peer language solve hover in a way Igni's draft hasn't considered? Particularly relevant for Q3: how do peer frameworks express hover-scale specifically — as a transform property always available, or as a hover-only affordance? What's the load-bearing pattern across the survey?
+>
+> **Q6 (anti-anchoring vs principled-minority):** This panel is anti-anchored on Q1 and Q3, but Igni has a documented principled-minority pattern (`docs/private/114`, four instances) where Tyr reverses panel consensus to preserve architectural principles. If 3/3 of you HOLD on B1 + α, what would the principled-minority case for Tyr to reverse on either (one of the four hover shapes / one of the three Q7 options) look like? If you genuinely think B1 + α are right, predict the strongest minority objection that *should* exist; if you flipped on Q1 or Q3, you've already made the case — say so.
