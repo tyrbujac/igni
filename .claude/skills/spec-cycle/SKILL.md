@@ -129,8 +129,40 @@ If the design note doesn't exist yet, you're at Stage 1 — open it. If the late
 3. Commit per session boundary — one focused commit per session-end is the precedent (e.g. commits `e42407d` cleanup pass, `0f9f3b3` scope lock, `afd1de8` methodology pre-draft).
 4. Update memory if the session produced load-bearing decisions (scope locks, methodology insights, real-app candidate selection).
 
+## Plan structure rules
+
+Plans describe FORWARD work only. Articulated 2026-04-30 after a single session accumulated 11 streams documenting mostly-completed work — third recurring session-shape structural-discipline failure mode (after version-hygiene + one-version-at-a-time). The rule prevents plans from drifting into session logs.
+
+**Required plan sections:**
+- **Context** — why this plan exists; what triggered it; what state it leaves behind. Brief.
+- **Streams** — discrete forward work items (≤7 total).
+- **Out of scope** — explicitly named exclusions for this session.
+- **Verification** — single consolidated section at plan end (not per-stream).
+
+**Per-stream structure (each stream item):**
+- **Name** — short imperative ("Open doc 128", "Run Stage 2 panel").
+- **Scope** — what specifically gets done; what's NOT done.
+- **Trigger** — what kicks this stream off (file edit, panel run, prior stream completion).
+- **Files** — paths to modify; (gitignored) markers where applicable.
+- **Commit shape** — single-commit message format; or "no commit (gitignored)".
+
+**Anti-patterns:**
+- ❌ **Completed work as plan items.** If it's already shipped, it goes in a session log (`docs/private/<n>_session_<date>.md`) or commit-message log — not the plan.
+- ❌ **Per-stream verification sections.** Move to plan-level Verification.
+- ❌ **Inline methodology cataloguing.** Methodology chapter §4 queue is its own surface (memory + design notes). Plans don't catalogue.
+- ❌ **Dependent streams chained mid-plan** (`Stream A → Stream B → Stream C`). If A must finish before B starts, B is a different plan in a future session.
+
+**Length rules:**
+- ≤100 lines total.
+- ≤15 lines per stream.
+- ≤7 streams maximum.
+
+**When plans are exceeded** (>100 lines / >7 streams / mostly-completed-work content): stop, write a session log entry capturing completed work, start a fresh plan next session for the truly-forward residual work.
+
+**Catalogue note (candidate sub-section for methodology chapter §4):** plan-length-discipline is the third structural rule emerged from cycle execution (after version-hygiene + one-version-at-a-time). The meta-pattern itself is dissertation material — *structural discipline emerges from cycle execution, not from up-front design.* n=3 establishes the meta-pattern; promote to a sub-section heading when chapter §4 first-draft session lands (~2026-05-05 per dissertation cadence).
+
 ## When this skill applies
 
-Designing new syntax. Running panels. Writing design notes. Deciding skip-Stage-2. Interpreting cold-test results. Updating ROADMAP Stream 3 status. Drafting Stage 0/2/3 prompts.
+Designing new syntax. Running panels. Writing design notes. Deciding skip-Stage-2. Interpreting cold-test results. Updating ROADMAP Stream 3 status. Drafting Stage 0/2/3 prompts. Drafting plans for next-session work (per Plan structure rules above).
 
 When this skill does NOT apply: cookbook entries (different audience), transpiler-only fixes (no spec change), version-bump mechanics (use the `version-bump` skill), trap-journal walks (use the `trap-journal` skill), CHANGELOG entries (covered by `version-bump`).
