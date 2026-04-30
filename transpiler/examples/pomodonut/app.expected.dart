@@ -162,7 +162,9 @@ class _PomodonutScreenState extends State<PomodonutScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Pomodonut')),
-      body: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Center(
           child: Column(
@@ -222,6 +224,8 @@ class _PomodonutScreenState extends State<PomodonutScreen> {
           ),
         ),
       ),
+        ),
+      ),
     );
   }
 }
@@ -238,7 +242,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Settings')),
-      body: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -317,6 +323,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: const Text('Back'),
             ),
           ],
+        ),
+      ),
         ),
       ),
     );

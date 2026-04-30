@@ -192,7 +192,9 @@ class _InputScreenState extends State<InputScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('BMI CALCULATOR')),
-      body: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -237,6 +239,8 @@ class _InputScreenState extends State<InputScreen> {
           ],
         ),
       ),
+        ),
+      ),
     );
   }
 }
@@ -267,7 +271,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
     }
     return Scaffold(
       appBar: AppBar(title: Text('YOUR RESULT')),
-      body: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -304,6 +310,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
               child: const Text('RE-CALCULATE'),
             ),
           ],
+        ),
+      ),
         ),
       ),
     );

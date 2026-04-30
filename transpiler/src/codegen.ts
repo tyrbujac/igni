@@ -1690,7 +1690,15 @@ export class CodeGenerator {
     if (hasImageBg) {
       const imgSrc = this.exprToDart(screenBgProp!.value);
       scaffoldParts.push(`      body: Container(\n        width: double.infinity,\n        height: double.infinity,\n        decoration: const BoxDecoration(\n          image: DecorationImage(\n            image: AssetImage('assets/' + ${imgSrc}),\n            fit: BoxFit.cover,\n          ),\n        ),\n        child: SafeArea(\n          child: ${bodyWidget.trimStart()},\n        ),\n      )`);
-    } else if (titleProp || scaffoldBg || this.containsPaginateEach(uiNodes)) {
+    } else if (this.containsPaginateEach(uiNodes)) {
+      // `paginate:` `each` produces a ListView.builder which owns its own
+      // scrolling — wrapping it in SingleChildScrollView would either error
+      // ("Vertical viewport was given unbounded height") or double-scroll.
+      // Pre-v0.20.4-era this elif also excluded `title:` and `scaffoldBg`
+      // screens from the scroll wrap, but those exclusions had no rationale
+      // and broke real-app screens with content > viewport (card-sender Home
+      // overflow 2026-04-30). Title is just AppBar decoration; scaffoldBg is
+      // just colour. Neither should disable scrolling.
       const inner = bodyWidget.trimStart();
       scaffoldParts.push(`      body: ${needsSafeArea ? `SafeArea(\n        child: ${inner},\n      )` : inner}`);
     } else {

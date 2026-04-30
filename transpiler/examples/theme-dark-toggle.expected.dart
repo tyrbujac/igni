@@ -49,7 +49,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Toggle')),
-      body: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -66,6 +68,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Text('Toggle theme'),
             ),
           ],
+        ),
+      ),
         ),
       ),
     );

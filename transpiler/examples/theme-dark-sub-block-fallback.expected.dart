@@ -27,7 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Sub-block fall-back')),
-      body: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -41,6 +43,8 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFFF5F5F5) : const Color(0xFF0D0D14))),
             ),
           ],
+        ),
+      ),
         ),
       ),
     );

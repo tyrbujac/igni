@@ -30,7 +30,9 @@ class _DiceeScreenState extends State<DiceeScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Dicee'), backgroundColor: Colors.red, foregroundColor: Colors.white),
       backgroundColor: Colors.red,
-      body: Center(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Center(
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -58,6 +60,8 @@ class _DiceeScreenState extends State<DiceeScreen> {
             ),
             ),
           ],
+        ),
+      ),
         ),
       ),
     );

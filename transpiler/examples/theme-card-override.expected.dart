@@ -17,7 +17,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF1D1E33),
       body: SafeArea(
-        child: Container(
+        child: SingleChildScrollView(
+          child: Container(
         decoration: BoxDecoration(color: const Color(0xFF1D1E33)),
         child: Padding(
         padding: const EdgeInsets.all(16),
@@ -31,6 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       ),
+        ),
       ),
     );
   }

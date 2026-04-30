@@ -17,7 +17,8 @@ class _MiCardScreenState extends State<MiCardScreen> {
     return Scaffold(
       backgroundColor: Colors.teal,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Center(
           child: Column(
@@ -95,6 +96,7 @@ class _MiCardScreenState extends State<MiCardScreen> {
           ),
         ),
       ),
+        ),
       ),
     );
   }

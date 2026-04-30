@@ -51,7 +51,9 @@ class _FilesScreenState extends State<FilesScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Notes'), backgroundColor: Colors.black, foregroundColor: Colors.white),
       backgroundColor: Colors.black,
-      body: Container(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Container(
         decoration: BoxDecoration(color: Colors.black),
         child: Padding(
         padding: const EdgeInsets.all(24),
@@ -100,6 +102,8 @@ class _FilesScreenState extends State<FilesScreen> {
           ],
         ),
       ),
+      ),
+        ),
       ),
     );
   }
@@ -155,7 +159,9 @@ class _NoteScreenState extends State<NoteScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Note'), backgroundColor: Colors.black, foregroundColor: Colors.white),
       backgroundColor: Colors.black,
-      body: Container(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Container(
         decoration: BoxDecoration(color: Colors.black),
         child: Padding(
         padding: const EdgeInsets.all(24),
@@ -318,6 +324,8 @@ class _NoteScreenState extends State<NoteScreen> {
         ),
       ),
       ),
+        ),
+      ),
     );
   }
 }
@@ -335,7 +343,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Settings'), backgroundColor: Colors.black, foregroundColor: Colors.white),
       backgroundColor: Colors.black,
-      body: Container(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Container(
         decoration: BoxDecoration(color: Colors.black),
         child: Padding(
         padding: const EdgeInsets.all(24),
@@ -396,6 +406,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
       ),
+      ),
+        ),
       ),
     );
   }
