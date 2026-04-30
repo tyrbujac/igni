@@ -749,7 +749,7 @@ Igni is positioned as a UI language whose primitives match Figma's auto-layout v
 | Frame `align` (start / center / end) | `align: start` / `center` / `end` |
 | Color variables (named tokens) | `theme: color: <name>: "#hex"` |
 | Spacing variables | `theme: spacing:` (or use built-in `small`/`medium`/`large` + numeric `spacing/1`–`spacing/8`) |
-| Typography styles (closed set) | `theme: typography:` with `style: heading` / `heading.small` / `body` / `caption` |
+| Typography styles (closed set) | `theme: typography:` with `style: heading` / `title` / `body` / `caption` |
 | Corner radius (uniform) | `rounded: small` / `medium` / `large` / `full` |
 | Stroke (uniform) | `border: thin` / `medium` / `thick` |
 | Components | `component Name:` blocks |

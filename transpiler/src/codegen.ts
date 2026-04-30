@@ -443,9 +443,11 @@ export class CodeGenerator {
   // The no-theme branch must be byte-identical to Igni's pre-v0.12.1 output so
   // all existing diff fixtures pass unchanged. The has-theme branch patches
   // the slots Igni's STYLE_MAP reads from with a bare fontFamily string:
-  //   heading  → headlineLarge + mirror to headlineSmall (so `heading.small` inherits)
+  //   heading  → headlineLarge + mirror to headlineSmall (so `title` inherits)
   //   body     → bodyLarge + bodyMedium (bodyMedium is the default unstyled label)
   //   caption  → bodySmall
+  // (v0.20.4: `title` was renamed from `heading.small`; same Material 3
+  //  headlineSmall mapping under the hood.)
   //
   // The family string (e.g. 'Pacifico') must match one of the entries that
   // syncFonts() registers under `flutter.fonts:` in pubspec.yaml. Both trace

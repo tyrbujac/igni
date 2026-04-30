@@ -1,6 +1,6 @@
 component Card(title):
   layout vertical, padding: medium, background: card, rounded: medium:
-    label title, style: heading.small
+    label title, style: title
     body
 
 screen Home:

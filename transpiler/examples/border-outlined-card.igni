@@ -2,5 +2,5 @@ screen BorderOutlinedCard:
   layout vertical, padding: large, gap: medium:
     label "Outlined card", style: heading
     layout vertical, padding: medium, rounded: medium, border: thin:
-      label "Notifications", style: heading.small
+      label "Notifications", style: title
       label "Get alerts when something happens", style: caption

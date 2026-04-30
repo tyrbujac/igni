@@ -24,7 +24,7 @@ screen ProductList:
     each product in products:
       layout horizontal, spread: true, padding: medium:
         layout vertical:
-          label product.name, style: heading.small
+          label product.name, style: title
           label "$" + product.price
         button "Add to Cart", on tap: add_to_cart(product)
 
@@ -45,12 +45,12 @@ screen Cart:
       each item in shared.cart:
         layout horizontal, spread: true, padding: medium:
           layout vertical:
-            label item.name, style: heading.small
+            label item.name, style: title
             label "$" + item.price + " (Qty: " + item.quantity + ")"
           button "Remove", color: danger, on tap: remove_item(item)
 
       divider
-      label "Total: $" + cart_total(), style: heading.small
+      label "Total: $" + cart_total(), style: title
 
   cart_total():
     t = 0

@@ -55,7 +55,7 @@ screen Home, title: "Cards":
     each card in shared.cards:
       layout vertical, padding: spacing/4, gap: spacing/2, background: card, rounded: medium, on tap: pick(card):
         layout horizontal, gap: spacing/3:
-          label card.title, style: heading.small
+          label card.title, style: title
           if card.is_new:
             label "NEW!", padding: spacing/1, background: sage, color: cream, rounded: small, style: caption
         label card.occasion, style: caption, color: subtle
@@ -89,13 +89,13 @@ screen Designer, title: "Customise":
         if shared.sender_name is not "":
           label "— " + shared.sender_name, style: caption, color: subtle
 
-      label "Recipient", style: heading.small
+      label "Recipient", style: title
       input bind: recipient_draft, placeholder: "Who is this for?", on change: shared.draft_recipient = recipient_draft
 
-      label "Message", style: heading.small
+      label "Message", style: title
       input bind: message_draft, placeholder: "Add a personal touch", on change: shared.draft_message = message_draft
 
-      label "Accent", style: heading.small
+      label "Accent", style: title
       layout horizontal, gap: spacing/3:
         button "Brand red", color: brand, on tap: shared.draft_accent = "brand"
         button "Sage green", color: sage, on tap: shared.draft_accent = "sage"
@@ -138,7 +138,7 @@ screen Send, title: "Send card":
       spinner
       label "Sending…", style: caption, color: subtle
     else if response is error:
-      label "Send failed", color: brand, style: heading.small
+      label "Send failed", color: brand, style: title
       button "Try again", color: subtle, on tap: shared.send_url = ""
     else:
       label "Sent!", style: heading, color: sage
@@ -164,13 +164,13 @@ screen History, title: "Sent history":
 
     if shared.sent_history is empty:
       layout vertical, padding: spacing/6, gap: spacing/2, align: center:
-        label "No cards sent yet", style: heading.small, color: subtle
+        label "No cards sent yet", style: title, color: subtle
         label "Send one from the Home screen", style: caption, color: subtle
     else:
-      label "Recently sent", style: heading.small
+      label "Recently sent", style: title
       each entry in shared.sent_history:
         layout vertical, padding: spacing/4, gap: spacing/2, background: card, rounded: medium:
-          label entry.card_title, style: heading.small
+          label entry.card_title, style: title
           if entry.recipient is not "":
             label "To " + entry.recipient, style: caption, color: subtle
           if entry.message is not "":
@@ -182,12 +182,12 @@ screen Settings, title: "Settings":
   layout vertical, padding: spacing/6, gap: spacing/4, fill: true:
     button "← Back", color: subtle, on tap: navigate back
 
-    label "Theme", style: heading.small
+    label "Theme", style: title
     layout vertical, gap: spacing/2:
       button "Follow system", color: brand, on tap: shared.theme_mode = "system"
       button "Light", color: brand, on tap: shared.theme_mode = "light"
       button "Dark", color: brand, on tap: shared.theme_mode = "dark"
       label "Active: " + shared.theme_mode, style: caption, color: subtle
 
-    label "Sender name", style: heading.small
+    label "Sender name", style: title
     input bind: sender_draft, placeholder: "Your name on sent cards", on change: shared.sender_name = sender_draft

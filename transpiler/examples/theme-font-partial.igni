@@ -4,5 +4,5 @@ theme:
 
 screen Demo:
   label "Heading in Pacifico", style: heading
-  label "Subheading also Pacifico", style: heading.small
+  label "Subheading also Pacifico", style: title
   label "Body keeps default font"

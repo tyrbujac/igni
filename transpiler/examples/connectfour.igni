@@ -17,9 +17,9 @@ screen ConnectFour:
       label "Turn: " + player
     else:
       if winner is "draw":
-        label "Draw — board full", style: heading.small
+        label "Draw — board full", style: title
       else:
-        label winner + " wins!", style: heading.small, color: color_for(winner)
+        label winner + " wins!", style: title, color: color_for(winner)
 
     layout horizontal, gap: small:
       each col in [0, 1, 2, 3, 4, 5, 6]:

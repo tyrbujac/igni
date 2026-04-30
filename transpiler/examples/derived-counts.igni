@@ -11,7 +11,7 @@ screen DerivedCounts:
   info = length(filter(items, i => i.level is "info"))
 
   layout vertical, gap: medium, padding: large:
-    label critical + " critical", style: heading.small
+    label critical + " critical", style: title
     label warning + " warning"
     label info + " info"
     each item in items:

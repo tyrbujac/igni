@@ -649,8 +649,8 @@ export class Parser {
         this.advance();
         if (this.check(TokenType.Dot)) {
           this.error(
-            `typography token \`${name}.small\` is not a theme entry — \`heading.small\` is a size variant ` +
-            `that inherits from \`heading\`. Only \`heading\`, \`body\`, \`caption\` belong in the theme.`
+            `typography token \`${name}.<sub>\` is not a theme entry — Igni's typography slots are flat (no dot notation). ` +
+            `Only \`heading\`, \`body\`, \`caption\` belong in the theme. The \`title\` style token (a smaller heading, used as \`label X, style: title\`) inherits from \`heading\` automatically.`
           );
         }
         if (!THEME_TEXT_TOKENS.has(name as ThemeTextTokenName)) {

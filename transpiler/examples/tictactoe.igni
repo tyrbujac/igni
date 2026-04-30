@@ -14,9 +14,9 @@ screen TicTacToe:
       label "Your move, " + player
     else:
       if winner is "draw":
-        label "Draw — nobody takes it!", style: heading.small
+        label "Draw — nobody takes it!", style: title
       else:
-        label winner + " takes it!", style: heading.small
+        label winner + " takes it!", style: title
 
     layout vertical, gap: small:
       each row_start in [0, 3, 6]:

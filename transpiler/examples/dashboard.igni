@@ -33,7 +33,7 @@ screen Dashboard:
         badge "Active", color: brand
 
     layout vertical, gap: small:
-      label "Recent Activity", style: heading.small
+      label "Recent Activity", style: title
       each event in activities:
         layout horizontal, padding: medium, spread: true:
           label event.text, style: body

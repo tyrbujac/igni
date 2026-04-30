@@ -29,6 +29,25 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.20.4 — 2026-04-30
+*Operator-designed proactive typography rename: the four label `style:` tokens are now all flat (`heading`, `title`, `body`, `caption`). Distinct from v0.20.1's reactive panel-driven rename — first instance of the proactive-operator-rename ship-context class.*
+
+### Changed
+
+- **`style: heading.small` renamed to `style: title`.** Igni's flat-naming discipline rejects dot notation; `heading.small` was the only dotted variant in the four-slot text-style scheme, violating the "one way to do everything" + flat-naming invariants. The new vocabulary is **heading / title / body / caption** — all flat tokens. Same Material 3 `headlineSmall` mapping under the hood (visual rendering unchanged); only the surface name changes. Three converging structural priors locked the rename to `title`: (1) Figma's `Section title` vocabulary in its text-styles editor, (2) Markdown's H2 = "section title" mental shorthand, (3) Material 3's `title*` category as a named typography slot. Plus n=1 real-app surface (operator tutorial walk 2026-04-30 reached for `style: title` and noticed the dot-notation friction). Skip-Stage-2 + skip-Stage-0 per `docs/private/128` justification: shape mirrors existing flat-token grammar; structural priors lock the choice; alternative shapes (`subhead`, `subtitle`, `headline`) all lose to at least one prior. Codegen: `STYLE_MAP` key rename in `transpiler/src/codegen-helpers.ts:38-43` (drops `'heading.small'`, adds `'title'`); same `Theme.of(context).textTheme.headlineSmall!` mapping. Material 3 mapping nuance: `style: title` matches M3's `title*` *vocabulary* but maps to M3's `headlineSmall` *underneath* (Igni's 4-slot compression doesn't promise 1:1 M3 mapping — see doc 128 §Subtlety B). Parser error message for dot-notation typography tokens (`transpiler/src/parser.ts:652`) rewritten to reference `title` instead of `heading.small` and to teach the flat-naming rule. Migration cost: 1-keyword find-and-replace per source file (`style: heading.small` → `style: title`). 11 fixtures + card-sender app + tutorial migrated alongside ship; spec/cheatsheet/micro examples + token tables + prose updated. 142 transpiler tests stay green (the rename is internal STYLE_MAP key change; emitted Dart bytes unchanged).
+
+### Methodology
+
+- **First explicit operator-designed proactive rename in project history.** v0.20.1 was *reactive* (chat-mode panel signal flagged keyword collision). v0.20.4 is *proactive* (operator surfaces friction at n=1, structural priors + invariants justify, ships under skip-Stage-2/0). Both classes ship without full cycle ceremony but for different reasons. Catalogued in `docs/private/128` §Methodology contribution — n=1 instance of the proactive class; gates next-instance for class promotion.
+- **Provenance-clarity decision (Tyr 2026-04-30 pushback against bundle-into-v0.21):** ships standalone rather than bundling into v0.21 cycle (which has architectural depth — persistence Q2 split + race-condition Shape A/B/C). Methodology chapter benefits from clean per-change provenance; the v0.20.x small-ship sequence (v0.20.2 docs + v0.20.3 codegen + v0.20.4 typography) is intentional cadence.
+
+### Notes
+
+- **First real spec fork in v0.20.x series since v0.20.1.** v0.20.2 and v0.20.3 shipped as discrete commits per version-hygiene rule (no spec text changes). v0.20.4 changes spec/cheatsheet/micro text → real fork ceremony required.
+- **Variable-name vs style-token collision (Subtlety A in doc 128).** The variable name `title` is extremely natural (`label post.title, style: title` is canonical); cheatsheet adds a one-line callout that var-name and style-token positions are different (no conflict). Watch trap-journal post-ship for any author confusion.
+
+---
+
 ## v0.20.1 — 2026-04-29
 *Synthesis-driven corrections from the v0.20.0 chat-mode cheatsheet review (`tests/v0.20.1-cheatsheet-review/`, 4-cell panel, $0). One small syntax rename (`theme: text:` → `theme: typography:`) eliminating the keyword collision that was the load-bearing teaching wart in v0.20.0's theme section. Plus documentation patches: auto-fall-back rule clarification + cross-language-prior callout, reactive fetch race conditions documented as undefined-behaviour pending v0.21 design, sparse `spacing/N` whitelist constraint strengthened, `shared.theme_mode` "system" reframed as user-preference value, "row identity" defined explicitly. New positive fixture for sub-block fall-back. 137 → 138 tests; smoke 84/89 → 86/91 (5 known-latent skipped, 0 failed).*
 

@@ -12,6 +12,6 @@ screen Picker:
   options = ["EU", "US", "Asia"]
 
   layout vertical, padding: large, gap: medium:
-    label "Pick region", style: heading.small
+    label "Pick region", style: title
     dropdown bind: shared.region, options: options
     button "Back", on tap: navigate back

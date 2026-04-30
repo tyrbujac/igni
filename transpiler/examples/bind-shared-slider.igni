@@ -11,7 +11,7 @@ screen Counter:
 
 screen Settings:
   layout vertical, padding: large, gap: medium:
-    label "Step size", style: heading.small
+    label "Step size", style: title
     slider bind: shared.step, min: 1, max: 10
     label shared.step
     button "Back", on tap: navigate back

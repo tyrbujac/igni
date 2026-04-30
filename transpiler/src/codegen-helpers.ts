@@ -37,7 +37,7 @@ export const BORDER_WIDTH_TOKENS: Record<string, number> = {
 
 export const STYLE_MAP: Record<string, string> = {
   heading: 'Theme.of(context).textTheme.headlineLarge!',
-  'heading.small': 'Theme.of(context).textTheme.headlineSmall!',
+  title: 'Theme.of(context).textTheme.headlineSmall!',
   body: 'Theme.of(context).textTheme.bodyLarge!',
   caption: 'Theme.of(context).textTheme.bodySmall!',
 };
