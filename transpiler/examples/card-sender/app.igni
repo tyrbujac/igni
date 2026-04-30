@@ -1,0 +1,88 @@
+theme:
+  color:
+    brand: "#D14545"
+    cream: "#FBF3E4"
+    sage: "#8FA876"
+    surface: "#FBF3E4"
+    text: "#3D2E26"
+    card: "#FFFFFF"
+    subtle: "#A89C8E"
+  typography:
+    heading: font: pacifico
+    body: font: source_sans
+  scaffold:
+    background: surface
+  appbar:
+    background: surface
+    foreground: text
+
+theme dark:
+  color:
+    cream: "#1F1812"
+    surface: "#1F1812"
+    text: "#F5EDE0"
+    card: "#2D241D"
+    subtle: "#6B6055"
+  scaffold:
+    background: surface
+  appbar:
+    background: surface
+    foreground: text
+
+shared:
+  theme_mode = "system"
+  sender_name = ""
+  cards = [
+    {id: 1, title: "Birthday", occasion: "birthday", bg: "card-birthday.jpg", is_new: true},
+    {id: 2, title: "Thank You", occasion: "thank-you", bg: "card-thank-you.jpg", is_new: false},
+    {id: 3, title: "Holiday", occasion: "holiday", bg: "card-holiday.jpg", is_new: true},
+    {id: 4, title: "Get Well", occasion: "get-well", bg: "card-get-well.jpg", is_new: false},
+    {id: 5, title: "Congrats", occasion: "congrats", bg: "card-congrats.jpg", is_new: false},
+    {id: 6, title: "Just Because", occasion: "generic", bg: "card-generic.jpg", is_new: true}
+  ]
+  picked_card = null
+  sent_history = []
+
+screen Home, title: "Cards":
+  layout vertical, padding: spacing/6, gap: spacing/4, fill: true:
+    label "Pick a card", style: heading
+    label "Tap a design to start customising", style: caption, color: subtle
+
+    each design in shared.cards:
+      layout vertical, padding: spacing/4, gap: spacing/2, background: card, rounded: medium, on tap: pick(design):
+        layout horizontal, gap: spacing/3:
+          label design.title, style: heading.small
+          if design.is_new:
+            label "NEW!", padding: spacing/1, background: sage, color: cream, rounded: small, style: caption
+        label design.occasion, style: caption, color: subtle
+
+    button "Settings", color: subtle, on tap: navigate to Settings
+
+  pick(c):
+    shared.picked_card = c
+    navigate to Designer
+
+screen Designer, title: "Customise":
+  layout vertical, padding: spacing/6, gap: spacing/4, fill: true:
+    button "← Back", color: subtle, on tap: navigate back
+    if shared.picked_card is null:
+      label "No card selected"
+    else:
+      label shared.picked_card.title, style: heading
+      label "Customiser flow lands next session", style: caption, color: subtle
+
+screen Settings, title: "Settings":
+  sender_draft = shared.sender_name
+
+  layout vertical, padding: spacing/6, gap: spacing/4, fill: true:
+    button "← Back", color: subtle, on tap: navigate back
+
+    label "Theme", style: heading.small
+    layout vertical, gap: spacing/2:
+      button "Follow system", color: brand, on tap: shared.theme_mode = "system"
+      button "Light", color: brand, on tap: shared.theme_mode = "light"
+      button "Dark", color: brand, on tap: shared.theme_mode = "dark"
+      label "Active: " + shared.theme_mode, style: caption, color: subtle
+
+    label "Sender name", style: heading.small
+    input bind: sender_draft, placeholder: "Your name on sent cards", on change: shared.sender_name = sender_draft
