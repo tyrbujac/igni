@@ -1,8 +1,8 @@
 {
   "label with style": {
     "prefix": "label",
-    "body": ["label \"$1\", style: ${2|heading,heading.small,body,caption|}"],
-    "description": "Label with style token — pick from heading | heading.small | body | caption"
+    "body": ["label \"$1\", style: ${2|heading,title,body,caption|}"],
+    "description": "Label with style token — pick from heading | title | body | caption (v0.20.4: heading.small renamed to title)"
   },
   "screen": {
     "prefix": "screen",
@@ -64,5 +64,30 @@
     "prefix": "fetch",
     "body": ["${1:result} = fetch(\"$2\")"],
     "description": "Reactive HTTP fetch"
+  },
+  "color property": {
+    "prefix": "color",
+    "body": ["color: ${1|brand,subtle,danger,green,red,blue,white,black,yellow,orange,purple,teal|}"],
+    "description": "Colour property — picks from the 12 built-in tokens"
+  },
+  "gap property": {
+    "prefix": "gap",
+    "body": ["gap: ${1|small,medium,large|}"],
+    "description": "Gap property — small | medium | large word tokens"
+  },
+  "padding property": {
+    "prefix": "padding",
+    "body": ["padding: ${1|small,medium,large|}"],
+    "description": "Padding property — small | medium | large word tokens"
+  },
+  "shared block": {
+    "prefix": "shared",
+    "body": ["shared:", "  ${1:variable_name} = ${2:initial_value}", "  $0"],
+    "description": "Shared state block — top-level cross-screen state via shared.X"
+  },
+  "transition property": {
+    "prefix": "transition",
+    "body": ["transition: ${1|fade,slide|}"],
+    "description": "Transition property — fade | slide animates conditional render swaps"
   }
 }
