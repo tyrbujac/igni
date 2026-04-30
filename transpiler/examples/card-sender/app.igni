@@ -41,6 +41,9 @@ shared:
     {id: 6, title: "Just Because", occasion: "generic", bg: "card-generic.jpg", is_new: true}
   ]
   picked_card = null
+  draft_recipient = ""
+  draft_message = ""
+  draft_accent = "brand"
   sent_history = []
 
 screen Home, title: "Cards":
@@ -63,13 +66,50 @@ screen Home, title: "Cards":
     navigate to Designer
 
 screen Designer, title: "Customise":
+  recipient_draft = shared.draft_recipient
+  message_draft = shared.draft_message
+
   layout vertical, padding: spacing/6, gap: spacing/4, fill: true:
     button "← Back", color: subtle, on tap: navigate back
-    if shared.picked_card is null:
-      label "No card selected"
-    else:
-      label shared.picked_card.title, style: heading
-      label "Customiser flow lands next session", style: caption, color: subtle
+
+    layout vertical, padding: spacing/5, gap: spacing/3, background: card, rounded: medium, border: thin:
+      label shared.picked_card.title, style: heading, color: shared.draft_accent
+      label shared.picked_card.occasion, style: caption, color: subtle
+
+      if shared.draft_recipient is not "":
+        label "To " + shared.draft_recipient, style: body
+      if shared.draft_message is not "":
+        label shared.draft_message, style: body
+      if shared.sender_name is not "":
+        label "— " + shared.sender_name, style: caption, color: subtle
+
+    label "Recipient", style: heading.small
+    input bind: recipient_draft, placeholder: "Who is this for?", on change: shared.draft_recipient = recipient_draft
+
+    label "Message", style: heading.small
+    input bind: message_draft, placeholder: "Add a personal touch", on change: shared.draft_message = message_draft
+
+    label "Accent", style: heading.small
+    layout horizontal, gap: spacing/3:
+      button "Brand red", color: brand, on tap: shared.draft_accent = "brand"
+      button "Sage green", color: sage, on tap: shared.draft_accent = "sage"
+
+    button "Preview", color: brand, on tap: navigate to Preview
+
+screen Preview, title: "Preview":
+  layout vertical, padding: spacing/6, gap: spacing/4, fill: true:
+    button "← Back", color: subtle, on tap: navigate back
+
+    layout vertical, padding: spacing/6, gap: spacing/4, background: card, rounded: medium, fill: true:
+      label shared.picked_card.title, style: heading, color: shared.draft_accent
+      if shared.draft_recipient is not "":
+        label "To " + shared.draft_recipient, style: body
+      if shared.draft_message is not "":
+        label shared.draft_message, style: body
+      if shared.sender_name is not "":
+        label "— " + shared.sender_name, style: caption, color: subtle
+
+    label "Send flow lands next session", style: caption, color: subtle
 
 screen Settings, title: "Settings":
   sender_draft = shared.sender_name
