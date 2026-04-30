@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3-flash-preview",
+  "model_id": "gemini-3-flash-preview",
+  "prompt_name": "Card preview screen with floating share button and overlay watermark",
+  "prompt_slug": "card-preview-screen-with-floating-share-button-and-overlay-watermark",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v021-pre-cycle-evidence/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v021-pre-cycle-evidence/cheatsheet-draft-full.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "d31e0f2e373e35eb3ecd3d094f7b4ab49e76f2a5404aeb5d9df5a245480ac07e",
+  "spec_words": 8255,
+  "timestamp": "2026-04-30T09:34:13.295Z",
+  "duration_ms": 14565,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 15435,
+    "output_tokens": 383,
+    "cache_read_tokens": 8180
+  },
+  "cost_usd": 0.0092755,
+  "transpile": null
+}

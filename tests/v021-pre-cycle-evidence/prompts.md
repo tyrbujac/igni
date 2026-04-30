@@ -23,7 +23,7 @@ npx tsx tests/runner/cold-test.ts \
 
 ---
 
-## P1 — Card list home screen with hoverable previews and decorative stamps
+## 1. Card list home screen with hoverable previews and decorative stamps
 
 > Write Igni source for the home screen of a digital greeting-card-sender app. The screen shows a grid of available card designs the user can pick from. Each card design is a small preview (image background + a title overlay like "Birthday" or "Thank You" in a hand-drawn style) the user can tap to start customising it. Some cards have a "NEW!" stamp in the top-right corner — a small rotated label that's visually distinct from the rest of the card.
 >
@@ -41,7 +41,7 @@ npx tsx tests/runner/cold-test.ts \
 
 ---
 
-## P2 — Card preview screen with floating share button and overlay watermark
+## 2. Card preview screen with floating share button and overlay watermark
 
 > Write Igni source for a card preview screen in the same app. The screen shows the picked card design at full size — image background fills the screen, title and message render on top of the image. In the bottom-right corner, a circular "Share" button floats over the card content (always visible, doesn't scroll with the card).
 >
@@ -56,7 +56,7 @@ npx tsx tests/runner/cold-test.ts \
 
 ---
 
-## P3 — Filter screen with chip-group tag filter and inline previews
+## 3. Filter screen with chip-group tag filter and inline previews
 
 > Write Igni source for a filter screen in the same app. The user has a list of tags (occasion: birthday, thank-you, holiday, get-well, congrats, sympathy, generic — 7 tags). The screen shows these as a chip group at the top: each chip is a small rounded label (`#birthday`, `#thank-you`, etc.) the user can tap to toggle. Selected chips highlight with brand colour; unselected chips show on the subtle background.
 >
