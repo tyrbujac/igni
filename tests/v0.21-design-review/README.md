@@ -87,16 +87,49 @@ Patch decision (per spec-cycle skill rules):
 - **The wrapper-overload-at-fourth-instance concern (doc 126 §"Why A locked over B" anticipated this) was substantively pressed by 2/3 cells.** The Stage 1 lock under operator confidence was honest — n=4 cross-source signal was stronger than v0.20.4's n=1 — but the architectural axis turned out to be load-bearing in a way the lock didn't fully account for. Methodology lesson: *operator-confidence locks under cross-source threshold can still meet architectural pushback; anti-anchored Stage 2 is the load-bearing instrument that catches it.*
 - **Peer-language convergence on race-conditions** (3/3 cells reach the same survey conclusion) is methodology-grade independent corroboration. When peer languages have universally moved past a pattern (URL-guard) and Igni's draft proposes that pattern, the absence of any modern peer using it is itself signal.
 
-### Patch list (post-Tyr-decision)
+### Patch list — Tyr decisions (2026-04-30)
 
-Pending Q1 + Q3 Tyr-reversal decisions. Independently confirmed patches (apply regardless of Q1/Q3 outcome):
+**Q1 — FLIPPED A → B (`shared persisted:` annotated block).** Tyr-decision rationale (per syntax reading + load-bearing argument-semantic asymmetry):
+- Refined-A's parens-overhead becomes annoying when persisting many variables (4 calls vs single block declaring 4).
+- Refined-A is B-shaped with parens-syntax (cosmetic difference, not functional).
+- B's variant-pair shape matches `theme:` / `theme dark:` precedent shipped in v0.20 — sub-block flavour declares variant of same primitive class.
+- Persistence IS a flavour of shared state, not a separate category (rejecting Gemini's C which would create a third top-level state block).
+- B preserves `shared.X` access pattern across volatile + persisted variables.
 
-1. **doc 126 Q4** — replace silent-merge lean with parse-time-error-on-conflicting-persisted-declarations.
-2. **doc 126 Q5** — generalize to JSON-literal-only rule covering function calls / wrapper calls / variable references / nested expressions.
-3. **Both Q4 + Q5 patches apply equally to Option A, B, or C** — they're option-independent per design note.
+**Q3 — FLIPPED A → C+B (counter-token + `http.Client.close()`).** CC-delegated decision per Tyr ("your call based on codegen-tradeoff read"). Rationale:
+- Codegen surface bounded (~10 extra lines/fetch vs ~5 for C-only). Both small absolute counts.
+- Peer-language convergence is universal (SwiftUI `.task(id:)`, React Query, Compose `LaunchedEffect(key)` all ship cancellation+lifecycle). Shipping C-only would put Igni alone among modern reactive frameworks.
+- Bandwidth savings on slider-drag surfaces are user-visible (mobile data + battery; canonical bad case).
+- Web partial-cancellation caveat (`http.Client.close()` is best-effort on Flutter Web) is documentable; counter-token correctness backstop catches anything close() misses.
+- C+B foundation makes future cancellation refinements incremental rather than re-architecting.
+
+**Q4 — FLIPPED to parse-time error.** All 3/3 panel cells independently identified durability-of-failure asymmetry. Concrete rule: *"A persisted shared name may be declared exactly once per app."* Cross-file collision is parse-time error.
+
+**Q5 — REFINED to JSON-literal-only generalized rule.** All 3/3 panel cells flagged the operator-honest-lean as correct in shape but under-specified — the three concrete rejections miss `persist(now())` / `persist(uuid())` / function-call categories. Concrete rule: *"`persist()` accepts only JSON-serialisable literal defaults: string, number, boolean, null, or lists/maps composed only of the same."*
+
+All four patches applied to docs 126 + 121 in this session. Cycle status table updated; Stage 2 → Stage 0 (cheatsheet cold-test) per `spec-cycle` skill cycle.
+
+### Methodology contributions catalogued (chapter §4 queue)
+
+**11 + 12 (this session arc):** *Split-alternative Trigger A* — principled-minority sub-pattern where panel converges on "not the locked option" but splits across alternatives; architecture chooses replacement from non-converged candidates. Distinct from doc 114's instances 1-4 (panel converges on alternative; architecture honors-or-overrides).
+
+- **Instance 5 (Q1 here):** panel rejects A, splits B (Claude) vs C (Gemini); architecture picks B per syntax-reading + load-bearing argument-semantic-asymmetry objection.
+- **Instance 6 (Q3 here):** panel converges on "not A" with shared C-core but splits on cancellation depth (Claude → B+C; GPT → C-only-with-B-future; Gemini → C+B); architecture picks C+B per codegen-tradeoff read + peer-language convergence.
+
+**First Stage 2 panel where both Q1 + Q3 anti-anchors fired Trigger A simultaneously** (10th methodology contribution, catalogued in commit `a9af164`'s message). Plus the split-alternative sub-pattern (11th + 12th, catalogued here).
 
 ### Files
 
-- `tests/v0.21-design-review/README.md` — pre-registration above; this synthesis section.
+- `tests/v0.21-design-review/README.md` — pre-registration above; this synthesis section + Tyr-decision patch list.
 - `prompts.md` — single-prompt 5-Q anti-anchored framework.
 - 3 cell outputs (`<model>_none_v0-21-persistence-reactive-fetch-race-design-critique.md`).
+- `docs/private/126_v021_persistence.md` — Q2 FLIPPED A→B; Q4 + Q5 patches applied (gitignored).
+- `docs/private/121_reactive_fetch_race.md` — FLIPPED A→C+B with codegen sketch + caveats (gitignored).
+
+### Next-session opener
+
+**Stage 0 cheatsheet cold-test for v0.21** (per `spec-cycle` skill cycle stage progression). Draft v0.21 cheatsheet additions:
+- `shared persisted:` sub-block syntax + access pattern + JSON-literal rule + collision rule.
+- `fetch()` re-fetch cancellation + counter-token semantic rule + best-effort-on-Web caveat.
+
+Then 3 frontier models × 3 prompts cold-test to validate LLM cold-reach on the new shapes. ~$0.30-0.50, ~1 session.
