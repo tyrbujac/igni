@@ -60,7 +60,9 @@ screen Home, title: "Cards":
             label "NEW!", padding: spacing/1, background: sage, color: cream, rounded: small, style: caption
         label design.occasion, style: caption, color: subtle
 
-    button "Settings", color: subtle, on tap: navigate to Settings
+    layout horizontal, gap: spacing/3:
+      button "History", color: subtle, on tap: navigate to History
+      button "Settings", color: subtle, on tap: navigate to Settings
 
   pick(c):
     shared.picked_card = c
@@ -152,6 +154,24 @@ screen Sent, title: "Sent":
     label "Card sent!", style: heading, color: sage
     label "Shareable link generation lands next session.", style: caption, color: subtle
     button "Send another", color: brand, on tap: navigate to Home
+
+screen History, title: "Sent history":
+  layout vertical, padding: spacing/6, gap: spacing/4, fill: true:
+    button "← Back", color: subtle, on tap: navigate back
+
+    if shared.sent_history is empty:
+      layout vertical, padding: spacing/6, gap: spacing/2, align: center:
+        label "No cards sent yet", style: heading.small, color: subtle
+        label "Send one from the Home screen", style: caption, color: subtle
+    else:
+      label "Recently sent", style: heading.small
+      each entry in shared.sent_history:
+        layout vertical, padding: spacing/4, gap: spacing/2, background: card, rounded: medium:
+          label entry.card_title, style: heading.small
+          if entry.recipient is not "":
+            label "To " + entry.recipient, style: caption, color: subtle
+          if entry.message is not "":
+            label entry.message, style: caption
 
 screen Settings, title: "Settings":
   sender_draft = shared.sender_name
