@@ -1,0 +1,5 @@
+
+  Error: `shared persisted:` default for `installed_at` is a call to `now()`. Persisted defaults must be JSON-serialisable literals (string, number, true/false/null, or lists/maps of the same). Function calls (now(), uuid()), wrapper calls (fetch(), spring()), variable references, and computed expressions are rejected because the default is evaluated only on first run; the disk value wins on every run after. To persist dynamic data, declare a literal default and assign the value later from an explicit event handler.
+
+    persisted-non-literal-default.igni:2 |   installed_at = now()
+                                         |                     ^

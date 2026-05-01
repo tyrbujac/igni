@@ -1,0 +1,6 @@
+shared persisted:
+  installed_at = now()
+
+screen Home:
+  layout vertical:
+    label "Home"

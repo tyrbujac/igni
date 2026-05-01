@@ -1,0 +1,17 @@
+shared:
+  cart = []
+  current_filter = "all"
+
+shared persisted:
+  theme_mode = "system"
+  font_size = 17
+  recent_searches = []
+
+screen Settings:
+  layout vertical, padding: large, gap: medium:
+    label "Theme: " + shared.theme_mode
+    button "Light", on tap: shared.theme_mode = "light"
+    button "Dark", on tap: shared.theme_mode = "dark"
+    button "System", on tap: shared.theme_mode = "system"
+    label "Font size: " + shared.font_size
+    slider bind: shared.font_size, min: 12, max: 24, step: 1

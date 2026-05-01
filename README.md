@@ -6,7 +6,7 @@
 
 A programming language for building UIs — designed to be read.
 
-**Status: research prototype.** Final-year CS dissertation project investigating whether LLM output accuracy and human readability track each other. Spec is at <!-- SYNC:version -->v0.20.4<!-- /SYNC:version -->; transpiler covers most of it; the tutorial has been through multiple cold-run iterations. Not yet production-ready. See [§ Status](#status) for the methodology + evidence.
+**Status: research prototype.** Final-year CS dissertation project investigating whether LLM output accuracy and human readability track each other. Spec is at <!-- SYNC:version -->v0.21.0<!-- /SYNC:version -->; transpiler covers most of it; the tutorial has been through multiple cold-run iterations. Not yet production-ready. See [§ Status](#status) for the methodology + evidence.
 
 **The hypothesis:** LLM accuracy and human readability track each other. Remove the ambiguity that trips LLMs up — no brackets on component invocation, one way to update state, a single spec document — and the language becomes nicer for humans too. Igni is that experiment.
 
@@ -131,13 +131,13 @@ my-app/
 
 ## Status
 
-**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.20.4<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.20.4<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.20.4-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.20.4-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.20.4-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.20.4-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
+**Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.21.0<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.21.0<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.21.0-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.21.0-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.21.0-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.21.0-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
-<!-- SYNC:latest-spec-changes -->**Latest spec change: v0.20.4** (2026-04-30) — *TODO: one-line tagline describing what v0.20.4 ships.* See [`CHANGELOG.md`](CHANGELOG.md) for full history.<!-- /SYNC:latest-spec-changes -->
+<!-- SYNC:latest-spec-changes -->**Latest spec change: v0.21.0** (2026-05-01) — *Persistent shared state + reactive-fetch race-conditions handled. Cycle path: `docs/private/126` (persistence) + `docs/private/121` (race conditions); n=4 cross-source convergence on persistence; Stage 0 STRONG PASS zero-patch (8/9 canonical, 1 truncated cell).* See [`CHANGELOG.md`](CHANGELOG.md) for full history.<!-- /SYNC:latest-spec-changes -->
 
 **Latest methodology result:** the v0.10 domain-swap round (Shopping + Apothecary + Spaceship Cargo, 3 × 4 models × cheatsheet tier) produced 9/9 frontier adoption of `{target with ...}` unprompted. Three runs at varying domain distance from e-commerce rules out the "shopping-cart corpus density" confound — the cheatsheet teaches the syntax, the domain doesn't supply it. First post-ship result strong enough to call directly-supported rather than suggestive.
 
-**Transpiler:** Working. <!-- SYNC:example-count -->95<!-- /SYNC:example-count --> example apps compile and run in the browser; iOS simulator and Android emulator supported via `igni run ios` / `igni run android` (device auto-pick, auto-boot, `--device` override). Covers:
+**Transpiler:** Working. <!-- SYNC:example-count -->97<!-- /SYNC:example-count --> example apps compile and run in the browser; iOS simulator and Android emulator supported via `igni run ios` / `igni run android` (device auto-pick, auto-boot, `--device` override). Covers:
 
 - **Composition** — screens, components, wrapper components with `body` slot, layouts
 - **Control flow** — `if`/`else`, `each` loops (with `paginate:` for lazy rendering), functions, lambdas
@@ -164,15 +164,15 @@ igni/
 ├── LICENSE                  # GPL v3 (transpiler) + CC BY-SA 4.0 (spec/docs)
 ├── spec/
 │   ├── README.md
-│   ├── <!-- SYNC:version -->v0.20.4<!-- /SYNC:version -->.md             # current canonical spec
-│   ├── <!-- SYNC:version -->v0.20.4<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
-│   ├── <!-- SYNC:version -->v0.20.4<!-- /SYNC:version -->-micro.md       # current canonical micro reference
-│   └── archive/             # historical <!-- SYNC:historical-range-files -->v0.2.md → v0.20.1.md<!-- /SYNC:historical-range-files --> (never edited after shipping)
+│   ├── <!-- SYNC:version -->v0.21.0<!-- /SYNC:version -->.md             # current canonical spec
+│   ├── <!-- SYNC:version -->v0.21.0<!-- /SYNC:version -->-cheatsheet.md  # current canonical cheatsheet
+│   ├── <!-- SYNC:version -->v0.21.0<!-- /SYNC:version -->-micro.md       # current canonical micro reference
+│   └── archive/             # historical <!-- SYNC:historical-range-files -->v0.2.md → v0.20.4.md<!-- /SYNC:historical-range-files --> (never edited after shipping)
 ├── transpiler/
 │   ├── README.md
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point
-│   ├── examples/            # <!-- SYNC:example-count -->95<!-- /SYNC:example-count --> .igni apps + .expected.dart references
+│   ├── examples/            # <!-- SYNC:example-count -->97<!-- /SYNC:example-count --> .igni apps + .expected.dart references
 │   └── examples-errors/     # pinned transpile-rejection fixtures
 ├── tests/                   # cold-LLM test results + methodology
 │   ├── README.md

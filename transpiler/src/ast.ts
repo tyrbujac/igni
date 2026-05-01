@@ -120,6 +120,13 @@ export interface VariableDecl extends NodeBase {
   name: string;
   value: Expr;
   typeHint?: string;
+  // v0.21: set when this VariableDecl was declared inside a `shared persisted:`
+  // sub-block. Persisted shared state is durable (survives app restart) via
+  // SharedPreferences; volatile shared state is in-memory only. Both live in
+  // `Program.shared` flat — namespace is shared (`shared.X` works regardless
+  // of which sub-block declared it). Default false (only true for the
+  // sub-block variant).
+  persisted?: boolean;
 }
 
 export interface Assignment extends NodeBase {

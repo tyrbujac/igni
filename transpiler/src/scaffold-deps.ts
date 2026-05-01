@@ -13,9 +13,13 @@
 // 2026-04-26 during pomodonut browser-test).
 
 export const SCAFFOLD_DEPS: { import: string; key: string; line: string }[] = [
-  { import: 'package:http/',         key: 'http:',         line: '  http: ^1.2.0' },
-  { import: 'package:geolocator/',   key: 'geolocator:',   line: '  geolocator: ^13.0.1' },
-  { import: 'package:audioplayers/', key: 'audioplayers:', line: '  audioplayers: ^6.1.0' },
+  { import: 'package:http/',                key: 'http:',                line: '  http: ^1.2.0' },
+  { import: 'package:geolocator/',          key: 'geolocator:',          line: '  geolocator: ^13.0.1' },
+  { import: 'package:audioplayers/',        key: 'audioplayers:',        line: '  audioplayers: ^6.1.0' },
+  // v0.21: shared persisted: state. Pulled in only when codegen emits the
+  // shared_preferences import (i.e., the program contains a `shared persisted:`
+  // sub-block).
+  { import: 'package:shared_preferences/',  key: 'shared_preferences:',  line: '  shared_preferences: ^2.3.0' },
 ];
 
 export function injectDependencies(dart: string, pubspec: string): string {

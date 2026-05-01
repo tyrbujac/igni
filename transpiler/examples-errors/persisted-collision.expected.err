@@ -1,0 +1,5 @@
+
+  Error: `shared.theme_mode` is declared more than once and at least one declaration is persisted. Persisted shared names may be declared exactly once per file (line 2). Reason: persisted collisions are durable — the wrong winner's value persists across app restart even after the conflicting declaration is deleted. Plain `shared:` allows silent merge because volatile-state collisions evaporate on restart; persisted state can't.
+
+    persisted-collision.igni:5 |   theme_mode = "light"
+                               |             ^

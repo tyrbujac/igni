@@ -10,6 +10,7 @@ import {
   Assignment, Expr, IsExpr, BinaryExpr, NumberLit, StringLit, Ident,
   ListLit, ObjectLit, ObjectUpdate, FieldAccess, IndexAccess,
   ThemeBlock, ThemeTextToken, ThemeTextTokenName, ThemeColorToken, ThemeChromeToken,
+  SourceLocation,
   TestBlock, TestStatement, RenderStmt, ExpectStmt,
   TapStmt, ChangeStmt, SubmitStmt, ToggleStmt, SlideStmt,
   MockFetchBlock, MockEveryBlock, MockFetchResponse,
@@ -103,6 +104,29 @@ export class Parser {
         }
       }
       this.assertProgress(posBefore);
+    }
+    // v0.21 Q4: persisted shared names collision check. A persisted name may
+    // be declared exactly once per file (cross-file collision deferred to
+    // v0.22+; see plan from 2026-05-01). Volatile name colliding with a
+    // persisted name of the same identifier also rejects — durability
+    // asymmetry: persisted collisions survive even after the conflicting
+    // declaration is deleted.
+    const seenNames = new Map<string, VariableDecl>();
+    for (const decl of shared) {
+      const prev = seenNames.get(decl.name);
+      if (prev) {
+        const eitherPersisted = decl.persisted || prev.persisted;
+        if (eitherPersisted) {
+          this.errors.push(new TranspileError(
+            `\`shared.${decl.name}\` is declared more than once and at least one declaration is persisted. ` +
+            `Persisted shared names may be declared exactly once per file (line ${prev.loc?.line ?? '?'}). ` +
+            `Reason: persisted collisions are durable — the wrong winner's value persists across app restart even after the conflicting declaration is deleted. Plain \`shared:\` allows silent merge because volatile-state collisions evaporate on restart; persisted state can't.`,
+            decl.loc?.line ?? 1, decl.loc?.column ?? 1,
+          ));
+        }
+      } else {
+        seenNames.set(decl.name, decl);
+      }
     }
     if (this.errors.length > 0) {
       throw new AggregateTranspileError(this.errors);
@@ -455,14 +479,39 @@ export class Parser {
 
   private parseSharedBlock(): VariableDecl[] {
     this.consume(TokenType.Shared, 'Expected "shared"');
+    // v0.21: optional `persisted` qualifier — `shared persisted:`. Lex'd as
+    // Identifier (not a reserved keyword), position-disambiguated immediately
+    // after `shared` and before `:`. Same precedent as v0.20.0's `theme dark:`.
+    let persisted = false;
+    if (this.check(TokenType.Identifier) && this.current().value === 'persisted') {
+      this.advance();
+      persisted = true;
+    }
     this.consume(TokenType.Colon, 'Expected ":"');
     this.consume(TokenType.Newline, 'Expected newline');
-    this.consume(TokenType.Indent, 'Expected indent', this.indentHint('shared:'));
+    this.consume(TokenType.Indent, 'Expected indent', this.indentHint(persisted ? 'shared persisted:' : 'shared:'));
     const vars: VariableDecl[] = [];
     while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
       const posBefore = this.pos;
       try {
-        vars.push(this.parseVariableDecl());
+        const decl = this.parseVariableDecl();
+        if (persisted) {
+          decl.persisted = true;
+          // v0.21 Q5: persist() / `shared persisted:` defaults must be
+          // JSON-serialisable literals (string, number, bool, null, list/map of
+          // same). Function calls, wrapper calls, variable references, and
+          // computed expressions are rejected because the default is evaluated
+          // only on first run when no disk value exists; on every subsequent run
+          // the disk value wins. Dynamic defaults would silently capture
+          // install-time values, violating "no magic."
+          //
+          // Errors are pushed (not thrown) so the rest of the block parses
+          // cleanly — synchronizeLine after a throw would eat across the
+          // shared block's Dedent and cascade into following declarations.
+          const persistErr = this.validatePersistedLiteralDefault(decl);
+          if (persistErr) this.errors.push(persistErr);
+        }
+        vars.push(decl);
       } catch (e) {
         if (e instanceof TranspileError) {
           this.errors.push(e);
@@ -475,6 +524,63 @@ export class Parser {
     }
     this.consume(TokenType.Dedent, 'Expected dedent');
     return vars;
+  }
+
+  // v0.21: walk the default expression of a `shared persisted:` declaration
+  // and return a TranspileError if it isn't a JSON-serialisable literal.
+  // Returns null when the default is valid. Reasons in doc 126 §Q5; cheatsheet
+  // teaches the rule alongside the syntax. Returns rather than throws so the
+  // shared-block loop can keep parsing the remaining declarations cleanly
+  // (a throw + synchronizeLine would cross the block's Dedent and cascade).
+  private validatePersistedLiteralDefault(decl: VariableDecl): TranspileError | null {
+    let firstErr: TranspileError | null = null;
+    const reject = (reason: string, loc: SourceLocation | undefined): void => {
+      if (firstErr) return;
+      firstErr = new TranspileError(
+        `\`shared persisted:\` default for \`${decl.name}\` ${reason}. ` +
+        `Persisted defaults must be JSON-serialisable literals (string, number, true/false/null, ` +
+        `or lists/maps of the same). Function calls (now(), uuid()), wrapper calls (fetch(), spring()), ` +
+        `variable references, and computed expressions are rejected because the default is evaluated ` +
+        `only on first run; the disk value wins on every run after. To persist dynamic data, declare ` +
+        `a literal default and assign the value later from an explicit event handler.`,
+        loc?.line ?? decl.loc?.line ?? 1,
+        loc?.column ?? decl.loc?.column ?? 1,
+      );
+    };
+    const walk = (expr: Expr): void => {
+      switch (expr.type) {
+        case 'StringLit':
+        case 'NumberLit':
+          return;
+        case 'Ident':
+          if (expr.name === 'true' || expr.name === 'false' || expr.name === 'null') return;
+          reject(`references the variable \`${expr.name}\``, expr.loc);
+          return;
+        case 'ListLit':
+          for (const el of expr.elements) walk(el);
+          return;
+        case 'ObjectLit':
+          for (const entry of expr.entries) walk(entry.value);
+          return;
+        case 'FunctionCall':
+          reject(`is a call to \`${expr.name}()\``, expr.loc);
+          return;
+        case 'BinaryExpr':
+        case 'EqualityExpr':
+        case 'IsExpr':
+        case 'UnaryExpr':
+          reject(`is a computed expression`, expr.loc);
+          return;
+        case 'FieldAccess':
+        case 'IndexAccess':
+          reject(`references a member of another value`, expr.loc);
+          return;
+        default:
+          reject(`is not a JSON literal`, expr.loc);
+      }
+    };
+    walk(decl.value);
+    return firstErr;
   }
 
   private parseThemeBlock(): ThemeBlock {

@@ -86,6 +86,10 @@ export class CodeGenerator {
   private fetchVars: { name: string; url: string; urlExpr: Expr; method?: string; body?: string; reactive: boolean; kind?: 'fetch' | 'locate' }[] = [];
 
   private hasShared = false;
+  // v0.21: set when at least one variable in `shared:` carries `persisted: true`
+  // (declared via `shared persisted:` sub-block). Gates the SharedPreferences
+  // import + load/save codegen + async main wrapping.
+  private hasPersistedShared = false;
   // v0.18: when generating a *.test.igni file, fetch codegen routes through
   // `_igniHttpGet` (the test-scope wrapper) instead of `http.get(...)` so
   // `mock fetch:` blocks can intercept calls.
@@ -155,6 +159,7 @@ export class CodeGenerator {
     this.allScreens = program.screens;
     this.allComponents = program.components;
     this.hasShared = program.shared.length > 0;
+    this.hasPersistedShared = program.shared.some(v => v.persisted);
     // v0.15.0: load theme.color overrides + user-defined tokens.
     this.themeColors = {};
     this.themeScaffold = {};
@@ -258,6 +263,13 @@ export class CodeGenerator {
     if (this.hasFetch) {
       code += `import 'package:http/http.dart' as http;\n`;
       code += `import 'dart:convert';\n`;
+    } else if (this.hasPersistedShared) {
+      // v0.21: persisted shared state needs jsonEncode/jsonDecode for
+      // load/save. http isn't pulled in unless fetch() is also used.
+      code += `import 'dart:convert';\n`;
+    }
+    if (this.hasPersistedShared) {
+      code += `import 'package:shared_preferences/shared_preferences.dart';\n`;
     }
     if (hasRandom) {
       code += `import 'dart:math';\n`;
@@ -405,7 +417,16 @@ export class CodeGenerator {
       if (hasThemeDark) {
         code += `\nThemeMode _resolveThemeMode(dynamic mode) {\n  if (mode == 'light') return ThemeMode.light;\n  if (mode == 'dark') return ThemeMode.dark;\n  return ThemeMode.system;\n}\n\n`;
       }
-      code += `void main() {\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, ${dualThemeArgs}, home: ${firstName}Screen()),\n  ));\n}\n`;
+      if (this.hasPersistedShared) {
+        // v0.21: persisted shared state requires loading from disk before the
+        // first build. Wrap main in async and ensureInitialized + await
+        // SharedState.init() before runApp. Missing this would race the first
+        // render against the disk read and show the literal default for one
+        // frame before snapping to the persisted value.
+        code += `void main() async {\n  WidgetsFlutterBinding.ensureInitialized();\n  await SharedState.init();\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, ${dualThemeArgs}, home: ${firstName}Screen()),\n  ));\n}\n`;
+      } else {
+        code += `void main() {\n  runApp(ListenableBuilder(\n    listenable: shared,\n    builder: (context, child) => MaterialApp(debugShowCheckedModeBanner: false, ${dualThemeArgs}, home: ${firstName}Screen()),\n  ));\n}\n`;
+      }
     } else {
       if (hasThemeDark) {
         code += `\nThemeMode _resolveThemeMode(dynamic mode) {\n  if (mode == 'light') return ThemeMode.light;\n  if (mode == 'dark') return ThemeMode.dark;\n  return ThemeMode.system;\n}\n\n`;
@@ -488,15 +509,52 @@ export class CodeGenerator {
 
   private genSharedState(vars: VariableDecl[]): string {
     const fields = vars.map(v => {
-      const dartType = inferType(v.value, v.typeHint);
+      // v0.21: persisted vars use `dynamic` so jsonDecode can assign directly
+      // without static-cast generation. Volatile vars keep their inferred type
+      // (existing behaviour, byte-identical for non-persisted programs).
+      const dartType = v.persisted ? 'dynamic' : inferType(v.value, v.typeHint);
       this.sharedVarTypes[v.name] = dartType;
       const dartValue = this.exprToDart(v.value);
       return this.withMarker(v, `shared:${v.name}`, `  ${dartType} ${v.name} = ${dartValue};`);
     }).join('\n');
 
+    const persistedVars = vars.filter(v => v.persisted);
+    const hasPersisted = persistedVars.length > 0;
+
     let code = `class SharedState extends ChangeNotifier {\n`;
-    code += fields + '\n\n';
-    code += `  void update(void Function() fn) {\n    fn();\n    notifyListeners();\n  }\n`;
+    code += fields + '\n';
+    if (hasPersisted) {
+      // v0.21 persistence: SharedPreferences-backed durable storage.
+      // - `init()` runs once at app start (before runApp), reading every
+      //   persisted key from disk into the in-memory field. Missing keys keep
+      //   their literal default. JSON-decode failures (schema drift across
+      //   versions) silently fall back to the default — durable state should
+      //   never crash app boot.
+      // - `_savePersisted()` writes every persisted key on every update().
+      //   Saves are fire-and-forget; SharedPreferences batches to disk.
+      code += `\n  static SharedPreferences? _prefs;\n`;
+      code += `\n  static Future<void> init() async {\n`;
+      code += `    _prefs = await SharedPreferences.getInstance();\n`;
+      for (const v of persistedVars) {
+        code += `    final _raw_${v.name} = _prefs!.getString('${v.name}');\n`;
+        code += `    if (_raw_${v.name} != null) {\n`;
+        code += `      try { shared.${v.name} = jsonDecode(_raw_${v.name}); } catch (_) {}\n`;
+        code += `    }\n`;
+      }
+      code += `  }\n`;
+      code += `\n  void _savePersisted() {\n`;
+      code += `    final prefs = _prefs;\n`;
+      code += `    if (prefs == null) return;\n`;
+      for (const v of persistedVars) {
+        code += `    prefs.setString('${v.name}', jsonEncode(${v.name}));\n`;
+      }
+      code += `  }\n`;
+    }
+    code += `\n  void update(void Function() fn) {\n    fn();\n`;
+    if (hasPersisted) {
+      code += `    _savePersisted();\n`;
+    }
+    code += `    notifyListeners();\n  }\n`;
     code += `}\n\n`;
     code += `final shared = SharedState();\n`;
     return code;

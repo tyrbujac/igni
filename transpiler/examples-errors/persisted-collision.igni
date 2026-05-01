@@ -1,0 +1,9 @@
+shared:
+  theme_mode = "system"
+
+shared persisted:
+  theme_mode = "light"
+
+screen Home:
+  layout vertical:
+    label "Home"

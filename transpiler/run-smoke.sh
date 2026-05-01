@@ -36,7 +36,7 @@ fi
 # Pre-flight: ensure kitchen-sink deps are in pubspec.
 PUBSPEC="$SCAFFOLD/pubspec.yaml"
 NEED_PUB_GET=0
-for entry in "audioplayers: ^6.1.0" "http: ^1.2.0" "geolocator: ^13.0.1"; do
+for entry in "audioplayers: ^6.1.0" "http: ^1.2.0" "geolocator: ^13.0.1" "shared_preferences: ^2.3.0"; do
   key=$(echo "$entry" | cut -d: -f1)
   if ! grep -qE "^  $key:" "$PUBSPEC"; then
     # macOS sed needs the empty .bak extension; we delete it after.
