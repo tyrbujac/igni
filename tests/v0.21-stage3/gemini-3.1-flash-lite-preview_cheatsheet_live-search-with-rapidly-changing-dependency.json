@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-flash-lite-preview",
+  "model_id": "gemini-3.1-flash-lite-preview",
+  "prompt_name": "Live-search with rapidly-changing dependency",
+  "prompt_slug": "live-search-with-rapidly-changing-dependency",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.21-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.21.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "39654e44d144bb81057b0c02f7f1856585f193d4670b2235f189bd772cb55e34",
+  "spec_words": 8007,
+  "timestamp": "2026-05-01T09:32:30.583Z",
+  "duration_ms": 2631,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 15107,
+    "output_tokens": 660,
+    "cache_read_tokens": 12263
+  },
+  "cost_usd": 0.005073325,
+  "transpile": null
+}

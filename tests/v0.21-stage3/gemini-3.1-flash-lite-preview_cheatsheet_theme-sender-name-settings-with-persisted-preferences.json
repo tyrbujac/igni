@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-flash-lite-preview",
+  "model_id": "gemini-3.1-flash-lite-preview",
+  "prompt_name": "Theme + sender-name settings with persisted preferences",
+  "prompt_slug": "theme-sender-name-settings-with-persisted-preferences",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.21-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.21.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "39654e44d144bb81057b0c02f7f1856585f193d4670b2235f189bd772cb55e34",
+  "spec_words": 8007,
+  "timestamp": "2026-05-01T09:32:27.950Z",
+  "duration_ms": 3033,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 15067,
+    "output_tokens": 744,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.00488275,
+  "transpile": null
+}

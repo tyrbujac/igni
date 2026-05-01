@@ -1,0 +1,23 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.5",
+  "model_id": "gpt-5.5-2026-04-23",
+  "prompt_name": "Notes app with persisted draft + sync to remote",
+  "prompt_slug": "notes-app-with-persisted-draft-sync-to-remote",
+  "prompt_index": 3,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.21-stage3/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.21.0-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "39654e44d144bb81057b0c02f7f1856585f193d4670b2235f189bd772cb55e34",
+  "spec_words": 8007,
+  "timestamp": "2026-05-01T09:29:49.855Z",
+  "duration_ms": 87450,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 14166,
+    "output_tokens": 5165,
+    "cache_read_tokens": 13056
+  },
+  "cost_usd": 0.232308,
+  "transpile": null
+}
