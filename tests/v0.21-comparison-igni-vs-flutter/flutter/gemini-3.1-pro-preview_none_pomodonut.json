@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "pomodonut",
+  "prompt_slug": "pomodonut",
+  "prompt_index": 3,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.21-comparison-igni-vs-flutter/prompts-flutter.md",
+  "spec_path": null,
+  "spec_tier": "none",
+  "spec_sha256": null,
+  "spec_words": 0,
+  "timestamp": "2026-05-01T15:33:54.943Z",
+  "duration_ms": 49462,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 350,
+    "output_tokens": 2080,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.02566,
+  "transpile": null
+}

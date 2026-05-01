@@ -1,0 +1,17 @@
+{
+  "framework": "flutter",
+  "model": "claude-opus-4-7",
+  "app": "bmi",
+  "prompt_tokens": 527,
+  "cheatsheet_tokens": 0,
+  "total_input_tokens": 527,
+  "cache_creation_tokens": 0,
+  "cache_read_tokens": 0,
+  "output_tokens": 3599,
+  "output_loc": 293,
+  "output_words": 751,
+  "wall_clock_seconds": 30.749,
+  "compile_success": true,
+  "extracted_code": true,
+  "cost_usd": 0.09261
+}

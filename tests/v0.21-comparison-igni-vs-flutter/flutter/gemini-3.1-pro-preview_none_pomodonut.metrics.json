@@ -1,0 +1,17 @@
+{
+  "framework": "flutter",
+  "model": "gemini-3.1-pro-preview",
+  "app": "pomodonut",
+  "prompt_tokens": 350,
+  "cheatsheet_tokens": 0,
+  "total_input_tokens": 350,
+  "cache_creation_tokens": 0,
+  "cache_read_tokens": 0,
+  "output_tokens": 2080,
+  "output_loc": 250,
+  "output_words": 678,
+  "wall_clock_seconds": 49.462,
+  "compile_success": true,
+  "extracted_code": true,
+  "cost_usd": 0.02566
+}

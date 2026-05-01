@@ -1,0 +1,17 @@
+{
+  "framework": "flutter",
+  "model": "gpt-5.5",
+  "app": "mi-card",
+  "prompt_tokens": 219,
+  "cheatsheet_tokens": 0,
+  "total_input_tokens": 219,
+  "cache_creation_tokens": 0,
+  "cache_read_tokens": 0,
+  "output_tokens": 770,
+  "output_loc": 110,
+  "output_words": 207,
+  "wall_clock_seconds": 9.962,
+  "compile_success": true,
+  "extracted_code": true,
+  "cost_usd": 0.024195
+}

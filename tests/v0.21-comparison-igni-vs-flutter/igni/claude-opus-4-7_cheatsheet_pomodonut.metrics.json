@@ -1,0 +1,17 @@
+{
+  "framework": "igni",
+  "model": "claude-opus-4-7",
+  "app": "pomodonut",
+  "prompt_tokens": 514,
+  "cheatsheet_tokens": 20526,
+  "total_input_tokens": 21040,
+  "cache_creation_tokens": 0,
+  "cache_read_tokens": 20607,
+  "output_tokens": 851,
+  "output_loc": 75,
+  "output_words": 274,
+  "wall_clock_seconds": 11.403,
+  "compile_success": true,
+  "extracted_code": true,
+  "cost_usd": 0.0337435
+}

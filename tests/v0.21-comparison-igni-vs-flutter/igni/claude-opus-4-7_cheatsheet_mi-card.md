@@ -1,0 +1,15 @@
+```igni
+screen IdCard, background: teal:
+  layout vertical, align: center, gap: medium, padding: large:
+    image "avatar.png", size: 140, round: true
+    label "Joe Bloggs", style: heading
+    label "IGNI DEVELOPER", color: white
+
+    layout horizontal, gap: medium, padding: medium, background: card, rounded: medium:
+      icon "phone", color: teal
+      label "+44 123 456 7890"
+
+    layout horizontal, gap: medium, padding: medium, background: card, rounded: medium:
+      icon "mail", color: teal
+      label "joe@bloggs.dev"
+```

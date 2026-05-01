@@ -1,0 +1,8 @@
+{
+  "model": "gemini-3.1-pro-preview",
+  "framework": "igni",
+  "app": "pomodonut",
+  "extracted_code": true,
+  "compile_success": false,
+  "compile_error": "Error: Unexpected character: '`'\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/phase4-igni-khPusK/app.igni:1 | ```igni\n                                                                                   | ^"
+}

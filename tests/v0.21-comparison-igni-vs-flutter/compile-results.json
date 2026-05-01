@@ -1,0 +1,146 @@
+[
+  {
+    "model": "claude-opus-4-7",
+    "framework": "igni",
+    "app": "bmi",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  },
+  {
+    "model": "claude-opus-4-7",
+    "framework": "igni",
+    "app": "mi-card",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  },
+  {
+    "model": "claude-opus-4-7",
+    "framework": "igni",
+    "app": "pomodonut",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  },
+  {
+    "model": "gemini-3.1-pro-preview",
+    "framework": "igni",
+    "app": "bmi",
+    "extracted_code": false,
+    "compile_success": false,
+    "compile_error": "no fenced code block found in output"
+  },
+  {
+    "model": "gemini-3.1-pro-preview",
+    "framework": "igni",
+    "app": "mi-card",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  },
+  {
+    "model": "gemini-3.1-pro-preview",
+    "framework": "igni",
+    "app": "pomodonut",
+    "extracted_code": true,
+    "compile_success": false,
+    "compile_error": "Error: Unexpected character: '`'\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/phase4-igni-khPusK/app.igni:1 | ```igni\n                                                                                   | ^"
+  },
+  {
+    "model": "gpt-5.5",
+    "framework": "igni",
+    "app": "bmi",
+    "extracted_code": true,
+    "compile_success": false,
+    "compile_error": "Error: Unexpected token \"gender_border\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/phase4-igni-h22oFO/app.igni:11 |   gender_border():\n                                                                                    |                ^\n\n  Error: Unexpected token \"\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/phase4-igni-h22oFO/app.igni:12 |     if shared.gender is \"male\":\n                                                                                    |     ^\n\n  Error: Unexpected token \"\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/phase4-igni-h22oFO/app.igni:13 |       return thick\n                                                                                    |       ^\n\n  Error: Expected \"screen\", got \"else\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/phase4-igni-h22oFO/app.igni:14 |     else:\n                                                                                    |         ^\n\n  Error: Expected \":\", got \".\"\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/phase4-igni-h22oFO/app.igni:18 |     if shared.gender is \"male\":\n                                                                                    |              ^\n\n  Error: Unexpected token \"gender_border\" — expected a UI element\n\n    /var/folders/rh/7f3gz0ls3fxfxv0jdmdsxn0m0000gn/T/phase4-igni-h22oFO/app.igni:27 |   gender_border():\n                                                  "
+  },
+  {
+    "model": "gpt-5.5",
+    "framework": "igni",
+    "app": "mi-card",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  },
+  {
+    "model": "gpt-5.5",
+    "framework": "igni",
+    "app": "pomodonut",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  },
+  {
+    "model": "claude-opus-4-7",
+    "framework": "flutter",
+    "app": "bmi",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  },
+  {
+    "model": "claude-opus-4-7",
+    "framework": "flutter",
+    "app": "mi-card",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  },
+  {
+    "model": "claude-opus-4-7",
+    "framework": "flutter",
+    "app": "pomodonut",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  },
+  {
+    "model": "gemini-3.1-pro-preview",
+    "framework": "flutter",
+    "app": "bmi",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  },
+  {
+    "model": "gemini-3.1-pro-preview",
+    "framework": "flutter",
+    "app": "mi-card",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  },
+  {
+    "model": "gemini-3.1-pro-preview",
+    "framework": "flutter",
+    "app": "pomodonut",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  },
+  {
+    "model": "gpt-5.5",
+    "framework": "flutter",
+    "app": "bmi",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  },
+  {
+    "model": "gpt-5.5",
+    "framework": "flutter",
+    "app": "mi-card",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  },
+  {
+    "model": "gpt-5.5",
+    "framework": "flutter",
+    "app": "pomodonut",
+    "extracted_code": true,
+    "compile_success": true,
+    "compile_error": null
+  }
+]

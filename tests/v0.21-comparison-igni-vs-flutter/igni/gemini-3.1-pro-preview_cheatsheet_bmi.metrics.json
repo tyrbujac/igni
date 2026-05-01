@@ -1,0 +1,17 @@
+{
+  "framework": "igni",
+  "model": "gemini-3.1-pro-preview",
+  "app": "bmi",
+  "prompt_tokens": 362,
+  "cheatsheet_tokens": 27042,
+  "total_input_tokens": 27404,
+  "cache_creation_tokens": 0,
+  "cache_read_tokens": 12270,
+  "output_tokens": 326,
+  "output_loc": 0,
+  "output_words": 0,
+  "wall_clock_seconds": 70.565,
+  "compile_success": false,
+  "extracted_code": false,
+  "cost_usd": 0.036634
+}

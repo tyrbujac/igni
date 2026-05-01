@@ -1,0 +1,25 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "bmi",
+  "prompt_slug": "bmi",
+  "prompt_index": 2,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.21-comparison-igni-vs-flutter/prompts-flutter.md",
+  "spec_path": null,
+  "spec_tier": "none",
+  "spec_sha256": null,
+  "spec_words": 0,
+  "timestamp": "2026-05-01T15:29:32.885Z",
+  "duration_ms": 30749,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 527,
+    "output_tokens": 3599,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.09261,
+  "transpile": null
+}

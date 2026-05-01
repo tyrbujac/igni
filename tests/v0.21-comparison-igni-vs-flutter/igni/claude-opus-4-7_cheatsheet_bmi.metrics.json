@@ -1,0 +1,17 @@
+{
+  "framework": "igni",
+  "model": "claude-opus-4-7",
+  "app": "bmi",
+  "prompt_tokens": 527,
+  "cheatsheet_tokens": 20563,
+  "total_input_tokens": 21090,
+  "cache_creation_tokens": 0,
+  "cache_read_tokens": 20607,
+  "output_tokens": 1187,
+  "output_loc": 74,
+  "output_words": 415,
+  "wall_clock_seconds": 13.779,
+  "compile_success": true,
+  "extracted_code": true,
+  "cost_usd": 0.0423935
+}

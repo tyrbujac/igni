@@ -1,0 +1,17 @@
+{
+  "framework": "igni",
+  "model": "gpt-5.5",
+  "app": "bmi",
+  "prompt_tokens": 347,
+  "cheatsheet_tokens": 26883,
+  "total_input_tokens": 27230,
+  "cache_creation_tokens": 0,
+  "cache_read_tokens": 13056,
+  "output_tokens": 3534,
+  "output_loc": 93,
+  "output_words": 452,
+  "wall_clock_seconds": 70.103,
+  "compile_success": false,
+  "extracted_code": true,
+  "cost_usd": 0.183418
+}

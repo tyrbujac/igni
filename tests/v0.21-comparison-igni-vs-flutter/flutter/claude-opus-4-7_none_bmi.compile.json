@@ -1,0 +1,8 @@
+{
+  "model": "claude-opus-4-7",
+  "framework": "flutter",
+  "app": "bmi",
+  "extracted_code": true,
+  "compile_success": true,
+  "compile_error": null
+}

@@ -1,0 +1,8 @@
+{
+  "model": "gemini-3.1-pro-preview",
+  "framework": "igni",
+  "app": "bmi",
+  "extracted_code": false,
+  "compile_success": false,
+  "compile_error": "no fenced code block found in output"
+}

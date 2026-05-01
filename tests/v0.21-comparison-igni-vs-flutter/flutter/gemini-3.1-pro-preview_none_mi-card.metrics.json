@@ -1,0 +1,17 @@
+{
+  "framework": "flutter",
+  "model": "gemini-3.1-pro-preview",
+  "app": "mi-card",
+  "prompt_tokens": 234,
+  "cheatsheet_tokens": 0,
+  "total_input_tokens": 234,
+  "cache_creation_tokens": 0,
+  "cache_read_tokens": 0,
+  "output_tokens": 714,
+  "output_loc": 84,
+  "output_words": 212,
+  "wall_clock_seconds": 33.986,
+  "compile_success": true,
+  "extracted_code": true,
+  "cost_usd": 0.009036
+}

@@ -1,0 +1,17 @@
+{
+  "framework": "igni",
+  "model": "gpt-5.5",
+  "app": "pomodonut",
+  "prompt_tokens": 338,
+  "cheatsheet_tokens": 13806,
+  "total_input_tokens": 14144,
+  "cache_creation_tokens": 0,
+  "cache_read_tokens": 0,
+  "output_tokens": 2822,
+  "output_loc": 91,
+  "output_words": 341,
+  "wall_clock_seconds": 52.958,
+  "compile_success": true,
+  "extracted_code": true,
+  "cost_usd": 0.15538
+}

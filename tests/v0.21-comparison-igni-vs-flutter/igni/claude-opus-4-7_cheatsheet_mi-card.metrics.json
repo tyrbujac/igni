@@ -1,0 +1,17 @@
+{
+  "framework": "igni",
+  "model": "claude-opus-4-7",
+  "app": "mi-card",
+  "prompt_tokens": 328,
+  "cheatsheet_tokens": 20553,
+  "total_input_tokens": 20881,
+  "cache_creation_tokens": 20607,
+  "cache_read_tokens": 0,
+  "output_tokens": 217,
+  "output_loc": 11,
+  "output_words": 63,
+  "wall_clock_seconds": 4.003,
+  "compile_success": true,
+  "extracted_code": true,
+  "cost_usd": 0.13558875
+}

@@ -1,0 +1,17 @@
+{
+  "framework": "flutter",
+  "model": "claude-opus-4-7",
+  "app": "pomodonut",
+  "prompt_tokens": 514,
+  "cheatsheet_tokens": 0,
+  "total_input_tokens": 514,
+  "cache_creation_tokens": 0,
+  "cache_read_tokens": 0,
+  "output_tokens": 2372,
+  "output_loc": 218,
+  "output_words": 505,
+  "wall_clock_seconds": 20.035,
+  "compile_success": true,
+  "extracted_code": true,
+  "cost_usd": 0.06187
+}

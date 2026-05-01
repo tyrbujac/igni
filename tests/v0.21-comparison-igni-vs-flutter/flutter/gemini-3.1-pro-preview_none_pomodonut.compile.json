@@ -1,0 +1,8 @@
+{
+  "model": "gemini-3.1-pro-preview",
+  "framework": "flutter",
+  "app": "pomodonut",
+  "extracted_code": true,
+  "compile_success": true,
+  "compile_error": null
+}

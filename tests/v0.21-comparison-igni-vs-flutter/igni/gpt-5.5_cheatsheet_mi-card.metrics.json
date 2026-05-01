@@ -1,0 +1,17 @@
+{
+  "framework": "igni",
+  "model": "gpt-5.5",
+  "app": "mi-card",
+  "prompt_tokens": 219,
+  "cheatsheet_tokens": 13823,
+  "total_input_tokens": 14042,
+  "cache_creation_tokens": 0,
+  "cache_read_tokens": 0,
+  "output_tokens": 692,
+  "output_loc": 12,
+  "output_words": 75,
+  "wall_clock_seconds": 14.471,
+  "compile_success": true,
+  "extracted_code": true,
+  "cost_usd": 0.09097
+}
