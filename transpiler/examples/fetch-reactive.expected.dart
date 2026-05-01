@@ -20,6 +20,8 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _resultsLoading = true;
   bool _resultsError = false;
   String? _lastResultsUrl;
+  int _resultsRequestId = 0;
+  http.Client? _resultsClient;
   late final TextEditingController _queryController;
 
   @override
@@ -32,12 +34,17 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void dispose() {
     _queryController.dispose();
+    _resultsClient?.close();
     super.dispose();
   }
 
   Future<void> _fetchResults() async {
+    _resultsClient?.close();
+    _resultsClient = http.Client();
+    final _myId = ++_resultsRequestId;
     try {
-      final _igni_response = await http.get(Uri.parse('/api/search?q='.toString() + (((active) as dynamic)?.toString() ?? '')));
+      final _igni_response = await _resultsClient!.get(Uri.parse('/api/search?q='.toString() + (((active) as dynamic)?.toString() ?? '')));
+      if (_myId != _resultsRequestId) return;
       if (_igni_response.statusCode == 200) {
         setState(() {
           results = jsonDecode(_igni_response.body);
@@ -49,7 +56,10 @@ class _SearchScreenState extends State<SearchScreen> {
           _resultsLoading = false;
         });
       }
+    } on http.ClientException {
+      return;
     } catch (e) {
+      if (_myId != _resultsRequestId) return;
       setState(() {
         _resultsError = true;
         _resultsLoading = false;

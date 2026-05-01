@@ -1,0 +1,13 @@
+screen RangeBrowser:
+  amount = 0
+  range = fetch("/api/range/" + amount)
+
+  layout vertical, padding: large, gap: medium:
+    label "Amount: " + amount
+    slider bind: amount, min: 0, max: 1000, step: 10
+    if range is loading:
+      spinner
+    else if range is error:
+      label "Lookup failed", color: danger
+    else:
+      label range.name, style: heading

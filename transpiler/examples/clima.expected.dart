@@ -23,12 +23,20 @@ class _WeatherScreenState extends State<WeatherScreen> {
   bool _forecastLoading = true;
   bool _forecastError = false;
   String? _lastForecastUrl;
+  int _forecastRequestId = 0;
+  http.Client? _forecastClient;
 
   @override
   void initState() {
     super.initState();
     _locateHere();
     _fetchForecast();
+  }
+
+  @override
+  void dispose() {
+    _forecastClient?.close();
+    super.dispose();
   }
 
   Future<void> _locateHere() async {
@@ -61,8 +69,12 @@ class _WeatherScreenState extends State<WeatherScreen> {
   }
 
   Future<void> _fetchForecast() async {
+    _forecastClient?.close();
+    _forecastClient = http.Client();
+    final _myId = ++_forecastRequestId;
     try {
-      final _igni_response = await http.get(Uri.parse('https://api.example.com/forecast?c='.toString() + (((coords) as dynamic)?.toString() ?? '')));
+      final _igni_response = await _forecastClient!.get(Uri.parse('https://api.example.com/forecast?c='.toString() + (((coords) as dynamic)?.toString() ?? '')));
+      if (_myId != _forecastRequestId) return;
       if (_igni_response.statusCode == 200) {
         setState(() {
           forecast = jsonDecode(_igni_response.body);
@@ -74,7 +86,10 @@ class _WeatherScreenState extends State<WeatherScreen> {
           _forecastLoading = false;
         });
       }
+    } on http.ClientException {
+      return;
     } catch (e) {
+      if (_myId != _forecastRequestId) return;
       setState(() {
         _forecastError = true;
         _forecastLoading = false;

@@ -601,9 +601,26 @@ export class CodeGenerator {
     return code;
   }
 
-  private genFetchMethod(fv: { name: string; url: string; method?: string; body?: string }): string {
+  private genFetchMethod(fv: { name: string; url: string; method?: string; body?: string; reactive: boolean }): string {
     const methodName = `_fetch${fv.name[0].toUpperCase() + fv.name.slice(1)}`;
     let code = `  Future<void> ${methodName}() async {\n`;
+
+    // v0.21 (Q3 = C+B per docs/private/121): reactive fetches gain a
+    // counter-token + http.Client lifecycle so rapid dependency changes don't
+    // produce stale-data-wins. Counter-token is the correctness primitive
+    // (works on every platform); http.Client.close() actually cancels in-flight
+    // requests on native + best-effort on Web. Test-mode skips the client
+    // lifecycle (the _igniHttpGet wrapper isn't an http.Client) but keeps the
+    // counter for ordering correctness.
+    const reactiveLifecycle = fv.reactive && !this.testMode;
+    if (reactiveLifecycle) {
+      code += `    _${fv.name}Client?.close();\n`;
+      code += `    _${fv.name}Client = http.Client();\n`;
+    }
+    if (fv.reactive) {
+      code += `    final _myId = ++_${fv.name}RequestId;\n`;
+    }
+
     code += `    try {\n`;
 
     // Determine HTTP method
@@ -629,6 +646,18 @@ export class CodeGenerator {
       // fetch:` blocks can intercept. v0.18 only mocks GET; non-GET methods
       // still hit the wrapper (which throws if no mock is set).
       code += `      final _igni_response = await _igniHttpGet(${fv.url});\n`;
+    } else if (reactiveLifecycle) {
+      // v0.21: reactive fetches go through the per-fetch client so close()
+      // can cancel in-flight requests when dependencies change.
+      if (fv.body && dartMethod !== 'get') {
+        code += `      final _igni_response = await _${fv.name}Client!.${dartMethod}(\n`;
+        code += `        Uri.parse(${fv.url}),\n`;
+        code += `        headers: {'Content-Type': 'application/json'},\n`;
+        code += `        body: jsonEncode(${fv.body}),\n`;
+        code += `      );\n`;
+      } else {
+        code += `      final _igni_response = await _${fv.name}Client!.${dartMethod}(Uri.parse(${fv.url}));\n`;
+      }
     } else if (fv.body && dartMethod !== 'get') {
       code += `      final _igni_response = await http.${dartMethod}(\n`;
       code += `        Uri.parse(${fv.url}),\n`;
@@ -637,6 +666,10 @@ export class CodeGenerator {
       code += `      );\n`;
     } else {
       code += `      final _igni_response = await http.${dartMethod}(Uri.parse(${fv.url}));\n`;
+    }
+
+    if (fv.reactive) {
+      code += `      if (_myId != _${fv.name}RequestId) return;\n`;
     }
 
     code += `      if (_igni_response.statusCode == 200) {\n`;
@@ -650,7 +683,17 @@ export class CodeGenerator {
     code += `          _${fv.name}Loading = false;\n`;
     code += `        });\n`;
     code += `      }\n`;
+    if (reactiveLifecycle) {
+      // v0.21: cancellation via http.Client.close() throws ClientException in
+      // the in-flight await; swallow it silently — the new fire's counter has
+      // already superseded.
+      code += `    } on http.ClientException {\n`;
+      code += `      return;\n`;
+    }
     code += `    } catch (e) {\n`;
+    if (fv.reactive) {
+      code += `      if (_myId != _${fv.name}RequestId) return;\n`;
+    }
     code += `      setState(() {\n`;
     code += `        _${fv.name}Error = true;\n`;
     code += `        _${fv.name}Loading = false;\n`;
@@ -1538,7 +1581,15 @@ export class CodeGenerator {
       const fetchDecls = this.fetchVars.map(f => {
         let decl = `  dynamic ${f.name};\n  bool _${f.name}Loading = true;\n  bool _${f.name}Error = false;`;
         if (f.reactive) {
-          decl += `\n  String? _last${f.name[0].toUpperCase() + f.name.slice(1)}Url;`;
+          const cap = f.name[0].toUpperCase() + f.name.slice(1);
+          decl += `\n  String? _last${cap}Url;`;
+          // v0.21 (Q3 = C+B): counter-token + http.Client lifecycle. Counter
+          // emitted always; client only outside test mode (test mode uses the
+          // _igniHttpGet wrapper instead of a real http.Client).
+          decl += `\n  int _${f.name}RequestId = 0;`;
+          if (!this.testMode) {
+            decl += `\n  http.Client? _${f.name}Client;`;
+          }
         }
         return decl;
       }).join('\n');
@@ -1595,8 +1646,9 @@ export class CodeGenerator {
       preBuild += `\n\n  @override\n  void initState() {\n    super.initState();\n${initLines.join('\n')}\n  }`;
     }
 
-    // dispose (controllers + every-block timers)
-    const needsDispose = hasControllers || hasEveryBlocks;
+    // dispose (controllers + every-block timers + reactive-fetch http.Client)
+    const reactiveFetchClients = this.fetchVars.filter(f => f.reactive && !this.testMode);
+    const needsDispose = hasControllers || hasEveryBlocks || reactiveFetchClients.length > 0;
     if (needsDispose) {
       const disposalLines: string[] = [];
       for (const v of this.ctx.boundInputVars) {
@@ -1604,6 +1656,11 @@ export class CodeGenerator {
       }
       for (let i = 0; i < everyBlocks.length; i++) {
         disposalLines.push(`    _everyTimer${i}?.cancel();`);
+      }
+      // v0.21 (Q3 = C+B): close any still-in-flight reactive fetch client.
+      // ClientException in the pending await is swallowed by the on-clause.
+      for (const f of reactiveFetchClients) {
+        disposalLines.push(`    _${f.name}Client?.close();`);
       }
       preBuild += `\n\n  @override\n  void dispose() {\n${disposalLines.join('\n')}\n    super.dispose();\n  }`;
     }

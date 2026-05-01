@@ -19,6 +19,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _userLoading = true;
   bool _userError = false;
   String? _lastUserUrl;
+  int _userRequestId = 0;
+  http.Client? _userClient;
 
   @override
   void initState() {
@@ -26,9 +28,19 @@ class _LoginScreenState extends State<LoginScreen> {
     _fetchUser();
   }
 
+  @override
+  void dispose() {
+    _userClient?.close();
+    super.dispose();
+  }
+
   Future<void> _fetchUser() async {
+    _userClient?.close();
+    _userClient = http.Client();
+    final _myId = ++_userRequestId;
     try {
-      final _igni_response = await http.get(Uri.parse('/api/user/me?r='.toString() + (((refresh) as dynamic)?.toString() ?? '')));
+      final _igni_response = await _userClient!.get(Uri.parse('/api/user/me?r='.toString() + (((refresh) as dynamic)?.toString() ?? '')));
+      if (_myId != _userRequestId) return;
       if (_igni_response.statusCode == 200) {
         setState(() {
           user = jsonDecode(_igni_response.body);
@@ -40,7 +52,10 @@ class _LoginScreenState extends State<LoginScreen> {
           _userLoading = false;
         });
       }
+    } on http.ClientException {
+      return;
     } catch (e) {
+      if (_myId != _userRequestId) return;
       setState(() {
         _userError = true;
         _userLoading = false;

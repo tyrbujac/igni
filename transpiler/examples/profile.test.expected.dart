@@ -77,6 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _userLoading = true;
   bool _userError = false;
   String? _lastUserUrl;
+  int _userRequestId = 0;
 
   @override
   void initState() {
@@ -85,8 +86,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _fetchUser() async {
+    final _myId = ++_userRequestId;
     try {
       final _igni_response = await _igniHttpGet('/api/user/me?refresh='.toString() + (((refresh) as dynamic)?.toString() ?? ''));
+      if (_myId != _userRequestId) return;
       if (_igni_response.statusCode == 200) {
         setState(() {
           user = jsonDecode(_igni_response.body);
@@ -99,6 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     } catch (e) {
+      if (_myId != _userRequestId) return;
       setState(() {
         _userError = true;
         _userLoading = false;
