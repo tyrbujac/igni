@@ -1,0 +1,25 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Theme + sender-name settings with persisted preferences",
+  "prompt_slug": "theme-sender-name-settings-with-persisted-preferences",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.21.1-docs-validation/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/spec/v0.21.1-cheatsheet.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "279941b2f082e1f3eba76d25674853c6382cdd7b0a89916f831c705432719a3b",
+  "spec_words": 8310,
+  "timestamp": "2026-05-01T16:32:18.849Z",
+  "duration_ms": 24527,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 392,
+    "output_tokens": 1450,
+    "cache_creation_tokens": 21309,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.17139125,
+  "transpile": null
+}

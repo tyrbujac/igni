@@ -4,7 +4,7 @@ Guidance for Claude and other AI assistants working on the Igni language project
 
 **Positioning.** *Designs that translate, not redesign.* A UI language whose primitives match Figma's auto-layout vocabulary; the canonical user is a designer-engineer + LLM pair authoring Igni from Figma source. The AI-assisted-creator framing is the parent category; this is its concrete instance. See `docs/private/97_figma_to_igni_workflow.md` for Path C scope and v0.15 expansion plan.
 
-**Status: transpiler stage.** The TypeScript-to-Dart transpiler covers most of the <!-- SYNC:version -->v0.21.0<!-- /SYNC:version --> spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter. *Originally named Rocket (v0.2–v0.3.1), renamed to Igni at v0.3.2.*
+**Status: transpiler stage.** The TypeScript-to-Dart transpiler covers most of the <!-- SYNC:version -->v0.21.1<!-- /SYNC:version --> spec. The project is a versioned markdown spec, a cold-LLM test suite, and a working transpiler that compiles `.igni` to Dart/Flutter. *Originally named Rocket (v0.2–v0.3.1), renamed to Igni at v0.3.2.*
 
 ## Igni at a glance
 
@@ -37,6 +37,7 @@ If a proposal violates one of these, it's wrong by definition — push back inst
 
 ## Working on the spec with Tyr
 
+- **Git workflow: direct-to-main, no PRs** *(set 2026-05-01)*. This is a solo-research repo (Tyr is the sole contributor; v1.0 ship is May-2027 dissertation submission). The cycle pattern is `commit → push origin main` directly. PRs add ceremony without review benefit when there's no second reviewer. **Do not** propose feature-branch + PR flows for routine work; if a hook denies a direct push to main, ask Tyr to authorize that specific push rather than rerouting through a branch. Force-push to main remains gated (genuinely destructive). Other repos may differ; this rule is Igni-specific.
 - **Tyr is the sole decision-maker.** Propose changes, present tradeoffs, wait for confirmation. Never edit the spec on his behalf without explicit approval.
 - **One version at a time** *(per `feedback_one_version_at_a_time.md` memory)*. When a spec version is the active cycle, defer the NEXT version's panel runs / Stage-1 implementation / spec edits to the post-ship gate window. Design-note drafting + cataloguing (Stream 3 entries, methodology contributions, structural-prior surveys) are allowed in parallel — they're prep work that doesn't compete for active-cycle bandwidth. Independent tracks (real-app builds, codegen-only small ships, trap-journal walks, methodology chapter §4 drafting per dissertation cadence) are version-orthogonal — run alongside as needed.
 - **Plan length discipline** *(per `spec-cycle` skill)*. Plans describe FORWARD work only — what to execute next session, not what was completed this session. Already-completed work goes in session log or commit messages. Cap plans at ~100 lines / 5-7 stream items. Long plans signal session-scope drift; cleanly-scoped plans are short.
