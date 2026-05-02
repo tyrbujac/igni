@@ -120,7 +120,7 @@ class _NoteScreenState extends State<NoteScreen> {
   void add_block(dynamic t) {
     dynamic current = shared.selected_note;
     dynamic new_block = {'type': t, 'content': '', 'checked': false};
-    dynamic updated = {...current, 'blocks': current['blocks'] + <dynamic>[new_block]};
+    dynamic updated = <String, dynamic>{...(current as Map), 'blocks': current['blocks'] + <dynamic>[new_block]};
     shared.update(() {
       shared.notes = shared.notes.map((e) => e == current ? updated : e).toList();
     });
@@ -131,9 +131,9 @@ class _NoteScreenState extends State<NoteScreen> {
 
   void toggle_check(dynamic b) {
     dynamic current = shared.selected_note;
-    dynamic flipped = {...b, 'checked': !b['checked']};
+    dynamic flipped = <String, dynamic>{...(b as Map), 'checked': !b['checked']};
     dynamic new_blocks = current['blocks'].map((e) => e == b ? flipped : e).toList();
-    dynamic updated = {...current, 'blocks': new_blocks};
+    dynamic updated = <String, dynamic>{...(current as Map), 'blocks': new_blocks};
     shared.update(() {
       shared.notes = shared.notes.map((e) => e == current ? updated : e).toList();
     });
@@ -145,7 +145,7 @@ class _NoteScreenState extends State<NoteScreen> {
   void remove_block(dynamic b) {
     dynamic current = shared.selected_note;
     dynamic new_blocks = current['blocks'].where((e) => e != b).toList();
-    dynamic updated = {...current, 'blocks': new_blocks};
+    dynamic updated = <String, dynamic>{...(current as Map), 'blocks': new_blocks};
     shared.update(() {
       shared.notes = shared.notes.map((e) => e == current ? updated : e).toList();
     });

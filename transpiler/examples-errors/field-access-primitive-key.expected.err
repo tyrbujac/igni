@@ -1,0 +1,10 @@
+
+  Error: `label` is a UI-primitive keyword and cannot be used as a field accessor. Use a non-primitive field name (e.g. `text`, `caption`, `name`) on the object.
+
+    field-access-primitive-key.igni:5 |     label range.label
+                                      |                      ^
+
+  Error: Expected "screen", got ""
+
+    field-access-primitive-key.igni:6 | 
+                                      | ^

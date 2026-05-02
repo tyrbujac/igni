@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SharedState extends ChangeNotifier {
-  var cart = {'name': 'Widget'};
+  dynamic cart = {'name': 'Widget'};
 
   void update(void Function() fn) {
     fn();
@@ -40,7 +40,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
             style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
             onPressed: () {
               shared.update(() {
-                shared.cart = {...shared.cart, 'name': 'Gizmo'};
+                shared.cart = <String, dynamic>{...(shared.cart as Map), 'name': 'Gizmo'};
               });
             },
             child: const Text('Update'),

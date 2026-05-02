@@ -31,6 +31,33 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.21.2 — 2026-05-02
+*Codegen + tooling patch ship. No spec syntax changes. Five fixes from the v0.21.2 trap-journal walk: button foreground-luminance, ObjectUpdate type-loose codegen, ObjectLit-state dynamic typing, border-token stringify, type-hint whitelist. Plus parser polish (FieldAccess primitive-collision error) and a script bug fix (`new-spec-version.ts` heading regex scoped). SMOKE_SKIP reduced 5 → 3. Three already-resolved traps (A1/A2/C2) confirmed during walk → n=3 promotes resolution-hygiene rule to `spec-cycle` skill update candidate.*
+
+### Changed
+
+- **Button foreground derived from background luminance.** `color: white` and `color: yellow` on `button` previously rendered white-on-white / white-on-yellow text (invisible). `genButton` now picks black foreground for built-in light tokens (`white`, `yellow`) and theme-color overrides whose hex resolves above the empirical 0.6 luminance threshold; vivid built-ins keep white foreground (no fixture churn for the 9 vivid tokens). Surfaced via calculator dogfood (`transpiler/examples/calculator/app.igni`).
+- **ObjectUpdate codegen typed-loose.** `{base with key: value}` previously emitted `{...base, 'key': value}` which tripped `flutter analyze`'s `ambiguous_set_or_map_literal_either` and `unchecked_use_of_nullable_value` for spread-of-dynamic. Now emits `<String, dynamic>{...(base as Map), 'key': value}` — Map cast is permissive (accepts Map<String, Object>, Map<String, dynamic>, Map<dynamic, dynamic> at runtime); `<String, dynamic>` prefix disambiguates. 9 fixtures regenerated. Removed `object-update` from SMOKE_SKIP.
+- **ObjectLit-initialised state vars typed `dynamic`.** Previously `var user = {...}` let Dart infer `Map<String, Object>`, which tripped `unchecked_use_of_nullable_value` on chained access (`user['profile']['city']`). Now emits `dynamic user = {...}` so the type chain stays loose end-to-end.
+- **Border-width tokens stringify in non-property positions.** Helper functions returning `thick` / `thin` (e.g. `width_for(method): if method is selected: return thick`) previously emitted bare identifiers (compile error). `exprToDart` for Ident now stringifies `BORDER_WIDTH_TOKENS` so the runtime `_igniBorderWidth` helper resolves them. Property-position uses (`border: thick`) unaffected — those compile-time-resolve via `genBorderWidth`. Narrows the `border-selected-state` bug surface (token-leak fixed; secondary state-field-detection bug deferred to v0.22+ design — fixture stays on SMOKE_SKIP).
+- **Type-hint whitelist for unknown identifiers.** `inferType` previously emitted `List<Item>` from `[Item]` style hints regardless of whether `Item` was a real type — Igni doesn't have class definitions, so this produced Dart compile errors. Now whitelists Dart built-ins (`int`, `double`, `num`, `bool`, `String`, `dynamic`); unknown identifiers fall back to `dynamic`. Removed `type-hints` from SMOKE_SKIP.
+- **FieldAccess parser produces primitive-collision-aware errors.** The v0.20.3 cluster fix added `expectObjectKey()` for object-literal field-key collisions but missed the symmetric FieldAccess parse sites (`obj.label`, `shared.label = …`, `{base.path with key: value}`). New `expectFieldName()` helper covers all three sites. New negative-test fixture `examples-errors/field-access-primitive-key.igni` locks in the friendlier error.
+- **`scripts/new-spec-version.ts` heading-replace regex scoped to the H1 line.** Pre-fix global string replace clobbered legitimate historical version references in body prose ("renamed from heading.small in v0.20.4" became "in v0.21.0"); 8 manual fixes needed across 3 files during v0.21.0 fork. Now `^(# [^\n]*?)\bvX.Y.Z\b` matches only the heading. Verified live during this v0.21.2 fork — historical refs preserved.
+- **Three already-resolved traps confirmed during walk** (no code change, trap-journal hygiene): A1 nested-list strict-typing fixed in `e42407d` (2026-04-28 cleanup pass, fixture `nested-list-mutation`); A2 input-bind controller scope-walk fixed in `47e9731` (v0.20.3 codegen identifier-resolution cluster, sub-shape 3); C2 `emit X:` trailing-colon ambiguity fixed in `e42407d` (Drift 2, fixture `emit-on-layout`).
+
+### Methodology
+
+- **Resolution-hygiene rule promoted from observation to `spec-cycle` skill update candidate (n=3).** Three same-day-fix-then-rediscovered traps (A1/A2/C2) in this walk burned ~30-45min of investigation cost. Proposed rule: at fix-commit time, append a resolution-row to the trap journal pointing back at the original entry's date+keyword. Commits `e42407d` and `47e9731` are templates — both bury the close-out in commit-message bullets ("Drift 2 emit X:") rather than amending the trap journal. n=3 confirmed promotion threshold; gates formal skill update on n=4 or operator confirmation.
+- **B3+B4+B1-secondary deferred as primitive-class decisions, not patch fixes.** SMOKE_SKIP residue (`border-selected-state`, `on-handler-named`, `on-handler-object-payload`) all need substantial codegen redesigns (component StatefulWidget detection + initial-value-state-vs-derived-state with `late` initialisers). Routes to v0.22 design-note candidate alongside Boojy Notes Block component bug (n=3 of broader "codegen-emits-stateless-when-stateful-needed" sub-class).
+
+### Out of scope (deferred)
+
+- **D1: Component post-layout function rule** — functions after layout in component body parse-fail, but parse fine in screen body (trap-journal line 322). Spec clarification vs transpiler fix decision pending Tyr's design call. Routes to v0.22 cycle.
+- **D2: Tutorial error-message clarity** (3 sub-items) — deferred to follow-up patch cycle.
+- **D3: Calculator-dogfood doc patches** — calculator dogfood Phase 1 still in flight (`docs/private/133`); patches surface from Phase 1 completion.
+
+---
+
 ## v0.21.1 — 2026-05-01
 *Docs-iteration patch. No spec syntax changes. Four cheatsheet patches per Stage 3 dual-instrument cross-instrument signal (3 Tier-A from `docs/private/130`) plus one Phase 4 honest extension (`docs/private/132`, `tests/v0.21-comparison-igni-vs-flutter/`). Stage 0 validation cleared at STRONG (`tests/v0.21.1-docs-validation/`, $1.00, 9 cells: input-bind misread 0/9 vs 3/8 baseline; self-assignment retry pattern 3/3 canonical with 2/3 explicit rule cite; bare-access 0/9 not regressed). Same precedent as v0.20.1 + v0.11.3 + v0.11.4 — docs-only resolution; criterion-1 v1.0 clock NOT reset (still 2026-04-29 from v0.20.0 ship; earliest v1.0 tag still 2026-07-29).*
 

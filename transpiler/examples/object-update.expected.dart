@@ -13,35 +13,35 @@ class ObjectUpdateDemoScreen extends StatefulWidget {
 
 class _ObjectUpdateDemoScreenState extends State<ObjectUpdateDemoScreen> {
   List<dynamic> items = <dynamic>[{'text': 'Buy milk', 'done': false}, {'text': 'Walk dog', 'done': true}];
-  var user = {'name': 'Tyr', 'profile': {'age': 24, 'city': 'Liverpool'}};
+  dynamic user = {'name': 'Tyr', 'profile': {'age': 24, 'city': 'Liverpool'}};
 
   void flip(dynamic target) {
     setState(() {
-      items = items.map((e) => e == target ? {...target, 'done': !target['done']} : e).toList();
+      items = items.map((e) => e == target ? <String, dynamic>{...(target as Map), 'done': !target['done']} : e).toList();
     });
   }
 
   void rename(dynamic target, dynamic new_text) {
     setState(() {
-      items = items.map((e) => e == target ? {...target, 'text': new_text} : e).toList();
+      items = items.map((e) => e == target ? <String, dynamic>{...(target as Map), 'text': new_text} : e).toList();
     });
   }
 
   void mark_done(dynamic target) {
     setState(() {
-      items = items.map((e) => e == target ? {...target, 'text': 'Done', 'done': true} : e).toList();
+      items = items.map((e) => e == target ? <String, dynamic>{...(target as Map), 'text': 'Done', 'done': true} : e).toList();
     });
   }
 
   void annotate(dynamic target) {
     setState(() {
-      items = items.map((e) => e == target ? {...target, 'notes': 'added'} : e).toList();
+      items = items.map((e) => e == target ? <String, dynamic>{...(target as Map), 'notes': 'added'} : e).toList();
     });
   }
 
   void move_city() {
     setState(() {
-      user = {...user, 'profile': {...user['profile'], 'city': 'Dublin'}};
+      user = <String, dynamic>{...(user as Map), 'profile': <String, dynamic>{...(user['profile'] as Map), 'city': 'Dublin'}};
     });
   }
 

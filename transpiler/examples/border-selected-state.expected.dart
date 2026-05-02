@@ -16,9 +16,9 @@ class _BorderSelectedStateScreenState extends State<BorderSelectedStateScreen> {
 
   dynamic width_for(dynamic method) {
     if (method == selected) {
-      return thick;
+      return 'thick';
     }
-    return thin;
+    return 'thin';
   }
 
   dynamic color_for(dynamic method) {

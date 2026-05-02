@@ -32,7 +32,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
     dynamic existing = shared.cart.cast<dynamic>().firstWhere((item) => item['id'] == product['id'], orElse: () => null);
     if (existing != null) {
       shared.update(() {
-        shared.cart = shared.cart.map((e) => e == existing ? {...existing, 'quantity': existing['quantity'] + 1} : e).toList();
+        shared.cart = shared.cart.map((e) => e == existing ? <String, dynamic>{...(existing as Map), 'quantity': existing['quantity'] + 1} : e).toList();
       });
     } else {
       dynamic new_item = {'id': product['id'], 'name': product['name'], 'price': product['price'], 'quantity': 1};

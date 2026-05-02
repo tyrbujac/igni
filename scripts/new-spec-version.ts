@@ -140,9 +140,15 @@ function main(): void {
   for (const v of variants) {
     const path = join(REPO, 'spec', `${newVersion}${v}.md`);
     let content = readFileSync(path, 'utf-8');
-    // Bump heading: "# Igni Language Spec vX.Y.Z" → new version. Cheatsheet/micro
-    // headings have their own conventions; replace the version string anywhere.
-    content = content.replace(new RegExp(`\\b${currentVersion}\\b`, 'g'), newVersion);
+    // Bump heading: "# Igni Language Spec vX.Y.Z" or "# Igni vX.Y.Z — Cheat Sheet"
+    // → new version. Scoped to the H1 heading line only — pre-fix v0.21.2 the
+    // global replace clobbered legitimate historical version references in
+    // body prose ("renamed from heading.small in v0.20.4" became "in v0.21.0",
+    // surfaced 2026-05-01 during v0.21.0 fork, 8 manual fixes across 3 files).
+    content = content.replace(
+      new RegExp(`^(# [^\\n]*?)\\b${currentVersion.replace(/\./g, '\\.')}\\b`),
+      `$1${newVersion}`,
+    );
     // Bump byline date: "**By Tyr | DD/MM/YY |" → today
     content = content.replace(/(\*\*By Tyr \| )\d{2}\/\d{2}\/\d{2}/, `$1${date}`);
     // Replace the existing Changes-from paragraph (single line starting **Changes from)

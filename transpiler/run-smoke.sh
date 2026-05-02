@@ -58,17 +58,19 @@ fi
 # stays green while each bug class is queued for v0.20+ design or codegen fix.
 #
 # Categories (each entry tagged with the bug class it represents):
-#   border-selected-state      — runtime border-token codegen leak
+#   border-selected-state      — runtime border-token codegen leak (v0.21.2: token
+#                                leak fixed in exprToDart; secondary state-field-
+#                                detection bug surfaces helper-can't-see-state — see
+#                                trap journal 2026-05-02. Stays skipped pending
+#                                state-field redesign, candidate v0.22+)
 #   object-update              — null-spread + ambiguous-literal type inference
 #   on-handler-named           — component-with-input-bind StatelessWidget mismatch (doc 116 #9)
 #   on-handler-object-payload  — same as above
 #   type-hints                 — typed-collection emits unresolved type-arg names
 SMOKE_SKIP=(
   border-selected-state
-  object-update
   on-handler-named
   on-handler-object-payload
-  type-hints
 )
 
 is_skipped() {

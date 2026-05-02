@@ -1,0 +1,5 @@
+screen Home:
+  range = {name: "Today", count: 12}
+
+  layout vertical:
+    label range.label

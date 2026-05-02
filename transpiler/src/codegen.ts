@@ -16,6 +16,7 @@ import {
   BORDER_WIDTH_TOKENS, isBorderWidthTokenName, resolveBorderWidthToken, generateBorderWidthResolver,
   isColorTokenName, isStyleValueName, isStyleValueExpr,
   resolveFontToken, hexToDartColor,
+  LIGHT_BUILTIN_COLOR_TOKENS, isLightHex,
 } from './codegen-helpers.js';
 import { TranspileError } from './errors.js';
 
@@ -770,6 +771,25 @@ export class CodeGenerator {
 
   private isBuiltinStyleValue(expr: Expr): boolean {
     return expr.type === 'Ident' && isStyleValueName(expr.name) && !this.isUserDeclaredName(expr.name);
+  }
+
+  // v0.21.2: pick a contrasting foreground for a button's `color:` background.
+  // Returns `Colors.black` when the resolved background is bright (luminance
+  // > 0.5), `Colors.white` otherwise. Resolution order:
+  //   1. Theme-color override → look up the hex, compute luminance.
+  //   2. Built-in light token (white / yellow) → black.
+  //   3. Anything else (vivid built-in, brand, runtime-resolved expression,
+  //      user-shadowed name) → white. Preserves pre-v0.21.2 behaviour for the
+  //      9 vivid built-ins; only `white`/`yellow`/light-overrides flip.
+  private genButtonForeground(expr: Expr): string {
+    if (expr.type === 'Ident' && expr.name in this.themeColors) {
+      const hex = this.themeColors[expr.name];
+      return isLightHex(hex) ? 'Colors.black' : 'Colors.white';
+    }
+    if (expr.type === 'Ident' && LIGHT_BUILTIN_COLOR_TOKENS.has(expr.name) && !this.isUserDeclaredName(expr.name)) {
+      return 'Colors.black';
+    }
+    return 'Colors.white';
   }
 
   private genColorValue(expr: Expr): string {
@@ -2378,15 +2398,16 @@ export class CodeGenerator {
 
     const styleParts: string[] = [];
     if (colorProp) {
-      // When a button has an explicit background colour, force white
-      // foreground so the text contrasts. Material derives `onPrimary`
-      // appropriately for colorScheme.primary, but raw named colours like
-      // `brand`/`danger`/`red` have no paired `onX`. Default ElevatedButton
-      // foreground on a pink-ish button renders invisible-on-pink. White is
-      // the right answer for every vivid Igni colour (brand, danger, red,
-      // blue, orange, green, purple, teal, black).
+      // When a button has an explicit background colour, derive a contrasting
+      // foreground. Default to white (right for the 9 vivid built-in tokens
+      // brand/danger/red/blue/green/orange/purple/teal/black where luminance
+      // ≤ 0.5); flip to black for known light tokens (`white`, `yellow`) and
+      // for theme-color overrides whose hex resolves to luminance > 0.5.
+      // Pre-v0.21.2 hardcoded `Colors.white` here; surfaced via calculator
+      // dogfood as white-on-white invisible text on `color: white` digit
+      // buttons.
       styleParts.push(`backgroundColor: ${this.genColorValue(colorProp.value)}`);
-      styleParts.push(`foregroundColor: Colors.white`);
+      styleParts.push(`foregroundColor: ${this.genButtonForeground(colorProp.value)}`);
     }
     if (isCircle) {
       // `shape: circle` — compact fixed-size button for icon-style controls
@@ -4204,6 +4225,14 @@ export class CodeGenerator {
         if (this.ctx.stateVars.includes(expr.name)) return expr.name;
         if (this.ctx.screenParams.includes(expr.name)) return this.ctx.isComponent ? expr.name : `widget.${expr.name}`;
         if (isStyleValueName(expr.name)) return `'${expr.name}'`;
+        // v0.21.2: border-width tokens (thin/medium/thick) used in non-property
+        // expression positions (return values, function args) need stringifying
+        // so the runtime `_igniBorderWidth` helper can resolve them. Pre-fix
+        // emitted bare identifiers, breaking helper-returning-token patterns
+        // like `border-selected-state` (`width_for(method)` returning `thick`).
+        // Property-position uses (`border: thick`) are unaffected — those are
+        // resolved at compile time by `genBorderWidth` before reaching here.
+        if (isBorderWidthTokenName(expr.name)) return `'${expr.name}'`;
         return expr.name;
       case 'BinaryExpr': {
         // Preserve grouping through Dart's left-to-right evaluation. Without
@@ -4274,9 +4303,16 @@ export class CodeGenerator {
       case 'ObjectLit':
         return `{${expr.entries.map(e => `'${e.key}': ${this.exprToDart(e.value)}`).join(', ')}}`;
       case 'ObjectUpdate': {
+        // v0.21.2: emit `<String, dynamic>{...(base as Map), 'k': v, ...}` so
+        // Dart's type inference for nested-map spread isn't ambiguous and the
+        // spread source is non-nullable. Pre-fix `{...base, 'k': v}` produced
+        // `ambiguous_set_or_map_literal_either` + `unchecked_use_of_nullable_value`
+        // for spread-of-dynamic patterns (object-update fixture 2026-04-28).
+        // The `as Map` cast is permissive — accepts Map<String, Object>,
+        // Map<String, dynamic>, Map<dynamic, dynamic> at runtime.
         const baseDart = this.exprToDart(expr.base);
         const overrides = expr.updates.map(u => `'${u.key}': ${this.exprToDart(u.value)}`).join(', ');
-        return `{...${baseDart}, ${overrides}}`;
+        return `<String, dynamic>{...(${baseDart} as Map), ${overrides}}`;
       }
       case 'FieldAccess':
         if (expr.object.type === 'Ident' && expr.object.name === 'shared') {

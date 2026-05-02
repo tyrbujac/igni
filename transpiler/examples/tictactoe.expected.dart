@@ -19,7 +19,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
   void place(dynamic cell) {
     if (winner.isEmpty && cell['mark'].isEmpty) {
       setState(() {
-        cells = cells.map((e) => e == cell ? {...cell, 'mark': player} : e).toList();
+        cells = cells.map((e) => e == cell ? <String, dynamic>{...(cell as Map), 'mark': player} : e).toList();
       });
       setState(() {
         winner = check();

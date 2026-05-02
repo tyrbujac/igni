@@ -1,0 +1,36 @@
+screen Calculator, background: black:
+  layout vertical, gap: medium, padding: medium:
+    
+    layout horizontal, gap: small:
+      button "C", on tap: print("C")
+      button "+/-", on tap: print("+/-")
+      button "%", on tap: print("%")
+      button "÷", on tap: print("÷")
+
+    layout horizontal, gap: small:
+      button "7", color: white, on tap: print("7")
+      button "8", color: white, on tap: print("8")
+      button "9", color: white, on tap: print("9")
+      button "x", on tap: print("x")
+
+    layout horizontal, gap: small:
+      button "4", color: white, on tap: print("4")
+      button "5", color: white, on tap: print("5")
+      button "6", color: white, on tap: print("6")
+      button "-", on tap: print("-")
+
+    layout horizontal, gap: small:
+      button "1", color: white, on tap: print("1")
+      button "2", color: white, on tap: print("2")
+      button "3", color: white, on tap: print("3")
+      button "+", on tap: print("+")
+
+    layout horizontal, gap: small:
+      button "0", color: white, on tap: print("0")
+      button "()", color: white, on tap: print("()")
+      button ".", color: white, on tap: print(".")
+      button "=", on tap: print("=")
+
+    
+
+       

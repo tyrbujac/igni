@@ -22,7 +22,7 @@ class _ConnectFourScreenState extends State<ConnectFourScreen> {
       if (target_row != null) {
         dynamic target = (target_row * 7 + col >= 0 && target_row * 7 + col < cells.length ? cells[target_row * 7 + col] : null);
         setState(() {
-          cells = cells.map((e) => e == target ? {...target, 'mark': player} : e).toList();
+          cells = cells.map((e) => e == target ? <String, dynamic>{...(target as Map), 'mark': player} : e).toList();
         });
         setState(() {
           winner = check_winner();

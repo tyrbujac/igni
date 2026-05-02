@@ -59,6 +59,37 @@ export const COLOR_MAP: Record<string, string> = {
 
 export const BACKGROUND_ONLY_TOKENS = new Set<string>(['card']);
 
+// v0.21.2: built-in colour tokens whose default Flutter value is bright enough
+// that black foreground text is readable but white text is not (luminance
+// roughly > 0.5). Used by `genButton` to pick a contrasting foreground when
+// the button background is one of these tokens. Other built-ins (brand /
+// danger / red / blue / green / orange / purple / teal / black / subtle) all
+// have luminance ≤ 0.5 in their Material defaults, so white text contrasts.
+// Theme-color overrides for any token are checked separately via `isLightHex`.
+export const LIGHT_BUILTIN_COLOR_TOKENS = new Set<string>(['white', 'yellow']);
+
+// v0.21.2: returns true when a hex string ("#RRGGBB") is bright enough that
+// black foreground text contrasts better than white. Used to pick contrasting
+// button foreground for theme-color overrides. Threshold of 0.6 picks off
+// `white` (1.0) and `yellow` (~0.93) while leaving borderline pastels (e.g.
+// `#80CBC4`, luminance ~0.51) on white text — preserving prior fixture
+// behaviour for theme-overridden brand colours that sit just above 0.5. The
+// 0.6 cutoff is empirical, not WCAG-strict (WCAG would flip much earlier);
+// trades perfect contrast for fixture stability and matches the threshold
+// committed to in the 2026-05-02 trap-journal entry.
+export function isLightHex(hex: string): boolean {
+  const m = /^#([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!m) return false;
+  const n = parseInt(m[1], 16);
+  const r = ((n >> 16) & 0xff) / 255;
+  const g = ((n >> 8) & 0xff) / 255;
+  const b = (n & 0xff) / 255;
+  // sRGB → linear (per WCAG / Flutter Color.computeLuminance).
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  const luminance = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return luminance > 0.6;
+}
+
 export const ALIGN_MAP: Record<string, string> = {
   start: 'MainAxisAlignment.start',
   center: 'MainAxisAlignment.center',
@@ -399,12 +430,19 @@ ${cases}
 }`;
 }
 
+// v0.21.2: Igni type-hint identifiers that map to real Dart built-in types.
+// Anything else (user-named classes like `Item` — Igni doesn't have class
+// definitions yet) falls back to `dynamic` to keep generated Dart compilable.
+const DART_BUILTIN_TYPES = new Set(['int', 'double', 'num', 'bool', 'String', 'dynamic']);
+
 export function inferType(expr: Expr, typeHint?: string): string {
   if (typeHint) {
     if (typeHint.startsWith('[') && typeHint.endsWith(']')) {
-      return `List<${typeHint.slice(1, -1)}>`;
+      const elemHint = typeHint.slice(1, -1);
+      const elemType = DART_BUILTIN_TYPES.has(elemHint) ? elemHint : 'dynamic';
+      return `List<${elemType}>`;
     }
-    return typeHint;
+    return DART_BUILTIN_TYPES.has(typeHint) ? typeHint : 'dynamic';
   }
   switch (expr.type) {
     case 'NumberLit': return expr.isFloat ? 'double' : 'int';
@@ -414,6 +452,13 @@ export function inferType(expr: Expr, typeHint?: string): string {
       if (isStyleValueName(expr.name)) return 'String';
       return 'var';
     case 'ListLit': return 'List<dynamic>';
+    // v0.21.2: state vars initialised to a map literal must be `dynamic` so
+    // chained field-access (`user['profile']['city']`) doesn't trigger Dart's
+    // `unchecked_use_of_nullable_value` on the intermediate `[]` (Map<X,V>[]
+    // returns V? which is non-dynamic for typed maps; dynamic stays loose).
+    // Pre-fix `var user = {...}` inferred Map<String, Object>; chained access
+    // tripped the analyzer (object-update fixture 2026-04-28).
+    case 'ObjectLit': return 'dynamic';
     default: return 'var';
   }
 }

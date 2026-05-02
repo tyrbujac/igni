@@ -32,7 +32,7 @@ class _NotesScreenState extends State<NotesScreen> {
               style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
               onPressed: () {
                 setState(() {
-                  current = {...current, 'blocks': current['blocks'] + <dynamic>[{'type': 'text', 'body': 'new'}]};
+                  current = <String, dynamic>{...(current as Map), 'blocks': current['blocks'] + <dynamic>[{'type': 'text', 'body': 'new'}]};
                 });
               },
               child: const Text('Add'),

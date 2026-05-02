@@ -1693,7 +1693,7 @@ export class Parser {
     const start = this.current();
     this.consume(TokenType.Shared, 'Expected "shared"');
     this.consume(TokenType.Dot, 'Expected "."');
-    const field = this.consume(TokenType.Identifier, 'Expected field name').value;
+    const field = this.expectFieldName();
     this.consume(TokenType.Equals, 'Expected "="');
     const value = this.parseExpr();
     return { type: 'Assignment', target: 'shared.' + field, value, loc: this.loc(start) };
@@ -1941,7 +1941,7 @@ export class Parser {
     while (this.check(TokenType.Dot) || this.check(TokenType.LBracket)) {
       if (this.check(TokenType.Dot)) {
         const tok = this.advance(); // consume .
-        const field = this.consume(TokenType.Identifier, 'Expected field name').value;
+        const field = this.expectFieldName();
         expr = { type: 'FieldAccess', object: expr, field, loc: this.loc(tok) } as FieldAccess;
       } else {
         const tok = this.advance(); // consume [
@@ -2026,6 +2026,23 @@ export class Parser {
     return this.consume(TokenType.Identifier, 'Expected key').value;
   }
 
+  // v0.21.2: symmetric helper for FieldAccess parser sites (`obj.field`,
+  // `shared.field = ...`, `{base.path with key: value}`). Pre-fix, hitting
+  // a primitive keyword here produced a generic "Expected field name, got X"
+  // error; the v0.20.3 helper covered ObjectLit field keys but not the
+  // FieldAccess `.field` parse positions. Trap journal 2026-05-01 entry
+  // (range.label) surfaced the asymmetry.
+  private expectFieldName(): string {
+    const cur = this.current();
+    const primitiveHint = primitiveNameForToken(cur.type);
+    if (primitiveHint !== null) {
+      return this.error(
+        `\`${primitiveHint}\` is a UI-primitive keyword and cannot be used as a field accessor. Use a non-primitive field name (e.g. \`text\`, \`caption\`, \`name\`) on the object.`
+      );
+    }
+    return this.consume(TokenType.Identifier, 'Expected field name').value;
+  }
+
   // Scans forward from the current position (just after `{`) for the
   // pattern `BASE with ...`. Returns 'valid' for Ident/FieldAccess bases,
   // 'invalid-call' if the base includes a function call, 'invalid-index'
@@ -2084,7 +2101,7 @@ export class Parser {
     let base: Ident | FieldAccess = { type: 'Ident', name: baseName, loc: this.loc(baseTok) };
     while (this.check(TokenType.Dot)) {
       const dotTok = this.advance();
-      const field = this.consume(TokenType.Identifier, 'Expected field name').value;
+      const field = this.expectFieldName();
       base = { type: 'FieldAccess', object: base, field, loc: this.loc(dotTok) };
     }
     this.consume(TokenType.With, 'Expected "with"');
