@@ -1,0 +1,25 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "v0.22 hover primitive design critique",
+  "prompt_slug": "v0-22-hover-primitive-design-critique",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.22-hover-design-review/prompts.md",
+  "spec_path": null,
+  "spec_tier": "none",
+  "spec_sha256": null,
+  "spec_words": 0,
+  "timestamp": "2026-05-07T20:07:58.194Z",
+  "duration_ms": 87504,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 5383,
+    "output_tokens": 4197,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.13184,
+  "transpile": null
+}

@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "v0.22 hover primitive design critique",
+  "prompt_slug": "v0-22-hover-primitive-design-critique",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.22-hover-design-review/prompts.md",
+  "spec_path": null,
+  "spec_tier": "none",
+  "spec_sha256": null,
+  "spec_words": 0,
+  "timestamp": "2026-05-07T20:12:55.006Z",
+  "duration_ms": 57207,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 3629,
+    "output_tokens": 1757,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.028342,
+  "transpile": null
+}
