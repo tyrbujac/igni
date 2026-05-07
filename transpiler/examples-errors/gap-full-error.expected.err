@@ -1,0 +1,5 @@
+
+  Error: 'full' is only valid for `rounded:`. Use a spacing token like `medium`, `none`, or `spacing/4` instead.
+
+    gap-full-error.igni:2 |   layout vertical, gap: full:
+                          |                             ^

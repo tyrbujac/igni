@@ -2,6 +2,11 @@ import { Expr, Property } from './ast.js';
 import { TranspileError } from './errors.js';
 
 export const DESIGN_TOKENS: Record<string, number> = {
+  // v0.22: zero token — explicit 0 px for gap/padding/rounded/size.
+  // Distinct from omitting the property (which uses the layout default,
+  // not zero).
+  none: 0,
+
   // Word tokens — semantic shortcuts (pre-v0.20)
   small: 8,
   medium: 16,
@@ -144,13 +149,32 @@ export function isStyleValueExpr(expr: Expr): boolean {
 }
 
 export function resolveDesignToken(expr: Expr): number {
-  if (expr.type === 'Ident' && expr.name in DESIGN_TOKENS) {
-    return DESIGN_TOKENS[expr.name];
+  if (expr.type === 'Ident') {
+    if (expr.name === 'full') {
+      throw new TranspileError(
+        "'full' is only valid for `rounded:`. Use a spacing token like `medium`, `none`, or `spacing/4` instead.",
+        expr.loc?.line ?? 1,
+        expr.loc?.column ?? 1,
+      );
+    }
+    if (expr.name in DESIGN_TOKENS) {
+      return DESIGN_TOKENS[expr.name];
+    }
   }
   if (expr.type === 'NumberLit') {
     return expr.value;
   }
   return 16;
+}
+
+// v0.22: rounded-only token resolution. `rounded: full` produces a pill /
+// circle shape — Flutter's `BorderRadius.circular` clamps the radius to
+// half the smaller dimension, so emitting a large constant (9999) is the
+// idiomatic way to say "fully round." Other tokens (none / small / medium /
+// large / spacing/N) resolve via the standard design-token table.
+export function resolveRoundedRadius(expr: Expr): string {
+  if (expr.type === 'Ident' && expr.name === 'full') return '9999';
+  return String(resolveDesignToken(expr));
 }
 
 export function resolveMaxWidthToken(expr: Expr): number | null {

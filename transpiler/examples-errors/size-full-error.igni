@@ -1,0 +1,3 @@
+screen Demo:
+  layout vertical, padding: full:
+    label "Hi"

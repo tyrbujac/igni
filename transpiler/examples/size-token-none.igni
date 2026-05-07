@@ -1,0 +1,7 @@
+screen IconRow:
+  layout vertical, padding: medium, gap: none:
+    label "Tightly packed", style: heading
+    layout horizontal, gap: none, padding: none, background: card, rounded: none:
+      icon "heart", color: subtle
+      icon "share", color: subtle
+      icon "more", color: subtle

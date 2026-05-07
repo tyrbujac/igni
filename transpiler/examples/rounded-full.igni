@@ -1,0 +1,6 @@
+screen Pill:
+  layout vertical, padding: medium, gap: medium, align: center:
+    layout vertical, padding: medium, background: brand, rounded: full:
+      label "Follow", color: white
+    layout vertical, padding: small, background: subtle, rounded: full, size: 64:
+      label "AB", color: white, style: heading

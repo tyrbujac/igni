@@ -9,7 +9,7 @@ import {
   TestBlock, TestStatement, RenderStmt, ExpectStmt,
 } from './ast.js';
 import {
-  findProp, resolveIdentName, resolveDesignToken, resolveMaxWidthToken, resolveStyle,
+  findProp, resolveIdentName, resolveDesignToken, resolveRoundedRadius, resolveMaxWidthToken, resolveStyle,
   resolveAlign, resolveBackground, resolveColor, mapIconName,
   inferType, isStringExpr, substituteLambdaParam, isImageBackground,
   generateIconLookupHelper, isDarkBackgroundExpr, generateStyleValueResolvers,
@@ -2050,7 +2050,7 @@ export class CodeGenerator {
       const borderProp = findProp(node.properties, 'border');
       if (bgProp || roundedProp || borderProp) {
         const decInd = this.indent(depth);
-        const radius = roundedProp ? resolveDesignToken(roundedProp.value) : null;
+        const radius = roundedProp ? resolveRoundedRadius(roundedProp.value) : null;
         let dec = 'BoxDecoration(';
         const decParts: string[] = [];
         if (bgProp && isImageBackground(bgProp.value)) {
@@ -2131,7 +2131,7 @@ export class CodeGenerator {
     const borderProp = findProp(node.properties, 'border');
     if (bgProp || roundedProp || borderProp) {
       const decInd = this.indent(depth);
-      const radius = roundedProp ? resolveDesignToken(roundedProp.value) : null;
+      const radius = roundedProp ? resolveRoundedRadius(roundedProp.value) : null;
       let dec = 'BoxDecoration(';
       const decParts: string[] = [];
       if (bgProp && isImageBackground(bgProp.value)) {
