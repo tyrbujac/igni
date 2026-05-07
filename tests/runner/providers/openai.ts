@@ -26,23 +26,45 @@ export class OpenAIProvider implements Provider {
     };
     if (params.effort) request.reasoning_effort = params.effort;
     if (params.spec) request.prompt_cache_key = specCacheKey(params.spec);
-    const response = await this.client.chat.completions.create(request);
+    const mustStream = !!params.effort || params.maxTokens > 8192;
+    let raw_output = '';
+    let model_id = params.model;
+    let finish_reason: string = 'unknown';
+    let usage_payload: any = null;
+    if (mustStream) {
+      const stream = await this.client.chat.completions.create({
+        ...request,
+        stream: true,
+        stream_options: { include_usage: true },
+      });
+      for await (const chunk of stream) {
+        if (chunk.model) model_id = chunk.model;
+        const choice = chunk.choices?.[0];
+        if (choice?.delta?.content) raw_output += choice.delta.content;
+        if (choice?.finish_reason) finish_reason = choice.finish_reason;
+        if ((chunk as any).usage) usage_payload = (chunk as any).usage;
+      }
+    } else {
+      const response = await this.client.chat.completions.create(request);
+      model_id = response.model;
+      const choice = response.choices[0];
+      raw_output = choice?.message?.content ?? '';
+      finish_reason = choice?.finish_reason ?? 'unknown';
+      usage_payload = response.usage;
+    }
     const duration_ms = Date.now() - started;
-
-    const choice = response.choices[0];
-    const raw_output = choice?.message?.content ?? '';
 
     return {
       provider: 'openai',
       requested_model: params.model,
-      model_id: response.model,
+      model_id,
       raw_output,
-      stop_reason: choice?.finish_reason ?? 'unknown',
+      stop_reason: finish_reason,
       duration_ms,
       usage: {
-        input_tokens: response.usage?.prompt_tokens ?? 0,
-        output_tokens: response.usage?.completion_tokens ?? 0,
-        cache_read_tokens: (response.usage as any)?.prompt_tokens_details?.cached_tokens ?? 0,
+        input_tokens: usage_payload?.prompt_tokens ?? 0,
+        output_tokens: usage_payload?.completion_tokens ?? 0,
+        cache_read_tokens: usage_payload?.prompt_tokens_details?.cached_tokens ?? 0,
       },
     };
   }

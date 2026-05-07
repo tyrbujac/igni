@@ -30,13 +30,21 @@ export class GoogleProvider implements Provider {
       generationConfig,
     });
 
+    const mustStream = params.maxTokens > 8192;
     const started = Date.now();
-    const response = await model.generateContent(userContent);
+    let final: any;
+    if (mustStream) {
+      const streamResult = await model.generateContentStream(userContent);
+      final = await streamResult.response;
+    } else {
+      const result = await model.generateContent(userContent);
+      final = result.response;
+    }
     const duration_ms = Date.now() - started;
 
-    const raw_output = response.response.text();
-    const usage = response.response.usageMetadata;
-    const finishReason = response.response.candidates?.[0]?.finishReason ?? 'unknown';
+    const raw_output = final.text();
+    const usage = final.usageMetadata;
+    const finishReason = final.candidates?.[0]?.finishReason ?? 'unknown';
 
     return {
       provider: 'google',
