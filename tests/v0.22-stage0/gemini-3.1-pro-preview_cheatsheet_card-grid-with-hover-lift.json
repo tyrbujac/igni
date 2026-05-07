@@ -1,0 +1,23 @@
+{
+  "provider": "google",
+  "requested_model": "gemini-3.1-pro-preview",
+  "model_id": "gemini-3.1-pro-preview",
+  "prompt_name": "Card grid with hover-lift",
+  "prompt_slug": "card-grid-with-hover-lift",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.22-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.22-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "7ab475f04b8b110278332f48419e10ef3def4218676c464348ead7a126814c26",
+  "spec_words": 8816,
+  "timestamp": "2026-05-07T20:35:39.748Z",
+  "duration_ms": 28794,
+  "stop_reason": "STOP",
+  "usage": {
+    "input_tokens": 16372,
+    "output_tokens": 374,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.037232,
+  "transpile": null
+}

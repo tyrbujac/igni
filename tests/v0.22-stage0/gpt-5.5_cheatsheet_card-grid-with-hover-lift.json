@@ -1,0 +1,23 @@
+{
+  "provider": "openai",
+  "requested_model": "gpt-5.5",
+  "model_id": "gpt-5.5-2026-04-23",
+  "prompt_name": "Card grid with hover-lift",
+  "prompt_slug": "card-grid-with-hover-lift",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.22-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.22-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "7ab475f04b8b110278332f48419e10ef3def4218676c464348ead7a126814c26",
+  "spec_words": 8816,
+  "timestamp": "2026-05-07T20:30:54.975Z",
+  "duration_ms": 15565,
+  "stop_reason": "stop",
+  "usage": {
+    "input_tokens": 15327,
+    "output_tokens": 744,
+    "cache_read_tokens": 0
+  },
+  "cost_usd": 0.098955,
+  "transpile": null
+}

@@ -1,0 +1,25 @@
+{
+  "provider": "anthropic",
+  "requested_model": "claude-opus-4-7",
+  "model_id": "claude-opus-4-7",
+  "prompt_name": "Card grid with hover-lift",
+  "prompt_slug": "card-grid-with-hover-lift",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.22-stage0/prompts.md",
+  "spec_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.22-stage0/cheatsheet-draft.md",
+  "spec_tier": "cheatsheet",
+  "spec_sha256": "7ab475f04b8b110278332f48419e10ef3def4218676c464348ead7a126814c26",
+  "spec_words": 8816,
+  "timestamp": "2026-05-07T20:30:15.881Z",
+  "duration_ms": 11925,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 182,
+    "output_tokens": 321,
+    "cache_creation_tokens": 22661,
+    "cache_read_tokens": 0,
+    "thinking_tokens": 0
+  },
+  "cost_usd": 0.15056625,
+  "transpile": null
+}
