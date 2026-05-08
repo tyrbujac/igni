@@ -1,0 +1,7 @@
+screen Outlined:
+  layout vertical, padding: medium:
+    layout vertical, padding: medium, border: thin, color: subtle, rounded: medium:
+      hover:
+        border: medium
+        color: brand
+      label "Hover for accent border"

@@ -1,0 +1,6 @@
+screen Bad:
+  layout vertical, padding: medium, background: card:
+    hover:
+      background: brand
+      label "this should error"
+    label "outside"

@@ -2,7 +2,7 @@ import { Token, TokenType } from './tokens.js';
 import { TranspileError, AggregateTranspileError } from './errors.js';
 import {
   Program, Screen, ScreenItem, VariableDecl, UINode,
-  Layout, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
+  Layout, HoverBlock, LabelNode, ButtonNode, InputNode, ToggleNode, IfNode,
   Property, EventHandler, FunctionDef, FunctionCall, Statement, EachNode,
   NavigateTo, NavigateBack, ComponentDef, ComponentItem, ComponentInvocation,
   LambdaExpr, EqualityExpr, InExpr, ReturnStmt, IfStmt, EachStmt, EveryNode, EmitStmt,
@@ -1078,6 +1078,7 @@ export class Parser {
     const direction = dirToken.value as 'vertical' | 'horizontal';
     const { properties, events } = this.parseArgs();
     const children: UINode[] = [];
+    let hover: HoverBlock | undefined;
     if (this.check(TokenType.Colon)) {
       this.advance(); // consume :
       this.consume(TokenType.Newline, 'Expected newline');
@@ -1086,6 +1087,17 @@ export class Parser {
         while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
           this.drainComments(children);
           if (this.check(TokenType.Dedent) || this.check(TokenType.EOF)) break;
+          // v0.22: hover sub-block detection. `hover` lowercase is unambiguous —
+          // not a UI primitive, not a component name. The cheatsheet teaches it
+          // as a layout-only sub-block.
+          const tok = this.current();
+          if (tok.type === TokenType.Identifier && tok.value === 'hover' && this.peek(1)?.type === TokenType.Colon) {
+            if (hover !== undefined) {
+              this.error('Duplicate `hover:` sub-block — only one is allowed per `layout`.');
+            }
+            hover = this.parseHoverBlock();
+            continue;
+          }
           children.push(this.parseUINode());
         }
         this.drainComments(children);
@@ -1106,7 +1118,86 @@ export class Parser {
         );
       }
     }
-    return { type: 'Layout', direction, properties, events, children, loc: this.loc(start) };
+    return { type: 'Layout', direction, properties, events, children, hover, loc: this.loc(start) };
+  }
+
+  // v0.22: parse a `hover:` sub-block. Property-overrides only — no UI
+  // primitive children (rejected with a hint to use `is_hovered()` + `if`).
+  // Cursor whitelist: `pointer` and `not_allowed` only. Nested `hover:` is a
+  // parse error. The block must be non-empty.
+  private parseHoverBlock(): HoverBlock {
+    const start = this.current();
+    this.advance(); // consume `hover` Identifier
+    this.consume(TokenType.Colon, 'Expected ":" after `hover`');
+    this.consume(TokenType.Newline, 'Expected newline after `hover:`');
+    if (!this.check(TokenType.Indent)) {
+      this.error('`hover:` block requires at least one property override (background, border, rounded, cursor).');
+    }
+    this.consume(TokenType.Indent, 'Expected indented `hover:` block');
+
+    // v0.22 hover whitelist. `color:` is paired with `border:` for border-colour
+    // overrides (mirrors base-layout border colour handling). `shadow:` was on
+    // the cheatsheet draft whitelist but ships without codegen support — drops
+    // out of v0.22; spec-fork text adjusted at version-bump time.
+    const ALLOWED = new Set(['background', 'border', 'rounded', 'cursor', 'color']);
+    const UI_PRIMITIVES = new Set([
+      'label', 'button', 'input', 'image', 'icon', 'toggle', 'slider',
+      'checkbox', 'dropdown', 'badge', 'spinner', 'divider',
+    ]);
+    const properties: Property[] = [];
+
+    while (!this.check(TokenType.Dedent) && !this.check(TokenType.EOF)) {
+      const propTok = this.current();
+      // Reject `hover:` nested inside another `hover:`.
+      if (propTok.type === TokenType.Identifier && propTok.value === 'hover' && this.peek(1)?.type === TokenType.Colon) {
+        this.error('`hover:` cannot nest inside another `hover:` block.');
+      }
+      // Reject UI primitives — `hover:` is property-only.
+      if (propTok.type === TokenType.Layout) {
+        this.error('`layout` is not allowed inside `hover:` — `hover:` only takes property overrides (background, border, rounded, cursor). For hover-conditional content, use `if is_hovered():` outside the `hover:` block.');
+      }
+      if (propTok.type === TokenType.Identifier && UI_PRIMITIVES.has(propTok.value) && this.peek(1)?.type !== TokenType.Colon) {
+        // Bare primitive call (e.g. `label "hi"`) is rejected. The check above
+        // peeks for `:` so that `label: ...` (a property called label) doesn't
+        // misfire — though `label` isn't in ALLOWED so it'd error below anyway.
+        this.error(`\`${propTok.value}\` is not allowed inside \`hover:\` — \`hover:\` only takes property overrides (background, border, rounded, cursor). For hover-conditional content, use \`if is_hovered():\` outside the \`hover:\` block.`);
+      }
+      // Tokens that aren't Identifier-or-property-name shape are likely UI
+      // primitives lexed as their own TokenType (e.g. TokenType.Label, .Button).
+      if (
+        propTok.type !== TokenType.Identifier &&
+        propTok.type !== TokenType.Label &&
+        propTok.type !== TokenType.Image &&
+        propTok.type !== TokenType.Icon
+      ) {
+        this.error(`Expected hover property (background, border, rounded, cursor), got "${propTok.value}".`);
+      }
+      const name = propTok.value;
+      if (!ALLOWED.has(name)) {
+        if (UI_PRIMITIVES.has(name)) {
+          this.error(`\`${name}\` is not allowed inside \`hover:\` — \`hover:\` only takes property overrides (background, border, rounded, cursor). For hover-conditional content, use \`if is_hovered():\` outside the \`hover:\` block.`);
+        }
+        this.error(`Unknown hover property "${name}" — \`hover:\` accepts: background, border, rounded, cursor.`);
+      }
+      this.advance(); // consume property name token
+      this.consume(TokenType.Colon, `Expected ':' after \`${name}\``);
+      const value = this.parseExpr();
+      // Cursor whitelist enforcement (v0.22 ships pointer + not_allowed).
+      if (name === 'cursor') {
+        const ident = value.type === 'Ident' ? value.name : null;
+        if (ident !== 'pointer' && ident !== 'not_allowed') {
+          this.error(`\`cursor:\` whitelist for v0.22 is \`pointer\` (clickable affordance) and \`not_allowed\` (disabled affordance). Got \`${ident ?? '<expr>'}\`.`);
+        }
+      }
+      properties.push({ name, value, loc: this.loc(propTok) });
+      if (this.check(TokenType.Newline)) this.advance();
+    }
+    this.consume(TokenType.Dedent, 'Expected dedent at end of `hover:` block');
+
+    if (properties.length === 0) {
+      this.error('`hover:` block is empty — add at least one property override (background, border, rounded, cursor).');
+    }
+    return { type: 'HoverBlock', properties, loc: this.loc(start) };
   }
 
   private parseLabel(): LabelNode {

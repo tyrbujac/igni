@@ -1,0 +1,6 @@
+screen Snap:
+  layout vertical, padding: medium:
+    layout vertical, padding: small, background: card, rounded: small, transition: none:
+      hover:
+        background: brand
+      label "Instant snap"

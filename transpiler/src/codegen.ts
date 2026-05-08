@@ -110,6 +110,17 @@ export class CodeGenerator {
   private cachedTestSlug = '';
   private needsIconLookup = false;
   private needsStyleResolvers = false;
+  // v0.22: hover scope tracking. Each layout with a `hover:` block (or one
+  // that lexically encloses a non-hover-scoped descendant calling
+  // `is_hovered()`) gets a fresh integer id. The id powers the Dart variable
+  // name (`_hover<N>`) bound by the `_HoverScope` builder lambda. The stack is
+  // pushed/popped around `genLayout` recursion so deeper `is_hovered()` calls
+  // resolve to the innermost id.
+  private hoverScopeStack: number[] = [];
+  private nextHoverScopeId = 0;
+  // Set when any layout in the program has a `hover:` block. Gates emission
+  // of the `_HoverScope` widget class at file-top scaffold time.
+  private needsHoverScope = false;
   // v0.17.0: emitted when a `border:` width on a layout uses a non-literal
   // expression (function call, field access, etc.) and needs runtime token
   // resolution. Literal tokens (`border: thin`) resolve at compile time.
@@ -161,6 +172,9 @@ export class CodeGenerator {
     this.allComponents = program.components;
     this.hasShared = program.shared.length > 0;
     this.hasPersistedShared = program.shared.some(v => v.persisted);
+    this.hoverScopeStack = [];
+    this.nextHoverScopeId = 0;
+    this.needsHoverScope = false;
     // v0.15.0: load theme.color overrides + user-defined tokens.
     this.themeColors = {};
     this.themeScaffold = {};
@@ -451,6 +465,33 @@ export class CodeGenerator {
     }
     if (this.needsStyleResolvers) {
       code += '\n' + generateStyleValueResolvers(this.themeColors, this.themeDarkColors) + '\n';
+    }
+    if (this.needsHoverScope) {
+      // v0.22: hover-state widget emitted once per generated file. Owns a
+      // boolean tracked via setState; exposes it to the builder lambda.
+      // MouseRegion's onEnter/onExit only fire for cursor-bearing platforms,
+      // so iOS/Android touch sessions never set the flag — matches the spec
+      // rule that `is_hovered()` returns false on touch platforms.
+      code += '\n' + 'class _HoverScope extends StatefulWidget {\n' +
+        '  final Widget Function(BuildContext, bool) builder;\n' +
+        '  final MouseCursor cursor;\n' +
+        '  const _HoverScope({required this.builder, this.cursor = MouseCursor.defer});\n' +
+        '  @override\n' +
+        '  State<_HoverScope> createState() => _HoverScopeState();\n' +
+        '}\n' +
+        '\n' +
+        'class _HoverScopeState extends State<_HoverScope> {\n' +
+        '  bool _hovered = false;\n' +
+        '  @override\n' +
+        '  Widget build(BuildContext context) {\n' +
+        '    return MouseRegion(\n' +
+        '      cursor: widget.cursor,\n' +
+        '      onEnter: (_) => setState(() => _hovered = true),\n' +
+        '      onExit: (_) => setState(() => _hovered = false),\n' +
+        '      child: widget.builder(context, _hovered),\n' +
+        '    );\n' +
+        '  }\n' +
+        '}\n';
     }
 
     if (!emitLineMarkers) {
@@ -1992,6 +2033,137 @@ export class CodeGenerator {
   }
 
   private genLayout(node: Layout, depth: number): string {
+    // v0.22: hover scopes are pushed before children render so that
+    // `is_hovered()` calls deep in the body resolve to this layout's id.
+    // The actual `_HoverScope` widget wrap is emitted near the end of this
+    // method, just before gesture wrapping.
+    const hoverScopeId = node.hover ? this.allocHoverScopeId() : null;
+    if (hoverScopeId !== null) this.hoverScopeStack.push(hoverScopeId);
+    try {
+      return this.genLayoutBody(node, depth, hoverScopeId);
+    } finally {
+      if (hoverScopeId !== null) this.hoverScopeStack.pop();
+    }
+  }
+
+  private allocHoverScopeId(): number {
+    this.needsHoverScope = true;
+    return this.nextHoverScopeId++;
+  }
+
+  // v0.22: cheatsheet whitelists `pointer` and `not_allowed`. Out-of-whitelist
+  // values are rejected at parse time; this just maps to Flutter constants.
+  private genCursorValue(expr: Expr): string {
+    const ident = expr.type === 'Ident' ? expr.name : null;
+    if (ident === 'pointer') return 'SystemMouseCursors.click';
+    if (ident === 'not_allowed') return 'SystemMouseCursors.forbidden';
+    return 'MouseCursor.defer';
+  }
+
+  // v0.22: build the BoxDecoration for a (possibly-hovered) layout. When
+  // `node.hover` is defined and a property is overridden on hover, emit the
+  // value as a `_hoverN ? hov : base` ternary; missing-base sides default to
+  // transparent / 0 / no-border. When hover isn't present, output is byte-
+  // identical to the previous Container construction (preserves existing
+  // diff fixtures).
+  private genLayoutDecoration(node: Layout, hoverScopeId: number | null): string | null {
+    const bgProp = findProp(node.properties, 'background');
+    const roundedProp = findProp(node.properties, 'rounded');
+    const borderProp = findProp(node.properties, 'border');
+    const baseColorProp = findProp(node.properties, 'color');
+    const hov = node.hover;
+    const hovBg = hov ? findProp(hov.properties, 'background') : undefined;
+    const hovRounded = hov ? findProp(hov.properties, 'rounded') : undefined;
+    const hovBorder = hov ? findProp(hov.properties, 'border') : undefined;
+    const hovColor = hov ? findProp(hov.properties, 'color') : undefined;
+
+    if (!bgProp && !roundedProp && !borderProp && !hovBg && !hovRounded && !hovBorder && !hovColor) {
+      return null;
+    }
+
+    const hoverVar = hoverScopeId !== null ? `_hover${hoverScopeId}` : null;
+    const decParts: string[] = [];
+
+    // Background
+    if (bgProp && isImageBackground(bgProp.value)) {
+      // Image backgrounds aren't overridable on hover for v0.22 — emit base only.
+      decParts.push(`image: DecorationImage(image: AssetImage('assets/' + ${this.exprToDart(bgProp.value)}), fit: BoxFit.cover)`);
+    } else if (bgProp && hovBg && hoverVar) {
+      decParts.push(`color: ${hoverVar} ? ${this.genBackgroundValue(hovBg.value)} : ${this.genBackgroundValue(bgProp.value)}`);
+    } else if (hovBg && hoverVar) {
+      decParts.push(`color: ${hoverVar} ? ${this.genBackgroundValue(hovBg.value)} : Colors.transparent`);
+    } else if (bgProp) {
+      decParts.push(`color: ${this.genBackgroundValue(bgProp.value)}`);
+    }
+
+    // Rounded
+    if (roundedProp && hovRounded && hoverVar) {
+      const baseR = resolveRoundedRadius(roundedProp.value);
+      const hovR = resolveRoundedRadius(hovRounded.value);
+      decParts.push(`borderRadius: BorderRadius.circular(${hoverVar} ? ${hovR} : ${baseR})`);
+    } else if (hovRounded && hoverVar) {
+      const hovR = resolveRoundedRadius(hovRounded.value);
+      decParts.push(`borderRadius: BorderRadius.circular(${hoverVar} ? ${hovR} : 0)`);
+    } else if (roundedProp) {
+      const baseR = resolveRoundedRadius(roundedProp.value);
+      decParts.push(`borderRadius: BorderRadius.circular(${baseR})`);
+    }
+
+    // Border + colour. Hover may override width (via `border:`) or colour
+    // (via `color:`) independently. When neither is overridden on hover,
+    // output matches the existing single-Border.all path byte-for-byte.
+    if (borderProp || hovBorder || hovColor) {
+      const subtleIdent: Expr = { type: 'Ident', name: 'subtle', loc: (borderProp ?? hovBorder ?? hovColor)!.value.loc };
+      const baseColorDart = baseColorProp ? this.genColorValue(baseColorProp.value) : this.genColorValue(subtleIdent);
+      const baseWidthDart = borderProp ? this.genBorderWidth(borderProp.value) : '0';
+      if ((hovBorder || hovColor) && hoverVar) {
+        const hovColorDart = hovColor ? this.genColorValue(hovColor.value) : baseColorDart;
+        const hovWidthDart = hovBorder ? this.genBorderWidth(hovBorder.value) : baseWidthDart;
+        const hoverBorder = `Border.all(color: ${hovColorDart}, width: ${hovWidthDart})`;
+        const baseBorder = borderProp
+          ? `Border.all(color: ${baseColorDart}, width: ${baseWidthDart})`
+          : 'null';
+        decParts.push(`border: ${hoverVar} ? ${hoverBorder} : ${baseBorder}`);
+      } else {
+        decParts.push(`border: Border.all(color: ${baseColorDart}, width: ${baseWidthDart})`);
+      }
+    }
+
+    return `BoxDecoration(${decParts.join(', ')})`;
+  }
+
+  // v0.22: pick the Container variant — `AnimatedContainer` when the layout
+  // has a `hover:` block AND `transition: none` isn't set. Plain `Container`
+  // otherwise (preserves existing fixtures byte-for-byte).
+  private genHoverableContainer(node: Layout, decoration: string, child: string | null, depth: number): string {
+    const decInd = this.indent(depth);
+    const hov = node.hover;
+    const transitionProp = findProp(node.properties, 'transition');
+    const transitionNone = transitionProp !== undefined && resolveIdentName(transitionProp.value) === 'none';
+    const useAnimated = hov !== undefined && !transitionNone;
+    if (useAnimated) {
+      if (child === null) {
+        return `AnimatedContainer(\n${decInd}  duration: const Duration(milliseconds: 150),\n${decInd}  curve: Curves.easeOut,\n${decInd}  decoration: ${decoration},\n${decInd})`;
+      }
+      return `AnimatedContainer(\n${decInd}  duration: const Duration(milliseconds: 150),\n${decInd}  curve: Curves.easeOut,\n${decInd}  decoration: ${decoration},\n${decInd}  child: ${child},\n${decInd})`;
+    }
+    if (child === null) {
+      return `Container(\n${decInd}  decoration: ${decoration},\n${decInd})`;
+    }
+    return `Container(\n${decInd}  decoration: ${decoration},\n${decInd}  child: ${child},\n${decInd})`;
+  }
+
+  // v0.22: wrap the layout's visual subtree in a `_HoverScope` so MouseRegion
+  // can detect cursor entry/exit and feed the boolean to nested decoration +
+  // `is_hovered()` calls. Sits between the gesture wrapper (outer) and the
+  // ConstrainedBox/Container chain (inner).
+  private wrapHoverScope(inner: string, scopeId: number, cursorDart: string | null, depth: number): string {
+    const ind = this.indent(depth);
+    const cursorLine = cursorDart ? `\n${ind}  cursor: ${cursorDart},` : '';
+    return `_HoverScope(${cursorLine}\n${ind}  builder: (context, _hover${scopeId}) => ${inner},\n${ind})`;
+  }
+
+  private genLayoutBody(node: Layout, depth: number, hoverScopeId: number | null): string {
     const widget = node.direction === 'vertical' ? 'Column' : 'Row';
     const alignProp = findProp(node.properties, 'align');
     const gapProp = findProp(node.properties, 'gap');
@@ -2022,10 +2194,14 @@ export class CodeGenerator {
     // EachNode shape; codegen here builds the wrapped Widget directly,
     // bypassing the standard children-loop spread emission.
     const transitionProp = findProp(node.properties, 'transition');
-    if (transitionProp) {
+    const transitionToken = transitionProp ? resolveIdentName(transitionProp.value) : null;
+    // v0.22: `transition: none` is the hover-instant-snap opt-out — it's not
+    // an AnimatedSwitcher token. Skip the if/each wrapping when the token is
+    // `none`; fall through to the standard children loop.
+    if (transitionProp && transitionToken !== 'none') {
       const onlyChild = node.children.find(c => c.type === 'If' || c.type === 'Each');
       if (onlyChild && (onlyChild.type === 'If' || onlyChild.type === 'Each')) {
-        const tokenName = resolveIdentName(transitionProp.value) ?? 'fade';
+        const tokenName = transitionToken ?? 'fade';
         childLines.push(`${this.genTransitionWrap(onlyChild, tokenName, colDepth + 2)},`);
       }
     } else {
@@ -2045,29 +2221,9 @@ export class CodeGenerator {
     // Empty layout: skip Column, just use Container for background/fill
     if (node.children.length === 0) {
       let code = 'const SizedBox()';
-      const bgProp = findProp(node.properties, 'background');
-      const roundedProp = findProp(node.properties, 'rounded');
-      const borderProp = findProp(node.properties, 'border');
-      if (bgProp || roundedProp || borderProp) {
-        const decInd = this.indent(depth);
-        const radius = roundedProp ? resolveRoundedRadius(roundedProp.value) : null;
-        let dec = 'BoxDecoration(';
-        const decParts: string[] = [];
-        if (bgProp && isImageBackground(bgProp.value)) {
-          decParts.push(`image: DecorationImage(image: AssetImage('assets/' + ${this.exprToDart(bgProp.value)}), fit: BoxFit.cover)`);
-        } else if (bgProp) {
-          decParts.push(`color: ${this.genBackgroundValue(bgProp.value)}`);
-        }
-        if (radius) decParts.push(`borderRadius: BorderRadius.circular(${radius})`);
-        if (borderProp) {
-          const widthDart = this.genBorderWidth(borderProp.value);
-          const colorProp = findProp(node.properties, 'color');
-          const subtleIdent: Expr = { type: 'Ident', name: 'subtle', loc: borderProp.value.loc };
-          const colorDart = colorProp ? this.genColorValue(colorProp.value) : this.genColorValue(subtleIdent);
-          decParts.push(`border: Border.all(color: ${colorDart}, width: ${widthDart})`);
-        }
-        dec += decParts.join(', ') + ')';
-        code = `Container(\n${decInd}  decoration: ${dec},\n${decInd})`;
+      const decoration = this.genLayoutDecoration(node, hoverScopeId);
+      if (decoration !== null) {
+        code = this.genHoverableContainer(node, decoration, null, depth);
       }
       const maxWidthProp = findProp(node.properties, 'max_width');
       if (maxWidthProp) {
@@ -2076,6 +2232,12 @@ export class CodeGenerator {
           const mwInd = this.indent(depth);
           code = `ConstrainedBox(\n${mwInd}  constraints: const BoxConstraints(maxWidth: ${maxWidthPx}),\n${mwInd}  child: ${code},\n${mwInd})`;
         }
+      }
+      // v0.22: wrap in `_HoverScope` (between max-width and gestures).
+      if (hoverScopeId !== null && node.hover) {
+        const cursorProp = findProp(node.hover.properties, 'cursor');
+        const cursorDart = cursorProp ? this.genCursorValue(cursorProp.value) : null;
+        code = this.wrapHoverScope(code, hoverScopeId, cursorDart, depth);
       }
       code = this.wrapWithGestures(code, node.events, depth);
       const fillProp = findProp(node.properties, 'fill');
@@ -2126,29 +2288,9 @@ export class CodeGenerator {
       const padInd = this.indent(depth);
       code = `Padding(\n${padInd}  padding: const EdgeInsets.all(${padSize}),\n${padInd}  child: ${code},\n${padInd})`;
     }
-    const bgProp = findProp(node.properties, 'background');
-    const roundedProp = findProp(node.properties, 'rounded');
-    const borderProp = findProp(node.properties, 'border');
-    if (bgProp || roundedProp || borderProp) {
-      const decInd = this.indent(depth);
-      const radius = roundedProp ? resolveRoundedRadius(roundedProp.value) : null;
-      let dec = 'BoxDecoration(';
-      const decParts: string[] = [];
-      if (bgProp && isImageBackground(bgProp.value)) {
-        decParts.push(`image: DecorationImage(image: AssetImage('assets/' + ${this.exprToDart(bgProp.value)}), fit: BoxFit.cover)`);
-      } else if (bgProp) {
-        decParts.push(`color: ${this.genBackgroundValue(bgProp.value)}`);
-      }
-      if (radius) decParts.push(`borderRadius: BorderRadius.circular(${radius})`);
-      if (borderProp) {
-        const widthDart = this.genBorderWidth(borderProp.value);
-        const colorProp = findProp(node.properties, 'color');
-        const subtleIdent: Expr = { type: 'Ident', name: 'subtle', loc: borderProp.value.loc };
-        const colorDart = colorProp ? this.genColorValue(colorProp.value) : this.genColorValue(subtleIdent);
-        decParts.push(`border: Border.all(color: ${colorDart}, width: ${widthDart})`);
-      }
-      dec += decParts.join(', ') + ')';
-      code = `Container(\n${decInd}  decoration: ${dec},\n${decInd}  child: ${code},\n${decInd})`;
+    const decoration = this.genLayoutDecoration(node, hoverScopeId);
+    if (decoration !== null) {
+      code = this.genHoverableContainer(node, decoration, code, depth);
     }
     const maxWidthProp = findProp(node.properties, 'max_width');
     if (maxWidthProp) {
@@ -2157,6 +2299,12 @@ export class CodeGenerator {
         const mwInd = this.indent(depth);
         code = `ConstrainedBox(\n${mwInd}  constraints: const BoxConstraints(maxWidth: ${maxWidthPx}),\n${mwInd}  child: ${code},\n${mwInd})`;
       }
+    }
+    // v0.22: wrap in `_HoverScope` (between max-width and gestures).
+    if (hoverScopeId !== null && node.hover) {
+      const cursorProp = findProp(node.hover.properties, 'cursor');
+      const cursorDart = cursorProp ? this.genCursorValue(cursorProp.value) : null;
+      code = this.wrapHoverScope(code, hoverScopeId, cursorDart, depth);
     }
     code = this.wrapWithGestures(code, node.events, depth);
     const fillProp = findProp(node.properties, 'fill');
@@ -3422,16 +3570,20 @@ export class CodeGenerator {
   // error message (Q3-tighten): misuse on a value-changing layout points at
   // `spring(value)` as the right primitive.
   private validateTransition(program: Program): void {
-    const TRANSITION_TOKENS = new Set(['fade', 'slide']);
+    // v0.22: `none` joins the layout-swap whitelist as the hover-instant-snap
+    // opt-out. It does NOT trigger AnimatedSwitcher wrapping (so the if/each
+    // child-shape check is skipped); codegen reads it to switch the hover
+    // Container variant from AnimatedContainer to Container.
+    const TRANSITION_TOKENS = new Set(['fade', 'slide', 'none']);
     const walkUI = (nodes: UINode[]): void => {
       for (const n of nodes) {
         if (n.type === 'Layout') {
           const transitionProp = findProp(n.properties, 'transition');
           if (transitionProp) {
-            // Token validation — must be `Ident('fade')` or `Ident('slide')`.
+            // Token validation — must be `Ident('fade')` / `Ident('slide')` / `Ident('none')`.
             if (transitionProp.value.type !== 'Ident' || !TRANSITION_TOKENS.has(transitionProp.value.name)) {
               throw new TranspileError(
-                '`transition:` takes one of two layout-swap tokens — `fade` or `slide`. ' +
+                '`transition:` takes one of three tokens — `fade` / `slide` (layout-swap) or `none` (hover instant-snap). ' +
                 'Per-call duration arguments (`transition: fade 200ms`) and other tokens are rejected; ' +
                 'the surface is intentionally narrow per the v0.17 width-token discipline.',
                 transitionProp.value.loc?.line ?? n.loc?.line ?? 1,
@@ -3439,15 +3591,19 @@ export class CodeGenerator {
               );
             }
             // Child-shape validation — exactly one IfNode or EachNode child.
-            // Comments are allowed as siblings (they don't render).
-            const renderableChildren = n.children.filter(c => c.type !== 'Comment');
-            if (renderableChildren.length !== 1 || (renderableChildren[0].type !== 'If' && renderableChildren[0].type !== 'Each')) {
-              throw new TranspileError(
-                'Use `spring(value)` for changing values; `transition:` only animates child replacement. ' +
-                'A layout with `transition:` must have exactly one child that is an `if`/`else` block ' +
-                'or an `each` loop. For per-row or value-by-value animation, use `spring(value)` consumed by `label`.',
-                n.loc?.line ?? 1, n.loc?.column ?? 1,
-              );
+            // Comments are allowed as siblings (they don't render). v0.22:
+            // `transition: none` is the hover opt-out and skips this check
+            // (it's not a child-replacement transition).
+            if (transitionProp.value.type === 'Ident' && transitionProp.value.name !== 'none') {
+              const renderableChildren = n.children.filter(c => c.type !== 'Comment');
+              if (renderableChildren.length !== 1 || (renderableChildren[0].type !== 'If' && renderableChildren[0].type !== 'Each')) {
+                throw new TranspileError(
+                  'Use `spring(value)` for changing values; `transition:` only animates child replacement. ' +
+                  'A layout with `transition:` must have exactly one child that is an `if`/`else` block ' +
+                  'or an `each` loop. For per-row or value-by-value animation, use `spring(value)` consumed by `label`.',
+                  n.loc?.line ?? 1, n.loc?.column ?? 1,
+                );
+              }
             }
           }
           walkUI(n.children);
@@ -4400,6 +4556,19 @@ export class CodeGenerator {
     }
     if (call.name === 'random' && args.length === 2) {
       return `(Random().nextInt(${args[1]} - ${args[0]} + 1) + ${args[0]})`;
+    }
+    if (call.name === 'is_hovered' && args.length === 0) {
+      // v0.22: lexical-scope hover-state read. Resolves to the innermost
+      // enclosing layout-with-`hover:`-block's Dart-side `_hoverN` boolean.
+      // No enclosing hover scope (e.g. inside a function or a layout without
+      // `hover:` and no hover ancestor) → constant `false`. Touch platforms
+      // never set the boolean (MouseRegion onEnter/onExit don't fire), which
+      // matches the spec rule that `is_hovered()` reads false on no-pointer
+      // platforms.
+      if (this.hoverScopeStack.length > 0) {
+        return `_hover${this.hoverScopeStack[this.hoverScopeStack.length - 1]}`;
+      }
+      return 'false';
     }
     if (call.name === 'now' && args.length === 0) {
       // v0.14: integer seconds since 1970-01-01 UTC. Non-reactive — bare

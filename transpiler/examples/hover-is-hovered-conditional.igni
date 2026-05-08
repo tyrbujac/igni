@@ -1,0 +1,9 @@
+screen Cards:
+  layout vertical, padding: medium, gap: medium:
+    layout vertical, padding: medium, background: card, rounded: medium:
+      hover:
+        background: brand
+        cursor: pointer
+      label "Sunset"
+      if is_hovered():
+        label "Photo by Anna — taken last summer", style: caption

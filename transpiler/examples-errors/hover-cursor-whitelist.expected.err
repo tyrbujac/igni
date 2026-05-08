@@ -1,0 +1,10 @@
+
+  Error: `cursor:` whitelist for v0.22 is `pointer` (clickable affordance) and `not_allowed` (disabled affordance). Got `grab`.
+
+    hover-cursor-whitelist.igni:4 |       cursor: grab
+                                  |                   ^
+
+  Error: Expected "screen", got "label"
+
+    hover-cursor-whitelist.igni:5 |     label "x"
+                                  |          ^

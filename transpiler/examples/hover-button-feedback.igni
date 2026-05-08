@@ -1,0 +1,7 @@
+screen Buttonish:
+  layout vertical, padding: medium, gap: medium, align: center:
+    layout horizontal, padding: medium, background: brand, rounded: large:
+      hover:
+        background: card
+        cursor: pointer
+      label "Press me", color: white

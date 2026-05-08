@@ -1,0 +1,10 @@
+
+  Error: `hover:` block requires at least one property override (background, border, rounded, cursor).
+
+    hover-empty-block.igni:4 |     label "x"
+                             |          ^
+
+  Error: Expected "screen", got ""
+
+    hover-empty-block.igni:5 | 
+                             | ^

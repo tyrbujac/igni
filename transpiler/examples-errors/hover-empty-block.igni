@@ -1,0 +1,4 @@
+screen Bad:
+  layout vertical, padding: medium, background: card:
+    hover:
+    label "x"

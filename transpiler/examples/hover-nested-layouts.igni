@@ -1,0 +1,10 @@
+screen Stacked:
+  layout vertical, padding: medium, gap: medium:
+    layout vertical, padding: medium, background: card, rounded: medium:
+      hover:
+        background: brand
+      label "Outer card"
+      layout horizontal, padding: small, background: subtle, rounded: small:
+        hover:
+          background: card
+        label "Inner button"

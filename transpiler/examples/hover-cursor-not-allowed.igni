@@ -1,0 +1,6 @@
+screen Disabled:
+  layout vertical, padding: medium, align: center:
+    layout horizontal, padding: medium, background: subtle, rounded: medium:
+      hover:
+        cursor: not_allowed
+      label "Submit (disabled)", color: subtle

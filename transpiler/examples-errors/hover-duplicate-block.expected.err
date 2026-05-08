@@ -1,0 +1,15 @@
+
+  Error: Duplicate `hover:` sub-block — only one is allowed per `layout`.
+
+    hover-duplicate-block.igni:5 |     hover:
+                                 |          ^
+
+  Error: Unexpected token "" — expected a UI element
+
+    hover-duplicate-block.igni:6 |       background: subtle
+                                 |       ^
+
+  Error: Expected "screen", got "label"
+
+    hover-duplicate-block.igni:7 |     label "x"
+                                 |          ^

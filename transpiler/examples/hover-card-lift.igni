@@ -1,0 +1,8 @@
+screen Gallery:
+  layout vertical, padding: medium, gap: medium:
+    layout vertical, padding: medium, background: card, rounded: medium:
+      hover:
+        background: brand
+        cursor: pointer
+      label "Sunset"
+      label "Photo by Anna", style: caption

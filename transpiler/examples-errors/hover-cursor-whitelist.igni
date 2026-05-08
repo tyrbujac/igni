@@ -1,0 +1,5 @@
+screen Bad:
+  layout vertical, padding: medium, background: card:
+    hover:
+      cursor: grab
+    label "x"

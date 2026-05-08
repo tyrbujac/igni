@@ -1,0 +1,10 @@
+
+  Error: `label` is not allowed inside `hover:` — `hover:` only takes property overrides (background, border, rounded, cursor). For hover-conditional content, use `if is_hovered():` outside the `hover:` block.
+
+    hover-children-rejected.igni:5 |       label "this should error"
+                                   |            ^
+
+  Error: Expected "screen", got "label"
+
+    hover-children-rejected.igni:6 |     label "outside"
+                                   |          ^

@@ -200,6 +200,12 @@ export interface Layout extends NodeBase {
   properties: Property[];
   events: EventHandler[];
   children: UINode[];
+  hover?: HoverBlock;
+}
+
+export interface HoverBlock extends NodeBase {
+  type: 'HoverBlock';
+  properties: Property[];
 }
 
 export interface LabelNode extends NodeBase {

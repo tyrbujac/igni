@@ -1,0 +1,15 @@
+
+  Error: `hover:` cannot nest inside another `hover:` block.
+
+    hover-nested-block.igni:5 |       hover:
+                              |            ^
+
+  Error: Unexpected token "" — expected a UI element
+
+    hover-nested-block.igni:6 |         background: subtle
+                              |         ^
+
+  Error: Expected "screen", got ""
+
+    hover-nested-block.igni:7 |     label "x"
+                              |     ^
