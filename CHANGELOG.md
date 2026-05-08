@@ -31,6 +31,40 @@ Spec evolution, one entry per version. Each version is a frozen snapshot in `spe
 
 ---
 
+## v0.22.0 — 2026-05-08
+*Hover primitive (Shape B1) + size-token gap fills. `hover:` sub-block on `layout` carries property-only overrides (`background:`/`border:`/`rounded:`/`cursor:`); `is_hovered()` lexical-scope boolean for hover-conditional content via `if`. Default ~150 ms ease-out animation; `transition: none` opt-out for instant snap. Touch platforms no-op (capability-based, not platform-based). Plus universal `none` (zero on `gap:`/`padding:`/`rounded:`/`size:`) and `rounded:`-only `full` (container-dependent — pill / circle). Stage 3 SOFT verdict (`tests/v0.22-stage3/`) at 4/4 P1 + 4/4 P2 + 2/3-strict-P3-visible; ships with three pre-registered cheatsheet patches. Cycle cost ~$1.05 cumulative ($0 Stage 2 chat-mode + ~$0.30 Stage 0 + $0.7520 Stage 3).*
+
+### Added
+
+- **`hover:` layout sub-block** (Shape B1; `docs/private/125_v022_hover.md` Stage 1 lock + `tests/v0.22-hover-design-review/` Stage 2 patches; Q7 LOCKED β — no `scale:` whitelist this cycle). Property-only overrides for `background:`, `border:`, `rounded:`, `cursor:`. UI primitives (`label`, `button`, `image`, etc.) rejected inside `hover:` with parser hint to use `if is_hovered():`. Nested `hover:` blocks rejected; duplicate `hover:` per layout rejected; empty `hover:` blocks rejected. `cursor:` whitelist: `pointer` (clickable affordance), `not_allowed` (disabled affordance) — narrow per the v0.17 width-token discipline.
+- **`is_hovered()` lexical-scope boolean builtin.** Reads the hover state of the innermost enclosing layout that defines a `hover:` block; returns `false` if no enclosing layout defines `hover:`. Nested `hover:`-bearing layouts shadow outer hover state. Non-reactive in functions / expression captures (matches `now()` semantics). Capability-based no-op on touch-only platforms — trackpad-equipped tablets and stylus surfaces hover correctly; phone-touch sessions do not.
+- **`AnimatedContainer` default for hover transitions** — ~150 ms ease-out on `background`/`border`/`rounded`/`color` flips. Explicit `transition: none` on the same layout opts out for instant-snap (`Container` instead of `AnimatedContainer`). `transition: none` joins the `transition:` token whitelist (`fade` / `slide` / `none`).
+- **Size token `none`** (universal 0 px on `gap:` / `padding:` / `rounded:` / `size:`). Distinct from omitting the property, which uses defaults. From `tests/v0.22-size-tokens-panel/` (4/4 ADD, same name across cells) — `docs/private/137_studio_drift_size_token_gaps.md`.
+- **Size token `full`** (`rounded:`-only — container-dependent radius for pill / circle shapes). Same panel: 3/4 same-name + 1/4 `pill` minority; `full` selected per pre-registered name-convergence criteria. Codegen emits `BorderRadius.circular(9999)` (Flutter clamps to half-min-dim). `padding: full` / `gap: full` / `size: full` rejected at parse time with targeted error.
+
+### Changed
+
+- **`transition:` token whitelist extended to three tokens** (`fade` / `slide` / `none`). `fade` and `slide` keep their v0.19 child-replacement-wrapping semantics (`AnimatedSwitcher` around the layout's single `if`/`each` child). `none` is new for v0.22 hover instant-snap and skips the child-replacement wrapping.
+- **Cheatsheet hover whitelist line** drops `shadow:` from the property-shape list. Stage 3 panel reached for `shadow: medium` at 4/4 P1 cells per the cheatsheet draft text — n=4/4 reproduction confirms the teaching as misleading; transpiler ships without `shadow:` codegen support. Future `shadow:` adds via separate design cycle.
+- **Cheatsheet `is_hovered()` rule** softened from "innermost enclosing layout" (which would imply per-layout MouseRegion overhead) to "innermost enclosing layout-with-`hover:`-block" — matches the implemented codegen scope rule and avoids per-layout MouseRegion allocation.
+- **Cheatsheet ambiguity-lint paragraph** dropped (was: "if `is_hovered()` is used inside a layout whose ancestor *also* defines a `hover:` block, the parser warns…"). The lint was authored at design time but never implemented in the transpiler; spec text mirrors implementation reality.
+
+### Methodology
+
+- **Pre-registering known-cheatsheet-defects in Stage 3 README scaffold** (n=1, gates n=2 for class promotion). The pre-Stage-3 README at `tests/v0.22-stage3/` flagged cheatsheet line 172 (`shadow:` whitelist) as a known v0.22.0-fork drop pre-run; 4/4 P1 cells reached for `shadow:` post-run; routing was clean (Tier-A mandatory cheatsheet patch, not user-error). Anti-pattern: treating cheatsheet-driven invalid-syntax as panel signal would have over-triggered Soft/Fail bars. First formal use of pre-registering known-cheatsheet-defects mechanism — class promotion gates on n=2.
+- **Provider-streaming-asymmetry trap class formally documented at n=3.** Three same-day-same-conditions reproductions of (gemini-3.1-pro-preview, P3-contact-card, ~8800-word spec) → `TypeError: fetch failed` at undici transport layer. Streaming branch in `providers/google.ts` does not resolve. Long-term fix queued: shared streaming-with-fallback-and-retry helper across all three providers.
+- **Honest-no n=1 sub-rule applied cross-source.** Two single-cell findings (Flash-lite P3 conditional-inside-`hover:`, Pro P2 `transition: fade` multi-child misuse) routed to observation log + n=2 gate per `feedback_n1_vs_n2_threshold`, not v0.22 spec changes. Demonstrates threshold-discipline at active-cycle-shipping time — protects bundle-shape from single-cell pull.
+
+### Test count / spec ship
+
+- `cd transpiler && npm test`: 165/165 green (was 153 → 165; +12 hover fixtures: 7 positive + 5 negative; transition-bad-token expected.err regen for 3-token whitelist).
+- `cd transpiler && npm run smoke`: 104/107 (3 pre-existing SMOKE_SKIPs unchanged; on-handler-named, on-handler-object-payload, border-selected-state secondary state-field bug — all routed to v0.22+ primitive-class redesign per `docs/private/137`-adjacent design notes).
+- End-to-end verification: `igni run` against `transpiler/test_apps/v022-hover-card-lift/` and `transpiler/test_apps/v022-hover-button/` browser smokes; per-card `_HoverScope` isolation confirmed (single-card `background: brand` while neighbours stay at base).
+- `spec/v0.21.2.{md,-cheatsheet.md,-micro.md}` archived; `spec/v0.22.0.{md,-cheatsheet.md,-micro.md}` shipped.
+- SYNC markers regenerated (CLAUDE.md, README.md, ARCHITECTURE.md, transpiler/examples/GALLERY.md).
+
+---
+
 ## v0.21.2 — 2026-05-02
 *Codegen + tooling patch ship. No spec syntax changes. Five fixes from the v0.21.2 trap-journal walk: button foreground-luminance, ObjectUpdate type-loose codegen, ObjectLit-state dynamic typing, border-token stringify, type-hint whitelist. Plus parser polish (FieldAccess primitive-collision error) and a script bug fix (`new-spec-version.ts` heading regex scoped). SMOKE_SKIP reduced 5 → 3. Three already-resolved traps (A1/A2/C2) confirmed during walk → n=3 promotes resolution-hygiene rule to `spec-cycle` skill update candidate.*
 
