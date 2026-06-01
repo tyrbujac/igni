@@ -14,7 +14,7 @@ FAILURES=()
 # checks them for *stability*, but a PASS certifies invalid Dart — so we surface
 # it as WARN, never silent green. When a future codegen fix flips one to FAIL,
 # read it as "regenerate the snapshot + drop from this list", not a regression.
-KNOWN_BROKEN=(border-selected-state on-handler-named on-handler-object-payload)
+KNOWN_BROKEN=(on-handler-named on-handler-object-payload)
 is_known_broken() {
   for b in "${KNOWN_BROKEN[@]}"; do [ "$b" = "$1" ] && return 0; done
   return 1

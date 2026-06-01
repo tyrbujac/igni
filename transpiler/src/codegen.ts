@@ -46,6 +46,11 @@ interface ScreenContext {
   // the target value. `label <alias>` and `label spring(...)` both lower to
   // TweenAnimationBuilder<double>.
   springAliases: Record<string, Expr>;
+  // v0.22: state-field vars emitted `late` because their field initializer
+  // references another instance field (they derive from it) yet they're
+  // reassigned at runtime, so they can't be build() locals. Populated by the
+  // derived-var promotion pass in genScreen.
+  lateStateVars?: Set<string>;
 }
 
 function newScreenContext(): ScreenContext {
@@ -1537,21 +1542,38 @@ export class CodeGenerator {
     // fields, so any screen-body variable whose initializer references another
     // screen-body variable must live inside build() — where it also re-evaluates
     // each rebuild, matching Igni's lexical reactivity semantics.
+    //
+    // Exception (v0.22 fix): a derived var that is ALSO reassigned at runtime
+    // (event handler / `every` block / function) is not a pure derived value —
+    // it's seeded from its dependency once, then mutated independently.
+    // Promoting it to a build() local would reset the user's value on every
+    // rebuild AND leave the handler that writes it referencing an out-of-scope
+    // local ("Undefined name"). Such vars stay real state fields, emitted `late`
+    // so the field initializer may still reference the field it derives from.
+    const runtimeReassigned = new Set<string>();
+    this.collectRuntimeReassignedTargets(screen, runtimeReassigned);
+    const lateStateVars = new Set<string>();
     let changedDerived = true;
     while (changedDerived) {
       changedDerived = false;
       for (const decl of allDecls) {
-        if (buildLocalVars.has(decl.name)) continue;
+        if (buildLocalVars.has(decl.name) || lateStateVars.has(decl.name)) continue;
         // fetch calls become stream/future state, handled separately — skip.
         if (decl.value.type === 'FunctionCall' && decl.value.name === 'fetch') continue;
         // v0.19 spring aliases don't get emitted at all; reads substitute to the target.
         if (this.ctx.springAliases[decl.name]) continue;
         if (this.exprRefsAny(decl.value, allDeclNames)) {
+          if (runtimeReassigned.has(decl.name)) {
+            lateStateVars.add(decl.name);
+            changedDerived = true;
+            continue;
+          }
           buildLocalVars.add(decl.name);
           changedDerived = true;
         }
       }
     }
+    this.ctx.lateStateVars = lateStateVars;
 
     let inBuildLocals = false;
     for (const item of screen.body) {
@@ -1915,6 +1937,41 @@ export class CodeGenerator {
     if (node.else_) collect(node.else_);
   }
 
+  // Collect names of variables reassigned at runtime — the target of an
+  // `Assignment` inside an event handler, an `every` block, or a function body
+  // (recursing through nested `if`/`each` statements and UI containers). The
+  // derived-var promotion pass uses this to keep a derived-but-reassigned var as
+  // a state field rather than a build() local.
+  private collectRuntimeReassignedTargets(screen: Screen, targets: Set<string>): void {
+    const walkStmt = (s: Statement): void => {
+      if (s.type === 'Assignment') targets.add(s.target);
+      else if (s.type === 'IfStmt') { s.then.forEach(walkStmt); if (s.else_) s.else_.forEach(walkStmt); }
+      else if (s.type === 'EachStmt') s.body.forEach(walkStmt);
+    };
+    const walkUI = (nodes: UINode[]): void => {
+      for (const n of nodes) {
+        const evs = (n as { events?: { action: Statement }[] }).events;
+        if (Array.isArray(evs)) for (const ev of evs) walkStmt(ev.action);
+        if (n.type === 'Layout') walkUI(n.children);
+        else if (n.type === 'If') {
+          for (const item of n.then) if (item.type !== 'VariableDecl') walkUI([item as UINode]);
+          for (const ei of n.elseIfs) for (const item of ei.body) if (item.type !== 'VariableDecl') walkUI([item as UINode]);
+          if (n.else_) for (const item of n.else_) if (item.type !== 'VariableDecl') walkUI([item as UINode]);
+        }
+        else if (n.type === 'Each') walkUI(n.children);
+        else if (n.type === 'ComponentInvocation') walkUI(n.children);
+      }
+    };
+    const uiNodes = screen.body.filter(
+      (i): i is UINode => i.type !== 'VariableDecl' && i.type !== 'FunctionDef' && i.type !== 'Every'
+    );
+    walkUI(uiNodes);
+    for (const item of screen.body) {
+      if (item.type === 'FunctionDef') item.body.forEach(walkStmt);
+      if (item.type === 'Every') item.body.forEach(walkStmt);
+    }
+  }
+
   private ifContainsAssignments(node: IfNode): boolean {
     const check = (items: (UINode | VariableDecl)[]) => items.some(i => i.type === 'VariableDecl');
     if (check(node.then)) return true;
@@ -1986,7 +2043,7 @@ export class CodeGenerator {
   private genStateVar(decl: VariableDecl): string {
     const dartType = inferType(decl.value, decl.typeHint);
     const dartValue = this.exprToDart(decl.value);
-    const needsLate = this.exprRefsParams(decl.value);
+    const needsLate = this.exprRefsParams(decl.value) || (this.ctx.lateStateVars?.has(decl.name) ?? false);
     const code = needsLate ? `late ${dartType} ${decl.name} = ${dartValue};` : `${dartType} ${decl.name} = ${dartValue};`;
     return this.withMarker(decl, `state:${decl.name}`, code);
   }
@@ -2704,17 +2761,32 @@ export class CodeGenerator {
     const isRound = roundProp !== undefined;
 
     const isNetwork = this.isNetworkImage(node.url);
-    let src: string;
+    // A "bare reference" src (`image item.url` / `image url`) carries no literal
+    // prefix, so its runtime value may be a full URL we can't classify at
+    // compile time. A compound expression with a literal prefix (e.g.
+    // `"dice" + n + ".png"`) builds a local asset path and stays an asset.
+    const isBareRef = node.url.type === 'Ident' || node.url.type === 'FieldAccess' || node.url.type === 'IndexAccess';
+    let code: string;
     if (isNetwork) {
-      src = this.exprToDart(node.url);
+      // Statically known network src (literal http string or http-prefixed concat).
+      const src = this.exprToDart(node.url);
+      code = `${ind}Image.network(\n${ind}  ${src},\n${ind}  width: ${size},\n${ind}  height: ${size},\n${ind}  fit: BoxFit.cover,\n${ind})`;
     } else if (node.url.type === 'StringLit') {
-      src = `'assets/${node.url.value}'`;
+      // Statically known local asset.
+      const src = `'assets/${node.url.value}'`;
+      code = `${ind}Image.asset(\n${ind}  ${src},\n${ind}  width: ${size},\n${ind}  height: ${size},\n${ind}  fit: BoxFit.cover,\n${ind})`;
+    } else if (isBareRef) {
+      // Bare reference, value only known at runtime → pick asset-vs-network at
+      // runtime: an "http..."-prefixed string loads over the network, anything
+      // else is a bundled asset. (v0.22 fix: previously emitted Image.asset for
+      // every such src, rendering Flutter's red error box for remote URLs.)
+      const e = this.exprToDart(node.url);
+      code = `${ind}Image(\n${ind}  image: (${e}).toString().startsWith('http') ? NetworkImage((${e}).toString()) as ImageProvider : AssetImage('assets/' + (${e}).toString()),\n${ind}  width: ${size},\n${ind}  height: ${size},\n${ind}  fit: BoxFit.cover,\n${ind})`;
     } else {
-      src = `'assets/' + ${this.exprToDart(node.url)}`;
+      // Compound expression with a literal prefix → local asset path (unchanged).
+      const src = `'assets/' + ${this.exprToDart(node.url)}`;
+      code = `${ind}Image.asset(\n${ind}  ${src},\n${ind}  width: ${size},\n${ind}  height: ${size},\n${ind}  fit: BoxFit.cover,\n${ind})`;
     }
-
-    const imageType = isNetwork ? 'Image.network' : 'Image.asset';
-    let code = `${ind}${imageType}(\n${ind}  ${src},\n${ind}  width: ${size},\n${ind}  height: ${size},\n${ind}  fit: BoxFit.cover,\n${ind})`;
     if (isRound) {
       code = `${ind}ClipOval(\n${ind}  child: ${code.trimStart()},\n${ind})`;
     }
@@ -4524,6 +4596,12 @@ export class CodeGenerator {
     }
     if (call.name === 'find' && args.length === 2 && call.args[1].type === 'LambdaExpr') {
       return `${args[0]}.cast<dynamic>().firstWhere(${args[1]}, orElse: () => null)`;
+    }
+    if (call.name === 'find' && args.length === 2) {
+      // v0.22 fix: identity form `find(items, target)` — the spec's canonical
+      // form (the lambda form `find(items, e => ...)` is handled above). Mirror
+      // without()/replace()/count() equality semantics; returns null if absent.
+      return `${args[0]}.cast<dynamic>().firstWhere((e) => e == ${args[1]}, orElse: () => null)`;
     }
     if (call.name === 'map' && args.length === 2 && call.args[1].type === 'LambdaExpr') {
       const lambda = call.args[1] as LambdaExpr;

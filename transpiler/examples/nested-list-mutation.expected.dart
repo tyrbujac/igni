@@ -13,10 +13,10 @@ class NotesScreen extends StatefulWidget {
 
 class _NotesScreenState extends State<NotesScreen> {
   List<dynamic> notes = <dynamic>[{'title': 'First', 'blocks': <dynamic>[{'type': 'text', 'body': 'hi'}]}];
+  late var current = (0 >= 0 && 0 < notes.length ? notes[0] : null);
 
   @override
   Widget build(BuildContext context) {
-    var current = (0 >= 0 && 0 < notes.length ? notes[0] : null);
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(

@@ -1,0 +1,7 @@
+screen Gallery:
+  photos = [{url: "https://picsum.photos/200", caption: "remote"}, {url: "logo.png", caption: "local"}]
+
+  layout vertical, padding: medium, gap: small:
+    each photo in photos:
+      image photo.url, size: large
+      label photo.caption

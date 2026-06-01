@@ -1,0 +1,8 @@
+screen Picker:
+  options = ["one", "two", "three"]
+  selected = options[0]
+
+  layout vertical, padding: medium, gap: small:
+    label selected
+    button "Next", on tap: selected = options[1]
+    button "Reset", on tap: selected = options[0]

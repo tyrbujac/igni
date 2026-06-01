@@ -13,6 +13,7 @@ class BorderSelectedStateScreen extends StatefulWidget {
 
 class _BorderSelectedStateScreenState extends State<BorderSelectedStateScreen> {
   List<dynamic> methods = <dynamic>[{'name': 'Credit Card'}, {'name': 'PayPal'}, {'name': 'Bank Transfer'}];
+  late var selected = (0 >= 0 && 0 < methods.length ? methods[0] : null);
 
   dynamic width_for(dynamic method) {
     if (method == selected) {
@@ -30,7 +31,6 @@ class _BorderSelectedStateScreenState extends State<BorderSelectedStateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var selected = (0 >= 0 && 0 < methods.length ? methods[0] : null);
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(

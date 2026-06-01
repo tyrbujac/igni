@@ -65,8 +65,9 @@ fi
 #                                state-field redesign, candidate v0.22+)
 #   on-handler-named           — component-with-input-bind StatelessWidget mismatch (doc 116 #9)
 #   on-handler-object-payload  — same as above
+# (border-selected-state removed 2026-06-01 — its secondary state-field-detection
+#  bug was fixed by the derived-var promotion `late`-field change; analyzes clean.)
 SMOKE_SKIP=(
-  border-selected-state
   on-handler-named
   on-handler-object-payload
 )

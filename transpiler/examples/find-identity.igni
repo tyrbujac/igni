@@ -1,0 +1,9 @@
+screen FindIdentity:
+  fruits = ["apple", "banana", "cherry"]
+  found = find(fruits, "banana")
+  missing = find(fruits, "grape")
+
+  layout vertical, padding: medium, gap: small:
+    label found
+    if missing is null:
+      label "grape not found"
