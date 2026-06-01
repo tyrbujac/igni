@@ -2,17 +2,17 @@
 
 The language definition. Three tiers of the same spec, plus the history.
 
-## Current (v0.14.1)
+## Current (<!-- SYNC:version -->v0.22.0<!-- /SYNC:version -->)
 
-- **[`v0.14.1.md`](v0.14.1.md)** — **full spec.** Canonical definition in learning order: hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → recurrence → reference. Read this once; refer back by section.
-- **[`v0.14.1-cheatsheet.md`](v0.14.1-cheatsheet.md)** — **cheatsheet.** Same language, condensed to ~3,400 words. Optimised for cold-LLM context and human skim-reading. Primary input for test runs.
-- **[`v0.14.1-micro.md`](v0.14.1-micro.md)** — **micro reference.** ~780 words, rules-only, no prose, no tradeoffs. Third context tier for cold tests that want to vary context size as an independent variable.
+- **[`<!-- SYNC:version -->v0.22.0<!-- /SYNC:version -->.md`](<!-- SYNC:version -->v0.22.0<!-- /SYNC:version -->.md)** — **full spec.** Canonical definition in learning order: hello world → screens → display → variables → interaction → layout → state → conditionals → lists → functions → components → navigation → shared state → async → recurrence → reference. Read this once; refer back by section.
+- **[`<!-- SYNC:version -->v0.22.0<!-- /SYNC:version -->-cheatsheet.md`](<!-- SYNC:version -->v0.22.0<!-- /SYNC:version -->-cheatsheet.md)** — **cheatsheet.** Same language, condensed for cold-LLM context and human skim-reading. Primary input for test runs.
+- **[`<!-- SYNC:version -->v0.22.0<!-- /SYNC:version -->-micro.md`](<!-- SYNC:version -->v0.22.0<!-- /SYNC:version -->-micro.md)** — **micro reference.** Rules-only, no prose, no tradeoffs. Third context tier for cold tests that want to vary context size as an independent variable.
 
 Pick the tier that matches your need: full for understanding, cheatsheet for writing Igni, micro for squeezing context.
 
 ## Archive
 
-Historical spec versions (v0.2 → v0.13.1) live in [`archive/`](archive/). Moved there for navigability — prior to v0.11.5, all versions sat at `spec/` top level. Historical cold-test writeups in `tests/vX.Y/` may reference the old `spec/vX.Y.Z.md` paths; the file you want is now at `spec/archive/vX.Y.Z.md`.
+Historical spec versions (<!-- SYNC:historical-range -->v0.2 → v0.21.2<!-- /SYNC:historical-range -->) live in [`archive/`](archive/). Moved there for navigability — prior to v0.11.5, all versions sat at `spec/` top level. Historical cold-test writeups in `tests/vX.Y/` may reference the old `spec/vX.Y.Z.md` paths; the file you want is now at `spec/archive/vX.Y.Z.md`.
 
 See [`../CHANGELOG.md`](../CHANGELOG.md) for the version-by-version evolution narrative.
 

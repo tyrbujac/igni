@@ -363,8 +363,8 @@ Inside the component, `emit <event>` declares a custom event channel. At the cal
 
 ## Pointers
 
-- **Spec reference:** [`spec/v0.13.1-cheatsheet.md`](../spec/v0.13.1-cheatsheet.md) (~2,500 words, scan-oriented)
+- **Spec reference:** [`spec/v0.22.0-cheatsheet.md`](../spec/v0.22.0-cheatsheet.md) (scan-oriented)
 - **Beginner walkthrough:** [`tutorial.md`](tutorial.md)
 - **Migrating from Flutter:** [`migrating-from-flutter.md`](migrating-from-flutter.md)
 - **Audience scope (what Igni is and isn't for):** README "[What Igni is for](../README.md#what-igni-is-for)"
-- **Browse all 46 examples:** [`transpiler/examples/GALLERY.md`](../transpiler/examples/GALLERY.md)
+- **Browse all 108 examples:** [`transpiler/examples/GALLERY.md`](../transpiler/examples/GALLERY.md)

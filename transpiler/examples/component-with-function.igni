@@ -1,0 +1,11 @@
+component Card(title):
+  helper():
+    return "test"
+  
+  layout vertical:
+    label title
+    label helper()
+
+screen Home:
+  layout vertical:
+    Card "Test"

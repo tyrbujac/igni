@@ -1,6 +1,6 @@
 # Examples
 
-<!-- SYNC:example-count -->46<!-- /SYNC:example-count --> `.igni` apps, each paired with a reference `.expected.dart` for diff-testing. Also usable as a learning gallery — browse to see Igni in action.
+<!-- SYNC:example-count -->108<!-- /SYNC:example-count --> `.igni` apps, each paired with a reference `.expected.dart` for diff-testing. Also usable as a learning gallery — browse to see Igni in action.
 
 For per-example LOC counts and Igni-to-Dart abstraction ratios, see the auto-generated [`GALLERY.md`](GALLERY.md).
 

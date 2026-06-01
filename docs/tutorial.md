@@ -1,6 +1,6 @@
 # Learn Igni
 
-> Tutorial v2.12 · targets Igni v0.19.1 (syntax verified against current spec — covers basic primitives only; advanced features like component events, animation, and testing are not yet in this tutorial)
+> Tutorial v2.12 · targets Igni v0.22.0 (syntax verified against current spec — covers basic primitives only; advanced features like component events, animation, and testing are not yet in this tutorial)
 
 > **Work in progress** — feedback welcome. An intermediate tutorial covering lists, navigation, and async data is planned.
 
@@ -767,4 +767,4 @@ These are principled exclusions, not missing features. Each one would break a lo
 - **Gradients and blur effects.** Decorative-and-substitutable. Solid `theme: color:` brand expression typically carries the same intent without the spec-budget cost.
 - **Constraints / pinning** (Figma's "pin to right edge"). Flow-layout primitives (`align:`, `gap:`, `padding:`) cover the canonical use cases. Pinning is coordinate-relative; Igni is flow-relative.
 
-Some Figma features sit on the roadmap as candidates pending real-app or cold-test signal — `hover:` for web/desktop apps, `layout stack:` for badges/FAB/modals, `wrap:` for tag lists. They're not in the language yet, and may or may not land depending on whether actual app pressure surfaces a clear need. The spec is a budget, not a backlog.
+Some Figma features sit on the roadmap as candidates pending real-app or cold-test signal — `layout stack:` for badges/FAB/modals, `wrap:` for tag lists. They're not in the language yet, and may or may not land depending on whether actual app pressure surfaces a clear need. (`hover:` for web/desktop apps shipped in v0.22.0.) The spec is a budget, not a backlog.

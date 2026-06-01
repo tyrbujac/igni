@@ -1,0 +1,26 @@
+{
+  "provider": "openai",
+  "api": "responses",
+  "reasoning_effort": "high",
+  "requested_model": "gpt-5.5",
+  "model_id": "gpt-5.5-2026-04-23",
+  "prompt_name": "v0.23 primitive-class strategic design critique",
+  "prompt_slug": "v0-23-primitive-class-strategic-design-critique",
+  "prompt_index": 1,
+  "prompt_path": "/Users/tyrbujac/Documents/Projects/experiments/Igni/tests/v0.23-design-review/prompts.md",
+  "spec_path": null,
+  "spec_tier": "none",
+  "spec_sha256": null,
+  "spec_words": 0,
+  "timestamp": "2026-05-08T19:54:54.837Z",
+  "duration_ms": 358609,
+  "stop_reason": "completed",
+  "usage": {
+    "input_tokens": 17363,
+    "output_tokens": 17315,
+    "reasoning_tokens": 12948,
+    "cache_read_tokens": 17152
+  },
+  "cost_usd": null,
+  "transpile": null
+}

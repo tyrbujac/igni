@@ -14,7 +14,7 @@ Three differences worth absorbing before reading code:
 
 2. **The widget tree is not exposed.** You don't write `Column(children: [...])` or worry about `BuildContext`. Igni's `layout vertical:` compiles to `Column`, `layout horizontal:` to `Row`, and the indentation tells the compiler what to put in `children:`. There's nothing to lift up, nothing to constructor-cascade, nothing to wrap in `Builder` to access context.
 
-3. **The spec is a budget, not a backlog.** Flutter ships ~2,000 widget classes and a large API surface. Igni ships ~25 primitives (full list in the [cheatsheet](../spec/v0.13.1-cheatsheet.md)). When you find Igni "missing" something Flutter has — tabs, slivers, custom-painters, drawer widgets — the answer is usually "compose it from primitives" or "this isn't an Igni use case; drop into raw Flutter." The narrowness is the point: a smaller spec means LLMs can reach for the right primitive on the first try.
+3. **The spec is a budget, not a backlog.** Flutter ships ~2,000 widget classes and a large API surface. Igni ships ~25 primitives (full list in the [cheatsheet](../spec/v0.22.0-cheatsheet.md)). When you find Igni "missing" something Flutter has — tabs, slivers, custom-painters, drawer widgets — the answer is usually "compose it from primitives" or "this isn't an Igni use case; drop into raw Flutter." The narrowness is the point: a smaller spec means LLMs can reach for the right primitive on the first try.
 
 The first two shifts are wins for almost every Flutter user; the third is a real tradeoff documented in *Non-goals* below.
 
@@ -223,8 +223,8 @@ Three honest rules of thumb:
 
 ## Pointers
 
-- **Spec reference:** [`spec/v0.13.1.md`](../spec/v0.13.1.md) (full) or [`spec/v0.13.1-cheatsheet.md`](../spec/v0.13.1-cheatsheet.md) (scan-oriented)
+- **Spec reference:** [`spec/v0.22.0.md`](../spec/v0.22.0.md) (full) or [`spec/v0.22.0-cheatsheet.md`](../spec/v0.22.0-cheatsheet.md) (scan-oriented)
 - **Cookbook (task-shaped recipes):** [`cookbook.md`](cookbook.md)
 - **Beginner walkthrough:** [`tutorial.md`](tutorial.md)
-- **All 46 example apps:** [`transpiler/examples/GALLERY.md`](../transpiler/examples/GALLERY.md)
+- **All 108 example apps:** [`transpiler/examples/GALLERY.md`](../transpiler/examples/GALLERY.md)
 - **Mobile (iOS / Android):** [`mobile.md`](mobile.md)

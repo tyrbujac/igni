@@ -68,7 +68,7 @@ First run needs internet — `flutter create` fetches scaffold packages from pub
 
 Igni is designed to be injected straight into your LLM's context window.
 
-1. **The context:** paste the entire contents of [`spec/v0.15.0-cheatsheet.md`](spec/v0.15.0-cheatsheet.md) into your system prompt or initial message.
+1. **The context:** paste the entire contents of [`<!-- SYNC:cheatsheet-path -->spec/v0.22.0-cheatsheet.md<!-- /SYNC:cheatsheet-path -->`](<!-- SYNC:cheatsheet-path -->spec/v0.22.0-cheatsheet.md<!-- /SYNC:cheatsheet-path -->) into your system prompt or initial message.
 2. **The persona:** add this instruction: *"You are an expert Igni developer. Write concise, idiomatic Igni code using strictly the provided rules. Do not invent syntax."*
 3. **The prompt:** ask for the specific UI you need. Example: *"Build a `screen Settings:` with a dark mode toggle bound to a boolean variable, and a red logout button."*
 
@@ -133,11 +133,11 @@ my-app/
 
 **Language spec:** Current canonical spec is [spec/<!-- SYNC:version -->v0.22.0<!-- /SYNC:version -->.md](spec/<!-- SYNC:version -->v0.22.0<!-- /SYNC:version -->.md). Companion cheatsheet at [<!-- SYNC:cheatsheet-path -->spec/v0.22.0-cheatsheet.md<!-- /SYNC:cheatsheet-path -->](<!-- SYNC:cheatsheet-path -->spec/v0.22.0-cheatsheet.md<!-- /SYNC:cheatsheet-path -->); syntax-only micro reference at [<!-- SYNC:micro-path -->spec/v0.22.0-micro.md<!-- /SYNC:micro-path -->](<!-- SYNC:micro-path -->spec/v0.22.0-micro.md<!-- /SYNC:micro-path -->). Designed iteratively through cold-LLM testing and human usability testing. See [`CHANGELOG.md`](CHANGELOG.md) for the full evolution.
 
-<!-- SYNC:latest-spec-changes -->**Latest spec change: v0.22.0** (2026-05-08) — *Hover primitive (Shape B1) + size-token gap fills. `hover:` sub-block on `layout` carries property-only overrides (`background:`/`border:`/`rounded:`/`cursor:`); `is_hovered()` lexical-scope boolean for hover-conditional content via `if`. Default ~150 ms ease-out animation; `transition: none` opt-out for instant snap. Touch platforms no-op (capability-based, not platform-based). Plus universal `none` (zero on `gap:`/`padding:`/`rounded:`/`size:`) and `rounded:`-only `full` (container-dependent — pill / circle). Stage 3 SOFT verdict (`tests/v0.22-stage3/`) at 4/4 P1 + 4/4 P2 + 2/3-strict-P3-visible; ships with three pre-registered cheatsheet patches. Cycle cost ~<!-- SYNC:latest-spec-changes -->.05 cumulative ($0 Stage 2 chat-mode + ~$0.30 Stage 0 + $0.7520 Stage 3).* See [`CHANGELOG.md`](CHANGELOG.md) for full history.<!-- /SYNC:latest-spec-changes -->
+<!-- SYNC:latest-spec-changes -->**Latest spec change: v0.22.0** (2026-05-08) — *Hover primitive (Shape B1) + size-token gap fills. `hover:` sub-block on `layout` carries property-only overrides (`background:`/`border:`/`rounded:`/`cursor:`); `is_hovered()` lexical-scope boolean for hover-conditional content via `if`. Default ~150 ms ease-out animation; `transition: none` opt-out for instant snap. Touch platforms no-op (capability-based, not platform-based). Plus universal `none` (zero on `gap:`/`padding:`/`rounded:`/`size:`) and `rounded:`-only `full` (container-dependent — pill / circle). Stage 3 SOFT verdict (`tests/v0.22-stage3/`) at 4/4 P1 + 4/4 P2 + 2/3-strict-P3-visible; ships with three pre-registered cheatsheet patches. Cycle cost ~$1.05 cumulative ($0 Stage 2 chat-mode + ~$0.30 Stage 0 + $0.7520 Stage 3).* See [`CHANGELOG.md`](CHANGELOG.md) for full history.<!-- /SYNC:latest-spec-changes -->
 
 **Latest methodology result:** the v0.10 domain-swap round (Shopping + Apothecary + Spaceship Cargo, 3 × 4 models × cheatsheet tier) produced 9/9 frontier adoption of `{target with ...}` unprompted. Three runs at varying domain distance from e-commerce rules out the "shopping-cart corpus density" confound — the cheatsheet teaches the syntax, the domain doesn't supply it. First post-ship result strong enough to call directly-supported rather than suggestive.
 
-**Transpiler:** Working. <!-- SYNC:example-count -->107<!-- /SYNC:example-count --> example apps compile and run in the browser; iOS simulator and Android emulator supported via `igni run ios` / `igni run android` (device auto-pick, auto-boot, `--device` override). Covers:
+**Transpiler:** Working. <!-- SYNC:example-count -->108<!-- /SYNC:example-count --> example apps compile and run in the browser; iOS simulator and Android emulator supported via `igni run ios` / `igni run android` (device auto-pick, auto-boot, `--device` override). Covers:
 
 - **Composition** — screens, components, wrapper components with `body` slot, layouts
 - **Control flow** — `if`/`else`, `each` loops (with `paginate:` for lazy rendering), functions, lambdas
@@ -172,7 +172,7 @@ igni/
 │   ├── README.md
 │   ├── src/                 # lexer, parser, codegen, CLI
 │   ├── bin/igni             # CLI entry point
-│   ├── examples/            # <!-- SYNC:example-count -->107<!-- /SYNC:example-count --> .igni apps + .expected.dart references
+│   ├── examples/            # <!-- SYNC:example-count -->108<!-- /SYNC:example-count --> .igni apps + .expected.dart references
 │   └── examples-errors/     # pinned transpile-rejection fixtures
 ├── tests/                   # cold-LLM test results + methodology
 │   ├── README.md

@@ -128,7 +128,10 @@ function syncRegions(source: string, regions: Record<string, string>): { out: st
   for (const [name, content] of Object.entries(regions)) {
     const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const re = new RegExp(`(<!--\\s*SYNC:${esc}\\s*-->)([\\s\\S]*?)(<!--\\s*/SYNC:${esc}\\s*-->)`, 'g');
-    out = out.replace(re, `$1${content}$3`);
+    // Function-form replacement: `content` may itself contain `$1`-style text
+    // (e.g. a "$1.05" cost tagline from CHANGELOG). String-form .replace would
+    // treat that as a capture-group backreference and corrupt the region.
+    out = out.replace(re, (_m, open, _body, close) => open + content + close);
   }
   return { out, changed: out !== source };
 }
@@ -266,7 +269,7 @@ function main(): void {
     'latest-spec-changes': facts.latestSpecChange,
   };
 
-  const targets = ['README.md', 'ARCHITECTURE.md', 'CLAUDE.md'];
+  const targets = ['README.md', 'ARCHITECTURE.md', 'CLAUDE.md', 'spec/README.md', 'transpiler/examples/README.md'];
   let anyDrift = false;
 
   console.log(`spec: current=${facts.current}, historical=${facts.oldest} → ${facts.secondNewest ?? '—'}`);
