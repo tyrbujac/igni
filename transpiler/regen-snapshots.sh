@@ -9,9 +9,14 @@
 set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 COUNT=0
-for f in "$SCRIPT_DIR"/examples/*.igni; do
+# Scan top-level + subdir fixtures (examples/*/app.igni) so the runnable demos
+# (bmi, boojy-notes, calculator, card-sender, pomodonut) regenerate too —
+# matching run-tests.sh's glob. Snapshot is written next to its source.
+for f in "$SCRIPT_DIR"/examples/*.igni "$SCRIPT_DIR"/examples/*/*.igni; do
+  [ -f "$f" ] || continue
+  dir=$(dirname "$f")
   name=$(basename "$f" .igni)
-  npx tsx "$SCRIPT_DIR/src/cli.ts" "$f" > "$SCRIPT_DIR/examples/$name.expected.dart" 2>/dev/null
+  npx tsx "$SCRIPT_DIR/src/cli.ts" "$f" > "$dir/$name.expected.dart" 2>/dev/null
   COUNT=$((COUNT + 1))
 done
 echo "Regenerated $COUNT snapshots in examples/."

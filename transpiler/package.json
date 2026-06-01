@@ -8,7 +8,6 @@
     "igni": "tsx src/igni.ts",
     "test": "bash run-tests.sh",
     "smoke": "bash run-smoke.sh",
-    "test:analyze": "bash run-analyze.sh",
     "regen-snapshots": "bash regen-snapshots.sh",
     "dev": "nodemon --ext igni --watch examples --exec 'npx tsx src/cli.ts examples/tutorial.igni > test_app/lib/main.dart && echo Transpiled.'"
   },

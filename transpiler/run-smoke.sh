@@ -63,10 +63,8 @@ fi
 #                                detection bug surfaces helper-can't-see-state — see
 #                                trap journal 2026-05-02. Stays skipped pending
 #                                state-field redesign, candidate v0.22+)
-#   object-update              — null-spread + ambiguous-literal type inference
 #   on-handler-named           — component-with-input-bind StatelessWidget mismatch (doc 116 #9)
 #   on-handler-object-payload  — same as above
-#   type-hints                 — typed-collection emits unresolved type-arg names
 SMOKE_SKIP=(
   border-selected-state
   on-handler-named
@@ -92,6 +90,17 @@ for f in "$EXAMPLES"/*.igni "$EXAMPLES"/*/*.igni; do
   [ -f "$f" ] || continue
   name=$(basename "$f" .igni)
   TOTAL=$((TOTAL + 1))
+
+  # Test fixtures (*.test.igni) import flutter_test and are exercised by the
+  # diff suite + test harness, not as standalone app code. Analysing them as an
+  # app yields a meaningless PASS, so skip them here.
+  case "$f" in
+    *.test.igni)
+      echo "SKIP  smoke/$name  (test fixture — not app code)"
+      SKIP=$((SKIP + 1))
+      continue
+      ;;
+  esac
 
   if is_skipped "$name"; then
     echo "SKIP  smoke/$name  (known-broken — see run-smoke.sh SMOKE_SKIP)"
